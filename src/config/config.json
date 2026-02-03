@@ -1,0 +1,19 @@
+{
+  "contact": {
+    "email": "direccion@ctgone.com",
+    "phone": "+57 (5) 6661 7000",
+    "location": "Cl. 17 Mz 10 L 21, El Campestre, Cartagena de Indias",
+    "website": "www.ctgone.com"
+  },
+  "company": {
+    "name": "CTG One Corporation",
+    "tagline": "AI Strategy & Infrastructure",
+    "founded": 2024,
+    "headquarters": "Cartagena de Indias, Colombia"
+  },
+  "social": {
+    "twitter": "https://twitter.com/ctgone",
+    "linkedin": "https://linkedin.com/company/ctgone",
+    "telegram": "https://t.me/ctgone"
+  }
+}

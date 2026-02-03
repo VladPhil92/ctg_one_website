@@ -1,0 +1,13 @@
+# robots.txt for CTG One Corporation
+# https://ctgone.com
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://ctgone.com/sitemap.xml
+
+# Disallow admin/private areas (for future use)
+Disallow: /api/
+Disallow: /_next/
+Disallow: /private/
