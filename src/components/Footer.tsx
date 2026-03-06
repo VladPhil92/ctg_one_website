@@ -111,15 +111,24 @@ export const Footer: React.FC = () => {
             © {currentYear} CTG One Corporation
           </p>
           <div className="flex items-center gap-6 sm:gap-10">
-            {FOOTER.links.legal.map((link) => (
-              <a
-                key={link}
-                href="#"
-                className="text-[10px] sm:text-[11px] text-text-dim hover:text-text-muted transition-colors duration-500 tracking-wide"
-              >
-                {link}
-              </a>
-            ))}
+            <a
+              href="/privacidad"
+              className="text-[10px] sm:text-[11px] text-text-dim hover:text-text-muted transition-colors duration-500 tracking-wide"
+            >
+              Privacy Policy
+            </a>
+            <a
+              href="#"
+              className="text-[10px] sm:text-[11px] text-text-dim hover:text-text-muted transition-colors duration-500 tracking-wide"
+            >
+              Terms of Service
+            </a>
+            <a
+              href="#"
+              className="text-[10px] sm:text-[11px] text-text-dim hover:text-text-muted transition-colors duration-500 tracking-wide"
+            >
+              Cookie Policy
+            </a>
           </div>
           <p className="text-[10px] sm:text-[11px] text-text-dim tracking-wide text-center md:text-right">
             {CONTACT.location}
