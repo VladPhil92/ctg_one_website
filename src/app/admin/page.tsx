@@ -1,9 +1,18 @@
 import React from 'react';
-import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { formatCents } from '@/lib/format';
 import { StatCard } from '@/components/admin/StatCard';
 
 export default async function AdminOverviewPage() {
+  // Next.js can render a layout and its child page concurrently, so this
+  // page's own data fetching can start before admin/layout.tsx's redirect
+  // takes effect — each admin page re-checks independently rather than
+  // relying solely on the parent layout.
+  if (!isSupabaseConfigured) {
+    redirect('/');
+  }
+
   const supabase = await createClient();
 
   const [{ count: totalUsers }, { count: pendingKyc }, { count: pendingDeposits }, { data: wallets }] =
