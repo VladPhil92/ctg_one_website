@@ -235,15 +235,15 @@ export const TOKEN = {
     'Loyalty rewards program',
     'Community input on ecosystem benefits and promotions',
   ],
-  // NOTE: Public Sale removed (closed, no active public sale of new
-  // tokens). Remaining categories are shown as-is and currently sum to
-  // 70%, not 100% — the freed 30% has not been reassigned to avoid
-  // inventing new figures; needs a decision on where it goes.
+  // NOTE: Public Sale closed (no active public sale of new tokens); its
+  // 30% was redistributed proportionally across the remaining categories,
+  // preserving their original relative weighting (5:4:3:2) rather than
+  // picking a category to favor.
   distribution: [
-    { label: 'Ecosystem Fund', percentage: 25 },
-    { label: 'Team & Advisors', percentage: 20 },
-    { label: 'Reserves', percentage: 15 },
-    { label: 'Liquidity', percentage: 10 },
+    { label: 'Ecosystem Fund', percentage: 36 },
+    { label: 'Team & Advisors', percentage: 29 },
+    { label: 'Reserves', percentage: 21 },
+    { label: 'Liquidity', percentage: 14 },
   ],
 };
 
