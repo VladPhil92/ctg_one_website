@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Badge } from '@/components/ui/Badge';
@@ -10,7 +11,6 @@ import {
   Building2,
   Home,
   Cpu,
-  Stethoscope,
   Smile,
   Scale,
   Palette,
@@ -22,8 +22,15 @@ const iconMap: Record<string, React.ReactNode> = {
   hotel: <Building2 size={18} strokeWidth={1.5} />,
   building: <Home size={18} strokeWidth={1.5} />,
   cpu: <Cpu size={18} strokeWidth={1.5} />,
-  // TODO: placeholder icon for Nvet Care — replace with brand icon once confirmed
-  stethoscope: <Stethoscope size={18} strokeWidth={1.5} />,
+  nvetcare: (
+    <Image
+      src="/images/logo/nvet-care-icon.png"
+      alt="Nvet Care"
+      width={23}
+      height={18}
+      className="object-contain"
+    />
+  ),
   smile: <Smile size={18} strokeWidth={1.5} />,
   scale: <Scale size={18} strokeWidth={1.5} />,
   palette: <Palette size={18} strokeWidth={1.5} />,

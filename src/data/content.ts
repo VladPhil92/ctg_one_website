@@ -144,16 +144,15 @@ export const ECOSYSTEM = {
       color: '#ae8c9a',
     },
     {
-      // TODO: No public Nvet Care icon/asset found in this repo. Using a
-      // distinct placeholder icon ('stethoscope') rather than reusing the
-      // previous veterinary unit's icon ('heart') — confirm brand icon with
-      // Nvet Care before publishing. No public domain/repo found either;
-      // if per-unit links are implemented later, default to the contact
-      // section (#contact) until Nvet Care provides one.
+      // Official Nvet Care logomark supplied and cropped to
+      // public/images/logo/nvet-care-icon.png (transparent background).
+      // No public domain/repo found; if per-unit links are implemented
+      // later, default to the contact section (#contact) until Nvet Care
+      // provides one.
       id: 'veterinary',
       name: 'Nvet Care',
       description: 'On-demand veterinary home-visit marketplace for Cartagena. Connects pet owners with verified veterinarians for house calls, with integrated booking and secure split payments.',
-      icon: 'stethoscope',
+      icon: 'nvetcare',
       color: '#8c9aae',
     },
     {
@@ -228,9 +227,6 @@ export const TOKEN = {
     'CTG One Token (CTGO) is the utility token connecting all nine business units. Part of our fintech vision and tokenization strategy — real utility, real value.',
   stats: [
     { label: 'Total Supply', value: '1B', suffix: 'CTGO' },
-    // TODO: "Tokens Staked" wasn't explicitly listed for removal or retention
-    // in the board's instructions — flagged for confirmation (see summary).
-    { label: 'Tokens Staked', value: '45', suffix: '%' },
     { label: 'Token Holders', value: '2,450', suffix: '+' },
   ],
   utilities: [
@@ -239,12 +235,11 @@ export const TOKEN = {
     'Loyalty rewards program',
     'Community input on ecosystem benefits and promotions',
   ],
+  // NOTE: Public Sale removed (closed, no active public sale of new
+  // tokens). Remaining categories are shown as-is and currently sum to
+  // 70%, not 100% — the freed 30% has not been reassigned to avoid
+  // inventing new figures; needs a decision on where it goes.
   distribution: [
-    // TODO: Public Sale closed per board direction. Left at 0% rather than
-    // redistributed, since the board asked not to invent new percentages
-    // without confirmation. Totals now sum to 70%, not 100% — needs a
-    // decision on how (or whether) to redistribute the remaining 30%.
-    { label: 'Public Sale (Closed)', percentage: 0 },
     { label: 'Ecosystem Fund', percentage: 25 },
     { label: 'Team & Advisors', percentage: 20 },
     { label: 'Reserves', percentage: 15 },

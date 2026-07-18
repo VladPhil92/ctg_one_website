@@ -71,8 +71,8 @@ export const TokenSection: React.FC = () => {
 
         {/* Stats */}
         <FadeInSection delay={0.2}>
-          <div 
-            className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 md:gap-10 mb-16 sm:mb-20 md:mb-24 py-8 sm:py-10 md:py-12"
+          <div
+            className="grid grid-cols-2 gap-6 sm:gap-8 md:gap-10 mb-16 sm:mb-20 md:mb-24 py-8 sm:py-10 md:py-12 max-w-sm mx-auto sm:max-w-md"
             style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)', borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}
           >
             {TOKEN.stats.map((stat, index) => (
