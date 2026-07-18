@@ -13,6 +13,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://ctgone.com/privacidad</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://ctgone.com/#token</loc>
     <lastmod>2025-02-01</lastmod>
     <changefreq>weekly</changefreq>

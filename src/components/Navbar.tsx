@@ -159,7 +159,7 @@ export const Navbar: React.FC = () => {
               </div>
 
               <p className="pt-8 text-[10px] text-text-dim tracking-wider">
-                © 2024 CTG One Corporation
+                © {new Date().getFullYear()} CTG One Corporation
               </p>
             </div>
           </div>
