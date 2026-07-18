@@ -83,6 +83,11 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Resources Links */}
+          {/* TODO: "Documentation" and "Whitepaper" are currently placeholder
+              links (href="#"). If/when they point to real content, that
+              content needs manual legal review to ensure CTGO is described
+              as a utility/loyalty token, not an investment — do not have
+              this regenerated automatically. */}
           <div>
             <h4 className="text-[10px] uppercase tracking-[0.2em] text-text-dim mb-6">
               Resources

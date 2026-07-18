@@ -5,26 +5,25 @@ import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Badge } from '@/components/ui/Badge';
 import { ECOSYSTEM } from '@/data/content';
-import { 
-  GraduationCap, 
-  Building2, 
+import {
+  GraduationCap,
+  Building2,
   Home,
-  Leaf,
   Cpu,
-  Heart, 
+  Stethoscope,
   Smile,
-  Scale, 
-  Palette, 
-  Wallet 
+  Scale,
+  Palette,
+  Wallet
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ReactNode> = {
   graduation: <GraduationCap size={18} strokeWidth={1.5} />,
   hotel: <Building2 size={18} strokeWidth={1.5} />,
   building: <Home size={18} strokeWidth={1.5} />,
-  leaf: <Leaf size={18} strokeWidth={1.5} />,
   cpu: <Cpu size={18} strokeWidth={1.5} />,
-  heart: <Heart size={18} strokeWidth={1.5} />,
+  // TODO: placeholder icon for Nvet Care — replace with brand icon once confirmed
+  stethoscope: <Stethoscope size={18} strokeWidth={1.5} />,
   smile: <Smile size={18} strokeWidth={1.5} />,
   scale: <Scale size={18} strokeWidth={1.5} />,
   palette: <Palette size={18} strokeWidth={1.5} />,
@@ -55,7 +54,7 @@ export const EcosystemSection: React.FC = () => {
           </div>
         </FadeInSection>
 
-        {/* Units Grid - 10 units in 5x2 grid on large screens */}
+        {/* Units Grid - 9 units, wraps to 5 columns on large screens */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-white/[0.02] rounded-lg overflow-hidden">
           {ECOSYSTEM.units.map((unit, index) => (
             <FadeInSection 

@@ -16,6 +16,7 @@ export const NAV_ITEMS = [
   { label: 'About', href: '#about' },
   { label: 'Services', href: '#services' },
   { label: 'Ecosystem', href: '#ecosystem' },
+  { label: 'Rewards', href: '#rewards' },
   { label: 'Token', href: '#token' },
   { label: 'Contact', href: '#contact' },
 ];
@@ -73,14 +74,13 @@ export const SOCIAL_LINKS = {
   github: 'https://github.com/ctgone',
 };
 
-// Business Units - 10 Integrated Units
+// Business Units - 9 Integrated Units
 export const BUSINESS_UNITS = [
   { id: 'education', name: 'Valderrama International School', color: '#d4a259' },
   { id: 'hospitality', name: 'CTG Suites', color: '#6b8cae' },
   { id: 'realestate', name: 'Bechara Real Estate', color: '#7da87d' },
-  { id: 'wellness', name: 'Hacienda San Benito', color: '#9a8cae' },
   { id: 'tech', name: 'CTG One Corporation', color: '#ae8c9a' },
-  { id: 'veterinary', name: 'Consultorio Veterinario Nicole Behar', color: '#8c9aae' },
+  { id: 'veterinary', name: 'Nvet Care', color: '#8c9aae' },
   { id: 'dental', name: 'Oralgreen', color: '#7dae9a' },
   { id: 'legal', name: 'Legalyst Consultores', color: '#c4956a' },
   { id: 'design', name: 'CTG One Design', color: '#ae9a8c' },

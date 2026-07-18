@@ -44,7 +44,7 @@ export const AboutSection: React.FC = () => {
                 style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)' }}
               >
                 <div>
-                  <div className="text-xl sm:text-2xl font-outfit font-medium text-white mb-1">10</div>
+                  <div className="text-xl sm:text-2xl font-outfit font-medium text-white mb-1">9</div>
                   <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.15em] text-text-dim">Business Units</div>
                 </div>
                 <div>

@@ -153,10 +153,10 @@ export const TokenSection: React.FC = () => {
           >
             <div>
               <h4 className="text-[13px] sm:text-sm font-outfit font-medium text-white mb-1">
-                Ready to join the ecosystem?
+                CTGO holders enjoy recognition benefits across the ecosystem.
               </h4>
               <p className="text-[12px] sm:text-[13px] md:text-sm text-text-dim">
-                Get early access to CTGO Token and exclusive benefits.
+                Discover the perks available today across CTG One's business units.
               </p>
             </div>
             <Button variant="primary" size="sm" className="flex-shrink-0">
