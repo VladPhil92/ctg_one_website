@@ -38,14 +38,9 @@ export interface StakingPool {
   rewards?: string;
 }
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  walletAddress?: string;
-  createdAt: Date;
-  kycVerified: boolean;
-  tier: 'basic' | 'silver' | 'gold' | 'platinum';
-}
+// NOTE: the mocked UserProfile that used to live here was retired along
+// with the mocked AuthContext — real account/KYC state now lives in
+// src/types/domain.ts (Profile), backed by the `profiles` table.
 
 export interface TradeOrder {
   type: 'buy' | 'sell';
