@@ -71,8 +71,8 @@ export const TokenSection: React.FC = () => {
 
         {/* Stats */}
         <FadeInSection delay={0.2}>
-          <div 
-            className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 md:gap-10 mb-16 sm:mb-20 md:mb-24 py-8 sm:py-10 md:py-12"
+          <div
+            className="grid grid-cols-2 gap-6 sm:gap-8 md:gap-10 mb-16 sm:mb-20 md:mb-24 py-8 sm:py-10 md:py-12 max-w-sm mx-auto sm:max-w-md"
             style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)', borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}
           >
             {TOKEN.stats.map((stat, index) => (
@@ -153,10 +153,10 @@ export const TokenSection: React.FC = () => {
           >
             <div>
               <h4 className="text-[13px] sm:text-sm font-outfit font-medium text-white mb-1">
-                Ready to join the ecosystem?
+                CTGO holders enjoy recognition benefits across the ecosystem.
               </h4>
               <p className="text-[12px] sm:text-[13px] md:text-sm text-text-dim">
-                Get early access to CTGO Token and exclusive benefits.
+                Discover the perks available today across CTG One's business units.
               </p>
             </div>
             <Button variant="primary" size="sm" className="flex-shrink-0">

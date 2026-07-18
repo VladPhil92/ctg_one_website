@@ -10,6 +10,7 @@ export const NAV_ITEMS = [
   { label: 'About', href: '#about' },
   { label: 'Services', href: '#services' },
   { label: 'Ecosystem', href: '#ecosystem' },
+  { label: 'Rewards', href: '#rewards' },
   { label: 'Token', href: '#token' },
   { label: 'Contact', href: '#contact' },
 ];
@@ -25,7 +26,7 @@ export const HERO = {
   ctaPrimary: 'Explore Ecosystem',
   ctaSecondary: 'Start Conversation',
   metrics: [
-    { value: '10', label: 'Business Units', icon: 'building' },
+    { value: '9', label: 'Business Units', icon: 'building' },
     { value: 'Dual', label: 'Architecture', icon: 'layers' },
     { value: '2024', label: 'Founded', icon: 'calendar' },
     { value: 'Cartagena', label: 'Headquarters', icon: 'location' },
@@ -105,13 +106,13 @@ export const SERVICES = {
   ],
 };
 
-// Business Ecosystem - 10 Integrated Units
+// Business Ecosystem - 9 Integrated Units
 export const ECOSYSTEM = {
   badge: 'Our Portfolio',
   title: 'Business',
   titleHighlight: 'Ecosystem',
   description:
-    'Ten complementary business units serving individuals, families, and organizations through our Commercial Management Team. Technology is not just another service — it\'s the infrastructure that supports and connects the entire ecosystem.',
+    'Nine complementary business units serving individuals, families, and organizations through our Commercial Management Team. Technology is not just another service — it\'s the infrastructure that supports and connects the entire ecosystem.',
   units: [
     {
       id: 'education',
@@ -136,13 +137,6 @@ export const ECOSYSTEM = {
       color: '#7da87d',
     },
     {
-      id: 'wellness',
-      name: 'Hacienda San Benito',
-      description: 'Burnout retreat, weight-loss retreat, glamping, organic garden, nursery, and birdwatching. Reconnection with nature.',
-      icon: 'leaf',
-      color: '#9a8cae',
-    },
-    {
       id: 'tech',
       name: 'CTG One Corporation',
       description: 'Core technology: automation, software, AI agents, applications, digital solutions, CTG One Token, and fintech platform.',
@@ -150,10 +144,15 @@ export const ECOSYSTEM = {
       color: '#ae8c9a',
     },
     {
+      // Official Nvet Care logomark supplied and cropped to
+      // public/images/logo/nvet-care-icon.png (transparent background).
+      // No public domain/repo found; if per-unit links are implemented
+      // later, default to the contact section (#contact) until Nvet Care
+      // provides one.
       id: 'veterinary',
-      name: 'Consultorio Veterinario Nicole Behar',
-      description: 'Home veterinary care in Cartagena, specializing in felines and dogs.',
-      icon: 'heart',
+      name: 'Nvet Care',
+      description: 'On-demand veterinary home-visit marketplace for Cartagena. Connects pet owners with verified veterinarians for house calls, with integrated booking and secure split payments.',
+      icon: 'nvetcare',
       color: '#8c9aae',
     },
     {
@@ -188,32 +187,63 @@ export const ECOSYSTEM = {
   ],
 };
 
+// CTG Rewards - Loyalty & Referral Program
+export const REWARDS = {
+  badge: 'Loyalty & Referrals',
+  title: 'CTG',
+  titleHighlight: 'Rewards',
+  description:
+    'A loyalty program for people who already trust the ecosystem. Earn recognition for the relationships you build with us, and redeem it across every business unit.',
+  features: [
+    {
+      title: 'Earn by Engaging',
+      description: 'Every purchase or service you use across CTG One\'s business units adds recognition points to your account.',
+      icon: 'award',
+    },
+    {
+      title: 'Earn by Referring',
+      description: 'Introduce real clients to any unit in the ecosystem and receive recognition once the relationship is confirmed.',
+      icon: 'userPlus',
+    },
+    {
+      title: 'Redeem Across the Ecosystem',
+      description: 'Exchange your accumulated points for products, services, and experiences from any CTG One business unit.',
+      icon: 'gift',
+    },
+    {
+      title: 'Tiered Recognition',
+      description: 'As your engagement grows, you move through membership tiers that unlock additional perks and priority access to services.',
+      icon: 'layers',
+    },
+  ],
+};
+
 // Token Section
 export const TOKEN = {
   badge: 'CTGO Token',
   title: 'The Token Powering',
   titleHighlight: 'Our Ecosystem',
   description:
-    'CTG One Token (CTGO) is the utility token connecting all ten business units. Part of our fintech vision and tokenization strategy — real utility, real value.',
+    'CTG One Token (CTGO) is the utility token connecting all nine business units. Part of our fintech vision and tokenization strategy — real utility, real value.',
   stats: [
     { label: 'Total Supply', value: '1B', suffix: 'CTGO' },
-    { label: 'Current Price', value: '$0.10', suffix: 'USD' },
-    { label: 'Tokens Staked', value: '45', suffix: '%' },
     { label: 'Token Holders', value: '2,450', suffix: '+' },
   ],
   utilities: [
     'Cross-unit payments and transactions',
     'Exclusive discounts and benefits',
     'Loyalty rewards program',
-    'Competitive staking APY',
-    'Governance and voting rights',
+    'Community input on ecosystem benefits and promotions',
   ],
+  // NOTE: Public Sale closed (no active public sale of new tokens); its
+  // 30% was redistributed proportionally across the remaining categories,
+  // preserving their original relative weighting (5:4:3:2) rather than
+  // picking a category to favor.
   distribution: [
-    { label: 'Public Sale', percentage: 30 },
-    { label: 'Ecosystem Fund', percentage: 25 },
-    { label: 'Team & Advisors', percentage: 20 },
-    { label: 'Reserves', percentage: 15 },
-    { label: 'Liquidity', percentage: 10 },
+    { label: 'Ecosystem Fund', percentage: 36 },
+    { label: 'Team & Advisors', percentage: 29 },
+    { label: 'Reserves', percentage: 21 },
+    { label: 'Liquidity', percentage: 14 },
   ],
 };
 

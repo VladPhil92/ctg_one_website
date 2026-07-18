@@ -2,7 +2,7 @@
 
 **AI Strategy & Infrastructure**
 
-Sitio web corporativo para CTG One Corporation — una empresa de tecnología y ecosistema empresarial integrado que diseña infraestructura tecnológica y arquitectura estratégica. Opera bajo una arquitectura dual: infraestructura tecnológica + agencia comercial con 10 unidades de negocio.
+Sitio web corporativo para CTG One Corporation — una empresa de tecnología y ecosistema empresarial integrado que diseña infraestructura tecnológica y arquitectura estratégica. Opera bajo una arquitectura dual: infraestructura tecnológica + agencia comercial con 9 unidades de negocio.
 
 ---
 
@@ -79,7 +79,7 @@ CTG One Website/
 - Logo corporativo
 - Tagline: "Technology is infrastructure. Strategy is architecture."
 - Descripción de arquitectura dual
-- Métricas: 10 Business Units, Dual Architecture, Founded 2024
+- Métricas: 9 Business Units, Dual Architecture, Founded 2024
 - Visualización del ecosistema blockchain
 
 ### ✅ About Section — Los 5 Pilares
@@ -95,17 +95,22 @@ CTG One Website/
 - Diseño & Comunicación
 - Fintech & Créditos
 
-### ✅ Ecosystem Section — 10 Unidades de Negocio
+### ✅ Ecosystem Section — 9 Unidades de Negocio
 1. **Valderrama International School** — Educación y tutorías
 2. **CTG Suites** — Hospitalidad en Cartagena y Santa Marta
 3. **Bechara Real Estate** — Inmobiliaria de alto standing
-4. **Hacienda San Benito** — Bienestar y naturaleza
-5. **CTG One Corporation** — Core tecnológico
-6. **Consultorio Veterinario Nicole Behar** — Veterinaria domiciliaria
-7. **Oralgreen** — Odontología integral
-8. **Legalyst Consultores** — Servicios legales
-9. **CTG One Design** — Diseño y marketing
-10. **Vantage Libranza Plus** — Créditos por libranza
+4. **CTG One Corporation** — Core tecnológico
+5. **Nvet Care** — Marketplace de visitas veterinarias a domicilio
+6. **Oralgreen** — Odontología integral
+7. **Legalyst Consultores** — Servicios legales
+8. **CTG One Design** — Diseño y marketing
+9. **Vantage Libranza Plus** — Créditos por libranza
+
+### ✅ CTG Rewards Section
+- Programa de fidelización y referidos (no es un vehículo de inversión)
+- Puntos por consumo y por referidos reales
+- Canje por productos/servicios/experiencias del ecosistema
+- Niveles/tiers de reconocimiento
 
 ### ✅ Token Section
 - CTG One Token (CTGO)
