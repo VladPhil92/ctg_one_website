@@ -21,7 +21,7 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-12 md:gap-16 mb-12 sm:mb-16 md:mb-20">
           {/* Brand Column */}
           <div className="col-span-2 lg:col-span-2">
-            <a href="#home" className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <a href="/" className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
               <div className="relative w-9 h-9 rounded-full overflow-hidden">
                 <Image
                   src="/images/logo/CTGLOGO.jpeg"

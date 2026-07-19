@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
 import { NAV_ITEMS, CONTACT_EMAIL } from '@/lib/constants';
@@ -9,25 +10,10 @@ import { Button } from './ui/Button';
 export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState('home');
+  const pathname = usePathname();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 80);
-
-      const sections = NAV_ITEMS.map(item => item.href.slice(1));
-      for (const section of sections.reverse()) {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          if (rect.top <= 100) {
-            setActiveSection(section);
-            break;
-          }
-        }
-      }
-    };
-
+    const handleScroll = () => setIsScrolled(window.scrollY > 80);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -48,7 +34,7 @@ export const Navbar: React.FC = () => {
         <div className="max-w-6xl mx-auto px-8 lg:px-12">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <a href="#home" className="flex items-center gap-4 z-10">
+            <a href="/" className="flex items-center gap-4 z-10">
               <div className="relative w-10 h-10 rounded-full overflow-hidden">
                 <Image
                   src="/images/logo/CTGLOGO.jpeg"
@@ -71,7 +57,7 @@ export const Navbar: React.FC = () => {
             {/* Desktop Menu */}
             <div className="hidden lg:flex items-center gap-10">
               {NAV_ITEMS.map((item) => {
-                const isActive = activeSection === item.href.slice(1);
+                const isActive = pathname === item.href;
                 return (
                   <a
                     key={item.label}
@@ -131,7 +117,7 @@ export const Navbar: React.FC = () => {
             <div className="flex flex-col h-full pt-28 pb-10 px-8">
               <nav className="flex-1 space-y-2">
                 {NAV_ITEMS.map((item) => {
-                  const isActive = activeSection === item.href.slice(1);
+                  const isActive = pathname === item.href;
                   return (
                     <a
                       key={item.label}

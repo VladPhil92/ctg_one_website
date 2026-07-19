@@ -6,13 +6,13 @@ import config from '@/config/config.json';
 
 // Navigation
 export const NAV_ITEMS = [
-  { label: 'Home', href: '#home' },
-  { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Ecosystem', href: '#ecosystem' },
-  { label: 'Rewards', href: '#rewards' },
-  { label: 'Token', href: '#token' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
+  { label: 'Services', href: '/services' },
+  { label: 'Ecosystem', href: '/ecosystem' },
+  { label: 'Rewards', href: '/rewards' },
+  { label: 'Token', href: '/token' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 // Hero Section
@@ -26,7 +26,7 @@ export const HERO = {
   ctaPrimary: 'Explore Ecosystem',
   ctaSecondary: 'Start Conversation',
   metrics: [
-    { value: '9', label: 'Business Units', icon: 'building' },
+    { value: '12', label: 'Business Units', icon: 'building' },
     { value: 'Dual', label: 'Architecture', icon: 'layers' },
     { value: '2024', label: 'Founded', icon: 'calendar' },
     { value: 'Cartagena', label: 'Headquarters', icon: 'location' },
@@ -106,23 +106,28 @@ export const SERVICES = {
   ],
 };
 
-// Business Ecosystem - 9 Integrated Units
+// Business Ecosystem - 12 Integrated Units
 export const ECOSYSTEM = {
   badge: 'Our Portfolio',
   title: 'Business',
   titleHighlight: 'Ecosystem',
   description:
-    'Nine complementary business units serving individuals, families, and organizations through our Commercial Management Team. Technology is not just another service — it\'s the infrastructure that supports and connects the entire ecosystem.',
+    'Twelve complementary business units serving individuals, families, and organizations through our Commercial Management Team. Technology is not just another service — it\'s the infrastructure that supports and connects the entire ecosystem.',
   units: [
     {
+      // Official Valderrama logomark supplied and cropped to
+      // public/images/logo/valderrama-icon.png (transparent background).
       id: 'education',
       name: 'Valderrama International School',
       description: 'Private tutoring in all academic subjects, plus music, dance, and art courses.',
-      icon: 'graduation',
+      icon: 'valderrama',
       color: '#d4a259',
       url: 'valderramainternationalschool.com',
     },
     {
+      // TODO: the CTG Suites logo supplied is a wordmark only (no
+      // separate icon mark to crop) — kept the placeholder lucide icon
+      // here rather than using a cropped fragment of text.
       id: 'hospitality',
       name: 'CTG Suites',
       description: 'Lodging management in Cartagena and Santa Marta. Hotel Mirador del Castillo (25 rooms) and Apartaestudio 2E.',
@@ -130,17 +135,21 @@ export const ECOSYSTEM = {
       color: '#6b8cae',
     },
     {
+      // Official Bechara Real Estate logomark supplied and cropped to
+      // public/images/logo/bechara-icon.png (transparent background).
       id: 'realestate',
       name: 'Bechara Real Estate',
       description: 'High-end property sales and rentals. Specialized advice for wealth investment and premium housing.',
-      icon: 'building',
+      icon: 'bechara',
       color: '#7da87d',
     },
     {
+      // Official CTG One coin logomark supplied and cropped to
+      // public/images/logo/ctg-one-coin-icon.png (transparent background).
       id: 'tech',
       name: 'CTG One Corporation',
       description: 'Core technology: automation, software, AI agents, applications, digital solutions, CTG One Token, and fintech platform.',
-      icon: 'cpu',
+      icon: 'ctgone',
       color: '#ae8c9a',
     },
     {
@@ -184,6 +193,34 @@ export const ECOSYSTEM = {
       icon: 'wallet',
       color: '#8cae9a',
     },
+    {
+      // Official PISÁO logomark supplied and cropped to
+      // public/images/logo/pisao-gastrobar-icon.png (transparent background).
+      id: 'gastrobar',
+      name: 'PISÁO Gastrobar',
+      description: '"La Casa del Patacón" — casual dining gastrobar in Cartagena with Caribbean identity.',
+      icon: 'pisao',
+      color: '#7a9a5c',
+      url: 'pisaogastrobar.com',
+    },
+    {
+      // Official CTG Craft Beer logomark supplied and cropped to
+      // public/images/logo/ctg-craft-beer-icon.png (transparent background).
+      id: 'craftbeer',
+      name: 'CTG Craft Beer',
+      description: 'Artisanal craft beer brewed in Cartagena — "Cerveza Artesanal" for the ecosystem\'s hospitality venues.',
+      icon: 'craftbeer',
+      color: '#c9a962',
+    },
+    {
+      // Official Guest Logistics Concierge logomark supplied and cropped
+      // to public/images/logo/guest-logistics-icon.png (transparent background).
+      id: 'guestlogistics',
+      name: 'Guest Logistics Concierge',
+      description: 'SaaS concierge platform coordinating guest logistics, bookings, and services across the hospitality ecosystem.',
+      icon: 'guestlogistics',
+      color: '#3b5169',
+    },
   ],
 };
 
@@ -224,7 +261,7 @@ export const TOKEN = {
   title: 'The Token Powering',
   titleHighlight: 'Our Ecosystem',
   description:
-    'CTG One Token (CTGO) is the utility token connecting all nine business units. Part of our fintech vision and tokenization strategy — real utility, real value.',
+    'CTG One Token (CTGO) is the utility token connecting all twelve business units. Part of our fintech vision and tokenization strategy — real utility, real value.',
   stats: [
     { label: 'Total Supply', value: '1B', suffix: 'CTGO' },
     { label: 'Token Holders', value: '2,450', suffix: '+' },

@@ -2,7 +2,7 @@
 
 **AI Strategy & Infrastructure**
 
-Sitio web corporativo para CTG One Corporation — una empresa de tecnología y ecosistema empresarial integrado que diseña infraestructura tecnológica y arquitectura estratégica. Opera bajo una arquitectura dual: infraestructura tecnológica + agencia comercial con 9 unidades de negocio.
+Sitio web corporativo para CTG One Corporation — una empresa de tecnología y ecosistema empresarial integrado que diseña infraestructura tecnológica y arquitectura estratégica. Opera bajo una arquitectura dual: infraestructura tecnológica + agencia comercial con 12 unidades de negocio.
 
 ---
 
@@ -24,7 +24,9 @@ CTG One Website/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx           # Layout principal + metadata
-│   │   ├── page.tsx             # Página principal
+│   │   ├── page.tsx             # Home (hero + accesos rápidos)
+│   │   ├── about/, services/, ecosystem/, rewards/, token/, contact/
+│   │   │                       # Subpáginas propias (antes eran anclas en una sola página)
 │   │   ├── globals.css          # Estilos globales + variables CSS
 │   │   └── dashboard/           # Dashboard administrativo
 │   ├── components/
@@ -79,7 +81,7 @@ CTG One Website/
 - Logo corporativo
 - Tagline: "Technology is infrastructure. Strategy is architecture."
 - Descripción de arquitectura dual
-- Métricas: 9 Business Units, Dual Architecture, Founded 2024
+- Métricas: 12 Business Units, Dual Architecture, Founded 2024
 - Visualización del ecosistema blockchain
 
 ### ✅ About Section — Los 5 Pilares
@@ -95,7 +97,7 @@ CTG One Website/
 - Diseño & Comunicación
 - Fintech & Créditos
 
-### ✅ Ecosystem Section — 9 Unidades de Negocio
+### ✅ Ecosystem Section — 12 Unidades de Negocio
 1. **Valderrama International School** — Educación y tutorías
 2. **CTG Suites** — Hospitalidad en Cartagena y Santa Marta
 3. **Bechara Real Estate** — Inmobiliaria de alto standing
@@ -105,6 +107,9 @@ CTG One Website/
 7. **Legalyst Consultores** — Servicios legales
 8. **CTG One Design** — Diseño y marketing
 9. **Vantage Libranza Plus** — Créditos por libranza
+10. **PISÁO Gastrobar** — Gastrobar "La Casa del Patacón" en Cartagena
+11. **CTG Craft Beer** — Cerveza artesanal
+12. **Guest Logistics Concierge** — Plataforma SaaS de logística de huéspedes
 
 ### ✅ CTG Rewards Section
 - Programa de fidelización y referidos (no es un vehículo de inversión)
