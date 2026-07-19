@@ -70,7 +70,7 @@ export const HeroSection: React.FC = () => {
             <FadeInSection delay={0.4}>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-12 sm:mb-16">
                 <Button
-                  href="#ecosystem"
+                  href="/ecosystem"
                   variant="primary"
                   size="md"
                   arrow

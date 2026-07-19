@@ -22,12 +22,69 @@ const iconMap: Record<string, React.ReactNode> = {
   hotel: <Building2 size={18} strokeWidth={1.5} />,
   building: <Home size={18} strokeWidth={1.5} />,
   cpu: <Cpu size={18} strokeWidth={1.5} />,
+  // Real logomarks render larger than the plain lucide icons (26px vs
+  // 18px tall) — at 18px the thin-stroked ones (Bechara's monogram
+  // especially) blurred into an illegible blob.
   nvetcare: (
     <Image
       src="/images/logo/nvet-care-icon.png"
       alt="Nvet Care"
+      width={34}
+      height={26}
+      className="object-contain"
+    />
+  ),
+  valderrama: (
+    <Image
+      src="/images/logo/valderrama-icon.png"
+      alt="Valderrama International School"
       width={23}
-      height={18}
+      height={26}
+      className="object-contain"
+    />
+  ),
+  bechara: (
+    <Image
+      src="/images/logo/bechara-icon.png"
+      alt="Bechara Real Estate"
+      width={19}
+      height={26}
+      className="object-contain"
+    />
+  ),
+  ctgone: (
+    <Image
+      src="/images/logo/ctg-one-coin-icon.png"
+      alt="CTG One Corporation"
+      width={26}
+      height={26}
+      className="object-contain"
+    />
+  ),
+  pisao: (
+    <Image
+      src="/images/logo/pisao-gastrobar-icon.png"
+      alt="PISÁO Gastrobar"
+      width={33}
+      height={26}
+      className="object-contain"
+    />
+  ),
+  craftbeer: (
+    <Image
+      src="/images/logo/ctg-craft-beer-icon.png"
+      alt="CTG Craft Beer"
+      width={25}
+      height={26}
+      className="object-contain"
+    />
+  ),
+  guestlogistics: (
+    <Image
+      src="/images/logo/guest-logistics-icon.png"
+      alt="Guest Logistics Concierge"
+      width={26}
+      height={26}
       className="object-contain"
     />
   ),
@@ -61,7 +118,7 @@ export const EcosystemSection: React.FC = () => {
           </div>
         </FadeInSection>
 
-        {/* Units Grid - 9 units, wraps to 5 columns on large screens */}
+        {/* Units Grid - 12 units, wraps to 5 columns on large screens */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-white/[0.02] rounded-lg overflow-hidden">
           {ECOSYSTEM.units.map((unit, index) => (
             <FadeInSection 
