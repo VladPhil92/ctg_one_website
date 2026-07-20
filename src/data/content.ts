@@ -165,10 +165,12 @@ export const ECOSYSTEM = {
       color: '#8c9aae',
     },
     {
+      // Official Oralgreen logomark supplied and cropped to
+      // public/images/logo/oralgreen-icon.png (transparent background).
       id: 'dental',
       name: 'Oralgreen',
       description: 'Comprehensive dental care based in Sincelejo. Clinical oral health services.',
-      icon: 'smile',
+      icon: 'oralgreen',
       color: '#7dae9a',
     },
     {

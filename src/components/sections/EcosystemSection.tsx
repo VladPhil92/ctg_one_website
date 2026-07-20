@@ -11,26 +11,27 @@ import {
   Building2,
   Home,
   Cpu,
-  Smile,
   Scale,
   Palette,
   Wallet
 } from 'lucide-react';
 
+// Real logomarks render noticeably larger than the plain lucide
+// placeholder icons (36px tall vs 24px) — at smaller sizes the
+// thin-stroked ones (Bechara's monogram especially) blurred into an
+// illegible blob, and overall the whole grid read as too small on
+// mobile.
 const iconMap: Record<string, React.ReactNode> = {
-  graduation: <GraduationCap size={18} strokeWidth={1.5} />,
-  hotel: <Building2 size={18} strokeWidth={1.5} />,
-  building: <Home size={18} strokeWidth={1.5} />,
-  cpu: <Cpu size={18} strokeWidth={1.5} />,
-  // Real logomarks render larger than the plain lucide icons (26px vs
-  // 18px tall) — at 18px the thin-stroked ones (Bechara's monogram
-  // especially) blurred into an illegible blob.
+  graduation: <GraduationCap size={24} strokeWidth={1.5} />,
+  hotel: <Building2 size={24} strokeWidth={1.5} />,
+  building: <Home size={24} strokeWidth={1.5} />,
+  cpu: <Cpu size={24} strokeWidth={1.5} />,
   nvetcare: (
     <Image
       src="/images/logo/nvet-care-icon.png"
       alt="Nvet Care"
-      width={34}
-      height={26}
+      width={46}
+      height={36}
       className="object-contain"
     />
   ),
@@ -38,8 +39,8 @@ const iconMap: Record<string, React.ReactNode> = {
     <Image
       src="/images/logo/valderrama-icon.png"
       alt="Valderrama International School"
-      width={23}
-      height={26}
+      width={31}
+      height={36}
       className="object-contain"
     />
   ),
@@ -47,8 +48,8 @@ const iconMap: Record<string, React.ReactNode> = {
     <Image
       src="/images/logo/bechara-icon.png"
       alt="Bechara Real Estate"
-      width={19}
-      height={26}
+      width={26}
+      height={36}
       className="object-contain"
     />
   ),
@@ -56,8 +57,8 @@ const iconMap: Record<string, React.ReactNode> = {
     <Image
       src="/images/logo/ctg-one-coin-icon.png"
       alt="CTG One Corporation"
-      width={26}
-      height={26}
+      width={36}
+      height={36}
       className="object-contain"
     />
   ),
@@ -65,8 +66,8 @@ const iconMap: Record<string, React.ReactNode> = {
     <Image
       src="/images/logo/pisao-gastrobar-icon.png"
       alt="PISÁO Gastrobar"
-      width={33}
-      height={26}
+      width={46}
+      height={36}
       className="object-contain"
     />
   ),
@@ -74,8 +75,8 @@ const iconMap: Record<string, React.ReactNode> = {
     <Image
       src="/images/logo/ctg-craft-beer-icon.png"
       alt="CTG Craft Beer"
-      width={25}
-      height={26}
+      width={34}
+      height={36}
       className="object-contain"
     />
   ),
@@ -83,15 +84,23 @@ const iconMap: Record<string, React.ReactNode> = {
     <Image
       src="/images/logo/guest-logistics-icon.png"
       alt="Guest Logistics Concierge"
-      width={26}
-      height={26}
+      width={35}
+      height={36}
       className="object-contain"
     />
   ),
-  smile: <Smile size={18} strokeWidth={1.5} />,
-  scale: <Scale size={18} strokeWidth={1.5} />,
-  palette: <Palette size={18} strokeWidth={1.5} />,
-  wallet: <Wallet size={18} strokeWidth={1.5} />,
+  oralgreen: (
+    <Image
+      src="/images/logo/oralgreen-icon.png"
+      alt="Oralgreen"
+      width={50}
+      height={30}
+      className="object-contain"
+    />
+  ),
+  scale: <Scale size={24} strokeWidth={1.5} />,
+  palette: <Palette size={24} strokeWidth={1.5} />,
+  wallet: <Wallet size={24} strokeWidth={1.5} />,
 };
 
 export const EcosystemSection: React.FC = () => {
@@ -121,14 +130,14 @@ export const EcosystemSection: React.FC = () => {
         {/* Units Grid - 12 units, wraps to 5 columns on large screens */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-white/[0.02] rounded-lg overflow-hidden">
           {ECOSYSTEM.units.map((unit, index) => (
-            <FadeInSection 
-              key={unit.id} 
+            <FadeInSection
+              key={unit.id}
               delay={0.03 + index * 0.03}
             >
-              <div 
+              <div
                 className="p-4 sm:p-6 md:p-8 lg:p-10 bg-bg-secondary hover:bg-white/[0.01] transition-colors duration-500 h-full"
               >
-                <span className="text-accent mb-3 sm:mb-4 md:mb-5 block">
+                <span className="text-accent mb-4 sm:mb-5 md:mb-6 flex items-center h-9">
                   {iconMap[unit.icon]}
                 </span>
                 <h3 className="text-[12px] sm:text-[13px] md:text-sm font-outfit font-medium text-white mb-1.5 sm:mb-2">
