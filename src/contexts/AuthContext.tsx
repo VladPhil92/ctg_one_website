@@ -1,105 +1,99 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { UserProfile } from '@/types/web3';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import type { Profile } from '@/types/domain';
 
 interface AuthContextType {
-  user: UserProfile | null;
+  userId: string | null;
+  email: string | null;
+  profile: Profile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  register: (email: string, password: string) => Promise<void>;
-  connectWallet: (address: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem('ctg_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+  const loadProfile = useCallback(async (uid: string) => {
+    if (!isSupabaseConfigured) return;
+    const supabase = createClient();
+    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
+    setProfile((data as Profile) ?? null);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockUser: UserProfile = {
-        id: Math.random().toString(36).substr(2, 9),
-        email,
-        createdAt: new Date(),
-        kycVerified: false,
-        tier: 'basic',
-      };
-
-      setUser(mockUser);
-      localStorage.setItem('ctg_user', JSON.stringify(mockUser));
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    } finally {
+  useEffect(() => {
+    // Supabase isn't configured yet in every environment (e.g. before the
+    // project's env vars are set up) — behave as "signed out" instead of
+    // throwing, so every other page keeps rendering normally.
+    if (!isSupabaseConfigured) {
       setIsLoading(false);
+      return;
     }
-  };
 
-  const register = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockUser: UserProfile = {
-        id: Math.random().toString(36).substr(2, 9),
-        email,
-        createdAt: new Date(),
-        kycVerified: false,
-        tier: 'basic',
-      };
+    const supabase = createClient();
+    let mounted = true;
 
-      setUser(mockUser);
-      localStorage.setItem('ctg_user', JSON.stringify(mockUser));
-    } catch (error) {
-      console.error('Register error:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      setUserId(session?.user?.id ?? null);
+      setEmail(session?.user?.email ?? null);
+      if (session?.user) {
+        loadProfile(session.user.id).finally(() => mounted && setIsLoading(false));
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+      setEmail(session?.user?.email ?? null);
+      if (session?.user) {
+        loadProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [loadProfile]);
+
+  const signOut = async () => {
+    if (isSupabaseConfigured) {
+      const supabase = createClient();
+      await supabase.auth.signOut();
     }
+    setUserId(null);
+    setEmail(null);
+    setProfile(null);
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('ctg_user');
-  };
-
-  const connectWallet = async (address: string) => {
-    if (!user) throw new Error('Must be logged in to connect wallet');
-    
-    // TODO: Verify wallet ownership
-    const updatedUser = { ...user, walletAddress: address };
-    setUser(updatedUser);
-    localStorage.setItem('ctg_user', JSON.stringify(updatedUser));
+  const refreshProfile = async () => {
+    if (userId) await loadProfile(userId);
   };
 
   return (
     <AuthContext.Provider
       value={{
-        user,
-        isAuthenticated: !!user,
+        userId,
+        email,
+        profile,
+        isAuthenticated: !!userId,
         isLoading,
-        login,
-        logout,
-        register,
-        connectWallet,
+        signOut,
+        refreshProfile,
       }}
     >
       {children}
