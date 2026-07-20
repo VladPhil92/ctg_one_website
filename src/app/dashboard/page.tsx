@@ -1,19 +1,30 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/hooks/useWallet';
 import { WalletConnect } from '@/components/web3/WalletConnect';
 import { Container } from '@/components/ui';
+import { Button } from '@/components/ui/Button';
+import { formatCents } from '@/lib/format';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 
+const KYC_LABELS: Record<string, { label: string; color: string }> = {
+  not_submitted: { label: 'Pendiente de enviar', color: 'var(--text-dim)' },
+  pending: { label: 'En revisión', color: 'var(--accent)' },
+  verified: { label: '✓ Verificado', color: 'var(--success)' },
+  rejected: { label: 'Rechazado', color: 'var(--error)' },
+};
+
 export default function DashboardPage() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { profile, email, isAuthenticated, isLoading, signOut } = useAuth();
+  const { wallet, isLoading: isWalletLoading } = useWallet();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/');
+      router.push('/iniciar-sesion');
     }
   }, [isAuthenticated, isLoading, router]);
 
@@ -28,42 +39,60 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user) return null;
+  if (!isAuthenticated) return null;
+
+  const kyc = KYC_LABELS[profile?.kyc_status ?? 'not_submitted'];
 
   return (
     <div style={{ backgroundColor: 'var(--bg-primary)' }}>
       <Navbar />
-      
+
       <div className="min-h-screen pt-24 pb-16">
         <Container>
-          <h1 className="text-4xl font-outfit font-bold mb-8">Dashboard</h1>
-          
-          {/* User Info Card */}
-          <div className="mb-8 p-6 rounded-lg border border-border" style={{ backgroundColor: 'var(--bg-card)' }}>
-            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--text-soft)' }}>
-              Información de Cuenta
-            </h2>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span style={{ color: 'var(--text-muted)' }}>Email:</span>
-                <span style={{ color: 'var(--text-primary)' }}>{user.email}</span>
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-4xl font-outfit font-bold">Dashboard</h1>
+            <Button onClick={signOut} variant="secondary" size="sm">Cerrar sesión</Button>
+          </div>
+
+          {/* Account + Balance */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="p-6 rounded-lg border border-border" style={{ backgroundColor: 'var(--bg-card)' }}>
+              <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--text-secondary)' }}>
+                Información de Cuenta
+              </h2>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>Email:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{profile?.email ?? email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>Verificación (KYC):</span>
+                  <span style={{ color: kyc.color }}>{kyc.label}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>Miembro desde:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>
+                    {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('es-CO') : '—'}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span style={{ color: 'var(--text-muted)' }}>Tier:</span>
-                <span style={{ color: 'var(--accent)' }} className="uppercase font-semibold">{user.tier}</span>
-              </div>
-              <div className="flex justify-between">
-                <span style={{ color: 'var(--text-muted)' }}>KYC Status:</span>
-                <span style={{ color: user.kycVerified ? 'var(--green)' : 'var(--text-dim)' }}>
-                  {user.kycVerified ? '✓ Verificado' : 'Pendiente'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span style={{ color: 'var(--text-muted)' }}>Miembro desde:</span>
-                <span style={{ color: 'var(--text-primary)' }}>
-                  {new Date(user.createdAt).toLocaleDateString('es-ES')}
-                </span>
-              </div>
+              {profile && profile.kyc_status !== 'verified' && (
+                <a href="/dashboard/kyc" className="inline-block mt-4 text-xs text-accent hover:underline">
+                  {profile.kyc_status === 'rejected' ? 'Vuelve a enviar tu documento →' : 'Completa tu verificación de identidad →'}
+                </a>
+              )}
+            </div>
+
+            <div className="p-6 rounded-lg border border-border" style={{ backgroundColor: 'var(--bg-card)' }}>
+              <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--text-secondary)' }}>
+                Saldo
+              </h2>
+              <p className="text-3xl font-outfit font-semibold text-white mb-4">
+                {isWalletLoading ? '—' : formatCents(wallet?.balance_cents ?? 0, wallet?.currency ?? 'COP')}
+              </p>
+              <Button href="/dashboard/depositos" variant="primary" size="sm">
+                Recargar cuenta
+              </Button>
             </div>
           </div>
 
@@ -75,29 +104,13 @@ export default function DashboardPage() {
 
           {/* Coming Soon Features Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ComingSoonCard 
-              title="Balance de Tokens" 
-              description="Visualiza tu balance de CTG One Tokens en tiempo real"
+            <ComingSoonCard
+              title="Historial de Transacciones"
+              description="Revisa todas tus recargas y su estado de revisión"
             />
-            <ComingSoonCard 
-              title="Historial de Transacciones" 
-              description="Revisa todas tus transacciones on-chain"
-            />
-            <ComingSoonCard 
-              title="Staking Pools" 
-              description="Haz staking de tus tokens y gana rewards"
-            />
-            <ComingSoonCard 
-              title="Trading Interface" 
-              description="Compra y vende CTGO tokens directamente"
-            />
-            <ComingSoonCard 
-              title="Loyalty Rewards" 
-              description="Acumula puntos por usar el ecosistema"
-            />
-            <ComingSoonCard 
-              title="Portfolio Analytics" 
-              description="Analíticas detalladas de tu portfolio"
+            <ComingSoonCard
+              title="Productos y Servicios"
+              description="Compra productos y servicios del ecosistema con tu saldo"
             />
           </div>
         </Container>
@@ -113,9 +126,9 @@ interface ComingSoonCardProps {
 
 function ComingSoonCard({ title, description }: ComingSoonCardProps) {
   return (
-    <div 
-      className="p-6 border border-accent rounded-lg" 
-      style={{ backgroundColor: 'var(--accent-dim)' }}
+    <div
+      className="p-6 border border-accent rounded-lg"
+      style={{ backgroundColor: 'rgba(201, 169, 98, 0.08)' }}
     >
       <div className="flex items-start gap-3 mb-3">
         <span className="text-2xl">🚧</span>
