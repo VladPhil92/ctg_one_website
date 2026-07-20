@@ -4,13 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
-import { NAV_ITEMS, CONTACT_EMAIL } from '@/lib/constants';
+import { NAV_ITEMS } from '@/lib/constants';
 import { Button } from './ui/Button';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 80);
@@ -55,7 +57,7 @@ export const Navbar: React.FC = () => {
             </a>
 
             {/* Desktop Menu */}
-            <div className="hidden lg:flex items-center gap-10">
+            <div className="hidden lg:flex items-center gap-6 xl:gap-8">
               {NAV_ITEMS.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -72,15 +74,27 @@ export const Navbar: React.FC = () => {
               })}
             </div>
 
-            {/* Desktop CTA */}
-            <div className="hidden lg:flex items-center">
-              <Button
-                href={`mailto:${CONTACT_EMAIL}`}
-                variant="primary"
-                size="sm"
-              >
-                Contact
-              </Button>
+            {/* Desktop CTA - account access */}
+            <div className="hidden lg:flex items-center gap-4">
+              {!isLoading && (
+                isAuthenticated ? (
+                  <Button href="/dashboard" variant="primary" size="sm">
+                    Mi Cuenta
+                  </Button>
+                ) : (
+                  <>
+                    <a
+                      href="/iniciar-sesion"
+                      className="whitespace-nowrap text-[11px] uppercase tracking-[0.15em] font-medium text-text-dim hover:text-text-muted transition-colors duration-500"
+                    >
+                      Iniciar Sesión
+                    </a>
+                    <Button href="/registro" variant="primary" size="sm">
+                      Crear Cuenta
+                    </Button>
+                  </>
+                )
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -133,15 +147,27 @@ export const Navbar: React.FC = () => {
                 })}
               </nav>
 
-              <div className="pt-8 border-t border-white/5">
-                <Button
-                  href={`mailto:${CONTACT_EMAIL}`}
-                  variant="primary"
-                  size="md"
-                  fullWidth
-                >
-                  Contact
-                </Button>
+              <div className="pt-8 border-t border-white/5 space-y-3">
+                {!isLoading && (
+                  isAuthenticated ? (
+                    <Button href="/dashboard" variant="primary" size="md" fullWidth>
+                      Mi Cuenta
+                    </Button>
+                  ) : (
+                    <>
+                      <Button href="/registro" variant="primary" size="md" fullWidth>
+                        Crear Cuenta
+                      </Button>
+                      <a
+                        href="/iniciar-sesion"
+                        onClick={() => setIsOpen(false)}
+                        className="block text-center py-2 text-[11px] uppercase tracking-[0.15em] font-medium text-text-dim hover:text-text-muted transition-colors duration-500"
+                      >
+                        Iniciar Sesión
+                      </a>
+                    </>
+                  )
+                )}
               </div>
 
               <p className="pt-8 text-[10px] text-text-dim tracking-wider">
