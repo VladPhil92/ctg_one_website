@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Locale, translatePhrase } from '@/i18n/translations';
 import { translateExtendedPhrase } from '@/i18n/extendedTranslations';
+import { translateContentPhrase } from '@/i18n/contentTranslations';
 
 type LanguageContextValue = {
   locale: Locale;
@@ -17,7 +18,9 @@ const COOKIE_KEY = 'ctg_locale';
 
 function translateValue(value: string, locale: Locale) {
   const primary = translatePhrase(value, locale);
-  return primary !== value ? primary : translateExtendedPhrase(value, locale);
+  if (primary !== value) return primary;
+  const extended = translateExtendedPhrase(value, locale);
+  return extended !== value ? extended : translateContentPhrase(value, locale);
 }
 
 function translateNode(node: Node, locale: Locale) {
@@ -30,7 +33,6 @@ function translateNode(node: Node, locale: Locale) {
   }
 
   if (!(node instanceof HTMLElement) || node.closest('[data-no-translate]')) return;
-
   const attributes = ['placeholder', 'title', 'aria-label'] as const;
   attributes.forEach((attribute) => {
     const value = node.getAttribute(attribute);
@@ -38,7 +40,6 @@ function translateNode(node: Node, locale: Locale) {
     const translated = translateValue(value, locale);
     if (translated !== value) node.setAttribute(attribute, translated);
   });
-
   node.childNodes.forEach((child) => translateNode(child, locale));
 }
 
@@ -50,9 +51,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     const initial: Locale = stored === 'es' || stored === 'en'
       ? stored
-      : navigator.language.toLowerCase().startsWith('es')
-        ? 'es'
-        : 'en';
+      : navigator.language.toLowerCase().startsWith('es') ? 'es' : 'en';
     setLocaleState(initial);
     setReady(true);
   }, []);
@@ -63,10 +62,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     document.cookie = `${COOKIE_KEY}=${nextLocale}; path=/; max-age=31536000; samesite=lax`;
   }, []);
 
-  const toggleLocale = useCallback(() => {
-    setLocale(locale === 'en' ? 'es' : 'en');
-  }, [locale, setLocale]);
-
+  const toggleLocale = useCallback(() => setLocale(locale === 'en' ? 'es' : 'en'), [locale, setLocale]);
   const t = useCallback((value: string) => translateValue(value, locale), [locale]);
 
   useEffect(() => {
@@ -80,7 +76,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         if (mutation.type === 'characterData') translateNode(mutation.target, locale);
       }
     });
-
     observer.observe(document.body, { subtree: true, childList: true, characterData: true });
     return () => observer.disconnect();
   }, [locale, ready]);
