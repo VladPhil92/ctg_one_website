@@ -1,10 +1,13 @@
-'use client';
-
 import React from 'react';
 import { Container, Badge, SectionHeader, FadeInSection } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
 import { LotCard } from '@/components/inversion/LotCard';
-import { DEMO_LOTS } from '@/lib/investment/demo-data';
+import { getPublicLots, getLotFundingSummary } from '@/lib/investment/queries';
+
+// See the same note in src/app/inversion/lotes/page.tsx — this page also
+// reads live lot data and must never get statically baked with a stale
+// (possibly empty) snapshot.
+export const dynamic = 'force-dynamic';
 
 const STEPS = [
   { n: '01', label: 'Selecciona una oportunidad' },
@@ -15,7 +18,10 @@ const STEPS = [
   { n: '06', label: 'Retira o reinvierte' },
 ];
 
-export default function InversionLandingPage() {
+export default async function InversionLandingPage() {
+  const lots = (await getPublicLots()).slice(0, 2);
+  const fundings = await Promise.all(lots.map(getLotFundingSummary));
+
   return (
     <>
       <section className="relative pt-20 pb-24 sm:pt-28 sm:pb-32 overflow-hidden">
@@ -83,16 +89,19 @@ export default function InversionLandingPage() {
               </Button>
             </div>
           </FadeInSection>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {DEMO_LOTS.map((lot, i) => (
-              <FadeInSection key={lot.slug} delay={i * 0.1}>
-                <LotCard lot={lot} />
-              </FadeInSection>
-            ))}
-          </div>
-          <p className="text-[11px] text-text-dim mt-6">
-            Datos de demostración — este programa se encuentra en fase de beta cerrada.
-          </p>
+          {lots.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {lots.map((lot, i) => (
+                <FadeInSection key={lot.id} delay={i * 0.1}>
+                  <LotCard lot={lot} funding={fundings[i]} />
+                </FadeInSection>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-text-dim">
+              Aún no hay lotes publicados. Este programa se encuentra en fase de beta cerrada.
+            </p>
+          )}
         </Container>
       </section>
 

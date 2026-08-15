@@ -72,11 +72,11 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Interim gate only (ADR-011): reuses the existing CTG One admin role
-  // until a dedicated investment RBAC table lands with the domain
-  // milestone. There is no real financial data behind /inversion/admin
-  // yet — this page is a demo-data shell, so this is not the final
-  // authorization boundary, just a reasonable placeholder for it.
+  // Interim gate only (ADR-011): reuses the existing CTG One admin role.
+  // The real authorization boundary is server-side inside every investment
+  // RPC (is_investment_admin()/is_investment_operator(), re-checked against
+  // investment_participant_profiles.investment_role) — this middleware
+  // check is just a UX fast-path so a non-admin never sees the page at all.
   if (isInvestmentAdminRoute && user) {
     const { data: profile } = await supabase
       .from('profiles')
