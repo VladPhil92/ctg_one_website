@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Locale, translatePhrase } from '@/i18n/translations';
+import { translateExtendedPhrase } from '@/i18n/extendedTranslations';
 
 type LanguageContextValue = {
   locale: Locale;
@@ -14,11 +15,16 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 const STORAGE_KEY = 'ctg-one-language';
 const COOKIE_KEY = 'ctg_locale';
 
+function translateValue(value: string, locale: Locale) {
+  const primary = translatePhrase(value, locale);
+  return primary !== value ? primary : translateExtendedPhrase(value, locale);
+}
+
 function translateNode(node: Node, locale: Locale) {
   if (node.nodeType === Node.TEXT_NODE && node.textContent) {
     const parent = node.parentElement;
     if (parent?.closest('[data-no-translate]')) return;
-    const translated = translatePhrase(node.textContent, locale);
+    const translated = translateValue(node.textContent, locale);
     if (translated !== node.textContent) node.textContent = translated;
     return;
   }
@@ -29,7 +35,7 @@ function translateNode(node: Node, locale: Locale) {
   attributes.forEach((attribute) => {
     const value = node.getAttribute(attribute);
     if (!value) return;
-    const translated = translatePhrase(value, locale);
+    const translated = translateValue(value, locale);
     if (translated !== value) node.setAttribute(attribute, translated);
   });
 
@@ -61,7 +67,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setLocale(locale === 'en' ? 'es' : 'en');
   }, [locale, setLocale]);
 
-  const t = useCallback((value: string) => translatePhrase(value, locale), [locale]);
+  const t = useCallback((value: string) => translateValue(value, locale), [locale]);
 
   useEffect(() => {
     if (!ready) return;
@@ -75,17 +81,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    observer.observe(document.body, {
-      subtree: true,
-      childList: true,
-      characterData: true,
-    });
-
+    observer.observe(document.body, { subtree: true, childList: true, characterData: true });
     return () => observer.disconnect();
   }, [locale, ready]);
 
   const value = useMemo(() => ({ locale, setLocale, toggleLocale, t }), [locale, setLocale, toggleLocale, t]);
-
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
