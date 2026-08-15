@@ -2,27 +2,21 @@ export type Locale = 'en' | 'es';
 
 type Pair = { en: string; es: string };
 
-// Curated bilingual catalog. These translations are intentionally written
-// for CTG One's corporate, account and investment vocabulary rather than
-// delegated to machine translation at runtime.
+// Manually curated terminology for CTG One. No runtime machine translation.
 export const PHRASES: Pair[] = [
   { en: 'Home', es: 'Inicio' },
   { en: 'About', es: 'Nosotros' },
   { en: 'Technology', es: 'Tecnología' },
   { en: 'Ecosystem', es: 'Ecosistema' },
   { en: 'Investment', es: 'Inversión' },
-  { en: 'Inversión', es: 'Investment' },
   { en: 'Rewards', es: 'Recompensas' },
-  { en: 'Token', es: 'Token' },
   { en: 'Contact', es: 'Contacto' },
   { en: 'My Account', es: 'Mi Cuenta' },
-  { en: 'Mi Cuenta', es: 'My Account' },
   { en: 'Sign In', es: 'Iniciar Sesión' },
-  { en: 'Iniciar Sesión', es: 'Sign In' },
   { en: 'Create Account', es: 'Crear Cuenta' },
-  { en: 'Crear Cuenta', es: 'Create Account' },
+  { en: 'Sign out', es: 'Cerrar sesión' },
   { en: 'See more', es: 'Ver más' },
-  { en: 'Ver más', es: 'See more' },
+  { en: 'Loading...', es: 'Cargando...' },
 
   { en: 'Software, AI & Infrastructure', es: 'Software, IA e Infraestructura' },
   { en: 'Technology is infrastructure.', es: 'La tecnología es infraestructura.' },
@@ -56,17 +50,14 @@ export const PHRASES: Pair[] = [
   { en: 'CTG One builds the technological foundation used across its business ecosystem. Our work focuses on proprietary software, artificial intelligence, automation, shared infrastructure, and digital products designed for the operational needs of our own units.', es: 'CTG One construye la base tecnológica utilizada en todo su ecosistema empresarial. Nuestro trabajo se enfoca en software propietario, inteligencia artificial, automatización, infraestructura compartida y productos digitales diseñados para las necesidades operativas de nuestras propias unidades.' },
 
   { en: 'Our Portfolio', es: 'Nuestro portafolio' },
-  { en: 'Business', es: 'Ecosistema de' },
-  { en: 'Ecosystem', es: 'Negocios' },
+  { en: 'Business', es: 'Negocios' },
   { en: 'Twelve operating business units form the application layer for CTG One technology. We build software and infrastructure centrally, then deploy and improve those systems inside the businesses where they create measurable operational value.', es: 'Doce unidades de negocio operativas conforman la capa de aplicación de la tecnología de CTG One. Construimos software e infraestructura de forma centralizada y luego desplegamos y mejoramos esos sistemas dentro de los negocios donde generan valor operativo medible.' },
 
   { en: 'Loyalty & Referrals', es: 'Lealtad y referidos' },
-  { en: 'Loyalty & Referral Program', es: 'Programa de lealtad y referidos' },
   { en: 'Earn by Engaging', es: 'Gana al participar' },
   { en: 'Earn by Referring', es: 'Gana al referir' },
   { en: 'Redeem Across the Ecosystem', es: 'Redime en todo el ecosistema' },
   { en: 'Tiered Recognition', es: 'Reconocimiento por niveles' },
-
   { en: 'The Token Powering', es: 'El token que impulsa' },
   { en: 'Our Ecosystem', es: 'Nuestro ecosistema' },
   { en: 'Total Supply', es: 'Suministro total' },
@@ -81,111 +72,69 @@ export const PHRASES: Pair[] = [
   { en: 'Explore how CTG One builds and deploys software, AI, automation, and digital infrastructure across a diversified portfolio of operating businesses.', es: 'Conoce cómo CTG One construye y despliega software, IA, automatización e infraestructura digital en un portafolio diversificado de negocios en operación.' },
 
   { en: 'CTG Craft Beer Investment', es: 'CTG Craft Beer Inversión' },
-  { en: 'CTG Craft Beer Inversión', es: 'CTG Craft Beer Investment' },
   { en: 'Participate', es: 'Participar' },
-  { en: 'Participar', es: 'Participate' },
   { en: 'See available batches', es: 'Ver lotes disponibles' },
-  { en: 'Ver lotes disponibles', es: 'See available batches' },
   { en: 'How it works', es: 'Cómo funciona' },
-  { en: 'Cómo funciona', es: 'How it works' },
   { en: 'Participate in the real production of', es: 'Participa en la producción real de' },
-  { en: 'Participa en la producción real de', es: 'Participate in the real production of' },
   { en: 'Finance the productive equivalent of identified CTG Craft Beer batches, follow their production and commercialization closely, and review settlement with full transparency. Real beer, real production, real inventory.', es: 'Financia el equivalente productivo de lotes identificados de CTG Craft Beer, sigue su producción y comercialización de cerca, y consulta la liquidación con transparencia total. Cerveza real, producción real, inventario real.' },
-  { en: 'Financia el equivalente productivo de lotes identificados de CTG Craft Beer, sigue su producción y comercialización de cerca, y consulta la liquidación con transparencia total. Cerveza real, producción real, inventario real.', es: 'Finance the productive equivalent of identified CTG Craft Beer batches, follow their production and commercialization closely, and review settlement with full transparency. Real beer, real production, real inventory.' },
   { en: 'Real portfolio', es: 'Portafolio real' },
-  { en: 'Portafolio real', es: 'Real portfolio' },
   { en: 'The styles of', es: 'Los estilos de' },
-  { en: 'Los estilos de', es: 'The styles of' },
   { en: 'German recipe', es: 'Receta alemana' },
-  { en: 'Receta alemana', es: 'German recipe' },
   { en: 'Product in circulation', es: 'Producto en circulación' },
-  { en: 'Producto en circulación', es: 'Product in circulation' },
   { en: 'Brand, product and commercialization beyond the screen.', es: 'Marca, producto y comercialización fuera de la pantalla.' },
-  { en: 'Marca, producto y comercialización fuera de la pantalla.', es: 'Brand, product and commercialization beyond the screen.' },
   { en: 'The process', es: 'El proceso' },
-  { en: 'El proceso', es: 'The process' },
   { en: 'From your investment to the', es: 'De tu inversión a la' },
-  { en: 'De tu inversión a la', es: 'From your investment to the' },
   { en: 'sale', es: 'venta' },
-  { en: 'venta', es: 'sale' },
   { en: 'Follow every stage of the batch: participation, production, commercialization and settlement.', es: 'Sigue cada etapa del lote: participación, producción, comercialización y liquidación.' },
-  { en: 'Sigue cada etapa del lote: participación, producción, comercialización y liquidación.', es: 'Follow every stage of the batch: participation, production, commercialization and settlement.' },
   { en: 'Explore opportunities', es: 'Explora oportunidades' },
-  { en: 'Explora oportunidades', es: 'Explore opportunities' },
   { en: 'Participate in a batch', es: 'Participa en un lote' },
-  { en: 'Participa en un lote', es: 'Participate in a batch' },
   { en: 'Track production', es: 'Sigue la producción' },
-  { en: 'Sigue la producción', es: 'Track production' },
   { en: 'Track sales', es: 'Sigue las ventas' },
-  { en: 'Sigue las ventas', es: 'Track sales' },
   { en: 'Review settlement', es: 'Consulta la liquidación' },
-  { en: 'Consulta la liquidación', es: 'Review settlement' },
   { en: 'Withdraw or reinvest', es: 'Retira o reinvierte' },
-  { en: 'Retira o reinvierte', es: 'Withdraw or reinvest' },
   { en: 'Opportunities', es: 'Oportunidades' },
-  { en: 'Oportunidades', es: 'Opportunities' },
   { en: 'Production batches', es: 'Lotes de producción' },
-  { en: 'Lotes de producción', es: 'Production batches' },
   { en: 'Open simulator', es: 'Abrir simulador' },
-  { en: 'Abrir simulador', es: 'Open simulator' },
 
   { en: 'Dashboard', es: 'Panel' },
-  { en: 'Panel', es: 'Dashboard' },
   { en: 'Account Information', es: 'Información de Cuenta' },
-  { en: 'Información de Cuenta', es: 'Account Information' },
   { en: 'Identity Verification (KYC):', es: 'Verificación de identidad (KYC):' },
-  { en: 'Verificación (KYC):', es: 'Identity Verification (KYC):' },
   { en: 'Member since:', es: 'Miembro desde:' },
-  { en: 'Miembro desde:', es: 'Member since:' },
   { en: 'Balance', es: 'Saldo' },
-  { en: 'Saldo', es: 'Balance' },
   { en: 'Add funds', es: 'Recargar cuenta' },
-  { en: 'Recargar cuenta', es: 'Add funds' },
   { en: 'Connect Wallet', es: 'Conectar Wallet' },
-  { en: 'Conectar Wallet', es: 'Connect Wallet' },
   { en: 'Transaction History', es: 'Historial de Transacciones' },
-  { en: 'Historial de Transacciones', es: 'Transaction History' },
   { en: 'Products and Services', es: 'Productos y Servicios' },
-  { en: 'Productos y Servicios', es: 'Products and Services' },
-  { en: 'Sign out', es: 'Cerrar sesión' },
-  { en: 'Cerrar sesión', es: 'Sign out' },
   { en: 'My dashboard', es: 'Mi panel' },
-  { en: 'Mi panel', es: 'My dashboard' },
   { en: 'Active capital', es: 'Capital activo' },
-  { en: 'Capital activo', es: 'Active capital' },
   { en: 'Available balance', es: 'Saldo disponible' },
-  { en: 'Saldo disponible', es: 'Available balance' },
   { en: 'Active allocations', es: 'Asignaciones activas' },
-  { en: 'Asignaciones activas', es: 'Active allocations' },
   { en: 'Request withdrawal', es: 'Solicitar retiro' },
-  { en: 'Solicitar retiro', es: 'Request withdrawal' },
   { en: 'Recent withdrawals', es: 'Retiros recientes' },
-  { en: 'Retiros recientes', es: 'Recent withdrawals' },
   { en: 'My allocations', es: 'Mis asignaciones' },
-  { en: 'Mis asignaciones', es: 'My allocations' },
 
   { en: 'Full name', es: 'Nombre completo' },
-  { en: 'Nombre completo', es: 'Full name' },
   { en: 'Phone', es: 'Teléfono' },
-  { en: 'Teléfono', es: 'Phone' },
   { en: 'Email', es: 'Correo electrónico' },
-  { en: 'Correo electrónico', es: 'Email' },
   { en: 'Password', es: 'Contraseña' },
-  { en: 'Contraseña', es: 'Password' },
   { en: 'Join the CTG One ecosystem.', es: 'Únete al ecosistema CTG One.' },
-  { en: 'Únete al ecosistema CTG One.', es: 'Join the CTG One ecosystem.' },
   { en: 'Already have an account?', es: '¿Ya tienes cuenta?' },
-  { en: '¿Ya tienes cuenta?', es: 'Already have an account?' },
-  { en: 'Loading...', es: 'Cargando...' },
-  { en: 'Cargando...', es: 'Loading...' },
 ];
 
 const enToEs = new Map(PHRASES.map(({ en, es }) => [en, es]));
 const esToEn = new Map(PHRASES.map(({ en, es }) => [es, en]));
+const englishValues = new Set(PHRASES.map(({ en }) => en));
+const spanishValues = new Set(PHRASES.map(({ es }) => es));
 
 export function translatePhrase(value: string, locale: Locale): string {
   const trimmed = value.trim();
   if (!trimmed) return value;
+
+  // If the text is already in the requested language, do nothing. This makes
+  // the translation layer idempotent and safe under React re-renders.
+  if (locale === 'es' && spanishValues.has(trimmed)) return value;
+  if (locale === 'en' && englishValues.has(trimmed)) return value;
+
   const translated = locale === 'es' ? enToEs.get(trimmed) : esToEn.get(trimmed);
   if (!translated || translated === trimmed) return value;
   const start = value.indexOf(trimmed);
