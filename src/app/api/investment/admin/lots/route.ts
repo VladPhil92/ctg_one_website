@@ -3,17 +3,21 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 
-// Real authorization lives in create_production_lot() itself
-// (is_investment_operator(), re-checked server-side against
-// investment_participant_profiles) — this handler only validates the
-// request shape before calling it, per docs/investment/API_CONVENTIONS.md.
 const createLotSchema = z.object({
   code: z.string().trim().min(3).max(64),
   beerStyle: z.string().trim().min(2).max(120),
   destination: z.string().trim().min(2).max(120),
   totalCases: z.number().int().positive(),
   caseSizeUnits: z.number().int().positive().default(24),
+  productionCostUnit: z.number().nonnegative().default(6000),
+  labelCostUnit: z.number().nonnegative().default(900),
+  ownPointPriceUnit: z.number().nonnegative().default(18000),
+  b2bPriceUnit: z.number().nonnegative().default(8000),
+  incRate: z.number().min(0).max(1).default(0.08),
+  advertisingRateOnPreInc: z.number().min(0).max(1).default(0.035),
 });
+
+const toCents = (cop: number) => Math.round(cop * 100);
 
 export async function POST(request: NextRequest) {
   if (!isSupabaseConfigured) {
@@ -32,6 +36,12 @@ export async function POST(request: NextRequest) {
     p_destination: parsed.data.destination,
     p_total_cases: parsed.data.totalCases,
     p_case_size_units: parsed.data.caseSizeUnits,
+    p_production_cost_unit_cents: toCents(parsed.data.productionCostUnit),
+    p_label_cost_unit_cents: toCents(parsed.data.labelCostUnit),
+    p_own_point_price_unit_cents: toCents(parsed.data.ownPointPriceUnit),
+    p_b2b_price_unit_cents: toCents(parsed.data.b2bPriceUnit),
+    p_inc_rate: parsed.data.incRate,
+    p_advertising_rate_on_pre_inc: parsed.data.advertisingRateOnPreInc,
   });
 
   if (error) {
