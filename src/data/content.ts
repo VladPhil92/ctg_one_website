@@ -9,17 +9,17 @@ import config from '@/config/config.json';
 
 // Hero Section
 export const HERO = {
-  badge: 'AI Strategy & Infrastructure',
+  badge: 'Software, AI & Infrastructure',
   title: 'Technology is infrastructure.',
   titleHighlight: 'Strategy is architecture.',
-  subtitle: 'We design both.',
+  subtitle: 'We build both for our own ecosystem.',
   description:
-    'CTG One Technology is a technology company and integrated business ecosystem that designs technological infrastructure and strategic architecture. We operate under a dual model: technology infrastructure and a commercial agency with trained advisors.',
+    'CTG One Technology is a technology company that builds software, AI systems, automation, and digital infrastructure for its own business ecosystem. We design, deploy, and operate the technology layer that powers our business units.',
   ctaPrimary: 'Explore Ecosystem',
   ctaSecondary: 'Start Conversation',
   metrics: [
     { value: '12', label: 'Business Units', icon: 'building' },
-    { value: 'Dual', label: 'Architecture', icon: 'layers' },
+    { value: 'One', label: 'Technology Layer', icon: 'layers' },
     { value: '2024', label: 'Founded', icon: 'calendar' },
     { value: 'Cartagena', label: 'Headquarters', icon: 'location' },
   ],
@@ -28,70 +28,69 @@ export const HERO = {
 // About Section
 export const ABOUT = {
   badge: 'About CTG One',
-  title: 'Dual Architecture:',
-  titleHighlight: 'Technology & Business Ecosystem',
+  title: 'Technology Built for',
+  titleHighlight: 'Our Own Ecosystem',
   description:
-    'CTG One Technology is a technology company founded in 2024 in Cartagena, Colombia, operating under a dual architecture: simultaneously a technological infrastructure company and an integrated business ecosystem of products and services.',
-  // The 5 Pillars of CTG One
+    'Founded in 2024 in Cartagena, Colombia, CTG One Technology develops and operates proprietary software and digital infrastructure applied directly across its own business units. Our companies provide real operating environments where technology is designed, tested, deployed, and continuously improved.',
   features: [
     {
-      title: 'Holistic Client Vision',
-      description: 'We treat complete persons and contexts instead of isolated cases. We understand the global situation before offering solutions.',
+      title: 'Proprietary Software',
+      description: 'We build applications, platforms, and digital products around the real operational needs of our business units.',
       icon: 'eye',
     },
     {
-      title: 'Multiple Access, One Ecosystem',
-      description: 'Clients don\'t need to search for multiple providers. CTG One functions as a recurring strategic ally for all their needs.',
+      title: 'AI & Automation',
+      description: 'We develop intelligent agents, automated workflows, and decision-support systems that improve execution across the ecosystem.',
       icon: 'network',
     },
     {
-      title: 'Trust Through Specialization',
-      description: 'Dedicated professionals in each unit under common quality and ethics standards. Each service is delivered by specific experts.',
+      title: 'Shared Digital Infrastructure',
+      description: 'Identity, data, payments, integrations, security, and reusable technology services are designed as a common layer for the ecosystem.',
       icon: 'shield',
     },
     {
-      title: 'Continuity Over Time',
-      description: 'Clients can enter through a simple service and scale to more complex solutions without friction. Long-term relationships.',
+      title: 'Business-Embedded Development',
+      description: 'Technology is built alongside real operations, allowing us to move from problem identification to production deployment with direct feedback.',
       icon: 'trending',
     },
     {
-      title: 'Risk Reduction',
-      description: 'By operating within a coordinated ecosystem, clients minimize errors, rework, and poor decisions.',
+      title: 'Continuous Improvement',
+      description: 'We measure how our systems perform inside the businesses and use operational data to refine products, automation, and infrastructure over time.',
       icon: 'check',
     },
   ],
-  differentiator: 'CTG One doesn\'t seek to be the biggest company, but the most connected — backed by a proprietary technology layer that makes this articulation possible at scale.',
+  differentiator: 'Our differentiator is vertical integration: CTG One develops the technology inside the same ecosystem where it is deployed, creating a direct link between software engineering, infrastructure, data, and real business operations.',
 };
 
-// Services Section
+// Technology Section
 export const SERVICES = {
-  badge: 'What We Do',
-  title: 'Technology &',
-  titleHighlight: 'Commercial Agency',
+  badge: 'What We Build',
+  title: 'Software &',
+  titleHighlight: 'Digital Infrastructure',
   description:
-    'CTG One operates under two dimensions: as a technology company designing AI solutions and digital platforms, and as a commercial agency with a trained team of advisors connecting clients to our entire ecosystem.',
+    'CTG One builds the technological foundation used across its business ecosystem. Our work focuses on proprietary software, artificial intelligence, automation, shared infrastructure, and digital products designed for the operational needs of our own units.',
   items: [
     {
-      title: 'Technology & Engineering',
-      description: 'Automation, software development, AI agents, applications, and digital solutions. Includes the CTG One Token and the ecosystem\'s fintech platform.',
+      title: 'Software Engineering',
+      description: 'Web applications, internal platforms, operational systems, APIs, and digital products engineered for the companies in the CTG One ecosystem.',
       icon: 'cpu',
       color: '#d4a259',
     },
     {
-      title: 'Commercial Management Team',
-      description: 'A team of trained sales advisors who sell products and services in an organized manner, guiding clients through the entire ecosystem without friction.',
+      title: 'AI & Automation',
+      description: 'AI agents, workflow automation, intelligent assistance, and process orchestration designed to reduce friction and improve execution across our operations.',
       icon: 'users',
       color: '#6b8cae',
     },
     {
-      title: 'Design & Communication',
-      description: 'Corporate image, branding, and digital marketing. In-house design and marketing team for visual identity and strategic communication.',
+      title: 'Platforms, Data & Infrastructure',
+      description: 'Shared architecture for identity, databases, integrations, analytics, payments, security, cloud services, and reusable components across business units.',
       icon: 'palette',
       color: '#7da87d',
     },
     {
-      title: 'Fintech & Credits',
-      description: 'Payroll deduction loans for pensioners and teachers. Credit app in development for medical, aesthetic, and consumer services.',
+      title: 'Embedded Product Development',
+      description: 'We turn operating needs from hospitality, education, real estate, finance, food, healthcare, and other units into technology products deployed inside the ecosystem.',
       icon: 'wallet',
       color: '#9a8cae',
     },
@@ -104,7 +103,7 @@ export const ECOSYSTEM = {
   title: 'Business',
   titleHighlight: 'Ecosystem',
   description:
-    'Twelve complementary business units serving individuals, families, and organizations through our Commercial Management Team. Technology is not just another service — it\'s the infrastructure that supports and connects the entire ecosystem.',
+    'Twelve operating business units form the application layer for CTG One technology. We build software and infrastructure centrally, then deploy and improve those systems inside the businesses where they create measurable operational value.',
   units: [
     {
       // Official Valderrama logomark supplied and cropped to
@@ -140,7 +139,7 @@ export const ECOSYSTEM = {
       // public/images/logo/ctg-one-coin-icon.png (transparent background).
       id: 'tech',
       name: 'CTG One Technology',
-      description: 'Core technology: automation, software, AI agents, applications, digital solutions, CTG One Token, and fintech platform.',
+      description: 'Core technology: proprietary software, AI systems, automation, applications, shared digital infrastructure, CTG One Token, and fintech platforms for the ecosystem.',
       icon: 'ctgone',
       color: '#ae8c9a',
     },
@@ -281,10 +280,10 @@ export const TOKEN = {
 // Contact (uses config.json for contact details)
 export const CONTACT = {
   badge: 'Get in Touch',
-  title: 'Let\'s Build',
-  titleHighlight: 'Together',
+  title: 'Technology for',
+  titleHighlight: 'Real Operations',
   description:
-    'Ready to access our integrated ecosystem? Let\'s start a conversation about how CTG One can help you with any of your needs — from technology to wellness, real estate to education.',
+    'Explore how CTG One builds and deploys software, AI, automation, and digital infrastructure across a diversified portfolio of operating businesses.',
   email: config.contact.email,
   phone: config.contact.phone,
   location: config.contact.location,
@@ -299,10 +298,10 @@ export const CONTACT = {
 // Footer
 export const FOOTER = {
   brand: 'CTG One Technology',
-  tagline: 'Technology is infrastructure. Strategy is architecture.',
+  tagline: 'Software, AI & infrastructure for our own business ecosystem.',
   links: {
     company: ['About', 'Team', 'Careers', 'Press'],
-    solutions: ['AI Strategy', 'Blockchain', 'Consulting', 'Rewards Program'],
+    solutions: ['Software Engineering', 'AI & Automation', 'Digital Infrastructure', 'Internal Platforms'],
     resources: ['Documentation', 'Whitepaper', 'Blog', 'Support'],
     legal: ['Privacy Policy', 'Terms of Service', 'Cookie Policy'],
   },
