@@ -14,7 +14,7 @@ export const WEBSITE = config.contact.website;
 export const NAV_ITEMS = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
-  { label: 'Services', href: '/services' },
+  { label: 'Technology', href: '/services' },
   { label: 'Ecosystem', href: '/ecosystem' },
   { label: 'Rewards', href: '/rewards' },
   { label: 'Token', href: '/token' },
