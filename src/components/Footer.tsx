@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { Container } from '@/components/ui';
-import { FOOTER, NAV_ITEMS, CONTACT } from '@/data/content';
+import { FOOTER, CONTACT } from '@/data/content';
+import { NAV_ITEMS } from '@/lib/constants';
 import Image from 'next/image';
 
 export const Footer: React.FC = () => {
