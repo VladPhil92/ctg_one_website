@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import { BarChart3, Coins, Factory, FileText, RefreshCw, Search } from 'lucide-react';
 import { Container, Badge, SectionHeader, FadeInSection } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
 import { LotCard } from '@/components/inversion/LotCard';
@@ -9,12 +10,42 @@ import { getPublicLots, getLotFundingSummary } from '@/lib/investment/queries';
 export const dynamic = 'force-dynamic';
 
 const STEPS = [
-  { n: '01', label: 'Selecciona una oportunidad' },
-  { n: '02', label: 'Financia un equivalente productivo' },
-  { n: '03', label: 'Sigue la producción' },
-  { n: '04', label: 'Sigue las ventas' },
-  { n: '05', label: 'Consulta la liquidación' },
-  { n: '06', label: 'Retira o reinvierte' },
+  {
+    n: '01',
+    title: 'Explora oportunidades',
+    description: 'Revisa los lotes disponibles, sus estilos, cantidades y condiciones.',
+    icon: Search,
+  },
+  {
+    n: '02',
+    title: 'Participa en un lote',
+    description: 'Elige cuánto participar y confirma tu aporte de forma segura.',
+    icon: Coins,
+  },
+  {
+    n: '03',
+    title: 'Sigue la producción',
+    description: 'Observa el avance del lote desde la elaboración hasta el envasado.',
+    icon: Factory,
+  },
+  {
+    n: '04',
+    title: 'Sigue las ventas',
+    description: 'Consulta la comercialización en puntos propios y canal B2B.',
+    icon: BarChart3,
+  },
+  {
+    n: '05',
+    title: 'Consulta la liquidación',
+    description: 'Revisa ingresos, costos, impuestos y resultado final del lote.',
+    icon: FileText,
+  },
+  {
+    n: '06',
+    title: 'Retira o reinvierte',
+    description: 'Decide qué hacer con tu saldo disponible al finalizar el proceso.',
+    icon: RefreshCw,
+  },
 ];
 
 const BEER_STYLES = [
@@ -144,27 +175,63 @@ export default async function InversionLandingPage() {
 
       <UnitEconomics />
 
-      <section className="py-20 sm:py-24">
+      <section className="py-20 sm:py-24 overflow-hidden">
         <Container>
           <FadeInSection>
             <SectionHeader
               badge="El proceso"
-              title="De la capital a la"
-              titleHighlight="liquidación"
-              description="Cada lote es trazable de principio a fin, con evidencia operativa en cada etapa."
+              title="De tu inversión a la"
+              titleHighlight="venta"
+              description="Sigue cada etapa del lote: participación, producción, comercialización y liquidación."
               centered={false}
-              className="mb-14 max-w-2xl"
+              className="mb-12 sm:mb-14 max-w-2xl"
             />
           </FadeInSection>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
-            {STEPS.map((step, i) => (
-              <FadeInSection key={step.n} delay={i * 0.05}>
-                <div>
-                  <span className="text-2xl font-outfit font-semibold text-accent">{step.n}</span>
-                  <p className="text-[13px] text-text-secondary mt-2 leading-snug">{step.label}</p>
-                </div>
-              </FadeInSection>
-            ))}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {STEPS.map((step, i) => {
+              const Icon = step.icon;
+              return (
+                <FadeInSection key={step.n} delay={i * 0.05}>
+                  <article className="group relative h-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 sm:p-7 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(201,169,98,0.28)] hover:bg-white/[0.04]">
+                    <div
+                      className="absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
+                      style={{ backgroundColor: 'rgba(201, 169, 98, 0.09)' }}
+                      aria-hidden="true"
+                    />
+
+                    <div className="relative flex items-start justify-between gap-5 mb-8">
+                      <div
+                        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-[rgba(201,169,98,0.22)]"
+                        style={{
+                          background: 'radial-gradient(circle at 50% 45%, rgba(201,169,98,0.15), rgba(201,169,98,0.035) 70%)',
+                          boxShadow: '0 0 34px rgba(201,169,98,0.07)',
+                        }}
+                      >
+                        <Icon
+                          aria-hidden="true"
+                          className="h-7 w-7 text-accent"
+                          strokeWidth={1.55}
+                        />
+                      </div>
+                      <span className="font-outfit text-3xl font-semibold tracking-tight text-accent/90">
+                        {step.n}
+                      </span>
+                    </div>
+
+                    <div className="relative">
+                      <div className="mb-4 h-px w-12 bg-white/20 transition-all duration-300 group-hover:w-16 group-hover:bg-[rgba(201,169,98,0.45)]" />
+                      <h3 className="mb-2 text-lg font-outfit font-medium text-white">
+                        {step.title}
+                      </h3>
+                      <p className="text-sm leading-relaxed text-text-muted">
+                        {step.description}
+                      </p>
+                    </div>
+                  </article>
+                </FadeInSection>
+              );
+            })}
           </div>
         </Container>
       </section>
