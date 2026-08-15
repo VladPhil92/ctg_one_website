@@ -3,11 +3,9 @@ import Image from 'next/image';
 import { Container, Badge, SectionHeader, FadeInSection } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
 import { LotCard } from '@/components/inversion/LotCard';
+import { UnitEconomics } from '@/components/inversion/UnitEconomics';
 import { getPublicLots, getLotFundingSummary } from '@/lib/investment/queries';
 
-// See the same note in src/app/inversion/lotes/page.tsx — this page also
-// reads live lot data and must never get statically baked with a stale
-// (possibly empty) snapshot.
 export const dynamic = 'force-dynamic';
 
 const STEPS = [
@@ -143,6 +141,8 @@ export default async function InversionLandingPage() {
           </FadeInSection>
         </Container>
       </section>
+
+      <UnitEconomics />
 
       <section className="py-20 sm:py-24">
         <Container>
