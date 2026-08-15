@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 const ITEMS = [
   { href: '/admin', label: 'Resumen' },
   { href: '/admin/usuarios', label: 'Usuarios' },
+  { href: '/admin/kyc', label: 'KYC' },
+  { href: '/admin/depositos', label: 'Depósitos' },
 ];
 
 export const AdminNav: React.FC = () => {

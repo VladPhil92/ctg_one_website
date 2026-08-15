@@ -1,8 +1,15 @@
 import React from 'react';
-import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { UsersTable } from '@/components/admin/UsersTable';
 
 export default async function AdminUsersPage() {
+  // See admin/page.tsx — each admin page re-checks this independently
+  // since layout/page rendering can race.
+  if (!isSupabaseConfigured) {
+    redirect('/');
+  }
+
   const supabase = await createClient();
 
   const { data: profiles } = await supabase
