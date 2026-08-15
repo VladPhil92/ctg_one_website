@@ -23,11 +23,11 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL('https://ctgone.com'),
   title: {
-    default: 'CTG One Corporation | AI Strategy & Infrastructure',
-    template: '%s | CTG One Corporation',
+    default: 'CTG One Technology | AI Strategy & Infrastructure',
+    template: '%s | CTG One Technology',
   },
   description:
-    'Technology is infrastructure. Strategy is architecture. We design both. CTG One Corporation designs, integrates, and scales strategic technological solutions.',
+    'Technology is infrastructure. Strategy is architecture. We design both. CTG One Technology designs, integrates, and scales strategic technological solutions.',
   keywords: [
     'CTG One',
     'AI Strategy',
@@ -40,9 +40,9 @@ export const metadata: Metadata = {
     'Digital Transformation',
     'Cartagena Colombia',
   ],
-  authors: [{ name: 'CTG One Corporation' }],
-  creator: 'CTG One Corporation',
-  publisher: 'CTG One Corporation',
+  authors: [{ name: 'CTG One Technology' }],
+  creator: 'CTG One Technology',
+  publisher: 'CTG One Technology',
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
@@ -52,8 +52,8 @@ export const metadata: Metadata = {
     locale: 'en_US',
     alternateLocale: 'es_CO',
     url: 'https://ctgone.com',
-    siteName: 'CTG One Corporation',
-    title: 'CTG One Corporation | AI Strategy & Infrastructure',
+    siteName: 'CTG One Technology',
+    title: 'CTG One Technology | AI Strategy & Infrastructure',
     description:
       'Technology is infrastructure. Strategy is architecture. We design both.',
     images: [
@@ -61,13 +61,13 @@ export const metadata: Metadata = {
         url: '/images/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'CTG One Corporation - AI Strategy & Infrastructure',
+        alt: 'CTG One Technology - AI Strategy & Infrastructure',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CTG One Corporation | AI Strategy & Infrastructure',
+    title: 'CTG One Technology | AI Strategy & Infrastructure',
     description:
       'Technology is infrastructure. Strategy is architecture. We design both.',
     images: ['/images/og-image.png'],
@@ -96,7 +96,7 @@ export const viewport: Viewport = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Corporation',
-  name: 'CTG One Corporation',
+  name: 'CTG One Technology',
   description:
     'Technology is infrastructure. Strategy is architecture. We design both.',
   url: 'https://ctgone.com',
