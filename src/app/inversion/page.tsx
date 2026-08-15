@@ -22,8 +22,8 @@ const BEER_STYLES = [
     name: 'Golden Pale Ale',
     origin: 'CTG Craft Beer',
     detail: '330 ml · 4.5% vol.',
-    image: '/images/inversion/ctg-craft-beer-miyagi.webp',
-    alt: 'Botella Golden Pale Ale de CTG Craft Beer en un punto de comercialización',
+    image: '/images/inversion/ctg-craft-beer-golden-pale-ale.webp',
+    alt: 'Botella Golden Pale Ale de CTG Craft Beer en fotografía de producto',
   },
   {
     name: 'Hefeweizen',
