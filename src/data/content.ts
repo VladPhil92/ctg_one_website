@@ -4,16 +4,8 @@
 
 import config from '@/config/config.json';
 
-// Navigation
-export const NAV_ITEMS = [
-  { label: 'Home', href: '/' },
-  { label: 'About', href: '/about' },
-  { label: 'Services', href: '/services' },
-  { label: 'Ecosystem', href: '/ecosystem' },
-  { label: 'Rewards', href: '/rewards' },
-  { label: 'Token', href: '/token' },
-  { label: 'Contact', href: '/contact' },
-];
+// Navigation: NAV_ITEMS lives in @/lib/constants (single source of truth —
+// Navbar and Footer both import it from there so the two menus can't drift).
 
 // Hero Section
 export const HERO = {
