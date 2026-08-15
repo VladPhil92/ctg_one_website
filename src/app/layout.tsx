@@ -23,20 +23,21 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL('https://ctgone.com'),
   title: {
-    default: 'CTG One Technology | AI Strategy & Infrastructure',
+    default: 'CTG One Technology | Software, AI & Infrastructure',
     template: '%s | CTG One Technology',
   },
   description:
-    'Technology is infrastructure. Strategy is architecture. We design both. CTG One Technology designs, integrates, and scales strategic technological solutions.',
+    'CTG One Technology builds proprietary software, artificial intelligence, automation, and digital infrastructure for its own business ecosystem.',
   keywords: [
     'CTG One',
-    'AI Strategy',
-    'Infrastructure',
-    'Blockchain',
+    'Software Engineering',
+    'Artificial Intelligence',
+    'Automation',
+    'Digital Infrastructure',
     'Technology Architecture',
-    'LatAm',
+    'Internal Platforms',
+    'Business Technology',
     'CTGO Token Utility',
-    'Loyalty Rewards Program',
     'Digital Transformation',
     'Cartagena Colombia',
   ],
@@ -53,23 +54,23 @@ export const metadata: Metadata = {
     alternateLocale: 'es_CO',
     url: 'https://ctgone.com',
     siteName: 'CTG One Technology',
-    title: 'CTG One Technology | AI Strategy & Infrastructure',
+    title: 'CTG One Technology | Software, AI & Infrastructure',
     description:
-      'Technology is infrastructure. Strategy is architecture. We design both.',
+      'Proprietary software, AI, automation, and digital infrastructure built for the CTG One business ecosystem.',
     images: [
       {
         url: '/images/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'CTG One Technology - AI Strategy & Infrastructure',
+        alt: 'CTG One Technology - Software, AI & Infrastructure',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CTG One Technology | AI Strategy & Infrastructure',
+    title: 'CTG One Technology | Software, AI & Infrastructure',
     description:
-      'Technology is infrastructure. Strategy is architecture. We design both.',
+      'Proprietary software, AI, automation, and digital infrastructure built for the CTG One business ecosystem.',
     images: ['/images/og-image.png'],
   },
   robots: {
@@ -98,7 +99,7 @@ const jsonLd = {
   '@type': 'Corporation',
   name: 'CTG One Technology',
   description:
-    'Technology is infrastructure. Strategy is architecture. We design both.',
+    'Technology company building proprietary software, artificial intelligence, automation, and digital infrastructure for its own business ecosystem.',
   url: 'https://ctgone.com',
   logo: 'https://ctgone.com/images/logo/ctg-one-logo.png',
   foundingDate: '2024',
@@ -113,8 +114,8 @@ const jsonLd = {
   ],
   contactPoint: {
     '@type': 'ContactPoint',
-    email: 'ctgonecorporation@gmail.com',
-    contactType: 'customer service',
+    email: 'direccion@ctgone.com',
+    contactType: 'general inquiries',
   },
 };
 
