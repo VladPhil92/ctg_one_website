@@ -37,8 +37,21 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isDashboardRoute = pathname.startsWith('/dashboard');
   const isAdminRoute = pathname.startsWith('/admin');
+  // CTG Craft Beer Inversión (docs/investment/adr/ADR-011): reuses this
+  // same session, gated separately so /inversion has its own redirect
+  // targets and doesn't send a signed-out investment visitor into the
+  // unrelated CTG One /dashboard flow.
+  const isInvestmentAppRoute = pathname.startsWith('/inversion/app');
+  const isInvestmentAdminRoute = pathname.startsWith('/inversion/admin');
 
   if ((isDashboardRoute || isAdminRoute) && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/iniciar-sesion';
+    url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if ((isInvestmentAppRoute || isInvestmentAdminRoute) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/iniciar-sesion';
     url.searchParams.set('next', pathname);
@@ -55,6 +68,25 @@ export async function updateSession(request: NextRequest) {
     if (profile?.role !== 'admin') {
       const url = request.nextUrl.clone();
       url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // Interim gate only (ADR-011): reuses the existing CTG One admin role.
+  // The real authorization boundary is server-side inside every investment
+  // RPC (is_investment_admin()/is_investment_operator(), re-checked against
+  // investment_participant_profiles.investment_role) — this middleware
+  // check is just a UX fast-path so a non-admin never sees the page at all.
+  if (isInvestmentAdminRoute && user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/inversion/app';
       return NextResponse.redirect(url);
     }
   }

@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { Container } from '@/components/ui';
-import { FOOTER, NAV_ITEMS, CONTACT } from '@/data/content';
+import { FOOTER, CONTACT } from '@/data/content';
+import { NAV_ITEMS } from '@/lib/constants';
 import Image from 'next/image';
 
 export const Footer: React.FC = () => {
@@ -21,7 +22,7 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-12 md:gap-16 mb-12 sm:mb-16 md:mb-20">
           {/* Brand Column */}
           <div className="col-span-2 lg:col-span-2">
-            <a href="#home" className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <a href="/" className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
               <div className="relative w-9 h-9 rounded-full overflow-hidden">
                 <Image
                   src="/images/logo/CTGLOGO.jpeg"
@@ -35,7 +36,7 @@ export const Footer: React.FC = () => {
                   CTG One
                 </span>
                 <span className="text-[9px] text-text-dim uppercase tracking-[0.2em]">
-                  Corporation
+                  Technology
                 </span>
               </div>
             </a>
@@ -113,7 +114,7 @@ export const Footer: React.FC = () => {
           style={{ borderTop: '1px solid rgba(255, 255, 255, 0.03)' }}
         >
           <p className="text-[10px] sm:text-[11px] text-text-dim tracking-wide">
-            © {currentYear} CTG One Corporation
+            © {currentYear} CTG One Technology
           </p>
           <div className="flex items-center gap-6 sm:gap-10">
             <a

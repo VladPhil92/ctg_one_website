@@ -1,7 +1,7 @@
 {
   "name": "ctgone-website",
   "version": "1.0.0",
-  "description": "CTG One Corporation - Corporate Website",
+  "description": "CTG One Technology - Corporate Website",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

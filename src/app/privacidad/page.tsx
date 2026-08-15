@@ -34,7 +34,7 @@ export default function PrivacidadPage() {
                   CTG One
                 </span>
                 <span className="text-[9px] text-text-dim uppercase tracking-[0.2em]">
-                  Corporation
+                  Technology
                 </span>
               </div>
             </a>
@@ -75,7 +75,7 @@ export default function PrivacidadPage() {
           {/* Introduction */}
           <section>
             <p className="text-text-muted">
-              CTG One Corporation (en adelante, &quot;CTG One&quot;, &quot;nosotros&quot; o &quot;la Empresa&quot;), con domicilio en
+              CTG One Technology (en adelante, &quot;CTG One&quot;, &quot;nosotros&quot; o &quot;la Empresa&quot;), con domicilio en
               Cl. 17 Mz 10 L 21, El Campestre, Cartagena de Indias, Colombia, se compromete a proteger la
               privacidad y los datos personales de los usuarios de sus plataformas digitales, incluyendo el
               sitio web <strong className="text-white">ctgone.com</strong> y la aplicación móvil{' '}
@@ -95,7 +95,7 @@ export default function PrivacidadPage() {
             </h2>
             <div className="glass-card rounded-lg p-6">
               <ul className="space-y-2 text-text-muted text-sm">
-                <li><strong className="text-text-secondary">Razón Social:</strong> CTG One Corporation</li>
+                <li><strong className="text-text-secondary">Razón Social:</strong> CTG One Technology</li>
                 <li><strong className="text-text-secondary">Dirección:</strong> Cl. 17 Mz 10 L 21, El Campestre, Cartagena de Indias, Colombia</li>
                 <li><strong className="text-text-secondary">Correo electrónico:</strong> direccion@ctgone.com</li>
                 <li><strong className="text-text-secondary">Teléfono:</strong> +57 (5) 6661 7000</li>
@@ -341,7 +341,7 @@ export default function PrivacidadPage() {
             style={{ borderTop: '1px solid rgba(255, 255, 255, 0.03)' }}
           >
             <p className="text-xs text-text-dim text-center">
-              © {new Date().getFullYear()} CTG One Corporation. Todos los derechos reservados.
+              © {new Date().getFullYear()} CTG One Technology. Todos los derechos reservados.
               <br />
               Cartagena de Indias, Colombia.
             </p>

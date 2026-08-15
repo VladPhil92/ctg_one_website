@@ -4,12 +4,8 @@ import React from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { HeroSection } from '@/components/sections/HeroSection';
-import { AboutSection } from '@/components/sections/AboutSection';
-import { ServicesSection } from '@/components/sections/ServicesSection';
-import { EcosystemSection } from '@/components/sections/EcosystemSection';
-import { RewardsSection } from '@/components/sections/RewardsSection';
-import { TokenSection } from '@/components/sections/TokenSection';
-import { ContactSection } from '@/components/sections/ContactSection';
+import { HomeOverviewSection } from '@/components/sections/HomeOverviewSection';
+import { AccountCtaSection } from '@/components/sections/AccountCtaSection';
 
 export default function Home() {
   return (
@@ -20,23 +16,11 @@ export default function Home() {
       {/* Hero Section */}
       <HeroSection />
 
-      {/* About Section */}
-      <AboutSection />
+      {/* Quick links to every other page */}
+      <HomeOverviewSection />
 
-      {/* Services Section */}
-      <ServicesSection />
-
-      {/* Ecosystem Section */}
-      <EcosystemSection />
-
-      {/* Rewards Section */}
-      <RewardsSection />
-
-      {/* Token Section */}
-      <TokenSection />
-
-      {/* Contact Section */}
-      <ContactSection />
+      {/* Account creation CTA */}
+      <AccountCtaSection />
 
       {/* Footer */}
       <Footer />

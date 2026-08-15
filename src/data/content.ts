@@ -1,19 +1,11 @@
 // ============================================
-// CTG ONE CORPORATION - CONTENT DATA
+// CTG ONE TECHNOLOGY - CONTENT DATA
 // ============================================
 
 import config from '@/config/config.json';
 
-// Navigation
-export const NAV_ITEMS = [
-  { label: 'Home', href: '#home' },
-  { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Ecosystem', href: '#ecosystem' },
-  { label: 'Rewards', href: '#rewards' },
-  { label: 'Token', href: '#token' },
-  { label: 'Contact', href: '#contact' },
-];
+// Navigation: NAV_ITEMS lives in @/lib/constants (single source of truth —
+// Navbar and Footer both import it from there so the two menus can't drift).
 
 // Hero Section
 export const HERO = {
@@ -22,11 +14,11 @@ export const HERO = {
   titleHighlight: 'Strategy is architecture.',
   subtitle: 'We design both.',
   description:
-    'CTG One Corporation is a technology company and integrated business ecosystem that designs technological infrastructure and strategic architecture. We operate under a dual model: technology infrastructure and a commercial agency with trained advisors.',
+    'CTG One Technology is a technology company and integrated business ecosystem that designs technological infrastructure and strategic architecture. We operate under a dual model: technology infrastructure and a commercial agency with trained advisors.',
   ctaPrimary: 'Explore Ecosystem',
   ctaSecondary: 'Start Conversation',
   metrics: [
-    { value: '9', label: 'Business Units', icon: 'building' },
+    { value: '12', label: 'Business Units', icon: 'building' },
     { value: 'Dual', label: 'Architecture', icon: 'layers' },
     { value: '2024', label: 'Founded', icon: 'calendar' },
     { value: 'Cartagena', label: 'Headquarters', icon: 'location' },
@@ -39,7 +31,7 @@ export const ABOUT = {
   title: 'Dual Architecture:',
   titleHighlight: 'Technology & Business Ecosystem',
   description:
-    'CTG One Corporation is a technology company founded in 2024 in Cartagena, Colombia, operating under a dual architecture: simultaneously a technological infrastructure company and an integrated business ecosystem of products and services.',
+    'CTG One Technology is a technology company founded in 2024 in Cartagena, Colombia, operating under a dual architecture: simultaneously a technological infrastructure company and an integrated business ecosystem of products and services.',
   // The 5 Pillars of CTG One
   features: [
     {
@@ -106,23 +98,28 @@ export const SERVICES = {
   ],
 };
 
-// Business Ecosystem - 9 Integrated Units
+// Business Ecosystem - 12 Integrated Units
 export const ECOSYSTEM = {
   badge: 'Our Portfolio',
   title: 'Business',
   titleHighlight: 'Ecosystem',
   description:
-    'Nine complementary business units serving individuals, families, and organizations through our Commercial Management Team. Technology is not just another service — it\'s the infrastructure that supports and connects the entire ecosystem.',
+    'Twelve complementary business units serving individuals, families, and organizations through our Commercial Management Team. Technology is not just another service — it\'s the infrastructure that supports and connects the entire ecosystem.',
   units: [
     {
+      // Official Valderrama logomark supplied and cropped to
+      // public/images/logo/valderrama-icon.png (transparent background).
       id: 'education',
       name: 'Valderrama International School',
       description: 'Private tutoring in all academic subjects, plus music, dance, and art courses.',
-      icon: 'graduation',
+      icon: 'valderrama',
       color: '#d4a259',
       url: 'valderramainternationalschool.com',
     },
     {
+      // TODO: the CTG Suites logo supplied is a wordmark only (no
+      // separate icon mark to crop) — kept the placeholder lucide icon
+      // here rather than using a cropped fragment of text.
       id: 'hospitality',
       name: 'CTG Suites',
       description: 'Lodging management in Cartagena and Santa Marta. Hotel Mirador del Castillo (25 rooms) and Apartaestudio 2E.',
@@ -130,17 +127,21 @@ export const ECOSYSTEM = {
       color: '#6b8cae',
     },
     {
+      // Official Bechara Real Estate logomark supplied and cropped to
+      // public/images/logo/bechara-icon.png (transparent background).
       id: 'realestate',
       name: 'Bechara Real Estate',
       description: 'High-end property sales and rentals. Specialized advice for wealth investment and premium housing.',
-      icon: 'building',
+      icon: 'bechara',
       color: '#7da87d',
     },
     {
+      // Official CTG One coin logomark supplied and cropped to
+      // public/images/logo/ctg-one-coin-icon.png (transparent background).
       id: 'tech',
-      name: 'CTG One Corporation',
+      name: 'CTG One Technology',
       description: 'Core technology: automation, software, AI agents, applications, digital solutions, CTG One Token, and fintech platform.',
-      icon: 'cpu',
+      icon: 'ctgone',
       color: '#ae8c9a',
     },
     {
@@ -156,10 +157,12 @@ export const ECOSYSTEM = {
       color: '#8c9aae',
     },
     {
+      // Official Oralgreen logomark supplied and cropped to
+      // public/images/logo/oralgreen-icon.png (transparent background).
       id: 'dental',
       name: 'Oralgreen',
       description: 'Comprehensive dental care based in Sincelejo. Clinical oral health services.',
-      icon: 'smile',
+      icon: 'oralgreen',
       color: '#7dae9a',
     },
     {
@@ -183,6 +186,34 @@ export const ECOSYSTEM = {
       description: 'Payroll loans for pensioners (Colpensiones, Casur, Cremil, Fiduprevisora) and MEN teachers. Credit app in development.',
       icon: 'wallet',
       color: '#8cae9a',
+    },
+    {
+      // Official PISÁO logomark supplied and cropped to
+      // public/images/logo/pisao-gastrobar-icon.png (transparent background).
+      id: 'gastrobar',
+      name: 'PISÁO Gastrobar',
+      description: '"La Casa del Patacón" — casual dining gastrobar in Cartagena with Caribbean identity.',
+      icon: 'pisao',
+      color: '#7a9a5c',
+      url: 'pisaogastrobar.com',
+    },
+    {
+      // Official CTG Craft Beer logomark supplied and cropped to
+      // public/images/logo/ctg-craft-beer-icon.png (transparent background).
+      id: 'craftbeer',
+      name: 'CTG Craft Beer',
+      description: 'Artisanal craft beer brewed in Cartagena — "Cerveza Artesanal" for the ecosystem\'s hospitality venues.',
+      icon: 'craftbeer',
+      color: '#c9a962',
+    },
+    {
+      // Official Guest Logistics Concierge logomark supplied and cropped
+      // to public/images/logo/guest-logistics-icon.png (transparent background).
+      id: 'guestlogistics',
+      name: 'Guest Logistics Concierge',
+      description: 'SaaS concierge platform coordinating guest logistics, bookings, and services across the hospitality ecosystem.',
+      icon: 'guestlogistics',
+      color: '#3b5169',
     },
   ],
 };
@@ -224,7 +255,7 @@ export const TOKEN = {
   title: 'The Token Powering',
   titleHighlight: 'Our Ecosystem',
   description:
-    'CTG One Token (CTGO) is the utility token connecting all nine business units. Part of our fintech vision and tokenization strategy — real utility, real value.',
+    'CTG One Token (CTGO) is the utility token connecting all twelve business units. Part of our fintech vision and tokenization strategy — real utility, real value.',
   stats: [
     { label: 'Total Supply', value: '1B', suffix: 'CTGO' },
     { label: 'Token Holders', value: '2,450', suffix: '+' },
@@ -267,13 +298,13 @@ export const CONTACT = {
 
 // Footer
 export const FOOTER = {
-  brand: 'CTG One Corporation',
+  brand: 'CTG One Technology',
   tagline: 'Technology is infrastructure. Strategy is architecture.',
   links: {
     company: ['About', 'Team', 'Careers', 'Press'],
-    solutions: ['AI Strategy', 'Blockchain', 'Consulting', 'Investment'],
+    solutions: ['AI Strategy', 'Blockchain', 'Consulting', 'Rewards Program'],
     resources: ['Documentation', 'Whitepaper', 'Blog', 'Support'],
     legal: ['Privacy Policy', 'Terms of Service', 'Cookie Policy'],
   },
-  copyright: `© ${new Date().getFullYear()} CTG One Corporation. All rights reserved.`,
+  copyright: `© ${new Date().getFullYear()} CTG One Technology. All rights reserved.`,
 };

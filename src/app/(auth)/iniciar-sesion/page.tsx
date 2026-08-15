@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import React, { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +16,21 @@ const loginSchema = z.object({
 
 export default function IniciarSesionPage() {
   const router = useRouter();
+  return (
+    <Suspense fallback={null}>
+      <IniciarSesionForm />
+    </Suspense>
+  );
+}
+
+function IniciarSesionForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // Only ever redirect to a same-site relative path (never a bare "//host"
+  // which browsers treat as protocol-relative) — anything else falls back
+  // to the original /dashboard destination.
+  const next = searchParams.get('next');
+  const redirectTo = next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +59,7 @@ export default function IniciarSesionPage() {
       });
       if (signInError) throw signInError;
       router.push('/dashboard');
+      router.push(redirectTo);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');

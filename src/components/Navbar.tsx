@@ -1,33 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
-import { NAV_ITEMS, CONTACT_EMAIL } from '@/lib/constants';
+import { NAV_ITEMS } from '@/lib/constants';
 import { Button } from './ui/Button';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState('home');
+  const pathname = usePathname();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 80);
-
-      const sections = NAV_ITEMS.map(item => item.href.slice(1));
-      for (const section of sections.reverse()) {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          if (rect.top <= 100) {
-            setActiveSection(section);
-            break;
-          }
-        }
-      }
-    };
-
+    const handleScroll = () => setIsScrolled(window.scrollY > 80);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -48,7 +36,7 @@ export const Navbar: React.FC = () => {
         <div className="max-w-6xl mx-auto px-8 lg:px-12">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <a href="#home" className="flex items-center gap-4 z-10">
+            <a href="/" className="flex items-center gap-4 z-10">
               <div className="relative w-10 h-10 rounded-full overflow-hidden">
                 <Image
                   src="/images/logo/CTGLOGO.jpeg"
@@ -63,15 +51,15 @@ export const Navbar: React.FC = () => {
                   CTG One
                 </span>
                 <span className="text-[9px] text-text-dim uppercase tracking-[0.2em]">
-                  Corporation
+                  Technology
                 </span>
               </div>
             </a>
 
             {/* Desktop Menu */}
-            <div className="hidden lg:flex items-center gap-10">
+            <div className="hidden lg:flex items-center gap-6 xl:gap-8">
               {NAV_ITEMS.map((item) => {
-                const isActive = activeSection === item.href.slice(1);
+                const isActive = pathname === item.href;
                 return (
                   <a
                     key={item.label}
@@ -86,15 +74,27 @@ export const Navbar: React.FC = () => {
               })}
             </div>
 
-            {/* Desktop CTA */}
-            <div className="hidden lg:flex items-center">
-              <Button
-                href={`mailto:${CONTACT_EMAIL}`}
-                variant="primary"
-                size="sm"
-              >
-                Contact
-              </Button>
+            {/* Desktop CTA - account access */}
+            <div className="hidden lg:flex items-center gap-4">
+              {!isLoading && (
+                isAuthenticated ? (
+                  <Button href="/dashboard" variant="primary" size="sm">
+                    Mi Cuenta
+                  </Button>
+                ) : (
+                  <>
+                    <a
+                      href="/iniciar-sesion"
+                      className="whitespace-nowrap text-[11px] uppercase tracking-[0.15em] font-medium text-text-dim hover:text-text-muted transition-colors duration-500"
+                    >
+                      Iniciar Sesión
+                    </a>
+                    <Button href="/registro" variant="primary" size="sm">
+                      Crear Cuenta
+                    </Button>
+                  </>
+                )
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -131,7 +131,7 @@ export const Navbar: React.FC = () => {
             <div className="flex flex-col h-full pt-28 pb-10 px-8">
               <nav className="flex-1 space-y-2">
                 {NAV_ITEMS.map((item) => {
-                  const isActive = activeSection === item.href.slice(1);
+                  const isActive = pathname === item.href;
                   return (
                     <a
                       key={item.label}
@@ -147,19 +147,31 @@ export const Navbar: React.FC = () => {
                 })}
               </nav>
 
-              <div className="pt-8 border-t border-white/5">
-                <Button
-                  href={`mailto:${CONTACT_EMAIL}`}
-                  variant="primary"
-                  size="md"
-                  fullWidth
-                >
-                  Contact
-                </Button>
+              <div className="pt-8 border-t border-white/5 space-y-3">
+                {!isLoading && (
+                  isAuthenticated ? (
+                    <Button href="/dashboard" variant="primary" size="md" fullWidth>
+                      Mi Cuenta
+                    </Button>
+                  ) : (
+                    <>
+                      <Button href="/registro" variant="primary" size="md" fullWidth>
+                        Crear Cuenta
+                      </Button>
+                      <a
+                        href="/iniciar-sesion"
+                        onClick={() => setIsOpen(false)}
+                        className="block text-center py-2 text-[11px] uppercase tracking-[0.15em] font-medium text-text-dim hover:text-text-muted transition-colors duration-500"
+                      >
+                        Iniciar Sesión
+                      </a>
+                    </>
+                  )
+                )}
               </div>
 
               <p className="pt-8 text-[10px] text-text-dim tracking-wider">
-                © {new Date().getFullYear()} CTG One Corporation
+                © {new Date().getFullYear()} CTG One Technology
               </p>
             </div>
           </div>

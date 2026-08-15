@@ -80,6 +80,7 @@ export const WalletConnect: React.FC = () => {
         </h3>
         <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
           Conecta tu wallet de MetaMask para comprar, vender y hacer staking de CTG One Tokens.
+          Conecta tu wallet de MetaMask para gestionar tus CTG One Tokens y tus beneficios del ecosistema.
         </p>
 
         <Button
@@ -119,6 +120,7 @@ export const WalletConnect: React.FC = () => {
         </p>
         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
           La funcionalidad completa de trading estará disponible próximamente. Actualmente puedes crear tu perfil y conectar tu wallet para estar listo cuando lancemos.
+          La funcionalidad completa de la wallet estará disponible próximamente. Actualmente puedes crear tu perfil y conectar tu wallet para estar listo cuando lancemos.
         </p>
       </div>
     </div>

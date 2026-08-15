@@ -1,5 +1,5 @@
 // ============================================
-// CTG ONE CORPORATION - CONSTANTS
+// CTG ONE TECHNOLOGY - CONSTANTS
 // ============================================
 
 import config from '@/config/config.json';
@@ -12,13 +12,13 @@ export const WEBSITE = config.contact.website;
 
 // Navigation
 export const NAV_ITEMS = [
-  { label: 'Home', href: '#home' },
-  { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Ecosystem', href: '#ecosystem' },
-  { label: 'Rewards', href: '#rewards' },
-  { label: 'Token', href: '#token' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
+  { label: 'Services', href: '/services' },
+  { label: 'Ecosystem', href: '/ecosystem' },
+  { label: 'Rewards', href: '/rewards' },
+  { label: 'Token', href: '/token' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 // Animation Configuration
@@ -74,15 +74,18 @@ export const SOCIAL_LINKS = {
   github: 'https://github.com/ctgone',
 };
 
-// Business Units - 9 Integrated Units
+// Business Units - 12 Integrated Units
 export const BUSINESS_UNITS = [
   { id: 'education', name: 'Valderrama International School', color: '#d4a259' },
   { id: 'hospitality', name: 'CTG Suites', color: '#6b8cae' },
   { id: 'realestate', name: 'Bechara Real Estate', color: '#7da87d' },
-  { id: 'tech', name: 'CTG One Corporation', color: '#ae8c9a' },
+  { id: 'tech', name: 'CTG One Technology', color: '#ae8c9a' },
   { id: 'veterinary', name: 'Nvet Care', color: '#8c9aae' },
   { id: 'dental', name: 'Oralgreen', color: '#7dae9a' },
   { id: 'legal', name: 'Legalyst Consultores', color: '#c4956a' },
   { id: 'design', name: 'CTG One Design', color: '#ae9a8c' },
   { id: 'credits', name: 'Vantage Libranza Plus', color: '#8cae9a' },
+  { id: 'gastrobar', name: 'PISÁO Gastrobar', color: '#7a9a5c' },
+  { id: 'craftbeer', name: 'CTG Craft Beer', color: '#c9a962' },
+  { id: 'guestlogistics', name: 'Guest Logistics Concierge', color: '#3b5169' },
 ];
