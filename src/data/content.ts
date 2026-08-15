@@ -310,7 +310,7 @@ export const FOOTER = {
   tagline: 'Technology is infrastructure. Strategy is architecture.',
   links: {
     company: ['About', 'Team', 'Careers', 'Press'],
-    solutions: ['AI Strategy', 'Blockchain', 'Consulting', 'Investment'],
+    solutions: ['AI Strategy', 'Blockchain', 'Consulting', 'Rewards Program'],
     resources: ['Documentation', 'Whitepaper', 'Blog', 'Support'],
     legal: ['Privacy Policy', 'Terms of Service', 'Cookie Policy'],
   },
