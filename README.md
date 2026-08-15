@@ -14,7 +14,7 @@ Además del sitio de marketing, la app incluye cuentas de usuario reales: regist
 - **React:** 18.2 · **TypeScript:** 5.3 · **Styling:** Tailwind CSS 3.4
 - **Backend / DB:** [Supabase](https://supabase.com) — Postgres + Auth + Storage, accedido vía `@supabase/ssr` y `@supabase/supabase-js`
 - **Middleware:** `src/middleware.ts` refresca la sesión de Supabase en cada request y protege `/dashboard` (y `/admin`, cuando exista)
-- **Validación:** Zod · **Data fetching:** TanStack React Query
+- **Validación:** Zod · **Data fetching:** Supabase directo + estado local (`useWallet`, `AuthContext`) — TanStack React Query está instalado pero no integrado todavía (sin `QueryClientProvider`/`useQuery` en el código)
 - **Web3 (opcional, wallet connect):** ethers, viem, wagmi
 - **Animación:** Framer Motion · **Iconos:** Lucide React
 - **Deployment:** Vercel, runtime Node/Edge (⚠️ **no** Static Export — ver [nota](#por-qué-ya-no-es-static-export))
@@ -188,14 +188,14 @@ Información de contacto centralizada desde `src/config/config.json`.
 
 ### Variables de entorno (`.env.local.example` → `.env.local`)
 
-| Variable | Uso |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase (Project Settings → API) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon/public key — segura para el cliente |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Solo servidor** — bypassa RLS. Nunca prefijar con `NEXT_PUBLIC_` ni usar en un Client Component |
-| `NEXT_PUBLIC_SITE_URL` | Base para links absolutos en emails de auth (confirmación, etc.) |
+| Variable | Requerida | Uso |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Sí | URL del proyecto Supabase (Project Settings → API). Si falta (junto con la anon key), middleware y `AuthContext` hacen no-op — el sitio se comporta como "sin sesión" en vez de romperse |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Sí | Anon/public key — segura para el cliente. Mismo comportamiento no-op que la de arriba si falta |
+| `NEXT_PUBLIC_SITE_URL` | No | Base para el link de confirmación en el email de registro. Si falta, `registro/page.tsx` cae a `window.location.origin` |
+| `SUPABASE_SERVICE_ROLE_KEY` | No (todavía) | **Solo servidor** — bypassa RLS. `createAdminClient()` en `src/lib/supabase/server.ts` ya la usa, pero hoy no tiene ningún caller — reservada para operaciones admin que necesiten saltarse RLS. Nunca prefijar con `NEXT_PUBLIC_` ni usar en un Client Component |
 
-Sin estas variables el sitio de marketing sigue funcionando (auth/middleware hacen no-op), pero `/dashboard`, login/registro y cualquier lectura de `wallets`/`profiles` no van a tener datos.
+Sin las dos primeras el sitio de marketing sigue funcionando, pero `/dashboard`, login/registro y cualquier lectura de `wallets`/`profiles` no van a tener datos.
 
 ---
 
