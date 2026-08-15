@@ -51,7 +51,7 @@ export const Navbar: React.FC = () => {
                   CTG One
                 </span>
                 <span className="text-[9px] text-text-dim uppercase tracking-[0.2em]">
-                  Corporation
+                  Technology
                 </span>
               </div>
             </a>
@@ -171,7 +171,7 @@ export const Navbar: React.FC = () => {
               </div>
 
               <p className="pt-8 text-[10px] text-text-dim tracking-wider">
-                © {new Date().getFullYear()} CTG One Corporation
+                © {new Date().getFullYear()} CTG One Technology
               </p>
             </div>
           </div>

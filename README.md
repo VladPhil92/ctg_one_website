@@ -1,8 +1,8 @@
-# CTG One Corporation - Corporate Website
+# CTG One Technology - Corporate Website
 
 **AI Strategy & Infrastructure**
 
-Sitio web corporativo para CTG One Corporation — una empresa de tecnología y ecosistema empresarial integrado que diseña infraestructura tecnológica y arquitectura estratégica. Opera bajo una arquitectura dual: infraestructura tecnológica + agencia comercial con 12 unidades de negocio.
+Sitio web corporativo para CTG One Technology — una empresa de tecnología y ecosistema empresarial integrado que diseña infraestructura tecnológica y arquitectura estratégica. Opera bajo una arquitectura dual: infraestructura tecnológica + agencia comercial con 12 unidades de negocio.
 
 ---
 
@@ -101,7 +101,7 @@ CTG One Website/
 1. **Valderrama International School** — Educación y tutorías
 2. **CTG Suites** — Hospitalidad en Cartagena y Santa Marta
 3. **Bechara Real Estate** — Inmobiliaria de alto standing
-4. **CTG One Corporation** — Core tecnológico
+4. **CTG One Technology** — Core tecnológico
 5. **Nvet Care** — Marketplace de visitas veterinarias a domicilio
 6. **Oralgreen** — Odontología integral
 7. **Legalyst Consultores** — Servicios legales
@@ -192,7 +192,7 @@ git push origin main
 
 ## 📄 Licencia
 
-© 2024-2026 CTG One Corporation. All rights reserved.
+© 2024-2026 CTG One Technology. All rights reserved.
 
 ---
 

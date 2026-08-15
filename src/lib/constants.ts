@@ -1,5 +1,5 @@
 // ============================================
-// CTG ONE CORPORATION - CONSTANTS
+// CTG ONE TECHNOLOGY - CONSTANTS
 // ============================================
 
 import config from '@/config/config.json';
@@ -79,7 +79,7 @@ export const BUSINESS_UNITS = [
   { id: 'education', name: 'Valderrama International School', color: '#d4a259' },
   { id: 'hospitality', name: 'CTG Suites', color: '#6b8cae' },
   { id: 'realestate', name: 'Bechara Real Estate', color: '#7da87d' },
-  { id: 'tech', name: 'CTG One Corporation', color: '#ae8c9a' },
+  { id: 'tech', name: 'CTG One Technology', color: '#ae8c9a' },
   { id: 'veterinary', name: 'Nvet Care', color: '#8c9aae' },
   { id: 'dental', name: 'Oralgreen', color: '#7dae9a' },
   { id: 'legal', name: 'Legalyst Consultores', color: '#c4956a' },

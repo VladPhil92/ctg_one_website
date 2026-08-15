@@ -1,5 +1,5 @@
 // ============================================
-// CTG ONE CORPORATION - CONTENT DATA
+// CTG ONE TECHNOLOGY - CONTENT DATA
 // ============================================
 
 import config from '@/config/config.json';
@@ -22,7 +22,7 @@ export const HERO = {
   titleHighlight: 'Strategy is architecture.',
   subtitle: 'We design both.',
   description:
-    'CTG One Corporation is a technology company and integrated business ecosystem that designs technological infrastructure and strategic architecture. We operate under a dual model: technology infrastructure and a commercial agency with trained advisors.',
+    'CTG One Technology is a technology company and integrated business ecosystem that designs technological infrastructure and strategic architecture. We operate under a dual model: technology infrastructure and a commercial agency with trained advisors.',
   ctaPrimary: 'Explore Ecosystem',
   ctaSecondary: 'Start Conversation',
   metrics: [
@@ -39,7 +39,7 @@ export const ABOUT = {
   title: 'Dual Architecture:',
   titleHighlight: 'Technology & Business Ecosystem',
   description:
-    'CTG One Corporation is a technology company founded in 2024 in Cartagena, Colombia, operating under a dual architecture: simultaneously a technological infrastructure company and an integrated business ecosystem of products and services.',
+    'CTG One Technology is a technology company founded in 2024 in Cartagena, Colombia, operating under a dual architecture: simultaneously a technological infrastructure company and an integrated business ecosystem of products and services.',
   // The 5 Pillars of CTG One
   features: [
     {
@@ -147,7 +147,7 @@ export const ECOSYSTEM = {
       // Official CTG One coin logomark supplied and cropped to
       // public/images/logo/ctg-one-coin-icon.png (transparent background).
       id: 'tech',
-      name: 'CTG One Corporation',
+      name: 'CTG One Technology',
       description: 'Core technology: automation, software, AI agents, applications, digital solutions, CTG One Token, and fintech platform.',
       icon: 'ctgone',
       color: '#ae8c9a',
@@ -306,7 +306,7 @@ export const CONTACT = {
 
 // Footer
 export const FOOTER = {
-  brand: 'CTG One Corporation',
+  brand: 'CTG One Technology',
   tagline: 'Technology is infrastructure. Strategy is architecture.',
   links: {
     company: ['About', 'Team', 'Careers', 'Press'],
@@ -314,5 +314,5 @@ export const FOOTER = {
     resources: ['Documentation', 'Whitepaper', 'Blog', 'Support'],
     legal: ['Privacy Policy', 'Terms of Service', 'Cookie Policy'],
   },
-  copyright: `© ${new Date().getFullYear()} CTG One Corporation. All rights reserved.`,
+  copyright: `© ${new Date().getFullYear()} CTG One Technology. All rights reserved.`,
 };

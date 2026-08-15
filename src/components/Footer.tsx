@@ -35,7 +35,7 @@ export const Footer: React.FC = () => {
                   CTG One
                 </span>
                 <span className="text-[9px] text-text-dim uppercase tracking-[0.2em]">
-                  Corporation
+                  Technology
                 </span>
               </div>
             </a>
@@ -113,7 +113,7 @@ export const Footer: React.FC = () => {
           style={{ borderTop: '1px solid rgba(255, 255, 255, 0.03)' }}
         >
           <p className="text-[10px] sm:text-[11px] text-text-dim tracking-wide">
-            © {currentYear} CTG One Corporation
+            © {currentYear} CTG One Technology
           </p>
           <div className="flex items-center gap-6 sm:gap-10">
             <a

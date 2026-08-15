@@ -56,7 +56,7 @@ const iconMap: Record<string, React.ReactNode> = {
   ctgone: (
     <Image
       src="/images/logo/ctg-one-coin-icon.png"
-      alt="CTG One Corporation"
+      alt="CTG One Technology"
       width={36}
       height={36}
       className="object-contain"
