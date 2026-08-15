@@ -1,5 +1,7 @@
 'use client';
 
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import React, { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { z } from 'zod';
@@ -13,6 +15,7 @@ const loginSchema = z.object({
 });
 
 export default function IniciarSesionPage() {
+  const router = useRouter();
   return (
     <Suspense fallback={null}>
       <IniciarSesionForm />
@@ -55,6 +58,7 @@ function IniciarSesionForm() {
         password: parsed.data.password,
       });
       if (signInError) throw signInError;
+      router.push('/dashboard');
       router.push(redirectTo);
       router.refresh();
     } catch (err) {
