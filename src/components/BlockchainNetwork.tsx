@@ -4,7 +4,7 @@ import React, { memo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   BrainCircuit,
-  ChartNoAxesCombined,
+  TrendingUp,
   Building2,
   GraduationCap,
   HeartPulse,
@@ -24,7 +24,7 @@ const GOLD = '#d4a259';
 
 const units: BusinessUnit[] = [
   { id: 'ai', label: 'AI Strategy', icon: BrainCircuit },
-  { id: 'commerce', label: 'Commerce', icon: ChartNoAxesCombined },
+  { id: 'commerce', label: 'Commerce', icon: TrendingUp },
   { id: 'hospitality', label: 'Hospitality', icon: Building2 },
   { id: 'education', label: 'Education', icon: GraduationCap },
   { id: 'health', label: 'Health', icon: HeartPulse },
@@ -93,7 +93,6 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
           </clipPath>
         </defs>
 
-        {/* Technical orbital system — CSS/SVG only, no continuous React re-renders. */}
         <g opacity="0.7">
           <circle cx="200" cy="200" r="178" fill="none" stroke="rgba(212,162,89,0.08)" strokeWidth="0.7" strokeDasharray="2 7">
             <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="70s" repeatCount="indefinite" />
@@ -105,7 +104,6 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
           <circle cx="200" cy="200" r="77" fill="none" stroke="rgba(212,162,89,0.12)" strokeWidth="0.7" strokeDasharray="1 8" />
         </g>
 
-        {/* Precision markers */}
         {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => {
           const rad = (angle * Math.PI) / 180;
           const x1 = 200 + 171 * Math.cos(rad);
@@ -115,7 +113,6 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
           return <line key={angle} x1={x1} y1={y1} x2={x2} y2={y2} stroke={GOLD} strokeOpacity="0.26" strokeWidth="0.8" />;
         })}
 
-        {/* Connections */}
         {units.map((unit, index) => {
           const pos = getNodePosition(index, units.length);
           const active = hoveredNode === unit.id;
@@ -138,7 +135,6 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
           );
         })}
 
-        {/* Nodes */}
         {units.map((unit, index) => {
           const Icon = unit.icon;
           const pos = getNodePosition(index, units.length);
@@ -185,7 +181,6 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
           );
         })}
 
-        {/* Central mariamulata / CTG One core */}
         <g>
           <circle cx="200" cy="200" r="67" fill="url(#networkCenterGlow)" />
           <circle cx="200" cy="200" r="53" fill="none" stroke={GOLD} strokeOpacity="0.2" strokeWidth="0.8" strokeDasharray="4 7">
