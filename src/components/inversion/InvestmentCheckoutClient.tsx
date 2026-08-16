@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { formatCents } from '@/lib/format';
 import { PAYMENT_INSTRUCTIONS_CONFIGURED, BANK_TRANSFER_INSTRUCTIONS, BRE_B_INSTRUCTIONS } from '@/lib/payment-instructions';
 import type { InvestmentProductionLot, LotFundingSummary } from '@/types/investment';
-import { Boxes, Check, CreditCard, FileCheck2, Minus, Plus, RadioTower, ReceiptText, ShieldCheck, WalletCards } from 'lucide-react';
+import { Boxes, Check, CreditCard, FileCheck2, Minus, Plus, RadioTower, ShieldCheck, WalletCards } from 'lucide-react';
 
 type PaymentMethod = 'bank_transfer' | 'pse' | 'bre_b_qr' | 'crypto';
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
