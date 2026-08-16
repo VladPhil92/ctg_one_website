@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const ITEMS = [
   { href: '/admin', label: 'Resumen' },
   { href: '/admin/operations', label: 'Producción OS' },
+  { href: '/admin/operations/overview', label: 'Ops Intelligence' },
   { href: '/admin/operations/scanner', label: 'Scanner' },
   { href: '/inversion/admin/orders', label: 'Inversiones' },
   { href: '/admin/usuarios', label: 'Usuarios' },
