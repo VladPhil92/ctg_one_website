@@ -2,12 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // Refreshes the Supabase auth session cookie on every request, then
-// gates /dashboard (any authenticated user) and /admin (admin role only,
-// re-checked against the profiles table — never trust a client-supplied
-// claim). This is a UX/perf fast-path, not the real authorization
-// boundary: every RPC a signed-in user can call re-verifies the role
-// itself (see supabase/migrations/0001_init.sql) precisely so a bug here
-// can't turn into unauthorized data access or fund movement.
+// gates authenticated/admin surfaces. This is a UX/perf fast-path, not
+// the real authorization boundary: database RLS/RPCs re-check access.
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -37,6 +33,7 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isDashboardRoute = pathname.startsWith('/dashboard');
   const isAdminRoute = pathname.startsWith('/admin');
+  const isKnowledgeRoute = pathname.startsWith('/knowledge');
   // CTG Craft Beer Inversión (docs/investment/adr/ADR-011): reuses this
   // same session, gated separately so /inversion has its own redirect
   // targets and doesn't send a signed-out investment visitor into the
@@ -44,7 +41,7 @@ export async function updateSession(request: NextRequest) {
   const isInvestmentAppRoute = pathname.startsWith('/inversion/app');
   const isInvestmentAdminRoute = pathname.startsWith('/inversion/admin');
 
-  if ((isDashboardRoute || isAdminRoute) && !user) {
+  if ((isDashboardRoute || isAdminRoute || isKnowledgeRoute) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/iniciar-sesion';
     url.searchParams.set('next', pathname);

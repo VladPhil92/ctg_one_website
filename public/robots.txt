@@ -8,6 +8,7 @@ Allow: /
 Disallow: /api/
 Disallow: /admin/
 Disallow: /dashboard/
+Disallow: /knowledge
 Disallow: /inversion/app
 Disallow: /inversion/admin
 Disallow: /iniciar-sesion
