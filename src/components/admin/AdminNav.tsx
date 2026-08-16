@@ -10,6 +10,7 @@ const ITEMS = [
   { href: '/admin/operations', label: 'Producción OS' },
   { href: '/admin/operations/overview', label: 'Ops Intelligence' },
   { href: '/admin/operations/scanner', label: 'Scanner' },
+  { href: '/admin/operations/settlement', label: 'Settlement' },
   { href: '/inversion/admin/orders', label: 'Inversiones' },
   { href: '/admin/usuarios', label: 'Usuarios' },
   { href: '/admin/kyc', label: 'KYC' },
