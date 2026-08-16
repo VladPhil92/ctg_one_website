@@ -31,7 +31,7 @@ function isMissingSchema(error: { code?: string; message?: string } | null): boo
   return message.includes('does not exist') || message.includes('could not find the function') || message.includes('schema cache');
 }
 
-async function timed<T>(fn: () => Promise<T>): Promise<{ value: T; latencyMs: number }> {
+async function timed<T>(fn: () => PromiseLike<T>): Promise<{ value: T; latencyMs: number }> {
   const started = Date.now();
   const value = await fn();
   return { value, latencyMs: Date.now() - started };
