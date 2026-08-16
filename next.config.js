@@ -1,12 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // NOTE: static export removed — real user accounts, deposits, and the
-  // admin panel need Route Handlers and server-side Supabase sessions,
-  // which `output: 'export'` does not support. The site now needs a
-  // Node-capable host (Vercel) instead of a static file host.
+  // CTG One requires a Node-capable runtime because the application uses
+  // middleware, authenticated server-side Supabase sessions and Route Handlers.
+  // Production currently runs as a Render Web Service.
   images: {
     unoptimized: true,
   },
-}
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+        ],
+      },
+    ];
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
