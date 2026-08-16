@@ -29,6 +29,12 @@ type Item = {
   status: Status;
 };
 
+type UseCase = {
+  title: string;
+  description: string;
+  status: Status;
+};
+
 const statusClass: Record<Status, string> = {
   LIVE: 'border-accent/30 text-accent bg-accent/[0.035]',
   PARTIAL: 'border-white/[0.10] text-text-secondary bg-white/[0.02]',
@@ -134,18 +140,18 @@ export const AIArchitectureSection: React.FC = () => {
         { icon: Network, title: 'Cost & usage controls', description: 'Budgets, per-flow limits, and usage telemetry before inference scales across the ecosystem.', status: 'ROADMAP' },
       ];
 
-  const useCases = es
+  const useCases: UseCase[] = es
     ? [
-        ['Document intelligence', 'Extracción, clasificación y resumen de documentos internos con revisión humana.', 'IN DEVELOPMENT' as Status],
-        ['Knowledge assistant', 'Asistencia contextual sobre documentación autorizada, con citas y límites de dominio.', 'ROADMAP' as Status],
-        ['Operational copilot', 'Apoyo a equipos con recomendaciones sobre datos operativos sin ejecución autónoma inicial.', 'ROADMAP' as Status],
-        ['Customer support', 'Clasificación y borradores de respuesta con escalamiento humano para casos sensibles.', 'ROADMAP' as Status],
+        { title: 'Document intelligence', description: 'Extracción, clasificación y resumen de documentos internos con revisión humana.', status: 'IN DEVELOPMENT' },
+        { title: 'Knowledge assistant', description: 'Asistencia contextual sobre documentación autorizada, con citas y límites de dominio.', status: 'ROADMAP' },
+        { title: 'Operational copilot', description: 'Apoyo a equipos con recomendaciones sobre datos operativos sin ejecución autónoma inicial.', status: 'ROADMAP' },
+        { title: 'Customer support', description: 'Clasificación y borradores de respuesta con escalamiento humano para casos sensibles.', status: 'ROADMAP' },
       ]
     : [
-        ['Document intelligence', 'Extraction, classification, and summarization of internal documents with human review.', 'IN DEVELOPMENT' as Status],
-        ['Knowledge assistant', 'Contextual assistance over authorized documentation with citations and domain boundaries.', 'ROADMAP' as Status],
-        ['Operational copilot', 'Support teams with recommendations over operating data without initial autonomous execution.', 'ROADMAP' as Status],
-        ['Customer support', 'Classification and response drafts with human escalation for sensitive cases.', 'ROADMAP' as Status],
+        { title: 'Document intelligence', description: 'Extraction, classification, and summarization of internal documents with human review.', status: 'IN DEVELOPMENT' },
+        { title: 'Knowledge assistant', description: 'Contextual assistance over authorized documentation with citations and domain boundaries.', status: 'ROADMAP' },
+        { title: 'Operational copilot', description: 'Support teams with recommendations over operating data without initial autonomous execution.', status: 'ROADMAP' },
+        { title: 'Customer support', description: 'Classification and response drafts with human escalation for sensitive cases.', status: 'ROADMAP' },
       ];
 
   return (
@@ -181,7 +187,6 @@ export const AIArchitectureSection: React.FC = () => {
       <div className="relative py-20 sm:py-28 md:py-32 bg-bg-secondary border-y border-white/[0.035]">
         <Container>
           <FadeInSection><div className="max-w-3xl mb-12"><Badge variant="accent" className="mb-6">{copy.pipelineBadge}</Badge><h2 className="font-outfit font-semibold text-3xl sm:text-4xl md:text-5xl text-white tracking-[-0.035em] mb-5">{copy.pipelineTitle}</h2><p className="text-sm sm:text-base text-text-muted leading-relaxed">{copy.pipelineDescription}</p></div></FadeInSection>
-
           <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-8 lg:gap-12">
             <FadeInSection direction="left">
               <div className="rounded-2xl border border-accent/15 bg-black/25 p-6 sm:p-8">
@@ -193,7 +198,6 @@ export const AIArchitectureSection: React.FC = () => {
                 ))}
               </div>
             </FadeInSection>
-
             <div className="grid sm:grid-cols-2 gap-3">
               {architecture.map(({ icon: Icon, title, description, status }, index) => (
                 <FadeInSection key={title} delay={0.04 + index * 0.04}>
@@ -228,7 +232,7 @@ export const AIArchitectureSection: React.FC = () => {
         <Container>
           <FadeInSection><div className="max-w-3xl mb-12"><Badge variant="accent" className="mb-6">{copy.useCasesBadge}</Badge><h2 className="font-outfit font-semibold text-3xl sm:text-4xl md:text-5xl text-white tracking-[-0.035em] mb-5">{copy.useCasesTitle}</h2><p className="text-sm sm:text-base text-text-muted leading-relaxed">{copy.useCasesDescription}</p></div></FadeInSection>
           <div className="grid md:grid-cols-2 gap-4">
-            {useCases.map(([title, description, status], index) => (
+            {useCases.map(({ title, description, status }, index) => (
               <FadeInSection key={title} delay={0.05 + index * 0.05}>
                 <div className="rounded-xl border border-white/[0.055] bg-white/[0.01] p-6 sm:p-7 min-h-[175px]">
                   <div className="flex items-start justify-between gap-4 mb-5"><Bot size={18} className="text-accent" /><span className={`text-[7px] uppercase tracking-[0.14em] px-2 py-1 rounded-full border ${statusClass[status]}`}>{status}</span></div>
@@ -237,13 +241,8 @@ export const AIArchitectureSection: React.FC = () => {
               </FadeInSection>
             ))}
           </div>
-
-          <FadeInSection delay={0.22}>
-            <div className="mt-14 border-l border-accent/40 pl-6 sm:pl-8 max-w-4xl"><p className="font-outfit text-xl sm:text-2xl md:text-3xl leading-relaxed tracking-[-0.02em] text-white/90">{copy.principle}</p></div>
-          </FadeInSection>
-          <FadeInSection delay={0.28}>
-            <Link href="/services" className="mt-10 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-accent hover:text-white transition-colors">{copy.technologyLink}<ArrowUpRight size={14} /></Link>
-          </FadeInSection>
+          <FadeInSection delay={0.22}><div className="mt-14 border-l border-accent/40 pl-6 sm:pl-8 max-w-4xl"><p className="font-outfit text-xl sm:text-2xl md:text-3xl leading-relaxed tracking-[-0.02em] text-white/90">{copy.principle}</p></div></FadeInSection>
+          <FadeInSection delay={0.28}><Link href="/services" className="mt-10 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-accent hover:text-white transition-colors">{copy.technologyLink}<ArrowUpRight size={14} /></Link></FadeInSection>
         </Container>
       </div>
     </section>
