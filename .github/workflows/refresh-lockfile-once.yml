@@ -1,0 +1,32 @@
+name: Refresh lockfile once
+
+on:
+  push:
+    branches:
+      - agent/security-local-qr
+    paths:
+      - .github/workflows/refresh-lockfile-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/security-local-qr
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm audit fix --package-lock-only --omit=dev --ignore-scripts
+      - name: Commit generated lockfile
+        run: |
+          if git diff --quiet package-lock.json; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: apply compatible audit lockfile fixes [lockfile-refresh]"
+          git push origin HEAD:agent/security-local-qr
