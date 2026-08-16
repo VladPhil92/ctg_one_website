@@ -20,14 +20,17 @@ function shouldRedact(key: string): boolean {
   return SENSITIVE_KEYS.some((candidate) => normalized.includes(candidate));
 }
 
-function redact(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(redact);
+function redactValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(redactValue);
   if (!value || typeof value !== 'object') return value;
+  return redactContext(value as LogContext);
+}
 
+function redactContext(context: LogContext): LogContext {
   return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>).map(([key, nested]) => [
+    Object.entries(context).map(([key, value]) => [
       key,
-      shouldRedact(key) ? '[REDACTED]' : redact(nested),
+      shouldRedact(key) ? '[REDACTED]' : redactValue(value),
     ])
   );
 }
@@ -39,7 +42,7 @@ function emit(level: LogLevel, event: string, context: LogContext = {}) {
     event,
     service: 'ctg-one-web',
     environment: process.env.NODE_ENV ?? 'unknown',
-    ...redact(context),
+    ...redactContext(context),
   };
 
   const line = JSON.stringify(payload);
