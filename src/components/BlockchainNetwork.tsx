@@ -13,32 +13,31 @@ import {
   Landmark,
   type LucideIcon,
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface BusinessUnit {
   id: string;
-  label: string;
+  en: string;
+  es: string;
   icon: LucideIcon;
 }
 
 const GOLD = '#d4a259';
 
 const units: BusinessUnit[] = [
-  { id: 'ai', label: 'AI Strategy', icon: BrainCircuit },
-  { id: 'commerce', label: 'Commerce', icon: TrendingUp },
-  { id: 'hospitality', label: 'Hospitality', icon: Building2 },
-  { id: 'education', label: 'Education', icon: GraduationCap },
-  { id: 'health', label: 'Health', icon: HeartPulse },
-  { id: 'legal', label: 'Legal', icon: Scale },
-  { id: 'design', label: 'Design', icon: PenTool },
-  { id: 'fintech', label: 'Fintech', icon: Landmark },
+  { id: 'ai', en: 'AI Strategy', es: 'Estrategia de IA', icon: BrainCircuit },
+  { id: 'commerce', en: 'Commerce', es: 'Comercio', icon: TrendingUp },
+  { id: 'hospitality', en: 'Hospitality', es: 'Hospitalidad', icon: Building2 },
+  { id: 'education', en: 'Education', es: 'Educación', icon: GraduationCap },
+  { id: 'health', en: 'Health', es: 'Salud', icon: HeartPulse },
+  { id: 'legal', en: 'Legal', es: 'Legal', icon: Scale },
+  { id: 'design', en: 'Design', es: 'Diseño', icon: PenTool },
+  { id: 'fintech', en: 'Fintech', es: 'Fintech', icon: Landmark },
 ];
 
 const getNodePosition = (index: number, total: number, radius = 150) => {
   const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
-  return {
-    x: 200 + radius * Math.cos(angle),
-    y: 200 + radius * Math.sin(angle),
-  };
+  return { x: 200 + radius * Math.cos(angle), y: 200 + radius * Math.sin(angle) };
 };
 
 interface BlockchainNetworkProps {
@@ -51,6 +50,7 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
   size = 'md',
 }) {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const { locale } = useLanguage();
 
   const handleMouseEnter = useCallback((unitId: string) => {
     if (interactive) setHoveredNode(unitId);
@@ -60,7 +60,10 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
   const svgSize = size === 'sm' ? 320 : size === 'lg' ? 520 : 400;
 
   return (
-    <div className="relative flex items-center justify-center" aria-label="CTG One technology ecosystem">
+    <div
+      className="relative flex items-center justify-center"
+      aria-label={locale === 'es' ? 'Ecosistema tecnológico de CTG One' : 'CTG One technology ecosystem'}
+    >
       <div
         className="absolute inset-[13%] rounded-full pointer-events-none"
         style={{
@@ -88,9 +91,7 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <clipPath id="centerLogoClip">
-            <circle cx="200" cy="200" r="30" />
-          </clipPath>
+          <clipPath id="centerLogoClip"><circle cx="200" cy="200" r="30" /></clipPath>
         </defs>
 
         <g opacity="0.7">
@@ -175,7 +176,7 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
                 fontFamily="DM Sans, sans-serif"
                 letterSpacing="0.04em"
               >
-                {unit.label}
+                {locale === 'es' ? unit.es : unit.en}
               </text>
             </g>
           );
