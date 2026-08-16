@@ -2,7 +2,6 @@ services:
   - type: web
     name: ctg-one-website
     runtime: node
-    plan: starter
     branch: main
     buildCommand: npm ci && npm run build
     startCommand: npm run start
