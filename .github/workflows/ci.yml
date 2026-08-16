@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Typecheck and build
+    name: Test, typecheck and build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -33,6 +33,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Critical safety invariants
+        run: npm test
+
+      - name: Production dependency audit
+        run: npm run audit:critical
 
       - name: Typecheck
         run: npx tsc --noEmit
