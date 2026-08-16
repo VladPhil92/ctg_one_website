@@ -1,0 +1,14 @@
+export type InvestmentRole='SUPER_ADMIN'|'FINANCE_ADMIN'|'PRODUCTION_MANAGER'|'INVENTORY_MANAGER'|'SALES_MANAGER'|'AUDITOR'|'PARTICIPANT';
+export type InvestmentPermission='ops.read'|'production.manage'|'inventory.manage'|'sales.manage'|'finance.read'|'finance.settle'|'funding.manage'|'audit.read'|'labels.read'|'labels.manage';
+
+const MATRIX:Record<InvestmentRole,InvestmentPermission[]>={
+ SUPER_ADMIN:['ops.read','production.manage','inventory.manage','sales.manage','finance.read','finance.settle','funding.manage','audit.read','labels.read','labels.manage'],
+ FINANCE_ADMIN:['ops.read','finance.read','finance.settle','funding.manage','audit.read'],
+ PRODUCTION_MANAGER:['ops.read','production.manage','labels.manage','inventory.manage'],
+ INVENTORY_MANAGER:['ops.read','inventory.manage','labels.read'],
+ SALES_MANAGER:['ops.read','sales.manage','labels.read'],
+ AUDITOR:['ops.read','finance.read','audit.read','labels.read'],
+ PARTICIPANT:[],
+};
+export const hasPermission=(role:InvestmentRole|undefined,permission:InvestmentPermission)=>!!role&&MATRIX[role]?.includes(permission);
+export const ROLE_LABELS:Record<InvestmentRole,string>={SUPER_ADMIN:'Super Admin',FINANCE_ADMIN:'Finanzas',PRODUCTION_MANAGER:'Producción',INVENTORY_MANAGER:'Inventario',SALES_MANAGER:'Ventas',AUDITOR:'Auditoría',PARTICIPANT:'Participante'};
