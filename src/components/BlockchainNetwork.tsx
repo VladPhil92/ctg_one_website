@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, memo } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Brain,
-  TrendingUp,
+  BrainCircuit,
+  ChartNoAxesCombined,
   Building2,
   GraduationCap,
-  Heart,
+  HeartPulse,
   Scale,
-  Palette,
-  Wallet,
+  PenTool,
+  Landmark,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -18,22 +18,22 @@ interface BusinessUnit {
   id: string;
   label: string;
   icon: LucideIcon;
-  color: string;
 }
 
+const GOLD = '#d4a259';
+
 const units: BusinessUnit[] = [
-  { id: 'ai', label: 'AI Strategy', icon: Brain, color: '#d4a259' },
-  { id: 'commerce', label: 'Commerce', icon: TrendingUp, color: '#6b8cae' },
-  { id: 'hospitality', label: 'Hospitality', icon: Building2, color: '#7da87d' },
-  { id: 'education', label: 'Education', icon: GraduationCap, color: '#9a8cae' },
-  { id: 'health', label: 'Health', icon: Heart, color: '#ae8c9a' },
-  { id: 'legal', label: 'Legal', icon: Scale, color: '#8c9aae' },
-  { id: 'design', label: 'Design', icon: Palette, color: '#7dae9a' },
-  { id: 'fintech', label: 'Fintech', icon: Wallet, color: '#c4956a' },
+  { id: 'ai', label: 'AI Strategy', icon: BrainCircuit },
+  { id: 'commerce', label: 'Commerce', icon: ChartNoAxesCombined },
+  { id: 'hospitality', label: 'Hospitality', icon: Building2 },
+  { id: 'education', label: 'Education', icon: GraduationCap },
+  { id: 'health', label: 'Health', icon: HeartPulse },
+  { id: 'legal', label: 'Legal', icon: Scale },
+  { id: 'design', label: 'Design', icon: PenTool },
+  { id: 'fintech', label: 'Fintech', icon: Landmark },
 ];
 
-// Calculate positions in a circle
-const getNodePosition = (index: number, total: number, radius: number = 150) => {
+const getNodePosition = (index: number, total: number, radius = 150) => {
   const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
   return {
     x: 200 + radius * Math.cos(angle),
@@ -51,201 +51,133 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
   size = 'md',
 }) {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-  const [rotationAngle, setRotationAngle] = useState(0);
 
-  // Very slow rotation animation - subtle elegance
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRotationAngle((prev) => (prev + 0.05) % 360);
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Memoized hover handlers
   const handleMouseEnter = useCallback((unitId: string) => {
     if (interactive) setHoveredNode(unitId);
   }, [interactive]);
 
-  const handleMouseLeave = useCallback(() => {
-    setHoveredNode(null);
-  }, []);
-
-  const svgSize = size === 'sm' ? 320 : size === 'lg' ? 500 : 400;
+  const handleMouseLeave = useCallback(() => setHoveredNode(null), []);
+  const svgSize = size === 'sm' ? 320 : size === 'lg' ? 520 : 400;
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <svg
-        width={svgSize}
-        height={svgSize}
-        viewBox="0 0 400 400"
-        className="drop-shadow-2xl"
-      >
+    <div className="relative flex items-center justify-center" aria-label="CTG One technology ecosystem">
+      <div
+        className="absolute inset-[13%] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(212,162,89,0.09) 0%, rgba(212,162,89,0.025) 38%, transparent 70%)',
+          filter: 'blur(14px)',
+        }}
+      />
+
+      <svg width={svgSize} height={svgSize} viewBox="0 0 400 400" className="relative drop-shadow-2xl overflow-visible">
         <defs>
-          {/* Gradients for each unit - More subtle */}
-          {units.map((unit) => (
-            <radialGradient key={`gradient-${unit.id}`} id={`glow-${unit.id}`}>
-              <stop offset="0%" stopColor={unit.color} stopOpacity="0.3" />
-              <stop offset="100%" stopColor={unit.color} stopOpacity="0" />
-            </radialGradient>
-          ))}
-
-          {/* Center glow gradient - Refined */}
-          <radialGradient id="centerGlow">
-            <stop offset="0%" stopColor="#d4a259" stopOpacity="0.4" />
-            <stop offset="50%" stopColor="#d4a259" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#d4a259" stopOpacity="0" />
+          <radialGradient id="networkCenterGlow">
+            <stop offset="0%" stopColor={GOLD} stopOpacity="0.24" />
+            <stop offset="55%" stopColor={GOLD} stopOpacity="0.07" />
+            <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
           </radialGradient>
-
-          {/* Static gradient for connections */}
-          <linearGradient id="connectionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#d4a259" stopOpacity="0.05" />
-            <stop offset="50%" stopColor="#d4a259" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#d4a259" stopOpacity="0.05" />
+          <linearGradient id="networkLine" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={GOLD} stopOpacity="0.08" />
+            <stop offset="50%" stopColor={GOLD} stopOpacity="0.42" />
+            <stop offset="100%" stopColor={GOLD} stopOpacity="0.08" />
           </linearGradient>
-
-          {/* Blur filter */}
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <filter id="softGoldGlow" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
             <feMerge>
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          <clipPath id="centerLogoClip">
+            <circle cx="200" cy="200" r="30" />
+          </clipPath>
         </defs>
 
-        {/* Background circles */}
-        <circle
-          cx="200"
-          cy="200"
-          r="170"
-          fill="none"
-          stroke="rgba(255, 255, 255, 0.03)"
-          strokeWidth="1"
-          strokeDasharray="4 4"
-          style={{ transform: `rotate(${rotationAngle}deg)`, transformOrigin: '200px 200px' }}
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="150"
-          fill="none"
-          stroke="rgba(255, 255, 255, 0.04)"
-          strokeWidth="1"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="95"
-          fill="none"
-          stroke="rgba(255, 255, 255, 0.03)"
-          strokeWidth="1"
-          strokeDasharray="8 8"
-          style={{ transform: `rotate(${-rotationAngle * 0.5}deg)`, transformOrigin: '200px 200px' }}
-        />
+        {/* Technical orbital system — CSS/SVG only, no continuous React re-renders. */}
+        <g opacity="0.7">
+          <circle cx="200" cy="200" r="178" fill="none" stroke="rgba(212,162,89,0.08)" strokeWidth="0.7" strokeDasharray="2 7">
+            <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="70s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="200" cy="200" r="151" fill="none" stroke="rgba(212,162,89,0.18)" strokeWidth="0.7" />
+          <circle cx="200" cy="200" r="112" fill="none" stroke="rgba(255,255,255,0.045)" strokeWidth="0.7" strokeDasharray="8 9">
+            <animateTransform attributeName="transform" type="rotate" from="360 200 200" to="0 200 200" dur="52s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="200" cy="200" r="77" fill="none" stroke="rgba(212,162,89,0.12)" strokeWidth="0.7" strokeDasharray="1 8" />
+        </g>
 
-        {/* Connection lines */}
+        {/* Precision markers */}
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => {
+          const rad = (angle * Math.PI) / 180;
+          const x1 = 200 + 171 * Math.cos(rad);
+          const y1 = 200 + 171 * Math.sin(rad);
+          const x2 = 200 + 178 * Math.cos(rad);
+          const y2 = 200 + 178 * Math.sin(rad);
+          return <line key={angle} x1={x1} y1={y1} x2={x2} y2={y2} stroke={GOLD} strokeOpacity="0.26" strokeWidth="0.8" />;
+        })}
+
+        {/* Connections */}
         {units.map((unit, index) => {
           const pos = getNodePosition(index, units.length);
-          const isHovered = hoveredNode === unit.id;
-
+          const active = hoveredNode === unit.id;
           return (
             <g key={`connection-${unit.id}`}>
-              {/* Base connection */}
               <line
                 x1="200"
                 y1="200"
                 x2={pos.x}
                 y2={pos.y}
-                stroke={isHovered ? unit.color : 'rgba(255, 255, 255, 0.08)'}
-                strokeWidth={isHovered ? 2 : 1}
-                style={{ transition: 'all 0.3s ease' }}
+                stroke={active ? GOLD : 'url(#networkLine)'}
+                strokeOpacity={active ? 0.92 : 0.5}
+                strokeWidth={active ? 1.35 : 0.7}
+                style={{ transition: 'all 320ms ease' }}
               />
-
-              {/* Animated pulse on connection */}
-              {isHovered && (
-                <line
-                  x1="200"
-                  y1="200"
-                  x2={pos.x}
-                  y2={pos.y}
-                  stroke={unit.color}
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  opacity="0.3"
-                  filter="url(#glow)"
-                />
-              )}
+              <circle r="1.7" fill={GOLD} opacity={active ? 0.95 : 0.22}>
+                <animateMotion dur={`${5.5 + index * 0.35}s`} repeatCount="indefinite" path={`M200,200 L${pos.x},${pos.y}`} />
+              </circle>
             </g>
           );
         })}
 
-        {/* Unit Nodes */}
+        {/* Nodes */}
         {units.map((unit, index) => {
           const Icon = unit.icon;
           const pos = getNodePosition(index, units.length);
-          const isHovered = hoveredNode === unit.id;
-
+          const active = hoveredNode === unit.id;
           return (
             <g
-              key={`node-${unit.id}`}
-              style={{ cursor: interactive ? 'pointer' : 'default' }}
+              key={unit.id}
               onMouseEnter={() => handleMouseEnter(unit.id)}
               onMouseLeave={handleMouseLeave}
+              style={{ cursor: interactive ? 'pointer' : 'default' }}
             >
-              {/* Glow effect on hover */}
-              {isHovered && (
-                <circle
-                  cx={pos.x}
-                  cy={pos.y}
-                  r="40"
-                  fill={`url(#glow-${unit.id})`}
-                />
-              )}
-
-              {/* Node background - More subtle */}
               <motion.circle
                 cx={pos.x}
                 cy={pos.y}
-                r="24"
-                fill="rgba(15, 15, 18, 0.95)"
-                stroke={isHovered ? unit.color : 'rgba(255, 255, 255, 0.06)'}
-                strokeWidth={isHovered ? 1 : 0.5}
-                animate={{
-                  scale: isHovered ? 1.08 : 1,
-                }}
-                transition={{ duration: 0.4, ease: [0.33, 1, 0.68, 1] }}
+                r="28"
+                fill="rgba(9,9,11,0.96)"
+                stroke={GOLD}
+                strokeOpacity={active ? 0.95 : 0.25}
+                strokeWidth={active ? 1.2 : 0.7}
+                animate={{ scale: active ? 1.08 : 1 }}
+                transition={{ duration: 0.28 }}
                 style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
               />
-
-              {/* Icon container */}
-              <foreignObject
-                x={pos.x - 12}
-                y={pos.y - 12}
-                width="24"
-                height="24"
-              >
-                <div
-                  className="flex items-center justify-center w-6 h-6 transition-transform duration-300"
-                  style={{ transform: isHovered ? 'scale(1.1)' : 'scale(1)' }}
-                >
-                  <Icon
-                    size={18}
-                    color={isHovered ? unit.color : '#a1a1aa'}
-                    strokeWidth={1.5}
-                  />
+              <circle cx={pos.x} cy={pos.y} r="22" fill="none" stroke={GOLD} strokeOpacity={active ? 0.28 : 0.08} strokeWidth="0.7" />
+              {active && <circle cx={pos.x} cy={pos.y} r="34" fill="none" stroke={GOLD} strokeOpacity="0.18" strokeWidth="1" filter="url(#softGoldGlow)" />}
+              <foreignObject x={pos.x - 12} y={pos.y - 12} width="24" height="24">
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <Icon size={19} color={GOLD} strokeWidth={active ? 1.8 : 1.4} />
                 </div>
               </foreignObject>
-
-              {/* Label - only show if not overlapping center */}
               <text
                 x={pos.x}
-                y={pos.y + 42}
+                y={pos.y + 45}
                 textAnchor="middle"
-                fill={isHovered ? unit.color : '#71717a'}
-                fontSize="10"
+                fill={active ? '#e0bd78' : '#898178'}
+                fontSize="9.5"
                 fontWeight="500"
                 fontFamily="DM Sans, sans-serif"
-                opacity={isHovered ? 1 : 0.6}
+                letterSpacing="0.04em"
               >
                 {unit.label}
               </text>
@@ -253,70 +185,23 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
           );
         })}
 
-        {/* Center - CTG One Token (rendered last to be on top) */}
+        {/* Central mariamulata / CTG One core */}
         <g>
-          {/* Outer glow */}
-          <circle
-            cx="200"
-            cy="200"
-            r="60"
-            fill="url(#centerGlow)"
+          <circle cx="200" cy="200" r="67" fill="url(#networkCenterGlow)" />
+          <circle cx="200" cy="200" r="53" fill="none" stroke={GOLD} strokeOpacity="0.2" strokeWidth="0.8" strokeDasharray="4 7">
+            <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="28s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="200" cy="200" r="43" fill="#080808" stroke={GOLD} strokeOpacity="0.9" strokeWidth="1.2" filter="url(#softGoldGlow)" />
+          <circle cx="200" cy="200" r="35" fill="rgba(212,162,89,0.035)" stroke={GOLD} strokeOpacity="0.14" strokeWidth="0.7" />
+          <image
+            href="/images/logo/ctg-one-coin-icon.png"
+            x="169"
+            y="169"
+            width="62"
+            height="62"
+            preserveAspectRatio="xMidYMid slice"
+            clipPath="url(#centerLogoClip)"
           />
-
-          {/* Static ring - no animation for elegance */}
-          <circle
-            cx="200"
-            cy="200"
-            r="48"
-            fill="none"
-            stroke="#d4a259"
-            strokeWidth="0.5"
-            strokeDasharray="6 6"
-            opacity="0.4"
-          />
-
-          {/* Core circle - static, solid background */}
-          <circle
-            cx="200"
-            cy="200"
-            r="40"
-            fill="#09090b"
-            stroke="#d4a259"
-            strokeWidth="1"
-          />
-
-          {/* Inner glow */}
-          <circle
-            cx="200"
-            cy="200"
-            r="28"
-            fill="rgba(212, 162, 89, 0.08)"
-          />
-
-          {/* Center text */}
-          <text
-            x="200"
-            y="196"
-            textAnchor="middle"
-            fill="#d4a259"
-            fontSize="14"
-            fontWeight="600"
-            fontFamily="Outfit, sans-serif"
-            letterSpacing="0.05em"
-          >
-            CTG
-          </text>
-          <text
-            x="200"
-            y="212"
-            textAnchor="middle"
-            fill="#71717a"
-            fontSize="9"
-            fontFamily="DM Sans, sans-serif"
-            letterSpacing="0.15em"
-          >
-            ONE
-          </text>
         </g>
       </svg>
     </div>
