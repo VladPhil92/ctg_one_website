@@ -15,6 +15,7 @@ export const NAV_ITEMS = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
   { label: 'Technology', href: '/services' },
+  { label: 'Products', href: '/products' },
   { label: 'Ecosystem', href: '/ecosystem' },
   { label: 'Inversión', href: '/inversion' },
   { label: 'Rewards', href: '/rewards' },
@@ -41,26 +42,17 @@ export const BREAKPOINTS = {
 
 // Theme Colors
 export const COLORS = {
-  // Primary
   accent: '#f59e0b',
   accentLight: '#fbbf24',
   accentDark: '#d97706',
-  
-  // Secondary
   accentSecondary: '#3b82f6',
-  
-  // Backgrounds
   bgPrimary: '#0a0a0f',
   bgSecondary: '#12121a',
   bgTertiary: '#1a1a25',
-  
-  // Text
   textPrimary: '#ffffff',
   textSecondary: '#e4e4e7',
   textMuted: '#a1a1aa',
   textDim: '#71717a',
-  
-  // Semantic
   success: '#10b981',
   error: '#ef4444',
   warning: '#f59e0b',
