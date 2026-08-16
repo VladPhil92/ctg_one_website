@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node scripts/test-critical-invariants.mjs",
-    "audit:critical": "npm audit --omit=dev --audit-level=critical"
+    "audit:critical": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
@@ -17,7 +17,7 @@
     "ethers": "^6.16.0",
     "framer-motion": "^10.16.0",
     "lucide-react": "^0.294.0",
-    "next": "^14.0.0",
+    "next": "14.2.35",
     "qr": "^0.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
