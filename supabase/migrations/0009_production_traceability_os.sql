@@ -92,7 +92,8 @@ begin
       values (p_lot_id, v_i, v_serial, 'PACKAGED', now(), auth.uid());
   end loop;
 
-  perform public.record_inventory_movement(p_lot_id, 'PACKAGED', p_quantity);
+  insert into public.investment_inventory_movements(lot_id, movement_type, quantity_units, actor_id)
+    values (p_lot_id, 'PACKAGED', p_quantity, auth.uid());
 
   insert into public.investment_audit_log(actor_id, action, entity, entity_id, new_value)
     values (auth.uid(), 'generate_bottle_units', 'investment_production_lots', p_lot_id,
@@ -118,10 +119,9 @@ declare
   v_count int;
   v_movement text;
 begin
-  if not (
-    public.is_investment_operator()
-    or public.is_investment_sales_operator()
-  ) then raise exception 'not authorized'; end if;
+  if not (public.is_investment_operator() or public.is_investment_sales_operator()) then
+    raise exception 'not authorized';
+  end if;
 
   if p_new_status not in ('QC_APPROVED','WAREHOUSE','DISPATCHED','IN_MARKET','RETURNED','DAMAGED','LOST','EXPIRED','RECALLED') then
     raise exception 'unsupported unit status';
@@ -135,7 +135,6 @@ begin
     where lot_id = p_lot_id and serial_code = any(p_serial_codes)
       and status <> 'SOLD';
   get diagnostics v_count = row_count;
-
   if v_count = 0 then raise exception 'no eligible bottle units found'; end if;
 
   v_movement := case p_new_status
@@ -148,12 +147,14 @@ begin
     when 'EXPIRED' then 'EXPIRED'
     else null
   end;
-  if v_movement is not null then perform public.record_inventory_movement(p_lot_id, v_movement, v_count); end if;
+  if v_movement is not null then
+    insert into public.investment_inventory_movements(lot_id, movement_type, quantity_units, actor_id)
+      values (p_lot_id, v_movement, v_count, auth.uid());
+  end if;
 
   insert into public.investment_audit_log(actor_id, action, entity, entity_id, new_value)
     values (auth.uid(), 'update_bottle_units_status', 'investment_production_lots', p_lot_id,
       jsonb_build_object('status', p_new_status, 'count', v_count, 'location', p_location));
-
   return v_count;
 end;
 $$;
@@ -187,7 +188,8 @@ begin
   if v_count = 0 then raise exception 'no sellable bottle units found'; end if;
 
   v_revenue := v_count::bigint * p_unit_price_cents;
-  perform public.record_inventory_movement(p_lot_id, 'SOLD', v_count);
+  insert into public.investment_inventory_movements(lot_id, movement_type, quantity_units, actor_id)
+    values (p_lot_id, 'SOLD', v_count, auth.uid());
 
   insert into public.investment_lot_financial_entries(lot_id, entry_type, amount_cents, description, actor_id)
     values (p_lot_id, 'REVENUE', v_revenue,
