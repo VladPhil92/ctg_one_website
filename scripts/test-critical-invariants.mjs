@@ -13,6 +13,8 @@ const knowledgeQuery = await read('src/app/api/knowledge/query/route.ts');
 const knowledgeIngest = await read('src/app/api/knowledge/admin/ingest/route.ts');
 const knowledgeMigration = await read('supabase/migrations/0007_ctg_knowledge_v01.sql');
 const supabaseMiddleware = await read('src/lib/supabase/middleware.ts');
+const adminNav = await read('src/components/admin/AdminNav.tsx');
+const labelsPage = await read('src/app/admin/operations/labels/page.tsx');
 
 const expectedFlags = [
   'CTG_INVESTMENT_PUBLIC_REGISTRATION_ENABLED',
@@ -24,48 +26,17 @@ const expectedFlags = [
   'CTG_INVESTMENT_WHATSAPP_NOTIFICATIONS_ENABLED',
 ];
 
-assert.match(
-  flags,
-  /process\.env\[name\]\s*===\s*['"]true['"]/,
-  'Investment feature flags must fail closed unless explicitly set to true.'
-);
+assert.match(flags,/process\.env\[name\]\s*===\s*['"]true['"]/, 'Investment feature flags must fail closed unless explicitly set to true.');
+for (const name of expectedFlags) assert.ok(flags.includes(name), `Missing required investment safety flag: ${name}`);
 
-for (const name of expectedFlags) {
-  assert.ok(flags.includes(name), `Missing required investment safety flag: ${name}`);
-}
+assert.ok(payments.includes("const PENDING = 'PENDING_CONFIGURATION'"), 'Payment instructions must retain an explicit pending sentinel.');
+assert.ok(payments.includes('PAYMENT_INSTRUCTIONS_CONFIGURED'), 'Payment instructions must expose a derived fail-closed safety switch.');
+assert.ok(payments.includes('.every(configured)'), 'Payment channels must require every displayed value to be configured.');
 
-assert.ok(
-  payments.includes("const PENDING = 'PENDING_CONFIGURATION'"),
-  'Payment instructions must retain an explicit pending sentinel.'
-);
-assert.ok(
-  payments.includes('PAYMENT_INSTRUCTIONS_CONFIGURED'),
-  'Payment instructions must expose a derived fail-closed safety switch.'
-);
-assert.ok(
-  payments.includes('.every(configured)'),
-  'Payment channels must require every displayed value to be configured.'
-);
+for (const header of ['X-Content-Type-Options','X-Frame-Options','Referrer-Policy','Permissions-Policy','Cross-Origin-Opener-Policy']) assert.ok(nextConfig.includes(header), `Missing baseline security header: ${header}`);
 
-for (const header of [
-  'X-Content-Type-Options',
-  'X-Frame-Options',
-  'Referrer-Policy',
-  'Permissions-Policy',
-  'Cross-Origin-Opener-Policy',
-]) {
-  assert.ok(nextConfig.includes(header), `Missing baseline security header: ${header}`);
-}
-
-assert.ok(
-  health.includes("'Cache-Control': 'no-store, max-age=0'"),
-  'Health responses must not be cached.'
-);
-assert.ok(
-  !health.includes('SUPABASE_SERVICE_ROLE_KEY'),
-  'Health endpoint must never expose or inspect the Supabase service-role secret.'
-);
-
+assert.ok(health.includes("'Cache-Control': 'no-store, max-age=0'"), 'Health responses must not be cached.');
+assert.ok(!health.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Health endpoint must never expose or inspect the Supabase service-role secret.');
 assert.ok(render.includes('healthCheckPath: /api/health'), 'Render must use the application health endpoint.');
 assert.ok(render.includes('autoDeployTrigger: checksPass'), 'Render must wait for repository checks before deployment.');
 assert.ok(render.includes('buildCommand: npm ci && npm run build'), 'Render must perform a clean production build.');
@@ -73,7 +44,6 @@ assert.ok(render.includes('NEXT_PUBLIC_SITE_URL'), 'Render blueprint must define
 assert.ok(render.includes('https://ctgone.com'), 'Render blueprint must use ctgone.com as the canonical production URL.');
 assert.ok(render.includes('SUPABASE_SERVICE_ROLE_KEY\n        sync: false'), 'Service-role secret must never be committed into the Render blueprint.');
 
-// CTG Knowledge v0.1 safety contract.
 assert.ok(render.includes('OPENAI_API_KEY\n        sync: false'), 'OpenAI API key must remain an external Render secret.');
 assert.ok(!render.includes('NEXT_PUBLIC_OPENAI'), 'OpenAI credentials must never be exposed through NEXT_PUBLIC variables.');
 assert.ok(knowledgeProvider.includes("import 'server-only'"), 'AI provider must be server-only.');
@@ -86,5 +56,16 @@ assert.ok(knowledgeMigration.includes('enable row level security'), 'Knowledge t
 assert.ok(knowledgeMigration.includes('security invoker'), 'Knowledge similarity search must retain caller RLS through SECURITY INVOKER.');
 assert.ok(knowledgeMigration.includes("classification in ('internal')"), 'v0.1 corpus classification must remain deliberately narrow.');
 assert.ok(supabaseMiddleware.includes("pathname.startsWith('/knowledge')"), 'Knowledge UI must be gated by the authenticated middleware path.');
+
+// Admin OS RBAC and traceability safety contract.
+for (const role of ['SUPER_ADMIN','FINANCE_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER','AUDITOR']) {
+  assert.ok(supabaseMiddleware.includes(role), `Middleware must recognize investment role ${role}.`);
+  assert.ok(adminNav.includes(role), `Admin navigation must recognize investment role ${role}.`);
+}
+assert.ok(supabaseMiddleware.includes("prefix:'/admin/operations/settlement'"), 'Settlement route must have a dedicated role gate.');
+assert.ok(supabaseMiddleware.includes("roles:['SUPER_ADMIN','FINANCE_ADMIN']"), 'Settlement must remain restricted to finance authority.');
+assert.ok(labelsPage.includes('/beer/'), 'Label factory QR payload must point only to public bottle trace routes.');
+assert.ok(!labelsPage.includes('participant_user_id'), 'Printed labels must never contain participant identity.');
+assert.ok(!labelsPage.includes('capital_committed'), 'Printed labels must never contain participant financial data.');
 
 console.log('Critical invariants: PASS');
