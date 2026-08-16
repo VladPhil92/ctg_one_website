@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
-export async function middleware(request: NextRequest) {
-  // Supabase isn't configured yet in every environment (e.g. before the
-  // project's env vars are set up) — no-op rather than 500 every request.
+export async function proxy(request: NextRequest) {
+  // Supabase isn't configured yet in every environment (for example,
+  // before environment variables are provisioned). No-op rather than
+  // returning 500 for every request.
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return NextResponse.next();
   }
