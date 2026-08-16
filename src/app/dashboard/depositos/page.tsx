@@ -11,6 +11,7 @@ import {
   BANK_TRANSFER_INSTRUCTIONS,
   BRE_B_INSTRUCTIONS,
   CRYPTO_DEPOSIT_ADDRESSES,
+  PAYMENT_INSTRUCTIONS_CONFIGURED,
 } from '@/lib/payment-instructions';
 import type { TransactionMethod } from '@/types/domain';
 
@@ -31,8 +32,8 @@ export default function DepositosPage() {
   const [amount, setAmount] = useState('');
   const [externalReference, setExternalReference] = useState('');
   const [proofFile, setProofFile] = useState<File | null>(null);
-  const [cryptoNetwork, setCryptoNetwork] = useState(CRYPTO_DEPOSIT_ADDRESSES[0]?.network ?? '');
-  const [cryptoAsset, setCryptoAsset] = useState(CRYPTO_DEPOSIT_ADDRESSES[0]?.asset ?? '');
+  const [cryptoNetwork] = useState(CRYPTO_DEPOSIT_ADDRESSES[0]?.network ?? '');
+  const [cryptoAsset] = useState(CRYPTO_DEPOSIT_ADDRESSES[0]?.asset ?? '');
   const [cryptoTxHash, setCryptoTxHash] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,6 +47,11 @@ export default function DepositosPage() {
 
   const handleSubmit = async () => {
     setError(null);
+
+    if (!PAYMENT_INSTRUCTIONS_CONFIGURED) {
+      setError('Las recargas están temporalmente deshabilitadas mientras configuramos los canales de pago.');
+      return;
+    }
 
     if (!isSupabaseConfigured || !userId) {
       setError('Los depósitos no están disponibles todavía.');
@@ -108,6 +114,31 @@ export default function DepositosPage() {
   };
 
   if (isAuthLoading || !isAuthenticated) return null;
+
+  if (!PAYMENT_INSTRUCTIONS_CONFIGURED) {
+    return (
+      <div style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <Navbar />
+        <div className="min-h-screen pt-24 pb-16">
+          <Container size="small">
+            <h1 className="text-3xl font-outfit font-bold text-white mb-2">Recargar cuenta</h1>
+            <div
+              className="p-6 rounded-lg mt-8"
+              style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            >
+              <p className="text-sm font-semibold text-white mb-2">Canales de pago en configuración</p>
+              <p className="text-sm text-text-muted leading-relaxed mb-5">
+                Las recargas están temporalmente deshabilitadas. No mostraremos datos bancarios,
+                PSE, Llave Bre-B o direcciones de wallet hasta que hayan sido configurados y
+                verificados para producción.
+              </p>
+              <Button href="/dashboard" variant="secondary" size="sm">Volver al panel</Button>
+            </div>
+          </Container>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: 'var(--bg-primary)' }}>

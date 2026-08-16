@@ -1,28 +1,43 @@
-// Non-secret display content shown to users during a deposit — not env
-// vars, just easy to edit here once the real details exist.
+// Public display configuration for account top-ups.
 //
-// TODO(business owner): every value below is a placeholder. Fill in the
-// real bank account / PSE / Bre-B details and the real corporate crypto
-// wallet addresses before this goes live — nothing here is functional
-// yet, it's just what gets displayed on the deposit form.
+// IMPORTANT: production payment channels must fail closed until the real
+// legal holder, bank/PSE/Bre-B details and wallet addresses have been
+// explicitly configured. Never replace these values with guessed data.
+
+const PENDING = 'PENDING_CONFIGURATION';
 
 export const BANK_TRANSFER_INSTRUCTIONS = {
-  bankName: 'TODO: nombre del banco',
-  accountType: 'TODO: tipo de cuenta (ahorros/corriente)',
-  accountNumber: 'TODO: número de cuenta',
-  accountHolder: 'CTG One Corporation',
-  nit: 'TODO: NIT',
+  bankName: PENDING,
+  accountType: PENDING,
+  accountNumber: PENDING,
+  accountHolder: PENDING,
+  nit: PENDING,
 };
 
 export const PSE_INSTRUCTIONS = {
-  note: 'TODO: instrucciones específicas de PSE, si difieren de la transferencia bancaria estándar',
+  note: PENDING,
 };
 
 export const BRE_B_INSTRUCTIONS = {
-  key: 'TODO: Llave Bre-B de CTG One',
+  key: PENDING,
 };
 
 export const CRYPTO_DEPOSIT_ADDRESSES: Array<{ network: string; asset: string; address: string }> = [
-  // TODO: reemplazar con la(s) dirección(es) de wallet corporativa real(es).
-  { network: 'polygon', asset: 'CTGO', address: 'TODO: dirección de wallet' },
+  { network: 'polygon', asset: 'CTGO', address: PENDING },
 ];
+
+const configured = (value: string) => value.trim().length > 0 && value !== PENDING;
+
+/**
+ * Single production safety switch derived from the actual display values.
+ * The top-up UI must not accept requests while any channel shown to users
+ * still contains placeholder configuration.
+ */
+export const PAYMENT_INSTRUCTIONS_CONFIGURED =
+  Object.values(BANK_TRANSFER_INSTRUCTIONS).every(configured) &&
+  configured(PSE_INSTRUCTIONS.note) &&
+  configured(BRE_B_INSTRUCTIONS.key) &&
+  CRYPTO_DEPOSIT_ADDRESSES.length > 0 &&
+  CRYPTO_DEPOSIT_ADDRESSES.every((item) =>
+    configured(item.network) && configured(item.asset) && configured(item.address)
+  );

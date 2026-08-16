@@ -1,13 +1,21 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Container } from '@/components/ui';
 import { FOOTER, CONTACT } from '@/data/content';
 import { NAV_ITEMS } from '@/lib/constants';
-import Image from 'next/image';
+import { useLanguage } from '@/contexts/LanguageContext';
+
+const PLATFORM_LINKS = [
+  { label: 'CTG Craft Beer Investment', href: '/inversion' },
+  { label: 'Rewards', href: '/rewards' },
+  { label: 'Token', href: '/token' },
+];
 
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const { locale, t } = useLanguage();
 
   return (
     <footer
@@ -18,9 +26,7 @@ export const Footer: React.FC = () => {
       }}
     >
       <Container className="relative z-10">
-        {/* Main Footer Content */}
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-12 md:gap-16 mb-12 sm:mb-16 md:mb-20">
-          {/* Brand Column */}
           <div className="col-span-2 lg:col-span-2">
             <a href="/" className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
               <div className="relative w-9 h-9 rounded-full overflow-hidden">
@@ -32,83 +38,65 @@ export const Footer: React.FC = () => {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-outfit font-medium text-white tracking-wide">
-                  CTG One
-                </span>
-                <span className="text-[9px] text-text-dim uppercase tracking-[0.2em]">
-                  Technology
-                </span>
+                <span className="text-sm font-outfit font-medium text-white tracking-wide">CTG One</span>
+                <span className="text-[9px] text-text-dim uppercase tracking-[0.2em]">Technology</span>
               </div>
             </a>
-            <p className="text-sm text-text-dim leading-relaxed max-w-xs">
-              {FOOTER.tagline}
-            </p>
+            <p className="text-sm text-text-dim leading-relaxed max-w-xs">{t(FOOTER.tagline)}</p>
           </div>
 
-          {/* Navigation Links */}
           <div>
             <h4 className="text-[10px] uppercase tracking-[0.2em] text-text-dim mb-6">
-              Navigation
+              {locale === 'es' ? 'Navegación' : 'Navigation'}
             </h4>
             <ul className="space-y-3">
               {NAV_ITEMS.map((item) => (
-                <li key={item.label}>
-                  <a
-                    href={item.href}
-                    className="text-sm text-text-muted hover:text-white transition-colors duration-500"
-                  >
-                    {item.label}
+                <li key={item.href}>
+                  <a href={item.href} className="text-sm text-text-muted hover:text-white transition-colors duration-500">
+                    {t(item.label)}
                   </a>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Company Links */}
           <div>
             <h4 className="text-[10px] uppercase tracking-[0.2em] text-text-dim mb-6">
-              Company
+              {locale === 'es' ? 'Plataformas' : 'Platforms'}
             </h4>
             <ul className="space-y-3">
-              {FOOTER.links.company.map((link) => (
-                <li key={link}>
-                  <a
-                    href="#"
-                    className="text-sm text-text-muted hover:text-white transition-colors duration-500"
-                  >
-                    {link}
+              {PLATFORM_LINKS.map((link) => (
+                <li key={link.href}>
+                  <a href={link.href} className="text-sm text-text-muted hover:text-white transition-colors duration-500">
+                    {t(link.label)}
                   </a>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Resources Links */}
-          {/* TODO: "Documentation" and "Whitepaper" are currently placeholder
-              links (href="#"). If/when they point to real content, that
-              content needs manual legal review to ensure CTGO is described
-              as a utility/loyalty token, not an investment — do not have
-              this regenerated automatically. */}
           <div>
-            <h4 className="text-[10px] uppercase tracking-[0.2em] text-text-dim mb-6">
-              Resources
-            </h4>
+            <h4 className="text-[10px] uppercase tracking-[0.2em] text-text-dim mb-6">Legal</h4>
             <ul className="space-y-3">
-              {FOOTER.links.resources.map((link) => (
-                <li key={link}>
-                  <a
-                    href="#"
-                    className="text-sm text-text-muted hover:text-white transition-colors duration-500"
-                  >
-                    {link}
-                  </a>
-                </li>
-              ))}
+              <li>
+                <a href="/privacidad" className="text-sm text-text-muted hover:text-white transition-colors duration-500">
+                  {t('Privacy Policy')}
+                </a>
+              </li>
+              <li>
+                <a href="/inversion/legal" className="text-sm text-text-muted hover:text-white transition-colors duration-500">
+                  {locale === 'es' ? 'Información legal de inversión' : 'Investment legal information'}
+                </a>
+              </li>
+              <li>
+                <a href="/inversion/riesgos" className="text-sm text-text-muted hover:text-white transition-colors duration-500">
+                  {locale === 'es' ? 'Riesgos de inversión' : 'Investment risks'}
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
-          {/* Bottom Bar */}
         <div
           className="pt-8 sm:pt-10 flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6"
           style={{ borderTop: '1px solid rgba(255, 255, 255, 0.03)' }}
@@ -116,26 +104,12 @@ export const Footer: React.FC = () => {
           <p className="text-[10px] sm:text-[11px] text-text-dim tracking-wide">
             © {currentYear} CTG One Technology
           </p>
-          <div className="flex items-center gap-6 sm:gap-10">
-            <a
-              href="/privacidad"
-              className="text-[10px] sm:text-[11px] text-text-dim hover:text-text-muted transition-colors duration-500 tracking-wide"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="#"
-              className="text-[10px] sm:text-[11px] text-text-dim hover:text-text-muted transition-colors duration-500 tracking-wide"
-            >
-              Terms of Service
-            </a>
-            <a
-              href="#"
-              className="text-[10px] sm:text-[11px] text-text-dim hover:text-text-muted transition-colors duration-500 tracking-wide"
-            >
-              Cookie Policy
-            </a>
-          </div>
+          <a
+            href="/contact"
+            className="text-[10px] sm:text-[11px] text-text-dim hover:text-text-muted transition-colors duration-500 tracking-wide"
+          >
+            {t('Contact')}
+          </a>
           <p className="text-[10px] sm:text-[11px] text-text-dim tracking-wide text-center md:text-right">
             {CONTACT.location}
           </p>
