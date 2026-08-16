@@ -10,7 +10,7 @@ import { useInvestmentSummary } from '@/hooks/useInvestmentSummary';
 import { InvestmentTrackingChart } from '@/components/inversion/InvestmentTrackingChart';
 import { formatCents } from '@/lib/format';
 import { INVESTMENT_ORDER_STATUS_LABELS } from '@/types/investment';
-import { Beer, CircleDollarSign, PackageCheck, ReceiptText } from 'lucide-react';
+import { Beer, CircleDollarSign, PackageCheck, FileText } from 'lucide-react';
 
 export default function DashboardInvestmentPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -39,7 +39,7 @@ export default function DashboardInvestmentPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
           <Metric icon={<CircleDollarSign size={16} />} label="Capital activo" value={summaryLoading ? '—' : formatCents(summary.activeCapitalCents)} />
           <Metric icon={<PackageCheck size={16} />} label="Asignaciones" value={summaryLoading ? '—' : String(summary.allocations.length)} />
-          <Metric icon={<ReceiptText size={16} />} label="Órdenes" value={ordersLoading ? '—' : String(orders.length)} />
+          <Metric icon={<FileText size={16} />} label="Órdenes" value={ordersLoading ? '—' : String(orders.length)} />
           <Metric icon={<Beer size={16} />} label="Lotes en seguimiento" value={ordersLoading ? '—' : String(new Set(orders.filter(o => o.status === 'ALLOCATED').map(o => o.lot_id)).size)} />
         </div>
 
@@ -61,9 +61,7 @@ export default function DashboardInvestmentPage() {
                     <p className="text-lg font-outfit font-semibold text-white">{order.lot?.beer_style ?? 'Lote CTG Craft Beer'}</p>
                     <p className="text-[11px] text-text-dim mt-1">{order.lot?.code ?? order.lot_id}</p>
                   </div>
-                  <span className="text-[9px] uppercase tracking-[.14em] border border-border rounded-full px-2.5 py-1 text-accent">
-                    {INVESTMENT_ORDER_STATUS_LABELS[order.status]}
-                  </span>
+                  <span className="text-[9px] uppercase tracking-[.14em] border border-border rounded-full px-2.5 py-1 text-accent">{INVESTMENT_ORDER_STATUS_LABELS[order.status]}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mb-6">
