@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node scripts/test-critical-invariants.mjs",
+    "audit:critical": "npm audit --omit=dev --audit-level=critical"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
