@@ -4,17 +4,17 @@
 
 import config from '@/config/config.json';
 
-// Navigation: NAV_ITEMS lives in @/lib/constants (single source of truth —
-// Navbar and Footer both import it from there so the two menus can't drift).
+// Legacy/shared content registry. Public capability claims in this file must
+// remain consistent with the canonical LIVE / PARTIAL / IN DEVELOPMENT /
+// ROADMAP maturity model used by Technology Status.
 
-// Hero Section
 export const HERO = {
-  badge: 'Software, AI & Infrastructure',
+  badge: 'Software & Digital Infrastructure',
   title: 'Technology is infrastructure.',
   titleHighlight: 'Strategy is architecture.',
   subtitle: 'We build both for our own ecosystem.',
   description:
-    'CTG One Technology is a technology company that builds software, AI systems, automation, and digital infrastructure for its own business ecosystem. We design, deploy, and operate the technology layer that powers our business units.',
+    'CTG One Technology builds proprietary software, transactional systems and shared digital infrastructure for its own business ecosystem. Advanced AI capabilities are being developed under an explicit governance and evidence model.',
   ctaPrimary: 'Explore Ecosystem',
   ctaSecondary: 'Start Conversation',
   metrics: [
@@ -25,265 +25,138 @@ export const HERO = {
   ],
 };
 
-// About Section
 export const ABOUT = {
   badge: 'About CTG One',
   title: 'Technology Built for',
   titleHighlight: 'Our Own Ecosystem',
   description:
-    'Founded in 2024 in Cartagena, Colombia, CTG One Technology develops and operates proprietary software and digital infrastructure applied directly across its own business units. Our companies provide real operating environments where technology is designed, tested, deployed, and continuously improved.',
+    'Founded in 2024 in Cartagena, Colombia, CTG One Technology develops and operates proprietary software and digital infrastructure applied directly across its own business units. Our companies provide real operating environments where technology is designed, tested, deployed and continuously improved.',
   features: [
     {
       title: 'Proprietary Software',
-      description: 'We build applications, platforms, and digital products around the real operational needs of our business units.',
+      description: 'Applications, platforms and digital products designed around verified operational needs inside the ecosystem.',
       icon: 'eye',
     },
     {
       title: 'AI & Automation',
-      description: 'We develop intelligent agents, automated workflows, and decision-support systems that improve execution across the ecosystem.',
+      description: 'Automation exists in selected workflows; agent, RAG and broader AI runtime capabilities remain explicitly in development or roadmap until production evidence exists.',
       icon: 'network',
     },
     {
       title: 'Shared Digital Infrastructure',
-      description: 'Identity, data, payments, integrations, security, and reusable technology services are designed as a common layer for the ecosystem.',
+      description: 'Identity, data, transactional models, authorization, security and reusable technology services form the evolving shared layer.',
       icon: 'shield',
     },
     {
       title: 'Business-Embedded Development',
-      description: 'Technology is built alongside real operations, allowing us to move from problem identification to production deployment with direct feedback.',
+      description: 'Technology is built alongside real operations, creating a direct feedback loop between engineering and business execution.',
       icon: 'trending',
     },
     {
       title: 'Continuous Improvement',
-      description: 'We measure how our systems perform inside the businesses and use operational data to refine products, automation, and infrastructure over time.',
+      description: 'Capabilities are promoted publicly only when implementation, testing, deployment and operational evidence support the claim.',
       icon: 'check',
     },
   ],
-  differentiator: 'Our differentiator is vertical integration: CTG One develops the technology inside the same ecosystem where it is deployed, creating a direct link between software engineering, infrastructure, data, and real business operations.',
+  differentiator:
+    'Our differentiator is vertical integration: CTG One develops technology inside the same ecosystem where it is deployed, connecting software engineering, infrastructure, data and real business operations.',
 };
 
-// Technology Section
 export const SERVICES = {
   badge: 'What We Build',
   title: 'Software &',
   titleHighlight: 'Digital Infrastructure',
   description:
-    'CTG One builds the technological foundation used across its business ecosystem. Our work focuses on proprietary software, artificial intelligence, automation, shared infrastructure, and digital products designed for the operational needs of our own units.',
+    'CTG One builds the technological foundation used across its own business ecosystem. Public capability claims distinguish operational systems from partial implementations, active development and roadmap architecture.',
   items: [
     {
       title: 'Software Engineering',
-      description: 'Web applications, internal platforms, operational systems, APIs, and digital products engineered for the companies in the CTG One ecosystem.',
+      description: 'Web applications, internal platforms, operational systems, APIs and digital products engineered for CTG One business units.',
       icon: 'cpu',
       color: '#d4a259',
     },
     {
-      title: 'AI & Automation',
-      description: 'AI agents, workflow automation, intelligent assistance, and process orchestration designed to reduce friction and improve execution across our operations.',
+      title: 'Automation & AI Development',
+      description: 'Existing server-side workflows and triggers are complemented by an AI architecture under development for contextual assistance, agents and governed automation.',
       icon: 'users',
       color: '#6b8cae',
     },
     {
       title: 'Platforms, Data & Infrastructure',
-      description: 'Shared architecture for identity, databases, integrations, analytics, payments, security, cloud services, and reusable components across business units.',
+      description: 'Shared architecture for identity, PostgreSQL data, authorization, storage, transactional models, security and cloud deployment.',
       icon: 'palette',
       color: '#7da87d',
     },
     {
       title: 'Embedded Product Development',
-      description: 'We turn operating needs from hospitality, education, real estate, finance, food, healthcare, and other units into technology products deployed inside the ecosystem.',
+      description: 'Operating needs from the ecosystem are translated into technology products and validated inside real business contexts.',
       icon: 'wallet',
       color: '#9a8cae',
     },
   ],
 };
 
-// Business Ecosystem - 12 Integrated Units
 export const ECOSYSTEM = {
   badge: 'Our Portfolio',
   title: 'Business',
   titleHighlight: 'Ecosystem',
   description:
-    'Twelve operating business units form the application layer for CTG One technology. We build software and infrastructure centrally, then deploy and improve those systems inside the businesses where they create measurable operational value.',
+    'Twelve operating business units form the application environments for CTG One technology. Their technology maturity is documented separately and must not be inferred solely from membership in the ecosystem.',
   units: [
-    {
-      // Official Valderrama logomark supplied and cropped to
-      // public/images/logo/valderrama-icon.png (transparent background).
-      id: 'education',
-      name: 'Valderrama International School',
-      description: 'Private tutoring in all academic subjects, plus music, dance, and art courses.',
-      icon: 'valderrama',
-      color: '#d4a259',
-      url: 'valderramainternationalschool.com',
-    },
-    {
-      // TODO: the CTG Suites logo supplied is a wordmark only (no
-      // separate icon mark to crop) — kept the placeholder lucide icon
-      // here rather than using a cropped fragment of text.
-      id: 'hospitality',
-      name: 'CTG Suites',
-      description: 'Lodging management in Cartagena and Santa Marta. Hotel Mirador del Castillo (25 rooms) and Apartaestudio 2E.',
-      icon: 'hotel',
-      color: '#6b8cae',
-    },
-    {
-      // Official Bechara Real Estate logomark supplied and cropped to
-      // public/images/logo/bechara-icon.png (transparent background).
-      id: 'realestate',
-      name: 'Bechara Real Estate',
-      description: 'High-end property sales and rentals. Specialized advice for wealth investment and premium housing.',
-      icon: 'bechara',
-      color: '#7da87d',
-    },
-    {
-      // Official CTG One coin logomark supplied and cropped to
-      // public/images/logo/ctg-one-coin-icon.png (transparent background).
-      id: 'tech',
-      name: 'CTG One Technology',
-      description: 'Core technology: proprietary software, AI systems, automation, applications, shared digital infrastructure, CTG One Token, and fintech platforms for the ecosystem.',
-      icon: 'ctgone',
-      color: '#ae8c9a',
-    },
-    {
-      // Official Nvet Care logomark supplied and cropped to
-      // public/images/logo/nvet-care-icon.png (transparent background).
-      // No public domain/repo found; if per-unit links are implemented
-      // later, default to the contact section (#contact) until Nvet Care
-      // provides one.
-      id: 'veterinary',
-      name: 'Nvet Care',
-      description: 'On-demand veterinary home-visit marketplace for Cartagena. Connects pet owners with verified veterinarians for house calls, with integrated booking and secure split payments.',
-      icon: 'nvetcare',
-      color: '#8c9aae',
-    },
-    {
-      // Official Oralgreen logomark supplied and cropped to
-      // public/images/logo/oralgreen-icon.png (transparent background).
-      id: 'dental',
-      name: 'Oralgreen',
-      description: 'Comprehensive dental care based in Sincelejo. Clinical oral health services.',
-      icon: 'oralgreen',
-      color: '#7dae9a',
-    },
-    {
-      id: 'legal',
-      name: 'Legalyst Consultores',
-      description: 'Conciliation, legal advice, and trademark registration.',
-      icon: 'scale',
-      color: '#c4956a',
-      url: 'legalystconsultores.com',
-    },
-    {
-      id: 'design',
-      name: 'CTG One Design',
-      description: 'Corporate image, branding, and digital marketing. In-house design and marketing team.',
-      icon: 'palette',
-      color: '#ae9a8c',
-    },
-    {
-      id: 'credits',
-      name: 'Vantage Libranza Plus',
-      description: 'Payroll loans for pensioners (Colpensiones, Casur, Cremil, Fiduprevisora) and MEN teachers. Credit app in development.',
-      icon: 'wallet',
-      color: '#8cae9a',
-    },
-    {
-      // Official PISÁO logomark supplied and cropped to
-      // public/images/logo/pisao-gastrobar-icon.png (transparent background).
-      id: 'gastrobar',
-      name: 'PISÁO Gastrobar',
-      description: '"La Casa del Patacón" — casual dining gastrobar in Cartagena with Caribbean identity.',
-      icon: 'pisao',
-      color: '#7a9a5c',
-      url: 'pisaogastrobar.com',
-    },
-    {
-      // Official CTG Craft Beer logomark supplied and cropped to
-      // public/images/logo/ctg-craft-beer-icon.png (transparent background).
-      id: 'craftbeer',
-      name: 'CTG Craft Beer',
-      description: 'Artisanal craft beer brewed in Cartagena — "Cerveza Artesanal" for the ecosystem\'s hospitality venues.',
-      icon: 'craftbeer',
-      color: '#c9a962',
-    },
-    {
-      // Official Guest Logistics Concierge logomark supplied and cropped
-      // to public/images/logo/guest-logistics-icon.png (transparent background).
-      id: 'guestlogistics',
-      name: 'Guest Logistics Concierge',
-      description: 'SaaS concierge platform coordinating guest logistics, bookings, and services across the hospitality ecosystem.',
-      icon: 'guestlogistics',
-      color: '#3b5169',
-    },
+    { id: 'education', name: 'Valderrama International School', description: 'Private tutoring and educational services.', icon: 'valderrama', color: '#d4a259', url: 'valderramainternationalschool.com' },
+    { id: 'hospitality', name: 'CTG Suites', description: 'Hospitality and lodging operations.', icon: 'hotel', color: '#6b8cae' },
+    { id: 'realestate', name: 'Bechara Real Estate', description: 'Property sales, rentals and real-estate advisory.', icon: 'bechara', color: '#7da87d' },
+    { id: 'tech', name: 'CTG One Technology', description: 'Core software, data, infrastructure and product-engineering layer for the ecosystem.', icon: 'ctgone', color: '#ae8c9a' },
+    { id: 'veterinary', name: 'Nvet Care', description: 'Veterinary service and marketplace concept with technology capabilities tracked by maturity status.', icon: 'nvetcare', color: '#8c9aae' },
+    { id: 'dental', name: 'Oralgreen', description: 'Comprehensive dental care based in Sincelejo.', icon: 'oralgreen', color: '#7dae9a' },
+    { id: 'legal', name: 'Legalyst Consultores', description: 'Conciliation, legal advice and trademark services.', icon: 'scale', color: '#c4956a', url: 'legalystconsultores.com' },
+    { id: 'design', name: 'CTG One Design', description: 'Corporate identity, branding and digital communication.', icon: 'palette', color: '#ae9a8c' },
+    { id: 'credits', name: 'Vantage Libranza Plus', description: 'Payroll-credit business unit; digital capabilities are tracked separately by maturity status.', icon: 'wallet', color: '#8cae9a' },
+    { id: 'gastrobar', name: 'PISÁO Gastrobar', description: 'Caribbean casual-dining gastrobar in Cartagena.', icon: 'pisao', color: '#7a9a5c', url: 'pisaogastrobar.com' },
+    { id: 'craftbeer', name: 'CTG Craft Beer', description: 'Craft-beer production and commercialization operation in Cartagena.', icon: 'craftbeer', color: '#c9a962' },
+    { id: 'guestlogistics', name: 'Guest Logistics Concierge', description: 'Guest-logistics and concierge product context within the hospitality ecosystem.', icon: 'guestlogistics', color: '#3b5169' },
   ],
 };
 
-// CTG Rewards - Loyalty & Referral Program
 export const REWARDS = {
   badge: 'Loyalty & Referrals',
   title: 'CTG',
   titleHighlight: 'Rewards',
   description:
-    'A loyalty program for people who already trust the ecosystem. Earn recognition for the relationships you build with us, and redeem it across every business unit.',
+    'CTG Rewards is the ecosystem loyalty and referral concept. Individual capabilities must be treated according to their verified implementation status rather than assumed to be universally active.',
   features: [
-    {
-      title: 'Earn by Engaging',
-      description: 'Every purchase or service you use across CTG One\'s business units adds recognition points to your account.',
-      icon: 'award',
-    },
-    {
-      title: 'Earn by Referring',
-      description: 'Introduce real clients to any unit in the ecosystem and receive recognition once the relationship is confirmed.',
-      icon: 'userPlus',
-    },
-    {
-      title: 'Redeem Across the Ecosystem',
-      description: 'Exchange your accumulated points for products, services, and experiences from any CTG One business unit.',
-      icon: 'gift',
-    },
-    {
-      title: 'Tiered Recognition',
-      description: 'As your engagement grows, you move through membership tiers that unlock additional perks and priority access to services.',
-      icon: 'layers',
-    },
+    { title: 'Earn by Engaging', description: 'Recognition mechanics associated with ecosystem engagement.', icon: 'award' },
+    { title: 'Earn by Referring', description: 'Referral recognition mechanics subject to the rules of the applicable business unit.', icon: 'userPlus' },
+    { title: 'Redeem Across the Ecosystem', description: 'Cross-ecosystem redemption is an architectural objective and must only be described as live where technically implemented.', icon: 'gift' },
+    { title: 'Tiered Recognition', description: 'Tiered benefits remain subject to the current implementation and published program rules.', icon: 'layers' },
   ],
 };
 
-// Token Section
+// CTGO is a Web3 technology roadmap. Do not add supply, holder count, price,
+// APY, TVL, distribution or contract-address claims without independently
+// verifiable production evidence.
 export const TOKEN = {
-  badge: 'CTGO Token',
-  title: 'The Token Powering',
-  titleHighlight: 'Our Ecosystem',
+  badge: 'CTGO · Web3 Strategy',
+  title: 'Utility Architecture',
+  titleHighlight: 'In Development',
   description:
-    'CTG One Token (CTGO) is the utility token connecting all twelve business units. Part of our fintech vision and tokenization strategy — real utility, real value.',
-  stats: [
-    { label: 'Total Supply', value: '1B', suffix: 'CTGO' },
-    { label: 'Token Holders', value: '2,450', suffix: '+' },
-  ],
+    'CTGO is part of CTG One’s fintech and Web3 roadmap. No production network, contract address, holder metrics, price, APY, TVL or public sale is represented as active until independently verifiable evidence exists.',
+  status: 'ROADMAP',
+  stats: [],
   utilities: [
-    'Cross-unit payments and transactions',
-    'Exclusive discounts and benefits',
-    'Loyalty rewards program',
-    'Community input on ecosystem benefits and promotions',
+    'Potential cross-unit payments and transactions.',
+    'Potential integration with CTG Rewards and ecosystem benefits.',
+    'Utility mechanisms to be documented and verified before production.',
   ],
-  // NOTE: Public Sale closed (no active public sale of new tokens); its
-  // 30% was redistributed proportionally across the remaining categories,
-  // preserving their original relative weighting (5:4:3:2) rather than
-  // picking a category to favor.
-  distribution: [
-    { label: 'Ecosystem Fund', percentage: 36 },
-    { label: 'Team & Advisors', percentage: 29 },
-    { label: 'Reserves', percentage: 21 },
-    { label: 'Liquidity', percentage: 14 },
-  ],
+  distribution: [],
 };
 
-// Contact (uses config.json for contact details)
 export const CONTACT = {
   badge: 'Get in Touch',
   title: 'Technology for',
   titleHighlight: 'Real Operations',
   description:
-    'Explore how CTG One builds and deploys software, AI, automation, and digital infrastructure across a diversified portfolio of operating businesses.',
+    'Explore how CTG One builds and deploys software and digital infrastructure across a diversified portfolio of operating businesses, while advanced AI capabilities progress under a documented maturity model.',
   email: config.contact.email,
   phone: config.contact.phone,
   location: config.contact.location,
@@ -295,15 +168,14 @@ export const CONTACT = {
   ],
 };
 
-// Footer
 export const FOOTER = {
   brand: 'CTG One Technology',
-  tagline: 'Software, AI & infrastructure for our own business ecosystem.',
+  tagline: 'Software and digital infrastructure for our own business ecosystem.',
   links: {
-    company: ['About', 'Team', 'Careers', 'Press'],
-    solutions: ['Software Engineering', 'AI & Automation', 'Digital Infrastructure', 'Internal Platforms'],
-    resources: ['Documentation', 'Whitepaper', 'Blog', 'Support'],
-    legal: ['Privacy Policy', 'Terms of Service', 'Cookie Policy'],
+    company: ['About'],
+    solutions: ['Software Engineering', 'Digital Infrastructure', 'Internal Platforms'],
+    resources: ['Technology Status', 'Products', 'AI', 'Labs', 'Changelog'],
+    legal: ['Privacy Policy'],
   },
   copyright: `© ${new Date().getFullYear()} CTG One Technology. All rights reserved.`,
 };
