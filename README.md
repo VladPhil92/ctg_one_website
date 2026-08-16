@@ -37,6 +37,7 @@ El diferenciador central es la integración vertical: CTG One desarrolla la tecn
 - **Web3:** ethers, viem y wagmi
 - **Animations:** Framer Motion
 - **Icons:** Lucide React
+- **i18n:** catálogo ES/EN curado manualmente, `LanguageProvider`, persistencia por cookie/localStorage
 - **Production hosting:** Render Web Service
 - **Source control / CI:** GitHub + GitHub Actions
 
@@ -101,11 +102,21 @@ Estas unidades no convierten a CTG One en una agencia comercial. Son los entorno
 | `/rewards` | CTG Rewards |
 | `/token` | CTGO Token |
 | `/contact` | Contacto |
+| `/privacidad` | Política de privacidad |
 | `/iniciar-sesion` | Autenticación |
 | `/registro` | Registro |
 | `/dashboard` | Cuenta protegida |
+| `/dashboard/kyc` | Verificación de identidad |
+| `/dashboard/depositos` | Recargas, bloqueadas hasta configurar canales reales de pago |
 | `/admin` | Área administrativa protegida |
 | `/inversion` | CTG Craft Beer Inversión |
+| `/inversion/lotes` | Lotes públicos |
+| `/inversion/como-funciona` | Explicación del modelo |
+| `/inversion/simulador` | Simulador |
+| `/inversion/riesgos` | Riesgos |
+| `/inversion/legal` | Información legal |
+| `/inversion/app` | Panel protegido del participante |
+| `/inversion/admin` | Panel protegido de administración |
 
 La etiqueta pública de navegación para `/services` es **Technology**. La ruta se conserva para compatibilidad.
 
@@ -126,11 +137,13 @@ Componentes principales:
 
 Las operaciones sensibles se ejecutan server-side y las funciones administrativas revalidan autorización antes de modificar datos.
 
+Los canales de recarga de la cuenta general funcionan bajo un criterio **fail closed**: la UI no debe aceptar solicitudes ni mostrar instrucciones bancarias/cripto mientras la configuración real de producción continúe pendiente.
+
 ---
 
 ## CTG Craft Beer Inversión
 
-La plataforma `/inversion` vive dentro del mismo proyecto, aislada del resto del sitio.
+La plataforma `/inversion` vive dentro del mismo proyecto y utiliza un bounded context propio para lotes, asignaciones, inventario, ventas, ledger, retiros y liquidaciones.
 
 La documentación funcional y técnica se encuentra en:
 
@@ -140,7 +153,18 @@ docs/investment/
 
 Incluye modelo de negocio, arquitectura de información, modelo financiero, seguridad, inventario, estados de lotes y ADRs de implementación.
 
-Las migraciones relacionadas se encuentran en `supabase/migrations/`.
+Migraciones actuales:
+
+```text
+0001_init.sql
+0002_kyc_submission_pending_trigger.sql
+0003_crypto_tx_hash_unique.sql
+0004_investment_schema.sql
+0005_investment_security_hardening.sql
+0006_investment_unit_economics.sql
+```
+
+`0006` incorpora el snapshot de economía unitaria por lote utilizado por la capa informativa de CTG Craft Beer Inversión. La liquidación real continúa dependiendo de los ingresos, impuestos, costos y ajustes efectivamente registrados en el ledger.
 
 ---
 
@@ -157,7 +181,7 @@ NEXT_PUBLIC_SITE_URL=https://ctgone.com
 
 Los secretos reales nunca deben almacenarse en el repositorio.
 
-La funcionalidad de inversión utiliza además variables `CTG_INVESTMENT_*` para habilitar capacidades de forma controlada.
+La funcionalidad de inversión utiliza además variables `CTG_INVESTMENT_*`. Todas fallan cerradas (`false`) cuando no están configuradas y deben habilitarse únicamente cuando sus dependencias operativas y revisiones correspondientes estén listas.
 
 ---
 
