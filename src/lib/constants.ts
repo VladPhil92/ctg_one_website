@@ -15,6 +15,7 @@ export const NAV_ITEMS = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
   { label: 'Technology', href: '/services' },
+  { label: 'AI', href: '/ai' },
   { label: 'Products', href: '/products' },
   { label: 'Ecosystem', href: '/ecosystem' },
   { label: 'Inversión', href: '/inversion' },
