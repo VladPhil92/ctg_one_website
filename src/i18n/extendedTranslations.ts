@@ -53,6 +53,11 @@ const PAIRS: Pair[] = [
   { en: 'Review all your deposits and their review status', es: 'Revisa todas tus recargas y su estado de revisión' },
   { en: 'Purchase products and services from the ecosystem using your balance', es: 'Compra productos y servicios del ecosistema con tu saldo' },
   { en: 'In development - Available soon', es: 'En desarrollo - Disponible próximamente' },
+  { en: 'Add funds', es: 'Recargar cuenta' },
+  { en: 'Payment channels are being configured', es: 'Canales de pago en configuración' },
+  { en: 'Top-ups are temporarily disabled. We will not display bank, PSE, Bre-B key or wallet information until it has been configured and verified for production.', es: 'Las recargas están temporalmente deshabilitadas. No mostraremos datos bancarios, PSE, Llave Bre-B o direcciones de wallet hasta que hayan sido configurados y verificados para producción.' },
+  { en: 'Back to dashboard', es: 'Volver al panel' },
+  { en: 'Top-ups are temporarily disabled while we configure payment channels.', es: 'Las recargas están temporalmente deshabilitadas mientras configuramos los canales de pago.' },
 
   { en: 'Create account', es: 'Crear cuenta' },
   { en: 'The registration service is not available yet. Please try again later.', es: 'El registro no está disponible todavía. Vuelve a intentarlo más tarde.' },
