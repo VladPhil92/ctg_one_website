@@ -11,14 +11,17 @@ import { Cpu, Sparkles, Network, Layers3 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const capabilityRail = [
-  { icon: Cpu, en: 'Proprietary software', es: 'Software propio' },
-  { icon: Sparkles, en: 'Applied AI', es: 'IA aplicada' },
-  { icon: Network, en: 'Infrastructure', es: 'Infraestructura' },
-  { icon: Layers3, en: 'Real ecosystem', es: 'Ecosistema real' },
+  { icon: Cpu, en: 'Proprietary software · Live', es: 'Software propio · Activo' },
+  { icon: Sparkles, en: 'Applied AI · In development', es: 'IA aplicada · En desarrollo' },
+  { icon: Network, en: 'Infrastructure · Live', es: 'Infraestructura · Activa' },
+  { icon: Layers3, en: 'Real ecosystem · Live', es: 'Ecosistema real · Activo' },
 ];
 
 export const HeroSection: React.FC = () => {
   const { locale, t } = useLanguage();
+  const description = locale === 'es'
+    ? 'CTG One Technology desarrolla software propietario e infraestructura digital para su propio ecosistema empresarial. Nuestra capa productiva actual combina aplicaciones, autenticación, datos, seguridad, CI/CD y plataformas transaccionales; las capacidades avanzadas de IA se encuentran en desarrollo y se publicarán como activas únicamente cuando exista implementación verificable.'
+    : 'CTG One Technology builds proprietary software and digital infrastructure for its own business ecosystem. Our current production layer combines applications, authentication, data, security, CI/CD, and transactional platforms; advanced AI capabilities remain in development and will be presented as live only when implementation is verifiable.';
 
   return (
     <section
@@ -64,7 +67,7 @@ export const HeroSection: React.FC = () => {
             </FadeInSection>
 
             <FadeInSection delay={0.3}>
-              <p className="text-[13px] sm:text-sm text-text-muted leading-relaxed max-w-xl mb-9 sm:mb-11">{t(HERO.description)}</p>
+              <p className="text-[13px] sm:text-sm text-text-muted leading-relaxed max-w-xl mb-9 sm:mb-11">{description}</p>
             </FadeInSection>
 
             <FadeInSection delay={0.36}>
