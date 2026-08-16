@@ -4,10 +4,13 @@
 User-agent: *
 Allow: /
 
-# Sitemap location
-Sitemap: https://ctgone.com/sitemap.xml
-
-# Disallow admin/private areas (for future use)
+# Private and authenticated application areas
 Disallow: /api/
-Disallow: /_next/
-Disallow: /private/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /inversion/app
+Disallow: /inversion/admin
+Disallow: /iniciar-sesion
+Disallow: /registro
+
+Sitemap: https://ctgone.com/sitemap.xml
