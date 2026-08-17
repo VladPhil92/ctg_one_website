@@ -23,6 +23,9 @@ const salesMigration = await read('supabase/migrations/0014_sales_os_foundation.
 const securityDefinerMigration = await read('supabase/migrations/0015_security_definer_execution_hardening.sql');
 const systemHealthMigration = await read('supabase/migrations/0018_system_health_trigger_name_fix.sql');
 const clientPrivilegeMigration = await read('supabase/migrations/0019_client_table_privilege_hardening.sql');
+const investmentLotRoute = await read('src/app/inversion/lotes/[slug]/page.tsx');
+const investmentCheckoutRoute = await read('src/app/dashboard/inversion/nueva/[slug]/page.tsx');
+const bottleTraceRoute = await read('src/app/beer/[serial]/page.tsx');
 
 const expectedFlags = [
   'CTG_INVESTMENT_PUBLIC_REGISTRATION_ENABLED',
@@ -54,6 +57,20 @@ assert.ok(render.includes('SUPABASE_SERVICE_ROLE_KEY\n        sync: false'), 'Se
 assert.ok(render.includes('value: "22.22.0"'), 'Render must pin the approved production Node runtime.');
 assert.ok(ci.includes('node-version: 22.22.0'), 'CI must use the same Node runtime as production.');
 assert.equal(packageJson.engines?.node, '>=22.22.0 <23.0.0', 'package.json must constrain Node to the approved production major.');
+
+// Next.js 16 removed synchronous access to dynamic route params. These three
+// business-critical dynamic pages must keep params promise-based and awaited.
+for (const [name, source] of [
+  ['investment lot detail', investmentLotRoute],
+  ['investment checkout', investmentCheckoutRoute],
+  ['public bottle trace', bottleTraceRoute],
+]) {
+  assert.ok(source.includes('Promise<{'), `${name} must type dynamic params as a Promise in Next.js 16.`);
+  assert.ok(source.includes('await params'), `${name} must await dynamic params before accessing route values.`);
+  assert.ok(!/params\.(slug|serial)/.test(source), `${name} must not access params synchronously in Next.js 16.`);
+}
+assert.ok(investmentLotRoute.includes('generateMetadata'), 'Investment lot detail must retain dynamic metadata generation.');
+assert.ok(investmentLotRoute.match(/generateMetadata[\s\S]*await params/), 'generateMetadata must await params in Next.js 16.');
 
 assert.ok(render.includes('OPENAI_API_KEY\n        sync: false'), 'OpenAI API key must remain an external Render secret.');
 assert.ok(!render.includes('NEXT_PUBLIC_OPENAI'), 'OpenAI credentials must never be exposed through NEXT_PUBLIC variables.');
