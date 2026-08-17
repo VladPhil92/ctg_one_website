@@ -121,10 +121,11 @@ Bounded context para:
 - eventos de producción
 - serialización por botella
 - movimientos de inventario
-- hechos financieros por lote
+- Sales OS con documentos e idempotencia
+- hechos financieros por lote vinculados a ventas
 - participant ledger
-- settlement
-- withdrawals / reinvestment
+- settlement reconciliado
+- withdrawals / reinvestment con reservas de saldo
 - RBAC
 - trazabilidad pública por serial
 
@@ -159,7 +160,7 @@ Pilot de conocimiento institucional con ingestión, chunking, retrieval, control
 | `/dashboard/depositos` | Cuenta y recargas; fail-closed si no hay canales reales configurados |
 | `/dashboard/inversion` | Investment experience integrada |
 | `/admin` | Admin OS protegido |
-| `/admin/operations` | Production / Traceability OS |
+| `/admin/operations` | Production / Traceability / Sales OS |
 | `/admin/system-health` | Diagnóstico técnico administrativo |
 | `/inversion` | CTG Craft Beer Investment público |
 | `/inversion/simulador` | Escenarios derivados de snapshots de lotes publicados |
@@ -191,6 +192,7 @@ Migraciones versionadas actualmente en el repositorio:
 0019_client_table_privilege_hardening.sql
 0020_authoritative_lot_economics.sql
 0021_economics_function_privilege_hardening.sql
+0022_closed_loop_integrity.sql
 ```
 
 La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno. Producción debe verificarse mediante migration history/System Health y procedimientos operacionales documentados. `EXPECTED_DATABASE_MIGRATION` debe coincidir con la última migración del repositorio; CI valida continuidad y ausencia de huecos.
@@ -201,11 +203,14 @@ La presencia de una migración en Git no prueba por sí sola que esté aplicada 
 - presets económicos editables en master data, sin convertirlos en historia retroactiva;
 - snapshot económico completo e histórico por lote;
 - órdenes que derivan capital desde el snapshot de lote en PostgreSQL;
+- allocation únicamente por flujo autorizado y respetando reservas de órdenes;
+- una sola FormulaVersion por lote;
 - ledger de participante append-only;
+- spendable balance descontando requests pendientes;
 - settlement único por lote;
+- revenue/tax vinculados a Sales OS;
 - correcciones mediante reversals/adjustments, no hard delete de historia financiera;
-- liquidación basada en hechos reales de ingreso/costo/impuesto, no en proyecciones de UI;
-- fórmula de participación versionada y fijada por allocation;
+- liquidación basada en hechos reales reconciliados, no en proyecciones de UI;
 - operaciones sensibles mediante funciones server-side/database-side con autorización revalidada.
 
 ## Seguridad
@@ -237,6 +242,8 @@ npm run build
 npx playwright test --project=chromium
 ```
 
+`npm test` incluye invariantes críticos, master data, migraciones, gobernanza, economía y Closed Loop.
+
 CI se ejecuta en pull requests y pushes a `main`. Render espera checks aprobados antes del auto-deploy.
 
 ## Desarrollo local
@@ -259,23 +266,25 @@ NEXT_PUBLIC_SITE_URL=https://ctgone.com
 
 Nunca almacenar secretos productivos en Git.
 
-## Roadmap técnico prioritario
-
-La siguiente etapa se denomina **CTG One Closed Loop**:
+## Closed Loop actual
 
 ```text
 Identity
-→ Investment
-→ Payment
+→ KYC
+→ Investment Order
+→ Payment Evidence
+→ Admin Verification
 → Allocation
 → Production
 → Serialization
 → Inventory
-→ Sales
-→ Finance / Ledger
+→ Sales OS
+→ Financial Facts
 → Settlement
-→ Withdrawal
-→ Reporting
+→ Participant Ledger
+→ Withdrawal / Reinvestment
 ```
+
+El circuito base ya tiene invariantes transaccionales en PostgreSQL. Las próximas etapas se concentran en inventario por ubicación, reconciliación operativa, returns/credit notes, payout rails y read models de portafolio.
 
 El primer caso vertical de referencia es CTG Craft Beer. El objetivo es que una operación completa pueda reconstruirse a partir de evidencia persistida y auditable.
