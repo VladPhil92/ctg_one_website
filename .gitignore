@@ -14,6 +14,11 @@ build/
 # Production
 dist/
 
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
 # Misc
 .DS_Store
 *.pem

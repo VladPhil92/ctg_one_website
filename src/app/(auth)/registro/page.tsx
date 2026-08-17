@@ -23,16 +23,17 @@ export default function RegistroPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     setError(null);
-
-    if (!isSupabaseConfigured) {
-      setError('El registro no está disponible todavía. Vuelve a intentarlo más tarde.');
-      return;
-    }
 
     const parsed = registerSchema.safeParse({ fullName, phone, email, password });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? 'Datos inválidos');
+      return;
+    }
+
+    if (!isSupabaseConfigured) {
+      setError('El registro no está disponible todavía. Vuelve a intentarlo más tarde.');
       return;
     }
 
@@ -69,7 +70,7 @@ export default function RegistroPage() {
   }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+    <form noValidate onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }}>
       <h1 className="text-xl font-outfit font-semibold text-white mb-1">Crear cuenta</h1>
       <p className="text-sm text-text-dim mb-8">Únete al ecosistema CTG One.</p>
 
@@ -82,14 +83,13 @@ export default function RegistroPage() {
         value={password}
         onChange={setPassword}
         autoComplete="new-password"
-        onEnter={handleSubmit}
       />
 
       {error && (
-        <p className="text-sm mb-4" style={{ color: 'var(--error)' }}>{error}</p>
+        <p role="alert" className="text-sm mb-4" style={{ color: 'var(--error)' }}>{error}</p>
       )}
 
-      <Button onClick={handleSubmit} loading={isSubmitting} variant="primary" size="md" fullWidth>
+      <Button type="submit" loading={isSubmitting} variant="primary" size="md" fullWidth>
         Crear cuenta
       </Button>
 

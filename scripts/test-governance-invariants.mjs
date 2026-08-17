@@ -8,6 +8,11 @@ const render = await read('render.yaml');
 const health = await read('src/app/api/health/route.ts');
 const deployment = await read('src/lib/observability/deployment.ts');
 const infrastructureHealth = await read('src/lib/observability/infrastructure-health.ts');
+const playwrightConfig = await read('playwright.config.mjs');
+const authE2E = await read('tests/e2e/auth.spec.mjs');
+const loginPage = await read('src/app/(auth)/iniciar-sesion/page.tsx');
+const registrationPage = await read('src/app/(auth)/registro/page.tsx');
+const authInput = await read('src/components/auth/AuthInput.tsx');
 const packageJson = JSON.parse(await read('package.json'));
 
 assert.ok(ci.includes('Enforce PR-only changes to main'), 'CI must keep the PR-only main deployment gate.');
@@ -28,5 +33,27 @@ assert.ok(infrastructureHealth.includes('EXPECTED_DATABASE_MIGRATION'), 'Schema 
 assert.ok(infrastructureHealth.includes("id: 'deployment-identity'"), 'Admin System Health must expose the exact deployment identity.');
 assert.ok(packageJson.scripts?.test?.includes('test-migration-integrity.mjs'), 'Migration integrity test must remain part of npm test.');
 assert.ok(packageJson.scripts?.test?.includes('test-governance-invariants.mjs'), 'Governance invariants must remain part of npm test.');
+
+// Browser E2E is part of the same required CI job that protects main.
+assert.ok(ci.includes('@playwright/test@1.62.0'), 'CI must pin the Playwright test runtime to an explicit version.');
+assert.ok(ci.includes('playwright install --with-deps chromium'), 'CI must install Chromium and its Linux dependencies before E2E.');
+assert.ok(ci.includes('Run browser E2E tests'), 'The protected CI job must execute browser E2E tests.');
+assert.ok(ci.includes('playwright test --project=chromium'), 'CI must run the Chromium project explicitly.');
+assert.ok(playwrightConfig.includes("testDir: './tests/e2e'"), 'Playwright must keep browser tests isolated under tests/e2e.');
+assert.ok(playwrightConfig.includes('workers: process.env.CI ? 1'), 'CI browser tests must run with one worker for deterministic execution.');
+assert.ok(playwrightConfig.includes('npm run start'), 'E2E must exercise the production Next.js server rather than next dev.');
+assert.ok(playwrightConfig.includes("locale: 'es-CO'"), 'Auth E2E must use an explicit locale so LanguageProvider behavior is deterministic.');
+assert.ok(playwrightConfig.includes("timezoneId: 'America/Bogota'"), 'Auth E2E must keep the Colombian runtime timezone deterministic.');
+assert.ok(!authE2E.includes('ctgone.com'), 'Baseline browser E2E must not target production directly.');
+assert.ok(!authE2E.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Browser E2E must never require the Supabase service-role secret.');
+assert.ok(authE2E.includes("page.route('**/auth/v1/**'"), 'Baseline auth E2E must intercept all Supabase auth network traffic.');
+assert.ok(authE2E.includes('E2E_AUTH_NETWORK_BLOCKED'), 'Intercepted auth traffic must terminate in a deterministic local E2E response.');
+assert.ok(loginPage.includes('<Button type="submit"'), 'Login must use one semantic form-submit path.');
+assert.ok(registrationPage.includes('<Button type="submit"'), 'Registration must use one semantic form-submit path.');
+assert.ok(!loginPage.includes('onEnter={handleSubmit}'), 'Login must not duplicate form submit through an input key handler.');
+assert.ok(!registrationPage.includes('onEnter={handleSubmit}'), 'Registration must not duplicate form submit through an input key handler.');
+assert.ok(authInput.includes('htmlFor={inputId}'), 'Auth inputs must explicitly associate their visible label with the control.');
+assert.ok(authInput.includes('id={inputId}'), 'Auth controls must expose the id referenced by their label.');
+assert.ok(authInput.includes('aria-label={label}'), 'Auth controls must retain an explicit accessible name for browser and assistive technology use.');
 
 console.log('Governance invariants: PASS');

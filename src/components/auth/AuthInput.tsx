@@ -19,12 +19,19 @@ export const AuthInput: React.FC<AuthInputProps> = ({
   autoComplete,
   onEnter,
 }) => {
+  const inputId = React.useId();
+
   return (
-    <label className="block mb-4">
-      <span className="block text-[11px] uppercase tracking-[0.15em] text-text-dim mb-2">
+    <div className="block mb-4">
+      <label
+        htmlFor={inputId}
+        className="block text-[11px] uppercase tracking-[0.15em] text-text-dim mb-2"
+      >
         {label}
-      </span>
+      </label>
       <input
+        id={inputId}
+        aria-label={label}
         type={type}
         value={value}
         autoComplete={autoComplete}
@@ -38,6 +45,6 @@ export const AuthInput: React.FC<AuthInputProps> = ({
           border: '1px solid var(--border)',
         }}
       />
-    </label>
+    </div>
   );
 };
