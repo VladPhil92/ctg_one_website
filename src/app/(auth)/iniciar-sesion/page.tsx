@@ -37,14 +37,14 @@ function IniciarSesionForm() {
     if (isSubmitting) return;
     setError(null);
 
-    if (!isSupabaseConfigured) {
-      setError('El inicio de sesión no está disponible todavía. Vuelve a intentarlo más tarde.');
-      return;
-    }
-
     const parsed = loginSchema.safeParse({ email, password });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? 'Datos inválidos');
+      return;
+    }
+
+    if (!isSupabaseConfigured) {
+      setError('El inicio de sesión no está disponible todavía. Vuelve a intentarlo más tarde.');
       return;
     }
 
@@ -66,7 +66,7 @@ function IniciarSesionForm() {
   };
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }}>
+    <form noValidate onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }}>
       <h1 className="text-xl font-outfit font-semibold text-white mb-1">Iniciar sesión</h1>
       <p className="text-sm text-text-dim mb-8">Accede a tu cuenta de CTG One.</p>
 
