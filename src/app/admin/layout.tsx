@@ -28,11 +28,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     | null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div className="relative min-h-screen overflow-x-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="pointer-events-none fixed inset-0 z-0 opacity-[.34]" style={{backgroundImage:'linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px, transparent 1px)',backgroundSize:'72px 72px'}} />
+      <div className="pointer-events-none fixed -right-40 -top-44 z-0 h-[520px] w-[520px] rounded-full" style={{background:'radial-gradient(circle,rgba(201,169,98,.075),rgba(201,169,98,0) 68%)'}} />
+      <div className="pointer-events-none fixed -left-48 bottom-[-220px] z-0 h-[520px] w-[520px] rounded-full" style={{background:'radial-gradient(circle,rgba(255,255,255,.025),rgba(255,255,255,0) 70%)'}} />
       <AdminNav investmentRole={investmentRole} />
-      <div className="pt-20 pb-16 px-4 sm:px-8">
-        <div className="max-w-6xl mx-auto">{children}</div>
-      </div>
+      <main className="relative z-10 px-4 pb-16 pt-24 sm:px-8 lg:pt-28">
+        <div className="mx-auto max-w-[1440px]">{children}</div>
+      </main>
     </div>
   );
 }
