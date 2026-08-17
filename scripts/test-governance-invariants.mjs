@@ -42,6 +42,8 @@ assert.ok(ci.includes('playwright test --project=chromium'), 'CI must run the Ch
 assert.ok(playwrightConfig.includes("testDir: './tests/e2e'"), 'Playwright must keep browser tests isolated under tests/e2e.');
 assert.ok(playwrightConfig.includes('workers: process.env.CI ? 1'), 'CI browser tests must run with one worker for deterministic execution.');
 assert.ok(playwrightConfig.includes('npm run start'), 'E2E must exercise the production Next.js server rather than next dev.');
+assert.ok(playwrightConfig.includes("locale: 'es-CO'"), 'Auth E2E must use an explicit locale so LanguageProvider behavior is deterministic.');
+assert.ok(playwrightConfig.includes("timezoneId: 'America/Bogota'"), 'Auth E2E must keep the Colombian runtime timezone deterministic.');
 assert.ok(!authE2E.includes('ctgone.com'), 'Baseline browser E2E must not target production directly.');
 assert.ok(!authE2E.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Browser E2E must never require the Supabase service-role secret.');
 assert.ok(loginPage.includes('<Button type="submit"'), 'Login must use one semantic form-submit path.');
