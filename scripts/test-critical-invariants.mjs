@@ -8,6 +8,8 @@ const payments = await read('src/lib/payment-instructions.ts');
 const nextConfig = await read('next.config.js');
 const health = await read('src/app/api/health/route.ts');
 const render = await read('render.yaml');
+const ci = await read('.github/workflows/ci.yml');
+const packageJson = JSON.parse(await read('package.json'));
 const knowledgeProvider = await read('src/lib/ai/openai.ts');
 const knowledgeQuery = await read('src/app/api/knowledge/query/route.ts');
 const knowledgeIngest = await read('src/app/api/knowledge/admin/ingest/route.ts');
@@ -18,6 +20,9 @@ const labelsPage = await read('src/app/admin/operations/labels/page.tsx');
 const operationsPage = await read('src/app/admin/operations/page.tsx');
 const beerMasterMigration = await read('supabase/migrations/0013_beer_style_master_and_lot_codes.sql');
 const salesMigration = await read('supabase/migrations/0014_sales_os_foundation.sql');
+const securityDefinerMigration = await read('supabase/migrations/0015_security_definer_execution_hardening.sql');
+const systemHealthMigration = await read('supabase/migrations/0018_system_health_trigger_name_fix.sql');
+const clientPrivilegeMigration = await read('supabase/migrations/0019_client_table_privilege_hardening.sql');
 
 const expectedFlags = [
   'CTG_INVESTMENT_PUBLIC_REGISTRATION_ENABLED',
@@ -46,6 +51,9 @@ assert.ok(render.includes('buildCommand: npm ci && npm run build'), 'Render must
 assert.ok(render.includes('NEXT_PUBLIC_SITE_URL'), 'Render blueprint must define the canonical site URL.');
 assert.ok(render.includes('https://ctgone.com'), 'Render blueprint must use ctgone.com as the canonical production URL.');
 assert.ok(render.includes('SUPABASE_SERVICE_ROLE_KEY\n        sync: false'), 'Service-role secret must never be committed into the Render blueprint.');
+assert.ok(render.includes('value: "22.22.0"'), 'Render must pin the approved production Node runtime.');
+assert.ok(ci.includes('node-version: 22.22.0'), 'CI must use the same Node runtime as production.');
+assert.equal(packageJson.engines?.node, '>=22.22.0 <23.0.0', 'package.json must constrain Node to the approved production major.');
 
 assert.ok(render.includes('OPENAI_API_KEY\n        sync: false'), 'OpenAI API key must remain an external Render secret.');
 assert.ok(!render.includes('NEXT_PUBLIC_OPENAI'), 'OpenAI credentials must never be exposed through NEXT_PUBLIC variables.');
@@ -86,5 +94,14 @@ assert.ok(salesMigration.includes("has_investment_permission('sales.manage')"), 
 assert.ok(salesMigration.includes("values (p_lot_id, 'SOLD', v_count, auth.uid())"), 'Confirmed sales must generate an inventory SOLD movement in the same transaction.');
 assert.ok(salesMigration.includes("'REVENUE', v_gross"), 'Confirmed sales must recognize gross revenue in the lot financial facts.');
 assert.ok(salesMigration.includes('p_tax_cents bigint default 0'), 'Tax recognition must remain explicit until a tax-inclusion policy is formally configured.');
+
+// Privilege hardening must remain explicit and fail closed.
+assert.ok(securityDefinerMigration.includes("REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC, anon"), 'Privileged SECURITY DEFINER functions must not inherit anonymous execute access.');
+assert.ok(securityDefinerMigration.includes("p.proname <> 'get_public_bottle_trace'"), 'The public bottle trace must remain the only intentional anonymous SECURITY DEFINER exception.');
+assert.ok(securityDefinerMigration.includes('FROM authenticated'), 'Internal privileged helpers must explicitly revoke authenticated execution.');
+assert.ok(systemHealthMigration.includes("'investment_allocation_permission_guard'"), 'System Health must verify the real allocation guard trigger name.');
+assert.ok(systemHealthMigration.includes("'investment_settlement_permission_guard'"), 'System Health must verify the real settlement guard trigger name.');
+assert.ok(clientPrivilegeMigration.includes('REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'), 'Anonymous clients must not retain sensitive-table DML or DDL-adjacent privileges.');
+assert.ok(clientPrivilegeMigration.includes('ALTER DEFAULT PRIVILEGES FOR ROLE postgres'), 'Future public tables must inherit the hardened client privilege baseline.');
 
 console.log('Critical invariants: PASS');
