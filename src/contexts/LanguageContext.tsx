@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { Locale, translatePhrase } from '@/i18n/translations';
 import { translateExtendedPhrase } from '@/i18n/extendedTranslations';
 import { translateContentPhrase } from '@/i18n/contentTranslations';
+import { translateInvestmentEconomicsPhrase } from '@/i18n/investmentEconomicsTranslations';
 
 type LanguageContextValue = {
   locale: Locale;
@@ -20,7 +21,10 @@ function translateValue(value: string, locale: Locale) {
   const primary = translatePhrase(value, locale);
   if (primary !== value) return primary;
   const extended = translateExtendedPhrase(value, locale);
-  return extended !== value ? extended : translateContentPhrase(value, locale);
+  if (extended !== value) return extended;
+  const investmentEconomics = translateInvestmentEconomicsPhrase(value, locale);
+  if (investmentEconomics !== value) return investmentEconomics;
+  return translateContentPhrase(value, locale);
 }
 
 function translateNode(node: Node, locale: Locale) {
