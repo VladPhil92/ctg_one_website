@@ -22,6 +22,16 @@ export type SystemHealthSnapshot = {
   };
 };
 
+type MigrationHealthRow = {
+  latest_migration: string | null;
+  migration_0012_applied: boolean;
+  migration_0015_applied: boolean;
+  migration_0016_applied: boolean;
+  core_permission_guard_triggers: number;
+  unintended_anon_security_definer_exec: number;
+  unintended_authenticated_internal_exec: number;
+};
+
 const MISSING_SCHEMA_CODES = new Set(['42P01', '42883', 'PGRST202', 'PGRST204', 'PGRST205']);
 
 function isMissingSchema(error: { code?: string; message?: string } | null): boolean {
@@ -118,13 +128,32 @@ export async function collectSystemHealth(
     latencyMs: roleAdminProbe.latencyMs,
   });
 
+  const migrationHealthProbe = await timed(() => supabase.rpc('get_system_migration_health'));
+  const migrationHealth = migrationHealthProbe.value.error
+    ? null
+    : (((migrationHealthProbe.value.data ?? []) as MigrationHealthRow[])[0] ?? null);
+
+  const migrationHealthPending = Boolean(
+    migrationHealthProbe.value.error && isMissingSchema(migrationHealthProbe.value.error)
+  );
+
+  const permissionGuardsHealthy = Boolean(
+    migrationHealth?.migration_0012_applied && migrationHealth.core_permission_guard_triggers === 6
+  );
   checks.push({
     id: 'migration-0012',
     label: 'Migration 0012 · Core permission guards',
-    status: rbacProbe.value.error || roleAdminProbe.value.error ? 'pending_schema' : 'degraded',
-    detail: rbacProbe.value.error || roleAdminProbe.value.error
-      ? 'Prerequisite RBAC migrations are not fully available.'
-      : 'Prerequisites are available. Trigger-level enforcement cannot be proven safely through a read-only health probe; verify 0012 in Supabase migration history.',
+    status: migrationHealthProbe.value.error
+      ? (migrationHealthPending ? 'pending_schema' : 'degraded')
+      : (permissionGuardsHealthy ? 'healthy' : 'degraded'),
+    detail: migrationHealthProbe.value.error
+      ? (migrationHealthPending
+          ? 'Authoritative migration observability is not installed in this environment yet.'
+          : `Permission-guard verification returned ${migrationHealthProbe.value.error.code ?? 'an error'}.`)
+      : permissionGuardsHealthy
+        ? 'Migration 0012 is recorded and all 6 critical permission-guard triggers are present.'
+        : `Permission guards are incomplete: migration recorded=${String(migrationHealth?.migration_0012_applied ?? false)}, triggers=${migrationHealth?.core_permission_guard_triggers ?? 0}/6.`,
+    latencyMs: migrationHealthProbe.latencyMs,
   });
 
   const beerStyleProbe = await timed(() =>
@@ -176,9 +205,60 @@ export async function collectSystemHealth(
           ? 'Normalized Sales OS tables are not installed in this environment yet.'
           : `Sales OS probe returned ${salesSchemaError.code ?? 'an error'}.`)
       : canonicalSalesChannelsAvailable
-        ? 'Sales documents, sale items and canonical sales channels are available. Write-path activation is verified separately after migration installation.'
+        ? 'Sales documents, sale items and canonical sales channels are available.'
         : `Sales OS is reachable but canonical channel master data is incomplete. Found: ${salesCodes.join(', ') || 'none'}.`,
     latencyMs: salesChannelsProbe.latencyMs + salesProbe.latencyMs,
+  });
+
+  const securityHardeningHealthy = Boolean(
+    migrationHealth?.migration_0015_applied
+    && migrationHealth.unintended_anon_security_definer_exec === 0
+    && migrationHealth.unintended_authenticated_internal_exec === 0
+  );
+  checks.push({
+    id: 'migration-0015',
+    label: 'Migration 0015 · SECURITY DEFINER hardening',
+    status: migrationHealthProbe.value.error
+      ? (migrationHealthPending ? 'pending_schema' : 'degraded')
+      : (securityHardeningHealthy ? 'healthy' : 'degraded'),
+    detail: migrationHealthProbe.value.error
+      ? (migrationHealthPending
+          ? 'Security-hardening observability is not installed in this environment yet.'
+          : `Security-hardening probe returned ${migrationHealthProbe.value.error.code ?? 'an error'}.`)
+      : securityHardeningHealthy
+        ? 'No unintended anonymous privileged RPCs or authenticated internal helper executions are exposed.'
+        : `Security hardening incomplete: anon=${migrationHealth?.unintended_anon_security_definer_exec ?? 0}, internal-authenticated=${migrationHealth?.unintended_authenticated_internal_exec ?? 0}.`,
+    latencyMs: migrationHealthProbe.latencyMs,
+  });
+
+  checks.push({
+    id: 'migration-0016',
+    label: 'Migration 0016 · Performance hardening',
+    status: migrationHealthProbe.value.error
+      ? (migrationHealthPending ? 'pending_schema' : 'degraded')
+      : (migrationHealth?.migration_0016_applied ? 'healthy' : 'degraded'),
+    detail: migrationHealthProbe.value.error
+      ? (migrationHealthPending
+          ? 'Performance-hardening observability is not installed in this environment yet.'
+          : `Performance-hardening probe returned ${migrationHealthProbe.value.error.code ?? 'an error'}.`)
+      : migrationHealth?.migration_0016_applied
+        ? 'Migration 0016 is recorded; foreign-key indexing and RLS init-plan hardening are installed.'
+        : 'Migration 0016 is not recorded in the authoritative migration history.',
+    latencyMs: migrationHealthProbe.latencyMs,
+  });
+
+  checks.push({
+    id: 'migration-0017',
+    label: 'Migration 0017 · System health observability',
+    status: migrationHealthProbe.value.error
+      ? (migrationHealthPending ? 'pending_schema' : 'degraded')
+      : (migrationHealth?.latest_migration && migrationHealth.latest_migration >= '0017' ? 'healthy' : 'degraded'),
+    detail: migrationHealthProbe.value.error
+      ? (migrationHealthPending
+          ? 'Authoritative migration-health RPC is not installed yet.'
+          : `System-health RPC returned ${migrationHealthProbe.value.error.code ?? 'an error'}.`)
+      : `Authoritative migration health is reachable; latest recorded migration: ${migrationHealth?.latest_migration ?? 'unknown'}.`,
+    latencyMs: migrationHealthProbe.latencyMs,
   });
 
   const summary = checks.reduce(
