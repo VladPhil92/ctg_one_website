@@ -9,6 +9,7 @@ import { Activity, Beer, Boxes, CircleDollarSign, Factory, PackageCheck, Plus, Q
 const UNIT_STATUS_OPTIONS = ['QC_APPROVED','WAREHOUSE','DISPATCHED','IN_MARKET','RETURNED','DAMAGED','LOST','EXPIRED','RECALLED'] as const;
 const FINANCIAL_TYPES = ['REVENUE','TAX','PRODUCTION_COST','COMMERCIAL_COST','ADJUSTMENT'] as const;
 const BEER_STYLES = [
+  { id:'golden-pale-ale', name:'Golden Pale Ale', prefix:'GOLD' },
   { id:'irish-red-ale', name:'Irish Red Ale', prefix:'IRA' },
   { id:'porter', name:'Porter', prefix:'POR' },
   { id:'oktoberfest-hefeweizen', name:'Oktoberfest Hefeweizen', prefix:'HEF' },
