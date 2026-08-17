@@ -37,11 +37,32 @@ assert.ok(economicsTranslations.includes('Advertising · ${match[1]} on pre-INC 
 assert.ok(economicsTranslations.includes("en: 'Batch-snapshot simulator'"), 'Simulator copy must have an English translation contract.');
 
 assert.ok(operations.includes("rpc('update_investment_beer_style_economics'"), 'Production OS must provide a database-authoritative preset update path.');
-assert.ok(operations.includes("production:'',label:'',ownPrice:'',b2bPrice:'',inc:'',advertising:''"), 'Production OS must initialize economics blank rather than inventing defaults.');
-for (const forbidden of ["production:'7000'", "label:'900'", "ownPrice:'18000'", "b2bPrice:'10000'", "inc:'8'", "advertising:'3.5'", "useState('18000')"]) {
-  assert.ok(!operations.includes(forbidden), `Production OS must not reintroduce financial UI default ${forbidden}.`);
+for (const field of ['production', 'label', 'ownPrice', 'b2bPrice', 'inc', 'advertising']) {
+  assert.match(
+    operations,
+    new RegExp(`${field}\\s*:\\s*''`),
+    `Production OS must initialize ${field} blank rather than inventing a financial default.`,
+  );
 }
-assert.ok(operations.includes('lot.own_point_price_unit_cents/100'), 'Sales entry should initialize from the selected lot snapshot, not a fixed sale price.');
+for (const [field, value] of [
+  ['production', '7000'],
+  ['label', '900'],
+  ['ownPrice', '18000'],
+  ['b2bPrice', '10000'],
+  ['inc', '8'],
+  ['advertising', '3.5'],
+]) {
+  assert.ok(
+    !new RegExp(`${field}\\s*:\\s*'${value}'`).test(operations),
+    `Production OS must not reintroduce financial UI default ${field}=${value}.`,
+  );
+}
+assert.ok(!/useState\(\s*'18000'\s*\)/.test(operations), 'Production OS must not reintroduce a fixed 18,000 COP sales state.');
+assert.match(
+  operations,
+  /lot\.own_point_price_unit_cents\s*\/\s*100/,
+  'Sales entry should initialize from the selected lot snapshot, not a fixed sale price.',
+);
 
 for (const column of ['production_cost_unit_cents','label_cost_unit_cents','own_point_price_unit_cents','b2b_price_unit_cents','inc_rate','advertising_rate_on_pre_inc']) {
   assert.ok(migration.includes(`alter column ${column} drop default`), `Migration 0020 must remove implicit lot default for ${column}.`);

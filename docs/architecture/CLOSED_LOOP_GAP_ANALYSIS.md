@@ -1,6 +1,6 @@
 # CTG One Closed Loop — Gap Analysis
 
-Date: 2026-08-16
+Date: 2026-08-17
 
 ## Target loop
 
@@ -8,317 +8,285 @@ Date: 2026-08-16
 Identity
 → KYC
 → Investment Order
-→ Payment
+→ Payment Evidence
+→ Admin Verification
 → Funding Allocation
 → Production Lot
 → Bottle Serialization
 → Inventory
-→ Sale
+→ Sales OS
 → Lot Financial Facts
-→ Participant Ledger
 → Settlement
+→ Participant Ledger
 → Withdrawal / Reinvestment
 → Reporting
 ```
 
-The objective is not merely that each screen exists. The objective is that each stage creates durable, authorized and auditable evidence linked to the next stage.
+The objective is not that every screen exists. The objective is that every transition creates durable, authorized, idempotent and auditable evidence that the next transition can verify.
+
+## Current integrity baseline
+
+The following are implemented and must be treated as architectural invariants rather than roadmap ideas:
+
+- Supabase Auth + participant-specific KYC.
+- Order checkout with server-derived capital requirement.
+- Allocation only after administrative payment verification in the canonical flow.
+- Beer Style Master Data and database-authoritative lot codes.
+- Lot economics snapshots and versioned financial formulas.
+- Production state machine + immutable event history.
+- Bottle-level unique serialization.
+- Bottle-state + inventory movement workflow.
+- Sales OS headers/items, channels and idempotency keys.
+- Append-only participant ledger.
+- One immutable settlement per lot.
+- Withdrawal and reinvestment request models.
+- RBAC, RLS, audit log and System Health.
+- CI invariants + browser E2E baseline.
+
+Migration `0022_closed_loop_integrity.sql` hardens the transactional chain before live financial records exist.
 
 ## 1. Identity / KYC
 
-### Current
-- Supabase Auth exists.
-- `profiles`, KYC submissions/documents and protected admin review exist.
-- Private document access is handled with signed URLs.
-- Administrative KYC approval works in production.
+### Implemented
+- Supabase Auth.
+- KYC submissions/documents and protected admin review.
+- Private document access through signed URLs.
+- Participant investment profile and investment-specific KYC status.
 
-### Gap
-- Review history is represented mainly by final fields/audit patterns rather than a dedicated immutable review-event stream.
-- Automated E2E coverage is missing.
-
-### Required
-- Add KYC integration/E2E tests before higher-risk payment activation.
-- Preserve all review actions in audit/domain events.
+### Remaining
+- Full isolated staging E2E for registration → KYC → approval is paused until a non-production Supabase environment is available.
+- A dedicated immutable KYC review-event stream is optional future hardening; current audit evidence remains the source.
 
 ## 2. Investment order / payment
 
-### Current
-- Investment checkout/order migration and user interfaces exist.
-- Payment channels use fail-closed behavior where production configuration is unavailable.
+### Implemented
+- `investment_orders` represents participant intent and reserves lot capacity.
+- Capital is derived from the persisted lot economics snapshot in PostgreSQL.
+- Payment evidence is submitted separately.
+- `approve_investment_order()` creates allocation + ledger consequences transactionally.
+- `0022` revokes the old participant-callable `create_funding_allocation()` bypass.
+- Approval revalidates investment KYC.
 
-### Gap
-- Full production payment-provider flow is not yet a closed automated loop.
-- Idempotency/replay guarantees must be explicit for every provider callback or manual approval command.
-
-### Required
-- Standard payment command model with unique external/internal references.
-- No allocation until payment state is authoritatively approved.
-- Tests for duplicate payment submission/approval.
+### Remaining
+- Real payment provider callbacks/rails remain fail-closed until production credentials and commercial instructions are configured.
+- Provider-specific idempotency and reconciliation must be implemented with the provider integration, not guessed in advance.
 
 ## 3. Funding allocation
 
-### Current
-- `investment_funding_allocations` represents economic interest in cases, not ownership of physical bottles.
-- Formula version is pinned to allocations.
-- Participant and CTG internal allocations are explicitly modeled.
+### Implemented
+- Allocations are economic interests in case-equivalent units, never ownership of individual bottles.
+- Allocation capital must match the lot snapshot exactly.
+- Active order reservations are included in capacity checks.
+- First allocation pins the lot FormulaVersion; later allocations on the same lot reuse it.
+- `FUNDING_OPEN → FUNDED` is blocked until allocations cover all cases and no active funding orders remain.
 
-### Gap
-- Allocation creation must remain strictly tied to approved funding/order facts as checkout evolves.
-- Reconciliation surface between paid orders and allocations should be explicit in Admin OS.
-
-### Required
-- Reconciliation query: approved paid capital vs allocated capital per lot and participant.
-- Alert on mismatch.
+### Remaining
+- Admin reconciliation views should expose paid-order capital vs allocated capital by participant and lot.
+- CTG internal funding workflow should receive a dedicated explicit command if internal capital will be used operationally.
 
 ## 4. Production lot
 
-### Current
-- Rich production state machine exists.
-- Production events preserve transition history.
-- Admin Production OS exists.
-- Lot code and beer style are stored on the lot.
+### Implemented
+- Beer Style Master Data.
+- Database-authoritative lot codes.
+- Complete immutable economic snapshot per lot.
+- Legal sequential production state machine with exceptional states.
+- Production events and audit trail.
 
-### Gap
-- Beer styles are UI hard-coded rather than authoritative master data.
-- Lot code sequencing is currently assisted by frontend logic and uniqueness constraint, but generation should be database-authoritative.
-- Large Production OS page mixes state, calculations and presentation.
+### New invariant in 0022
+`SETTLEMENT_PENDING → SETTLED` cannot be executed through the generic state transition command. Only `finalize_settlement()` may create the settlement and move the lot to `SETTLED`.
 
-### Required
-- `beer_style_master` or equivalent configuration table.
-- database function/transaction for next lot code.
-- split production UI into command panels and read models.
+### Remaining
+- Production OS should eventually be decomposed into smaller command/read-model components.
+- Evidence-document requirements can be made mandatory for selected high-risk transitions after operational policy is defined.
 
 ## 5. Bottle serialization
 
-### Current
-- `investment_bottle_units` provides immutable unique serials and unit number uniqueness within lot.
-- Capacity is checked against lot cases × case size.
-- Public bottle trace RPC and `/beer/[serial]` exist.
+### Implemented
+- Unique `serial_code` globally.
+- Unique `(lot_id, unit_number)`.
+- Generation cannot exceed physical lot capacity.
+- Public `/beer/[serial]` trace.
 
-### Gap
-- Generated units are inserted directly as `PACKAGED`; finer generated-vs-packaged semantics should be intentional.
-- Batch RPC currently accepts a serial array and can partially update eligible rows; caller does not receive a per-input rejection list.
-
-### Required
-- Decide whether GENERATED and PACKAGED are distinct business events.
-- For bulk sale/status commands, validate requested count against eligible count or return accepted/rejected serial detail.
-- Add concurrency tests for serialization.
+### Remaining
+- Decide whether `GENERATED` and `PACKAGED` represent distinct physical events; current generation enters bottles as `PACKAGED`.
+- Add isolated database concurrency fixtures when staging is available.
 
 ## 6. Inventory
 
-### Current
-- Movement-based inventory table exists.
-- Bottle status and inventory movements are linked operationally by RPCs.
+### Implemented
+- Bottle state and inventory movements are written by controlled RPCs.
+- Sale writes a `SOLD` inventory movement atomically.
+- `SOLD_OUT` now rejects lots with non-terminal bottle units.
 
-### Gap
-- Inventory movement rows do not yet include location_from/location_to/reference identifiers.
-- Current stock by location/state is not a first-class authoritative read model.
-- Some coarse invariants are documented as deferred.
+### Remaining
+- `location_from`, `location_to` and structured movement references.
+- First-class stock-by-location read model.
+- Reconciliation dashboard between bottle states and movement aggregates.
 
-### Required
-- Add movement references and locations.
-- Define stock derivation by lot/location/state.
-- Prevent impossible negative derived stock transitions.
-- Add reconciliation: bottle states vs movement totals.
+## 7. Sales OS
 
-## 7. Sales
+### Implemented
+- `investment_sales_channels`.
+- `investment_sales` sale header.
+- `investment_sale_items` one bottle per sale item.
+- Unique idempotency key.
+- One bottle cannot belong to two sale items.
+- Sale atomically updates bottle state, inventory movement, revenue/tax financial facts and audit evidence.
 
-### Current
-- `record_bottle_sales` marks eligible bottle units SOLD.
-- It creates SOLD inventory movement.
-- It creates lot-level `REVENUE` financial entry.
-- It writes audit evidence.
+### New invariants in 0022
+- Production OS uses `record_bottle_sale_document()` rather than legacy `record_bottle_sales()`.
+- Legacy sale RPC loses client execution.
+- Concurrent retries sharing an idempotency key are serialized by advisory lock.
+- Reusing an idempotency key with a different payload fails instead of silently returning an unrelated sale.
+- Revenue and tax financial entries retain `source_sale_id`.
 
-### Critical gap
-There is no normalized sales aggregate. A sale is currently represented indirectly by unit attributes + inventory movement + financial entry + free-text reference.
-
-This is insufficient for a mature commercial/financial closed loop because it cannot cleanly model:
-- sale header;
-- customer;
-- channel;
-- payment status/method;
-- multiple lines/SKUs;
-- discounts;
-- taxes by sale;
-- returns/credit notes;
-- idempotent external POS/import references.
-
-### Required — Sales OS
-
-Entities:
-- `sales_channels`
-- `customers`
-- `sales`
-- `sale_items`
-- `sale_payments`
-- `sale_adjustments` / credit notes as needed
-
-A confirmed sale must atomically or transactionally cause:
-1. sale persistence;
-2. bottle/stock transition;
-3. inventory movement;
-4. lot financial recognition;
-5. audit/domain event.
-
-Do not allow the frontend to independently write each consequence.
+### Remaining
+- Customer master.
+- Payment status/method per commercial sale where required.
+- Discounts, returns, credit notes and sale void reversal workflow.
+- External POS/import adapters.
 
 ## 8. Lot financial facts
 
-### Current
-- `investment_lot_financial_entries` stores revenue, tax, production/commercial costs and adjustments.
-- Settlement logic is based on real financial facts rather than a UI projection.
+### Implemented
+- Revenue, tax, production cost, commercial cost and adjustment facts.
+- `REVENUE` and `TAX` from Sales OS are linked to their sale document.
+- Generic financial command is restricted to production cost, commercial cost and adjustment.
 
-### Gap
-- Entries currently have description/actor but limited structured source linkage.
-- Sale revenue can be recorded without a normalized sale entity.
-- Reversal/adjustment genealogy should be explicit at lot-financial-fact level as the model matures.
+### Remaining
+- Structured source documents for non-sales costs.
+- Reversal genealogy for corrections rather than destructive edits.
 
-### Required
-- `reference_type`, `reference_id`, optional `reverses_entry_id`.
-- enforce source idempotency where applicable.
-- link revenue/tax/cost facts to originating sale/cost document.
+## 9. Settlement
 
-## 9. Participant ledger
+### Implemented
+- One settlement per lot enforced by unique constraint.
+- Settlement immutable after insert.
+- Full allocation coverage required before settlement.
+- Exactly one FormulaVersion required across the lot.
+- Sales gross/tax are reconciled against lot financial facts before settlement.
+- Manual/unbacked revenue and tax block settlement.
+- Allocation distribution conserves exact NDLP cents for both positive and negative NDLP using numeric floor + largest remainder.
+- Settlement generates participant ledger credits and transitions the lot to `SETTLED` transactionally.
 
-### Current
-- Append-only participant ledger.
-- Signed amounts.
-- lot/allocation references.
-- no direct client writes.
+### Remaining
+- Operational preview/checklist UI before finalization.
+- Explicit correction/reversal runbook.
+- Business decision on how severe negative NDLP should affect capital recovery must remain contractual, not inferred by engineering.
 
-### Gap
-- Need stronger automated regression suite for balance and settlement scenarios.
-- Need reconciliation between lot financial result, settlement snapshot and participant ledger credits.
+## 10. Participant ledger / balance
 
-### Required
-- ledger invariant tests.
-- reconciliation query/report.
-- operational alert if settlement snapshot and ledger distribution diverge.
+### Implemented
+- Append-only signed ledger.
+- No direct client writes.
+- Raw available balance derived from ledger.
+- `0022` introduces spendable balance = ledger available balance − active withdrawal/reinvestment reservations.
 
-## 10. Settlement
+### New concurrency invariant
+Withdrawal and reinvestment commands serialize on a per-participant advisory lock, so two simultaneous requests cannot reserve the same peso twice.
 
-### Current
-- one settlement per lot unique constraint.
-- immutable settlement row.
-- largest-remainder distribution design.
-- formula version pinned.
+### Remaining
+- Portfolio read model separating active capital, pending settlement, settled capital, realized profit, reserved balance and spendable balance.
+- Reconciliation report between settlement snapshot and resulting ledger credits.
 
-### Gap
-- End-to-end settlement must be validated against real sales/cost facts before broad production use.
-- Correction process needs explicit operational runbook.
+## 11. Withdrawals
 
-### Required
-- settlement preview/checklist.
-- automated regression fixtures.
-- reversal/adjustment procedure documented.
+### Implemented
+- Request, approval/rejection and paid states.
+- Ledger debit happens only when marked paid.
+- Requested/approved withdrawals reserve spendable balance before the debit occurs.
+- Approval and payment revalidate the current ledger state under the participant financial lock.
 
-## 11. Withdrawals / reinvestment
+### Remaining
+- Real payout provider/rail.
+- `PAYMENT_PROCESSING` command and provider reference.
+- Provider callback idempotency and payout reconciliation.
 
-### Current
-- request models exist.
-- participant balance comes from ledger semantics.
+## 12. Reinvestment
 
-### Gap
-- real payout rails and provider confirmation should remain disabled until configured.
-- idempotent payout reference and reconciliation required before activation.
+### Implemented
+- Source settlement and target lot genealogy.
+- Request reserves participant spendable balance.
+- Source settlement must contain an actual settlement credit for the participant.
+- Cumulative reinvestment attributed to one source cannot exceed that source settlement credit.
+- Approval revalidates KYC, balance, lot capacity and exact lot capital requirement.
+- Approval creates allocation + `REINVESTMENT_DEBIT` transactionally.
 
-### Required
-- payout command state machine.
-- unique provider reference.
-- ledger debit only at defined authorized transition.
-- reconciliation report.
+### Remaining
+- Participant-facing reinvestment UI.
+- Rejection/cancellation command surface.
 
-## 12. Reporting / User OS
+## 13. Reporting / User OS
 
-### Current
-- dashboard surfaces wallet, capital, allocations, activity and identity.
-- investment-specific pages provide operational tracking.
+### Implemented
+- Participant order/allocation tracking.
+- Production progress.
+- Participant dashboard now consumes spendable balance rather than presenting reserved funds as available.
 
-### Gap
-- user-facing performance must distinguish projected, provisional/recognized and realized/settled values.
-- active investment card should consolidate production progress, sales progress and financial state from authoritative read models.
+### Remaining
+- Consolidated portfolio read model.
+- Explicit presentation labels for projected, recognized, reserved, settled and withdrawable values.
 
-### Required
-- typed participant portfolio read model.
-- explicit labels: projection vs recognized vs settled.
+## 14. Testing
 
-## 13. Audit / events
+### CI-covered today
+- Critical architecture/security invariants.
+- Beer Style master-data invariants.
+- Migration continuity.
+- Git governance.
+- Financial economics invariants.
+- Closed-loop source-code/migration invariants.
+- TypeScript.
+- Production Next.js build.
+- Non-destructive Chromium E2E baseline.
 
-### Current
-- investment audit log and production event history exist.
-
-### Gap
-- no generic domain-event/outbox layer yet.
-
-### Required
-Introduce only when needed by notifications/observability:
+### Paused until isolated Supabase staging
+Full destructive/integration E2E:
 
 ```text
-domain_events
-id
-domain
-event_type
-entity_type
-entity_id
-actor_id
-payload
-occurred_at
+register
+→ KYC
+→ order
+→ payment evidence
+→ approval
+→ allocation
+→ production
+→ bottles
+→ sale
+→ settlement
+→ withdrawal / reinvestment
 ```
 
-Start as database persistence; do not introduce Kafka or distributed brokers.
+Production data must not be used as a test fixture.
 
-## 14. Testing exit criteria
+## 15. Next implementation sequence
 
-Before declaring Closed Loop production-ready, automated tests must prove at least:
+### Milestone B — Inventory reconciliation
+- structured inventory locations;
+- movement references;
+- bottle-state vs movement reconciliation queries;
+- stock-by-location read model.
 
-1. user registration/session protection;
-2. KYC submit/review;
-3. investment order creation;
-4. duplicate payment protection;
-5. payment approval → allocation;
-6. lot creation and legal transitions;
-7. serial generation without capacity/uniqueness violation;
-8. inventory movement invariants;
-9. sale confirmation without duplicate financial recognition;
-10. settlement exact distribution;
-11. withdrawal cannot exceed available ledger balance;
-12. role matrix denies unauthorized commands.
+### Milestone C — Commercial completion
+- customers;
+- returns / credit notes;
+- sale payments where needed;
+- POS/import adapters.
 
-## 15. Implementation sequence
-
-### Milestone A — Foundation
-- repository hygiene;
-- domain service/query-command boundaries;
-- master beer styles;
-- DB-authoritative lot codes;
-- test harness.
-
-### Milestone B — Physical operations
-- Production OS decomposition;
-- inventory locations/references;
-- bottle/inventory reconciliation.
-
-### Milestone C — Commercial close
-- Sales OS;
-- structured sale → financial facts;
-- return/adjustment semantics.
-
-### Milestone D — Financial close
-- reconciliation;
-- settlement regression suite;
-- payout/reinvestment hardening.
+### Milestone D — Financial operations
+- settlement preview;
+- payout provider lifecycle;
+- ledger/settlement reconciliation surfaces;
+- participant portfolio read model.
 
 ### Milestone E — Platform operations
 - Document OS;
 - Notification OS;
-- domain events;
+- domain events/outbox only when asynchronous consumers require it;
 - Incident Center;
-- backup/restore and security hardening.
-
-### Milestone F — Intelligence
-- read-only CTG Operations Intelligence over authorized read models;
-- human-controlled actions only;
-- evidence/citations required.
+- backup/restore drills and security hardening.
 
 ## Final invariant
 
-The user interface must never be the source of truth for a fact that can be calculated or verified from persisted domain evidence.
+The UI may request a command, but it must never be the source of truth for funding, physical inventory, revenue, tax, settlement or participant balance. Every material state transition must be reconstructible from persisted domain evidence.
