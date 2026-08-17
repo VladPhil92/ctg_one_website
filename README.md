@@ -193,6 +193,7 @@ Migraciones versionadas actualmente en el repositorio:
 0020_authoritative_lot_economics.sql
 0021_economics_function_privilege_hardening.sql
 0022_closed_loop_integrity.sql
+0023_closed_loop_review_hardening.sql
 ```
 
 La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno. Producción debe verificarse mediante migration history/System Health y procedimientos operacionales documentados. `EXPECTED_DATABASE_MIGRATION` debe coincidir con la última migración del repositorio; CI valida continuidad y ausencia de huecos.
@@ -205,10 +206,11 @@ La presencia de una migración en Git no prueba por sí sola que esté aplicada 
 - órdenes que derivan capital desde el snapshot de lote en PostgreSQL;
 - allocation únicamente por flujo autorizado y respetando reservas de órdenes;
 - una sola FormulaVersion por lote;
+- soporte explícito para allocations internas CTG y externas sin romper el contrato XOR participante/interno;
 - ledger de participante append-only;
 - spendable balance descontando requests pendientes;
 - settlement único por lote;
-- revenue/tax vinculados a Sales OS;
+- revenue/tax vinculados a Sales OS; Sales OS puede reconocer ambos bajo `sales.manage` cuando existe `source_sale_id`;
 - correcciones mediante reversals/adjustments, no hard delete de historia financiera;
 - liquidación basada en hechos reales reconciliados, no en proyecciones de UI;
 - operaciones sensibles mediante funciones server-side/database-side con autorización revalidada.
