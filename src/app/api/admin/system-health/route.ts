@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { collectSystemHealth } from '@/lib/observability/health';
+import { addInfrastructureHealth } from '@/lib/observability/infrastructure-health';
 import { logger } from '@/lib/observability/logger';
 
 export const dynamic = 'force-dynamic';
@@ -28,7 +29,8 @@ export async function GET() {
   }
 
   try {
-    const snapshot = await collectSystemHealth(supabase, user.id);
+    const coreSnapshot = await collectSystemHealth(supabase, user.id);
+    const snapshot = await addInfrastructureHealth(supabase, coreSnapshot);
     logger.info('system_health_checked', {
       userId: user.id,
       status: snapshot.status,
