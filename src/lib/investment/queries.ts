@@ -8,11 +8,13 @@ import type {
   LotFundingSummary,
   LotInventorySummary,
 } from '@/types/investment';
+import type { InvestmentFormulaVersion } from '@/types/investment-economics';
+import { hasCompleteLotEconomics } from '@/lib/investment/economics';
 
 // Public, unauthenticated-safe reads for /inversion marketing pages — the
-// underlying tables have `for select using (true)` RLS policies (see
-// 0004_investment_schema.sql), so these work the same whether or not the
-// visitor is signed in.
+// underlying tables have public SELECT RLS policies. Financial truth shown by
+// these helpers is always read from persisted lot/formula snapshots; no public
+// page supplies fallback prices, costs, tax rates or profit shares in code.
 
 export async function getPublicLots(): Promise<InvestmentProductionLot[]> {
   if (!isSupabaseConfigured) return [];
@@ -22,6 +24,28 @@ export async function getPublicLots(): Promise<InvestmentProductionLot[]> {
     .select('*')
     .order('created_at', { ascending: false });
   return (data as InvestmentProductionLot[]) ?? [];
+}
+
+export async function getPublicEconomicsReferenceLot(): Promise<InvestmentProductionLot | null> {
+  const lots = await getPublicLots();
+  const eligible = lots.filter((lot) => lot.status !== 'DRAFT' && hasCompleteLotEconomics(lot));
+  return eligible[0] ?? null;
+}
+
+export async function getPublicSimulationLots(): Promise<InvestmentProductionLot[]> {
+  const lots = await getPublicLots();
+  return lots.filter((lot) => lot.status === 'FUNDING_OPEN' && hasCompleteLotEconomics(lot));
+}
+
+export async function getActiveInvestmentFormulaVersion(): Promise<InvestmentFormulaVersion | null> {
+  if (!isSupabaseConfigured) return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('investment_formula_versions')
+    .select('id,version,effective_from,effective_to,participant_profit_share,ctg_profit_share,status,created_at,approved_at')
+    .eq('status', 'ACTIVE')
+    .maybeSingle();
+  return (data as InvestmentFormulaVersion | null) ?? null;
 }
 
 export async function getLotByCode(code: string): Promise<InvestmentProductionLot | null> {
