@@ -17,6 +17,7 @@ const adminNav = await read('src/components/admin/AdminNav.tsx');
 const labelsPage = await read('src/app/admin/operations/labels/page.tsx');
 const operationsPage = await read('src/app/admin/operations/page.tsx');
 const beerMasterMigration = await read('supabase/migrations/0013_beer_style_master_and_lot_codes.sql');
+const salesMigration = await read('supabase/migrations/0014_sales_os_foundation.sql');
 
 const expectedFlags = [
   'CTG_INVESTMENT_PUBLIC_REGISTRATION_ENABLED',
@@ -59,7 +60,6 @@ assert.ok(knowledgeMigration.includes('security invoker'), 'Knowledge similarity
 assert.ok(knowledgeMigration.includes("classification in ('internal')"), 'v0.1 corpus classification must remain deliberately narrow.');
 assert.ok(supabaseMiddleware.includes("pathname.startsWith('/knowledge')"), 'Knowledge UI must be gated by the authenticated middleware path.');
 
-// Admin OS RBAC and traceability safety contract.
 for (const role of ['SUPER_ADMIN','FINANCE_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER','AUDITOR']) {
   assert.ok(supabaseMiddleware.includes(role), `Middleware must recognize investment role ${role}.`);
   assert.ok(adminNav.includes(role), `Admin navigation must recognize investment role ${role}.`);
@@ -70,7 +70,6 @@ assert.ok(labelsPage.includes('/beer/'), 'Label factory QR payload must point on
 assert.ok(!labelsPage.includes('participant_user_id'), 'Printed labels must never contain participant identity.');
 assert.ok(!labelsPage.includes('capital_committed'), 'Printed labels must never contain participant financial data.');
 
-// Beer master data and lot-code authority must remain in PostgreSQL, not the browser.
 for (const code of ['GOLD','IRA','POR','HEF']) assert.ok(beerMasterMigration.includes(`('${code}'`), `Beer master migration must retain canonical style ${code}.`);
 assert.ok(beerMasterMigration.includes('pg_advisory_xact_lock'), 'Lot-code allocation must retain transaction-level serialization.');
 assert.ok(beerMasterMigration.includes("has_investment_permission('production.manage')"), 'Authoritative lot creation must revalidate production authorization.');
@@ -78,5 +77,14 @@ assert.ok(operationsPage.includes("from('investment_beer_styles')"), 'Production
 assert.ok(operationsPage.includes("rpc('create_production_lot_from_style'"), 'Production OS must create lots through the database-authoritative RPC.');
 assert.ok(!operationsPage.includes('const BEER_STYLES = ['), 'Production OS must not reintroduce a hard-coded beer-style catalog.');
 assert.ok(!operationsPage.includes("rpc('create_production_lot', payload)"), 'Production OS must not use the legacy frontend-code lot creation path.');
+
+// Sales OS must preserve one commercial document per idempotency key and one sale item per bottle.
+for (const table of ['investment_sales_channels','investment_sales','investment_sale_items']) assert.ok(salesMigration.includes(`public.${table}`), `Sales OS migration must include ${table}.`);
+assert.ok(salesMigration.includes('idempotency_key text not null unique'), 'Sales OS must prevent duplicate commercial operations through an idempotency key.');
+assert.ok(salesMigration.includes('bottle_unit_id uuid not null unique'), 'A physical bottle must not be attached to multiple sale items.');
+assert.ok(salesMigration.includes("has_investment_permission('sales.manage')"), 'Sales write path must revalidate sales.manage in PostgreSQL.');
+assert.ok(salesMigration.includes("values (p_lot_id, 'SOLD', v_count, auth.uid())"), 'Confirmed sales must generate an inventory SOLD movement in the same transaction.');
+assert.ok(salesMigration.includes("'REVENUE', v_gross"), 'Confirmed sales must recognize gross revenue in the lot financial facts.');
+assert.ok(salesMigration.includes('p_tax_cents bigint default 0'), 'Tax recognition must remain explicit until a tax-inclusion policy is formally configured.');
 
 console.log('Critical invariants: PASS');
