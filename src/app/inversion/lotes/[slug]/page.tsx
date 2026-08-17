@@ -12,13 +12,17 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const lot = await getLotByCode(params.slug);
+type LotRouteParams = Promise<{ slug: string }>;
+
+export async function generateMetadata({ params }: { params: LotRouteParams }) {
+  const { slug } = await params;
+  const lot = await getLotByCode(slug);
   return { title: lot ? `${lot.beer_style} — ${lot.code}` : 'Lote no encontrado' };
 }
 
-export default async function LotDetailPage({ params }: { params: { slug: string } }) {
-  const lot = await getLotByCode(params.slug);
+export default async function LotDetailPage({ params }: { params: LotRouteParams }) {
+  const { slug } = await params;
+  const lot = await getLotByCode(slug);
   if (!lot) notFound();
 
   const [timeline, funding, inventory] = await Promise.all([

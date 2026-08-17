@@ -7,8 +7,11 @@ import { ArrowLeft, RadioTower, ShieldCheck } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-export default async function NewInvestmentOrderPage({ params }: { params: { slug: string } }) {
-  const lot = await getLotByCode(params.slug);
+type InvestmentOrderRouteParams = Promise<{ slug: string }>;
+
+export default async function NewInvestmentOrderPage({ params }: { params: InvestmentOrderRouteParams }) {
+  const { slug } = await params;
+  const lot = await getLotByCode(slug);
   if (!lot) notFound();
   const funding = await getLotFundingSummary(lot);
 
