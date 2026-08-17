@@ -10,6 +10,7 @@ const economics = await read('src/lib/investment/economics.ts');
 const queries = await read('src/lib/investment/queries.ts');
 const operations = await read('src/app/admin/operations/page.tsx');
 const migration = await read('supabase/migrations/0020_authoritative_lot_economics.sql');
+const privilegeHardening = await read('supabase/migrations/0021_economics_function_privilege_hardening.sql');
 const languageContext = await read('src/contexts/LanguageContext.tsx');
 const economicsTranslations = await read('src/i18n/investmentEconomicsTranslations.ts');
 
@@ -49,5 +50,7 @@ assert.ok(migration.includes('p_production_cost_unit_cents bigint default null')
 assert.ok(migration.includes('p_inc_rate numeric default null'), 'Canonical lot RPC must fail closed when tax economics are omitted.');
 assert.ok(migration.includes('update_investment_beer_style_economics'), 'Migration 0020 must expose an audited master-data update RPC.');
 assert.ok(migration.includes('revoke execute on function public.create_production_lot('), 'Legacy lot creation RPC must no longer be client executable.');
+assert.ok(privilegeHardening.includes('from public, anon'), 'Economics master-data RPC must explicitly revoke anonymous execution.');
+assert.ok(privilegeHardening.includes('to authenticated'), 'Economics master-data RPC must explicitly grant authenticated execution after revocation.');
 
 console.log('Investment economics invariants: PASS');
