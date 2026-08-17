@@ -12,6 +12,7 @@ const playwrightConfig = await read('playwright.config.mjs');
 const authE2E = await read('tests/e2e/auth.spec.mjs');
 const loginPage = await read('src/app/(auth)/iniciar-sesion/page.tsx');
 const registrationPage = await read('src/app/(auth)/registro/page.tsx');
+const authInput = await read('src/components/auth/AuthInput.tsx');
 const packageJson = JSON.parse(await read('package.json'));
 
 assert.ok(ci.includes('Enforce PR-only changes to main'), 'CI must keep the PR-only main deployment gate.');
@@ -47,5 +48,8 @@ assert.ok(loginPage.includes('<Button type="submit"'), 'Login must use one seman
 assert.ok(registrationPage.includes('<Button type="submit"'), 'Registration must use one semantic form-submit path.');
 assert.ok(!loginPage.includes('onEnter={handleSubmit}'), 'Login must not duplicate form submit through an input key handler.');
 assert.ok(!registrationPage.includes('onEnter={handleSubmit}'), 'Registration must not duplicate form submit through an input key handler.');
+assert.ok(authInput.includes('htmlFor={inputId}'), 'Auth inputs must explicitly associate their visible label with the control.');
+assert.ok(authInput.includes('id={inputId}'), 'Auth controls must expose the id referenced by their label.');
+assert.ok(authInput.includes('aria-label={label}'), 'Auth controls must retain an explicit accessible name for browser and assistive technology use.');
 
 console.log('Governance invariants: PASS');
