@@ -34,6 +34,7 @@ function IniciarSesionForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     setError(null);
 
     if (!isSupabaseConfigured) {
@@ -65,7 +66,7 @@ function IniciarSesionForm() {
   };
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+    <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }}>
       <h1 className="text-xl font-outfit font-semibold text-white mb-1">Iniciar sesión</h1>
       <p className="text-sm text-text-dim mb-8">Accede a tu cuenta de CTG One.</p>
 
@@ -76,14 +77,13 @@ function IniciarSesionForm() {
         value={password}
         onChange={setPassword}
         autoComplete="current-password"
-        onEnter={handleSubmit}
       />
 
       {error && (
-        <p className="text-sm mb-4" style={{ color: 'var(--error)' }}>{error}</p>
+        <p role="alert" className="text-sm mb-4" style={{ color: 'var(--error)' }}>{error}</p>
       )}
 
-      <Button onClick={handleSubmit} loading={isSubmitting} variant="primary" size="md" fullWidth>
+      <Button type="submit" loading={isSubmitting} variant="primary" size="md" fullWidth>
         Iniciar sesión
       </Button>
 
