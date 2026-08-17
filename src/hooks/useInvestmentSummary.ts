@@ -19,11 +19,10 @@ const EMPTY: InvestmentSummary = {
   withdrawalRequests: [],
 };
 
-// Own-data-only reads for the participant dashboard — RLS scopes
-// investment_funding_allocations/investment_withdrawal_requests to
-// participant_user_id = auth.uid(), and get_investment_available_balance()
-// is authorized server-side to only return the caller's own balance
-// (or an admin's) — see 0005_investment_security_hardening.sql.
+// The participant dashboard shows spendable balance rather than raw ledger
+// balance. Pending withdrawal/reinvestment requests reserve the same financial
+// pool in PostgreSQL, preventing the UI from presenting already-committed money
+// as available for a second operation.
 export function useInvestmentSummary() {
   const { userId } = useAuth();
   const [summary, setSummary] = useState<InvestmentSummary>(EMPTY);
@@ -39,7 +38,7 @@ export function useInvestmentSummary() {
     const supabase = createClient();
 
     const [{ data: balance }, { data: allocations }, { data: withdrawals }] = await Promise.all([
-      supabase.rpc('get_investment_available_balance', { p_user: userId }),
+      supabase.rpc('get_investment_spendable_balance', { p_user: userId }),
       supabase.from('investment_funding_allocations').select('*').eq('participant_user_id', userId),
       supabase
         .from('investment_withdrawal_requests')
@@ -52,7 +51,7 @@ export function useInvestmentSummary() {
 
     setSummary({
       availableBalanceCents: (balance as number) ?? 0,
-      activeCapitalCents: allocationRows.reduce((sum, a) => sum + a.capital_committed_cents, 0),
+      activeCapitalCents: allocationRows.reduce((sum, allocation) => sum + allocation.capital_committed_cents, 0),
       allocations: allocationRows,
       withdrawalRequests: (withdrawals as InvestmentWithdrawalRequest[]) ?? [],
     });
@@ -60,7 +59,7 @@ export function useInvestmentSummary() {
   }, [userId]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   return { summary, isLoading, refresh: load };
