@@ -4,7 +4,9 @@ import { readFile } from 'node:fs/promises';
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 const migration = await read('supabase/migrations/0022_closed_loop_integrity.sql');
+const reviewHardening = await read('supabase/migrations/0023_closed_loop_review_hardening.sql');
 const operations = await read('src/app/admin/operations/page.tsx');
+const investmentTypes = await read('src/types/investment.ts');
 const summaryHook = await read('src/hooks/useInvestmentSummary.ts');
 
 assert.ok(
@@ -35,6 +37,18 @@ assert.ok(
   migration.includes("manual REVENUE/TAX is prohibited; use Sales OS"),
   'Database must reject manual sales revenue/tax facts.',
 );
+assert.ok(
+  reviewHardening.includes("new.entry_type in ('REVENUE','TAX')"),
+  'Financial permission guard must treat sales-backed revenue and tax together.',
+);
+assert.ok(
+  reviewHardening.includes('new.source_sale_id is not null'),
+  'Sales-manager financial authority must require an authoritative source sale.',
+);
+assert.ok(
+  reviewHardening.includes("public.has_investment_permission('sales.manage')"),
+  'Sales-backed tax/revenue must remain writable by Sales OS operators.',
+);
 
 assert.ok(
   migration.includes("hashtextextended('ctg-sale-idempotency:'"),
@@ -52,6 +66,10 @@ assert.ok(
 assert.ok(
   migration.includes('finalize_settlement() is the'),
   'Settlement must be the only path to SETTLED.',
+);
+assert.ok(
+  !/SETTLEMENT_PENDING\s*:\s*'SETTLED'/.test(investmentTypes),
+  'Shared UI state mapping must not offer a generic SETTLEMENT_PENDING -> SETTLED action.',
 );
 assert.ok(
   migration.includes('lot cannot be FUNDED until allocations cover all cases'),
@@ -81,6 +99,18 @@ assert.ok(
 assert.ok(
   migration.includes('capital committed does not match lot snapshot'),
   'Allocation capital must match the immutable lot snapshot.',
+);
+assert.ok(
+  reviewHardening.includes('if p_is_ctg_internal is true then'),
+  'Checked allocation helper must preserve CTG-internal allocations.',
+);
+assert.ok(
+  reviewHardening.includes('CTG internal allocation must not have a participant user'),
+  'CTG-internal allocations must preserve the participant/CTG XOR contract.',
+);
+assert.ok(
+  reviewHardening.includes('participant is required for external allocation'),
+  'External allocations must still require a participant user.',
 );
 
 assert.ok(
