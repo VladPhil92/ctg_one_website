@@ -46,6 +46,8 @@ assert.ok(playwrightConfig.includes("locale: 'es-CO'"), 'Auth E2E must use an ex
 assert.ok(playwrightConfig.includes("timezoneId: 'America/Bogota'"), 'Auth E2E must keep the Colombian runtime timezone deterministic.');
 assert.ok(!authE2E.includes('ctgone.com'), 'Baseline browser E2E must not target production directly.');
 assert.ok(!authE2E.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Browser E2E must never require the Supabase service-role secret.');
+assert.ok(authE2E.includes("page.route('**/auth/v1/**'"), 'Baseline auth E2E must intercept all Supabase auth network traffic.');
+assert.ok(authE2E.includes('E2E_AUTH_NETWORK_BLOCKED'), 'Intercepted auth traffic must terminate in a deterministic local E2E response.');
 assert.ok(loginPage.includes('<Button type="submit"'), 'Login must use one semantic form-submit path.');
 assert.ok(registrationPage.includes('<Button type="submit"'), 'Registration must use one semantic form-submit path.');
 assert.ok(!loginPage.includes('onEnter={handleSubmit}'), 'Login must not duplicate form submit through an input key handler.');
