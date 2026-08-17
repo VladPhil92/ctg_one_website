@@ -152,6 +152,35 @@ export async function collectSystemHealth(
     latencyMs: beerStyleProbe.latencyMs,
   });
 
+  const salesChannelsProbe = await timed(() =>
+    supabase.from('investment_sales_channels').select('code,name,active').eq('active', true).limit(10)
+  );
+  const salesProbe = await timed(() =>
+    supabase.from('investment_sales').select('id').limit(1)
+  );
+  const salesCodes = salesChannelsProbe.value.error
+    ? []
+    : (salesChannelsProbe.value.data ?? []).map((row) => String(row.code));
+  const expectedSalesCodes = ['PISAO', 'DIRECT', 'DISTRIBUTOR', 'RESTAURANT_PARTNER', 'EVENT', 'RETAIL', 'OTHER'];
+  const canonicalSalesChannelsAvailable = expectedSalesCodes.every((code) => salesCodes.includes(code));
+  const salesSchemaError = salesChannelsProbe.value.error ?? salesProbe.value.error;
+
+  checks.push({
+    id: 'migration-0014',
+    label: 'Migration 0014 · Sales OS Foundation',
+    status: salesSchemaError
+      ? (isMissingSchema(salesSchemaError) ? 'pending_schema' : 'degraded')
+      : (canonicalSalesChannelsAvailable ? 'healthy' : 'degraded'),
+    detail: salesSchemaError
+      ? (isMissingSchema(salesSchemaError)
+          ? 'Normalized Sales OS tables are not installed in this environment yet.'
+          : `Sales OS probe returned ${salesSchemaError.code ?? 'an error'}.`)
+      : canonicalSalesChannelsAvailable
+        ? 'Sales documents, sale items and canonical sales channels are available. Write-path activation is verified separately after migration installation.'
+        : `Sales OS is reachable but canonical channel master data is incomplete. Found: ${salesCodes.join(', ') || 'none'}.`,
+    latencyMs: salesChannelsProbe.latencyMs + salesProbe.latencyMs,
+  });
+
   const summary = checks.reduce(
     (acc, check) => {
       if (check.status === 'healthy') acc.healthy += 1;
