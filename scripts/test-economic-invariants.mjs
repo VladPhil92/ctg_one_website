@@ -10,6 +10,8 @@ const economics = await read('src/lib/investment/economics.ts');
 const queries = await read('src/lib/investment/queries.ts');
 const operations = await read('src/app/admin/operations/page.tsx');
 const migration = await read('supabase/migrations/0020_authoritative_lot_economics.sql');
+const languageContext = await read('src/contexts/LanguageContext.tsx');
+const economicsTranslations = await read('src/i18n/investmentEconomicsTranslations.ts');
 
 assert.ok(unitEconomics.includes('getPublicEconomicsReferenceLot'), 'Public unit economics must come from a persisted lot snapshot.');
 assert.ok(unitEconomics.includes('deriveUnitEconomics'), 'Public unit economics must use the shared economics calculator.');
@@ -27,6 +29,11 @@ assert.ok(simulatorClient.includes('deriveLotScenario'), 'Simulator scenarios mu
 assert.ok(economics.includes('lot.production_cost_unit_cents'), 'Shared economics must derive capital from the lot production-cost snapshot.');
 assert.ok(economics.includes('formula.participant_profit_share'), 'Participant scenario share must come from the versioned formula record.');
 assert.ok(queries.includes("lot.status === 'FUNDING_OPEN'"), 'Public simulator must only use funding-open lots.');
+
+assert.ok(languageContext.includes('translateInvestmentEconomicsPhrase'), 'LanguageContext must route investment economics through parameter-aware translations.');
+assert.ok(economicsTranslations.includes('Economía unitaria · (.+)'), 'Dynamic lot-code economics badges must have translation coverage.');
+assert.ok(economicsTranslations.includes('Advertising · ${match[1]} on pre-INC base'), 'Dynamic advertising-rate labels must have translation coverage.');
+assert.ok(economicsTranslations.includes("en: 'Batch-snapshot simulator'"), 'Simulator copy must have an English translation contract.');
 
 assert.ok(operations.includes("rpc('update_investment_beer_style_economics'"), 'Production OS must provide a database-authoritative preset update path.');
 assert.ok(operations.includes("production:'',label:'',ownPrice:'',b2bPrice:'',inc:'',advertising:''"), 'Production OS must initialize economics blank rather than inventing defaults.');
