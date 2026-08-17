@@ -190,6 +190,7 @@ Migraciones versionadas actualmente en el repositorio:
 0018_system_health_trigger_name_fix.sql
 0019_client_table_privilege_hardening.sql
 0020_authoritative_lot_economics.sql
+0021_economics_function_privilege_hardening.sql
 ```
 
 La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno. Producción debe verificarse mediante migration history/System Health y procedimientos operacionales documentados. `EXPECTED_DATABASE_MIGRATION` debe coincidir con la última migración del repositorio; CI valida continuidad y ausencia de huecos.
