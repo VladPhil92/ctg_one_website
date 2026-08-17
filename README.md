@@ -1,78 +1,71 @@
-# CTG One Technology - Corporate Website
+# CTG One Technology
 
-**Software, AI & Infrastructure**
+**Software, Data & Digital Infrastructure for the CTG One Business Ecosystem**
 
-CTG One Technology es una empresa tecnológica que desarrolla software propietario, sistemas de inteligencia artificial, automatización e infraestructura digital para sus propias unidades de negocio.
+CTG One Technology es la capa propietaria de software, datos e infraestructura digital que soporta el ecosistema empresarial CTG One. Diseña, construye y opera aplicaciones, plataformas transaccionales, identidad, automatización, seguridad e infraestructura compartida aplicadas directamente a unidades de negocio reales.
 
-No se presenta como agencia comercial ni como consultora tecnológica tercerizada. Su función es construir y operar la capa tecnológica común del ecosistema CTG One: aplicaciones, plataformas, datos, integraciones, identidad, pagos, automatización, seguridad e infraestructura compartida aplicada directamente a negocios reales del grupo.
+CTG One no se define como agencia comercial, agencia de ventas ni consultora tecnológica genérica para terceros. Su diferenciador es la integración vertical: la tecnología se desarrolla dentro del mismo ecosistema donde se utiliza, mide y mejora.
 
-El ecosistema funciona como entorno operativo para diseñar, probar, desplegar y mejorar continuamente los productos tecnológicos de CTG One.
+## Modelo operativo
 
----
+```text
+Necesidad real del negocio
+        ↓
+Diseño de sistema
+        ↓
+Desarrollo de software
+        ↓
+Despliegue productivo
+        ↓
+Datos operacionales
+        ↓
+Medición y auditoría
+        ↓
+Iteración
+```
 
-## Naturaleza de CTG One Technology
+## Stack actual
 
-CTG One desarrolla tecnología de manera centralizada y la aplica dentro de sus propias unidades de negocio.
-
-Principales líneas tecnológicas:
-
-- **Software Engineering:** aplicaciones web, plataformas internas, APIs y productos digitales.
-- **AI & Automation:** agentes de IA, automatización de procesos y asistencia inteligente.
-- **Platforms, Data & Infrastructure:** identidad, bases de datos, integraciones, analítica, pagos, seguridad y servicios cloud compartidos.
-- **Embedded Product Development:** desarrollo de productos tecnológicos a partir de necesidades operativas reales de las unidades de negocio.
-
-El diferenciador central es la integración vertical: CTG One desarrolla la tecnología dentro del mismo ecosistema donde se utiliza y mide su desempeño.
-
----
-
-## Tecnologías
-
-- **Framework:** Next.js 14 — App Router, Server Components y Client Components
-- **React:** 18.2
-- **TypeScript:** 5.3
-- **Styling:** Tailwind CSS 3.4
+- **Framework:** Next.js 16.3.1 — App Router, Server Components, Client Components y Route Handlers
+- **React:** 19.2.8
+- **TypeScript:** 5.x
+- **Styling:** Tailwind CSS 3.x
 - **Backend / Database:** Supabase — PostgreSQL, Auth y Storage
-- **Session / Middleware:** `@supabase/ssr`
+- **Session / SSR:** `@supabase/ssr`
 - **Validation:** Zod
-- **Web3:** ethers, viem y wagmi
+- **Data:** TanStack React Query donde aplica
+- **AI pilot:** OpenAI integration code + CTG Knowledge controlled retrieval
+- **Web3 libraries:** ethers, viem y wagmi; CTGO permanece ROADMAP hasta existir evidencia productiva verificable
 - **Animations:** Framer Motion
 - **Icons:** Lucide React
-- **i18n:** catálogo ES/EN curado manualmente, `LanguageProvider`, persistencia por cookie/localStorage
 - **Production hosting:** Render Web Service
 - **Source control / CI:** GitHub + GitHub Actions
 
-El proyecto no es un Static Export. Usa middleware, Server Components, autenticación y conexiones server-side con Supabase, por lo que requiere un runtime Node.
+El proyecto requiere runtime Node. No es un static export.
 
----
-
-## Arquitectura
+## Arquitectura de entrega
 
 ```text
-GitHub
-   │
-   │ push / merge a main
-   ▼
+branch
+  ↓
+Pull Request
+  ↓
 GitHub Actions
-   │
-   │ typecheck + Next.js build
-   ▼
+(test + dependency audit + typecheck + build)
+  ↓
+main
+  ↓
 Render Web Service
-   │
-   ▼
+  ↓
 ctgone.com
-   │
-   ▼
+  ↓
 Supabase
 PostgreSQL · Auth · Storage · RLS
 ```
 
-La rama de producción es `main`.
-
----
-
 ## Ecosistema empresarial
 
-CTG One Technology constituye la capa tecnológica del ecosistema integrado por doce unidades de negocio:
+CTG One Technology es la capa tecnológica común de doce unidades de negocio:
 
 1. Valderrama International School
 2. CTG Suites
@@ -87,73 +80,90 @@ CTG One Technology constituye la capa tecnológica del ecosistema integrado por 
 11. CTG Craft Beer
 12. Guest Logistics Concierge
 
-Estas unidades no convierten a CTG One en una agencia comercial. Son los entornos operativos en los que la compañía desarrolla y aplica software, automatización, plataformas e infraestructura tecnológica.
+Estas unidades constituyen entornos reales de aplicación y validación tecnológica. La pertenencia al ecosistema no implica que todas posean el mismo nivel de madurez digital; cada capacidad debe clasificarse por evidencia.
 
----
+## Modelo de madurez
+
+Toda capacidad pública debe clasificarse como una de:
+
+- `LIVE`
+- `PARTIAL`
+- `IN DEVELOPMENT`
+- `PILOT` cuando corresponda al producto
+- `ROADMAP`
+
+Nada debe presentarse como `LIVE` únicamente por existir una descripción, diseño o dependencia instalada.
+
+La superficie pública de evidencia vive en `/technology/status`.
+
+## Dominios actuales
+
+### Identity / Account
+
+- Supabase Auth
+- perfiles
+- KYC
+- documentos privados
+- wallet/account transactions
+- rutas protegidas
+- administración y auditoría
+
+### CTG Craft Beer Investment
+
+Bounded context para:
+
+- órdenes de inversión
+- asignaciones económicas
+- lotes de producción
+- economía unitaria
+- eventos de producción
+- serialización por botella
+- movimientos de inventario
+- hechos financieros por lote
+- participant ledger
+- settlement
+- withdrawals / reinvestment
+- RBAC
+- trazabilidad pública por serial
+
+### CTG Knowledge
+
+Pilot de conocimiento institucional con ingestión, chunking, retrieval, control de acceso y provider integration. Debe mantenerse bajo política de evidencia, evaluación y seguridad.
+
+### Observability
+
+- `/api/health`
+- Admin System Health
+- structured logger base
+- verificación de runtime/configuración/migraciones críticas
 
 ## Rutas principales
 
-| Ruta | Tipo |
+| Ruta | Propósito |
 |---|---|
-| `/` | Home |
+| `/` | Home corporativo |
 | `/about` | Naturaleza y modelo tecnológico |
-| `/services` | Tecnología: software, IA e infraestructura |
-| `/ecosystem` | Unidades de negocio |
+| `/services` | Technology capabilities |
+| `/ecosystem` | Ecosistema empresarial |
+| `/products` | Productos / case studies |
+| `/technology/status` | Registro público de madurez y evidencia |
+| `/ai` | Arquitectura y desarrollo de IA |
+| `/knowledge` | CTG Knowledge pilot |
 | `/rewards` | CTG Rewards |
-| `/token` | CTGO Token |
-| `/contact` | Contacto |
-| `/privacidad` | Política de privacidad |
-| `/iniciar-sesion` | Autenticación |
-| `/registro` | Registro |
-| `/dashboard` | Cuenta protegida |
-| `/dashboard/kyc` | Verificación de identidad |
-| `/dashboard/depositos` | Recargas, bloqueadas hasta configurar canales reales de pago |
-| `/admin` | Área administrativa protegida |
-| `/inversion` | CTG Craft Beer Inversión |
-| `/inversion/lotes` | Lotes públicos |
-| `/inversion/como-funciona` | Explicación del modelo |
-| `/inversion/simulador` | Simulador |
-| `/inversion/riesgos` | Riesgos |
-| `/inversion/legal` | Información legal |
-| `/inversion/app` | Panel protegido del participante |
-| `/inversion/admin` | Panel protegido de administración |
+| `/token` | CTGO Web3 roadmap |
+| `/dashboard` | Personal OS protegido |
+| `/dashboard/kyc` | Identidad/KYC |
+| `/dashboard/depositos` | Cuenta y recargas; fail-closed si no hay canales reales configurados |
+| `/dashboard/inversion` | Investment experience integrada |
+| `/admin` | Admin OS protegido |
+| `/admin/operations` | Production / Traceability OS |
+| `/admin/system-health` | Diagnóstico técnico administrativo |
+| `/inversion` | CTG Craft Beer Investment público |
+| `/beer/[serial]` | Trazabilidad pública por unidad |
 
-La etiqueta pública de navegación para `/services` es **Technology**. La ruta se conserva para compatibilidad.
+## Supabase migrations
 
----
-
-## Autenticación y datos
-
-La aplicación utiliza Supabase Auth y PostgreSQL con Row Level Security.
-
-Componentes principales:
-
-- `profiles`
-- `kyc_submissions`
-- `kyc_documents`
-- `wallets`
-- `transactions`
-- `admin_audit_log`
-
-Las operaciones sensibles se ejecutan server-side y las funciones administrativas revalidan autorización antes de modificar datos.
-
-Los canales de recarga de la cuenta general funcionan bajo un criterio **fail closed**: la UI no debe aceptar solicitudes ni mostrar instrucciones bancarias/cripto mientras la configuración real de producción continúe pendiente.
-
----
-
-## CTG Craft Beer Inversión
-
-La plataforma `/inversion` vive dentro del mismo proyecto y utiliza un bounded context propio para lotes, asignaciones, inventario, ventas, ledger, retiros y liquidaciones.
-
-La documentación funcional y técnica se encuentra en:
-
-```text
-docs/investment/
-```
-
-Incluye modelo de negocio, arquitectura de información, modelo financiero, seguridad, inventario, estados de lotes y ADRs de implementación.
-
-Migraciones actuales:
+Migraciones versionadas actualmente en el repositorio:
 
 ```text
 0001_init.sql
@@ -162,15 +172,60 @@ Migraciones actuales:
 0004_investment_schema.sql
 0005_investment_security_hardening.sql
 0006_investment_unit_economics.sql
+0007_ctg_knowledge_v01.sql
+0008_investment_orders_checkout.sql
+0009_production_traceability_os.sql
+0010_investment_rbac.sql
+0011_role_admin_and_permission_enforcement.sql
+0012_core_permission_guards.sql
 ```
 
-`0006` incorpora el snapshot de economía unitaria por lote utilizado por la capa informativa de CTG Craft Beer Inversión. La liquidación real continúa dependiendo de los ingresos, impuestos, costos y ajustes efectivamente registrados en el ledger.
+La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno. Producción debe verificarse mediante migration history/System Health y procedimientos operacionales documentados.
 
----
+## Principios financieros
 
-## Variables de entorno
+- dinero representado en centavos enteros (`bigint`) cuando aplica;
+- ledger de participante append-only;
+- settlement único por lote;
+- correcciones mediante reversals/adjustments, no hard delete de historia financiera;
+- liquidación basada en hechos reales de ingreso/costo/impuesto, no únicamente en proyecciones de UI;
+- operaciones sensibles mediante funciones server-side/database-side con autorización revalidada.
 
-Variables principales:
+## Seguridad
+
+Arquitectura base:
+
+- Supabase Auth;
+- RLS;
+- server-side authorization;
+- RBAC del dominio inversión;
+- funciones `SECURITY DEFINER` con comprobaciones explícitas;
+- Storage privado + signed URLs para documentos sensibles;
+- feature flags y canales financieros fail-closed;
+- headers de seguridad baseline;
+- dependency audit en CI.
+
+No se realizan afirmaciones de SOC 2, ISO 27001, PCI DSS u otras certificaciones sin evidencia formal.
+
+## CI
+
+```bash
+npm test
+npm run audit:critical
+npx tsc --noEmit
+npm run build
+```
+
+CI ejecuta estas comprobaciones en pull requests y pushes a `main`.
+
+## Desarrollo local
+
+```bash
+npm ci
+npm run dev
+```
+
+## Variables de entorno principales
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=
@@ -179,79 +234,55 @@ SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_SITE_URL=https://ctgone.com
 ```
 
-Los secretos reales nunca deben almacenarse en el repositorio.
+Nunca almacenar secretos productivos en Git.
 
-La funcionalidad de inversión utiliza además variables `CTG_INVESTMENT_*`. Todas fallan cerradas (`false`) cuando no están configuradas y deben habilitarse únicamente cuando sus dependencias operativas y revisiones correspondientes estén listas.
+## Roadmap técnico prioritario
 
----
-
-## Desarrollo local
-
-```bash
-npm install
-npm run dev
-```
-
-Validación:
-
-```bash
-npx tsc --noEmit
-npm run build
-```
-
-Producción:
-
-```bash
-npm start
-```
-
----
-
-## Deployment
-
-Producción corre como **Render Web Service** conectado al repositorio GitHub.
-
-Configuración esperada:
+La siguiente etapa se denomina **CTG One Closed Loop**:
 
 ```text
-Branch: main
-Runtime: Node
-Build Command: npm ci && npm run build
-Start Command: npm start
-Domain: https://ctgone.com
+Identity
+→ Investment
+→ Payment
+→ Allocation
+→ Production
+→ Serialization
+→ Inventory
+→ Sales
+→ Finance / Ledger
+→ Settlement
+→ Withdrawal
+→ Reporting
 ```
 
-El flujo de entrega es:
+El primer caso vertical de referencia es CTG Craft Beer. El objetivo es que una operación completa pueda reconstruirse a partir de evidencia persistida y auditable.
 
-```text
-branch → pull request → CI → merge a main → Render deploy → ctgone.com
-```
+Ver:
 
----
+- `docs/architecture/REPOSITORY_AUDIT_CURRENT.md`
+- `docs/architecture/CLOSED_LOOP_GAP_ANALYSIS.md`
+- `docs/architecture/CTG_ONE_OS.md`
+- `docs/investment/`
+- `docs/security/`
+- `docs/infrastructure/`
 
-## Posicionamiento corporativo
+## Posicionamiento canónico
 
-**CTG One Technology builds software, AI and digital infrastructure for its own business ecosystem.**
+**CTG One Technology is the proprietary software, data and digital infrastructure layer powering the CTG One business ecosystem.**
 
-La compañía no debe describirse públicamente como:
+No utilizar como definición institucional:
 
+- “Dual Architecture”;
 - agencia comercial;
 - agencia de ventas;
 - consultora tecnológica tercerizada;
-- proveedor genérico de servicios tecnológicos para terceros;
-- arquitectura dual tecnología + agencia comercial.
-
-La definición autorizada es una **empresa tecnológica integrada verticalmente con sus propias unidades de negocio**.
-
----
+- proveedor genérico de servicios tecnológicos.
 
 ## Contacto
 
 - **Email:** direccion@ctgone.com
 - **Phone:** +57 (5) 6661 7000
-- **Location:** Cl. 17 Mz 10 L 21, El Campestre, Cartagena de Indias
-- **Website:** www.ctgone.com
+- **Location:** Cartagena de Indias, Colombia
+- **Website:** https://ctgone.com
 
----
-
-© 2024-2026 CTG One Technology. All rights reserved.
+© 2024-2026 CTG One Technology.
