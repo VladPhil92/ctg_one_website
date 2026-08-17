@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -24,6 +25,26 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Enforce PR-only changes to main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          response="$(curl --fail --silent --show-error \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${REPOSITORY}/commits/${SHA}/pulls")"
+          merged_prs="$(printf '%s' "$response" | jq '[.[] | select(.merged_at != null and .base.ref == "main")] | length')"
+          if [ "$merged_prs" -lt 1 ]; then
+            echo "::error::Direct pushes to main are prohibited. Open a pull request and merge it after CI passes."
+            exit 1
+          fi
+          echo "Main commit is associated with a merged pull request."
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
