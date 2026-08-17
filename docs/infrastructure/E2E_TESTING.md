@@ -6,6 +6,14 @@ CTG One uses Playwright to validate user-visible browser behavior inside the sam
 
 The first suite is intentionally non-destructive. It does not create Supabase users, mutate production data, or require service-role credentials. It exercises the production Next.js build locally in CI and verifies the authentication shell, validation behavior, navigation, fail-closed auth behavior, and the public health contract.
 
+## Safety boundary
+
+Baseline browser tests must remain safe even if they are accidentally executed with Supabase public configuration present. `tests/e2e/auth.spec.mjs` therefore intercepts every browser request matching `**/auth/v1/**` and returns a deterministic local `503` response. Real login and signup traffic cannot leave the Playwright browser during this suite.
+
+Local validation tests additionally assert that invalid credentials produce zero auth-network attempts. A valid-looking submission may exercise the application's failure path, but any Supabase auth request is intercepted before it can reach an external project.
+
+This network boundary is a defense-in-depth rule; it is not permission to point the baseline suite at production. Production remains out of scope for tests that can submit forms.
+
 ## CI contract
 
 The protected `Test, typecheck and build` job performs, in order:
@@ -20,6 +28,8 @@ The protected `Test, typecheck and build` job performs, in order:
 8. Playwright browser tests against `next start`
 
 The Playwright runtime is pinned in CI as `@playwright/test@1.62.0`. During this bootstrap phase it is installed with `--no-save --package-lock=false`, keeping the application dependency lock unchanged while still making the browser-test runtime deterministic. A later testing-hardening phase may promote Playwright into the repository devDependency lock when the broader unit/integration test toolchain is standardized.
+
+The browser context is pinned to `es-CO` and `America/Bogota` so CTG One's `LanguageProvider` and locale-sensitive behavior are deterministic in CI.
 
 ## Local execution
 
@@ -41,7 +51,7 @@ To exercise an already-running non-production environment instead of starting a 
 PLAYWRIGHT_TEST_BASE_URL=https://your-test-environment.example
 ```
 
-Do not point the baseline suite at production unless a test has been explicitly reviewed as read-only.
+Do not point the baseline suite at production unless every selected test has been explicitly reviewed as read-only.
 
 ## Current coverage
 
@@ -49,8 +59,8 @@ Do not point the baseline suite at production unless a test has been explicitly 
 
 - login page rendering and semantic form submission;
 - Zod validation before backend access;
-- fail-closed behavior when browser Supabase configuration is absent;
-- registration validation without creating a user;
+- fail-closed login behavior without allowing real Supabase auth traffic;
+- registration validation while blocking real signup traffic;
 - navigation between login and registration;
 - the public `/api/health` response and absence of privileged secret material.
 
