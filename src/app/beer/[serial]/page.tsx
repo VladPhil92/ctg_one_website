@@ -9,15 +9,17 @@ export const dynamic = 'force-dynamic';
 export const metadata = { robots: { index: false, follow: false } };
 
 type Trace = { serial_code:string; unit_number:number; bottle_status:string; current_location:string|null; packaged_at:string|null; sold_at:string|null; lot_code:string; beer_style:string; destination:string; lot_status:string; case_size_units:number };
+type BottleTraceRouteParams = Promise<{ serial: string }>;
 
-export default async function BottleTracePage({params}:{params:{serial:string}}){
-  if(!isSupabaseConfigured) notFound();
-  const supabase=await createClient();
-  const serial=decodeURIComponent(params.serial).trim().toUpperCase();
-  const {data,error}=await supabase.rpc('get_public_bottle_trace',{p_serial_code:serial});
-  if(error) return <TraceUnavailable serial={serial}/>;
-  const trace=(Array.isArray(data)?data[0]:data) as Trace|undefined;
-  if(!trace) notFound();
+export default async function BottleTracePage({ params }: { params: BottleTraceRouteParams }) {
+  if (!isSupabaseConfigured) notFound();
+  const supabase = await createClient();
+  const { serial: serialParam } = await params;
+  const serial = decodeURIComponent(serialParam).trim().toUpperCase();
+  const { data, error } = await supabase.rpc('get_public_bottle_trace', { p_serial_code: serial });
+  if (error) return <TraceUnavailable serial={serial} />;
+  const trace = (Array.isArray(data) ? data[0] : data) as Trace | undefined;
+  if (!trace) notFound();
 
   return <div className="min-h-screen bg-[#050505] text-white"><Navbar/><main className="pt-28 pb-20"><Container>
     <div className="max-w-3xl mx-auto">
