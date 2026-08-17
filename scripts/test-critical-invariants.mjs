@@ -15,6 +15,8 @@ const knowledgeMigration = await read('supabase/migrations/0007_ctg_knowledge_v0
 const supabaseMiddleware = await read('src/lib/supabase/middleware.ts');
 const adminNav = await read('src/components/admin/AdminNav.tsx');
 const labelsPage = await read('src/app/admin/operations/labels/page.tsx');
+const operationsPage = await read('src/app/admin/operations/page.tsx');
+const beerMasterMigration = await read('supabase/migrations/0013_beer_style_master_and_lot_codes.sql');
 
 const expectedFlags = [
   'CTG_INVESTMENT_PUBLIC_REGISTRATION_ENABLED',
@@ -67,5 +69,14 @@ assert.ok(supabaseMiddleware.includes("roles:['SUPER_ADMIN','FINANCE_ADMIN']"), 
 assert.ok(labelsPage.includes('/beer/'), 'Label factory QR payload must point only to public bottle trace routes.');
 assert.ok(!labelsPage.includes('participant_user_id'), 'Printed labels must never contain participant identity.');
 assert.ok(!labelsPage.includes('capital_committed'), 'Printed labels must never contain participant financial data.');
+
+// Beer master data and lot-code authority must remain in PostgreSQL, not the browser.
+for (const code of ['GOLD','IRA','POR','HEF']) assert.ok(beerMasterMigration.includes(`('${code}'`), `Beer master migration must retain canonical style ${code}.`);
+assert.ok(beerMasterMigration.includes('pg_advisory_xact_lock'), 'Lot-code allocation must retain transaction-level serialization.');
+assert.ok(beerMasterMigration.includes("has_investment_permission('production.manage')"), 'Authoritative lot creation must revalidate production authorization.');
+assert.ok(operationsPage.includes("from('investment_beer_styles')"), 'Production OS must read beer styles from master data.');
+assert.ok(operationsPage.includes("rpc('create_production_lot_from_style'"), 'Production OS must create lots through the database-authoritative RPC.');
+assert.ok(!operationsPage.includes('const BEER_STYLES = ['), 'Production OS must not reintroduce a hard-coded beer-style catalog.');
+assert.ok(!operationsPage.includes("rpc('create_production_lot', payload)"), 'Production OS must not use the legacy frontend-code lot creation path.');
 
 console.log('Critical invariants: PASS');
