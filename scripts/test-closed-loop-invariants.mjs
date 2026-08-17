@@ -6,6 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const migration = await read('supabase/migrations/0022_closed_loop_integrity.sql');
 const reviewHardening = await read('supabase/migrations/0023_closed_loop_review_hardening.sql');
 const operations = await read('src/app/admin/operations/page.tsx');
+const settlementPage = await read('src/app/admin/operations/settlement/page.tsx');
 const investmentTypes = await read('src/types/investment.ts');
 const summaryHook = await read('src/hooks/useInvestmentSummary.ts');
 
@@ -70,6 +71,14 @@ assert.ok(
 assert.ok(
   !/SETTLEMENT_PENDING\s*:\s*'SETTLED'/.test(investmentTypes),
   'Shared UI state mapping must not offer a generic SETTLEMENT_PENDING -> SETTLED action.',
+);
+assert.ok(
+  settlementPage.includes("rpc('finalize_settlement'"),
+  'Finance settlement UI must use the canonical finalize_settlement command.',
+);
+assert.ok(
+  settlementPage.includes(".eq('status','SETTLEMENT_PENDING')"),
+  'Settlement UI must only offer lots that are actually pending settlement.',
 );
 assert.ok(
   migration.includes('lot cannot be FUNDED until allocations cover all cases'),
