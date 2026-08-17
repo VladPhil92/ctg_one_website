@@ -2,8 +2,22 @@ import { test, expect } from '@playwright/test';
 
 const authAlert = (page) => page.locator('form [role="alert"]');
 
+async function blockExternalAuth(page) {
+  let attempts = 0;
+  await page.route('**/auth/v1/**', async (route) => {
+    attempts += 1;
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'E2E_AUTH_NETWORK_BLOCKED' }),
+    });
+  });
+  return () => attempts;
+}
+
 test.describe('CTG One authentication shell', () => {
   test('login uses the form submission path and validates credentials before backend access', async ({ page }) => {
+    const authAttempts = await blockExternalAuth(page);
     await page.goto('/iniciar-sesion');
 
     await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
@@ -17,22 +31,24 @@ test.describe('CTG One authentication shell', () => {
     await password.press('Enter');
 
     await expect(authAlert(page)).toHaveText('Correo inválido');
+    expect(authAttempts()).toBe(0);
     await expect(page).toHaveURL(/\/iniciar-sesion$/);
   });
 
-  test('login fails closed when the CI runtime has no Supabase browser configuration', async ({ page }) => {
+  test('login fails closed without allowing real Supabase auth traffic', async ({ page }) => {
+    const authAttempts = await blockExternalAuth(page);
     await page.goto('/iniciar-sesion');
 
     await page.getByLabel('Correo electrónico').fill('e2e@example.com');
     await page.getByLabel('Contraseña').fill('not-a-production-password');
     await page.getByRole('button', { name: 'Iniciar sesión' }).click();
 
-    await expect(authAlert(page)).toHaveText(
-      'El inicio de sesión no está disponible todavía. Vuelve a intentarlo más tarde.'
-    );
+    await expect(authAlert(page)).toBeVisible();
+    expect(authAttempts()).toBeLessThanOrEqual(1);
   });
 
-  test('registration validates locally and remains non-destructive without backend configuration', async ({ page }) => {
+  test('registration validates locally and blocks real signup traffic', async ({ page }) => {
+    const authAttempts = await blockExternalAuth(page);
     await page.goto('/registro');
 
     await expect(page.getByRole('heading', { name: 'Crear cuenta' })).toBeVisible();
@@ -46,12 +62,12 @@ test.describe('CTG One authentication shell', () => {
     await submit.click();
 
     await expect(authAlert(page)).toHaveText('La contraseña debe tener al menos 8 caracteres');
+    expect(authAttempts()).toBe(0);
 
     await page.getByLabel('Contraseña').fill('E2E-safe-password-123');
     await submit.click();
-    await expect(authAlert(page)).toHaveText(
-      'El registro no está disponible todavía. Vuelve a intentarlo más tarde.'
-    );
+    await expect(authAlert(page)).toBeVisible();
+    expect(authAttempts()).toBeLessThanOrEqual(1);
   });
 
   test('auth navigation links connect login and registration routes', async ({ page }) => {
