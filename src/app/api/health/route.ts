@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/observability/logger';
+import { getDeploymentMetadata } from '@/lib/observability/deployment';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const deployment = getDeploymentMetadata();
   const checks = {
     supabasePublicConfig: Boolean(
       process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     ),
     siteUrlConfigured: Boolean(process.env.NEXT_PUBLIC_SITE_URL),
+    deploymentCommitAvailable: deployment.provider !== 'render' || Boolean(deployment.commit),
   };
 
   const status = Object.values(checks).every(Boolean) ? 'ok' : 'degraded';
@@ -16,8 +19,7 @@ export async function GET() {
   logger.info('health_check', {
     status,
     checks,
-    renderService: process.env.RENDER_SERVICE_NAME ?? null,
-    commit: process.env.RENDER_GIT_COMMIT?.slice(0, 12) ?? null,
+    deployment,
   });
 
   return NextResponse.json(
@@ -26,7 +28,7 @@ export async function GET() {
       service: 'ctg-one-web',
       timestamp: new Date().toISOString(),
       checks,
-      commit: process.env.RENDER_GIT_COMMIT?.slice(0, 12) ?? null,
+      deployment,
     },
     {
       status: 200,
