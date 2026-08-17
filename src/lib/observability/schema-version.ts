@@ -1,1 +1,1 @@
-export const EXPECTED_DATABASE_MIGRATION = '0021' as const;
+export const EXPECTED_DATABASE_MIGRATION = '0022' as const;
