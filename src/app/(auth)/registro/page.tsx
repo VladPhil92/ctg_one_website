@@ -26,14 +26,14 @@ export default function RegistroPage() {
     if (isSubmitting) return;
     setError(null);
 
-    if (!isSupabaseConfigured) {
-      setError('El registro no está disponible todavía. Vuelve a intentarlo más tarde.');
-      return;
-    }
-
     const parsed = registerSchema.safeParse({ fullName, phone, email, password });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? 'Datos inválidos');
+      return;
+    }
+
+    if (!isSupabaseConfigured) {
+      setError('El registro no está disponible todavía. Vuelve a intentarlo más tarde.');
       return;
     }
 
@@ -70,7 +70,7 @@ export default function RegistroPage() {
   }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }}>
+    <form noValidate onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }}>
       <h1 className="text-xl font-outfit font-semibold text-white mb-1">Crear cuenta</h1>
       <p className="text-sm text-text-dim mb-8">Únete al ecosistema CTG One.</p>
 
