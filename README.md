@@ -116,6 +116,7 @@ Bounded context para:
 - asignaciones económicas
 - lotes de producción
 - economía unitaria
+- master data de estilos cerveceros
 - eventos de producción
 - serialización por botella
 - movimientos de inventario
@@ -178,6 +179,7 @@ Migraciones versionadas actualmente en el repositorio:
 0010_investment_rbac.sql
 0011_role_admin_and_permission_enforcement.sql
 0012_core_permission_guards.sql
+0013_beer_style_master_and_lot_codes.sql
 ```
 
 La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno. Producción debe verificarse mediante migration history/System Health y procedimientos operacionales documentados.

@@ -127,6 +127,31 @@ export async function collectSystemHealth(
       : 'Prerequisites are available. Trigger-level enforcement cannot be proven safely through a read-only health probe; verify 0012 in Supabase migration history.',
   });
 
+  const beerStyleProbe = await timed(() =>
+    supabase.from('investment_beer_styles').select('id,code,name,units_per_case,active').eq('active', true).limit(4)
+  );
+  const beerStyleCodes = beerStyleProbe.value.error
+    ? []
+    : (beerStyleProbe.value.data ?? []).map((row) => String(row.code)).sort();
+  const expectedBeerStyleCodes = ['GOLD', 'HEF', 'IRA', 'POR'];
+  const canonicalStylesAvailable = expectedBeerStyleCodes.every((code) => beerStyleCodes.includes(code));
+
+  checks.push({
+    id: 'migration-0013',
+    label: 'Migration 0013 · Beer Style Master Data',
+    status: beerStyleProbe.value.error
+      ? (isMissingSchema(beerStyleProbe.value.error) ? 'pending_schema' : 'degraded')
+      : (canonicalStylesAvailable ? 'healthy' : 'degraded'),
+    detail: beerStyleProbe.value.error
+      ? (isMissingSchema(beerStyleProbe.value.error)
+          ? 'Beer Style Master Data is not installed in this environment yet.'
+          : `Beer Style Master Data probe returned ${beerStyleProbe.value.error.code ?? 'an error'}.`)
+      : canonicalStylesAvailable
+        ? 'Master catalog is available with GOLD, HEF, IRA and POR. Lot-code creation remains database-authoritative through migration 0013.'
+        : `Master catalog is reachable but canonical styles are incomplete. Found: ${beerStyleCodes.join(', ') || 'none'}.`,
+    latencyMs: beerStyleProbe.latencyMs,
+  });
+
   const summary = checks.reduce(
     (acc, check) => {
       if (check.status === 'healthy') acc.healthy += 1;
