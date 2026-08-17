@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+const authAlert = (page) => page.locator('form [role="alert"]');
+
 test.describe('CTG One authentication shell', () => {
   test('login uses the form submission path and validates credentials before backend access', async ({ page }) => {
     await page.goto('/iniciar-sesion');
@@ -14,7 +16,7 @@ test.describe('CTG One authentication shell', () => {
     await password.fill('password');
     await password.press('Enter');
 
-    await expect(page.getByRole('alert')).toHaveText('Correo inválido');
+    await expect(authAlert(page)).toHaveText('Correo inválido');
     await expect(page).toHaveURL(/\/iniciar-sesion$/);
   });
 
@@ -25,7 +27,7 @@ test.describe('CTG One authentication shell', () => {
     await page.getByLabel('Contraseña').fill('not-a-production-password');
     await page.getByRole('button', { name: 'Iniciar sesión' }).click();
 
-    await expect(page.getByRole('alert')).toHaveText(
+    await expect(authAlert(page)).toHaveText(
       'El inicio de sesión no está disponible todavía. Vuelve a intentarlo más tarde.'
     );
   });
@@ -43,11 +45,11 @@ test.describe('CTG One authentication shell', () => {
     await page.getByLabel('Contraseña').fill('short');
     await submit.click();
 
-    await expect(page.getByRole('alert')).toHaveText('La contraseña debe tener al menos 8 caracteres');
+    await expect(authAlert(page)).toHaveText('La contraseña debe tener al menos 8 caracteres');
 
     await page.getByLabel('Contraseña').fill('E2E-safe-password-123');
     await submit.click();
-    await expect(page.getByRole('alert')).toHaveText(
+    await expect(authAlert(page)).toHaveText(
       'El registro no está disponible todavía. Vuelve a intentarlo más tarde.'
     );
   });
