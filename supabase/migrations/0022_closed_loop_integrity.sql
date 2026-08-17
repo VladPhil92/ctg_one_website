@@ -104,7 +104,7 @@ begin
   end if;
 
   select count(distinct formula_version_id)::integer,
-         min(formula_version_id)
+         min(formula_version_id::text)::uuid
     into v_formula_count, v_formula_version_id
   from public.investment_funding_allocations
   where lot_id = p_lot_id;
@@ -327,7 +327,7 @@ begin
   where idempotency_key = trim(p_idempotency_key)
   limit 1;
 
-  if v_existing is not null then
+  if found then
     select array_agg(serial_code order by serial_code),
            bool_and(unit_price_cents = p_unit_price_cents)
       into v_existing_serials, v_existing_item_prices_match
@@ -682,7 +682,7 @@ begin
 
   select coalesce(sum(case_equivalent_units),0)::integer,
          count(distinct formula_version_id)::integer,
-         min(formula_version_id)
+         min(formula_version_id::text)::uuid
     into v_allocated, v_formula_count, v_formula_version_id
   from public.investment_funding_allocations
   where lot_id = p_lot_id;
