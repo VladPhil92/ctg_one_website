@@ -8,6 +8,9 @@ node_modules/
 out/
 build/
 
+# TypeScript generated state
+*.tsbuildinfo
+
 # Production
 dist/
 
