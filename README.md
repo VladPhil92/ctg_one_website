@@ -203,11 +203,12 @@ Migraciones versionadas actualmente en el repositorio:
 0024_inventory_reconciliation_preflight.sql
 0025_inventory_reconciliation.sql
 0026_inventory_reconciliation_hardening.sql
+0027_inventory_location_fk_index.sql
 ```
 
 La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno. Producción debe verificarse mediante migration history/System Health y procedimientos operacionales documentados. `EXPECTED_DATABASE_MIGRATION` debe coincidir con la última migración del repositorio; CI valida continuidad y ausencia de huecos.
 
-La secuencia de Inventory Reconciliation es deliberadamente fail-closed: `0024` aborta antes de instalar el modelo canónico si detecta historia física o comercial previa que requiera backfill explícito.
+La secuencia de Inventory Reconciliation es deliberadamente fail-closed: `0024` aborta antes de instalar el modelo canónico si detecta historia física o comercial previa que requiera backfill explícito. `0027` cubre el foreign key `investment_inventory_locations.created_by` detectado por el Performance Advisor.
 
 ## Principios financieros
 
