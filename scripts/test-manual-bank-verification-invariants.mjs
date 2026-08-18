@@ -56,6 +56,7 @@ assert.ok(admin.includes("rpc('reject_investment_bank_proof'"), 'Finance must ha
 
 assert.ok(paymentConfig.includes('NEXT_PUBLIC_INVESTMENT_BANCOLOMBIA_QR_URL'), 'Approved QR asset location must be external configuration, not invented source data.');
 assert.ok(paymentConfig.includes("bankName: 'Bancolombia'") && paymentConfig.includes("accountType: 'Cuenta de Ahorros'"), 'Investment QR configuration must describe the agreed Bancolombia savings rail.');
-assert.ok(schemaVersion.includes("'0039'"), 'Runtime expected migration must advance to 0039.');
+const expectedVersion = Number(schemaVersion.match(/'(\d{4})'/)?.[1] ?? '0');
+assert.ok(expectedVersion >= 39, 'Runtime expected migration must not regress below manual Bancolombia verification 0039.');
 
 console.log('Manual Bancolombia bank verification invariants: PASS');
