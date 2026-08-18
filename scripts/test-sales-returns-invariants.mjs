@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const migration = await read('supabase/migrations/0028_sales_returns_credit_notes.sql');
 const hardening = await read('supabase/migrations/0029_sales_returns_hardening.sql');
+const settlementClosure = await read('supabase/migrations/0030_sales_returns_settlement_guard.sql');
 const returnsPage = await read('src/app/admin/operations/returns/page.tsx');
 const settlementPage = await read('src/app/admin/operations/settlement/page.tsx');
 const nav = await read('src/components/admin/AdminNav.tsx');
@@ -70,6 +71,20 @@ assert.ok(
   hardening.includes('REVENUE_REVERSAL must equal authoritative credit-note gross')
     && hardening.includes('TAX_REVERSAL must equal authoritative credit-note tax'),
   'Financial reversals must equal their authoritative credit-note amounts.',
+);
+
+assert.ok(
+  settlementClosure.includes('settled lot cannot accept a new sales credit note'),
+  'Commercial credit notes must be rejected after a lot has been settled.',
+);
+assert.ok(
+  settlementClosure.includes('SALE_RETURNED movement must match credit-note customer custody and return destination'),
+  'Commercial return movements must match canonical customer custody and the credit-note receiving location.',
+);
+assert.ok(
+  settlementClosure.includes('create trigger investment_settlement_sales_returns_guard')
+    && settlementClosure.includes('settlement blocked: one or more credit-note units lack canonical SALE_RETURNED genealogy'),
+  'Settlement must fail closed when a credited bottle lacks canonical physical return genealogy.',
 );
 
 assert.ok(
