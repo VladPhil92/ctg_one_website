@@ -19,11 +19,20 @@ test.describe('CTG Craft Beer authoritative economics', () => {
     await expect(page.getByText('Cada lote publica su propio snapshot')).toHaveCount(0);
   });
 
-  test('simulator refuses to invent financial projections without funding-open lot data', async ({ page }) => {
+  test('simulator remains usable without an open lot and starts at the two-case minimum', async ({ page }) => {
     await page.goto('/inversion/simulador');
 
-    await expect(page.getByRole('heading', { name: 'Simulador por snapshot de lote' })).toBeVisible();
-    await expect(page.getByText(/No hay lotes con financiación abierta y snapshot económico completo/i)).toBeVisible();
-    await expect(page.getByText(/rentabilidad proyectada fija/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Simulador de participación' })).toBeVisible();
+    await expect(page.getByText('Escenario ilustrativo de referencia')).toBeVisible();
+    await expect(page.getByText(/no representa una oferta vigente/i)).toBeVisible();
+
+    const cases = page.getByLabel(/Número de cajas · mínimo 2/i);
+    await expect(cases).toHaveAttribute('min', '2');
+    await expect(cases).toHaveValue('2');
+    await expect(page.getByText('2 cajas · 48 botellas equivalentes')).toBeVisible();
+
+    await cases.fill('3');
+    await expect(cases).toHaveValue('3');
+    await expect(page.getByText('3 cajas · 72 botellas equivalentes')).toBeVisible();
   });
 });
