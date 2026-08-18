@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 const migration = await read('supabase/migrations/0024_inventory_reconciliation.sql');
+const hardening = await read('supabase/migrations/0025_inventory_reconciliation_hardening.sql');
 const scanner = await read('src/app/admin/operations/scanner/page.tsx');
 const inventoryPage = await read('src/app/admin/operations/inventory/page.tsx');
 const adminNav = await read('src/components/admin/AdminNav.tsx');
@@ -56,8 +57,7 @@ assert.ok(
   'Physical updates must fail atomically instead of partially updating a serial batch.',
 );
 assert.ok(
-  migration.includes("'IN_MARKET' requires a registered sales/partner location")
-    || migration.includes('IN_MARKET requires a registered sales/partner location'),
+  migration.includes('IN_MARKET requires a registered sales/partner location'),
   'Market receipt must require a registered destination.',
 );
 
@@ -97,6 +97,19 @@ assert.ok(
 assert.ok(
   scanner.includes('investment_inventory_locations'),
   'Bottle Scanner must select canonical registered locations.',
+);
+
+assert.ok(
+  hardening.includes('from unnest(p_bottle_ids) as u(id)'),
+  'Inventory helper must normalize UUID arrays using an explicit scalar alias.',
+);
+assert.ok(
+  hardening.includes('system inventory location type cannot be changed'),
+  'System inventory locations must preserve their semantic type.',
+);
+assert.ok(
+  hardening.includes("v_type := upper(trim(p_location_type))"),
+  'Location administration must normalize location type input.',
 );
 
 assert.ok(
