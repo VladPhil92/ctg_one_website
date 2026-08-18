@@ -58,6 +58,30 @@ BEGIN
   IF has_function_privilege('anon', 'public.get_runtime_schema_compatibility()', 'EXECUTE') THEN
     RAISE EXCEPTION 'anon must not execute runtime schema compatibility probe';
   END IF;
+
+  IF has_function_privilege(
+    'authenticated',
+    'public.update_investment_beer_style_economics(text,bigint,bigint,bigint,bigint,numeric,numeric)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'authenticated must not execute transport-less beer-style economics compatibility RPC';
+  END IF;
+
+  IF has_function_privilege(
+    'authenticated',
+    'public.create_production_lot_from_style(text,text,integer,integer,bigint,bigint,bigint,bigint,numeric,numeric)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'authenticated must not execute transport-less lot creation compatibility RPC';
+  END IF;
+
+  IF NOT has_function_privilege(
+    'authenticated',
+    'public.update_investment_beer_style_economics(text,bigint,bigint,bigint,bigint,bigint,numeric,numeric)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'authenticated must retain transport-aware beer-style economics RPC';
+  END IF;
 END $$;
 
 SELECT 'Golden Path local schema smoke passed' AS result;
