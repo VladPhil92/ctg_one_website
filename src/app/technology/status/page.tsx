@@ -8,11 +8,12 @@ import { Container } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { TECHNOLOGY_PROOF, type ProofStatus } from '@/data/technology-proof';
+import { PROOF_STATUSES, TECHNOLOGY_PROOF, type ProofStatus } from '@/data/technology-proof';
 import { Activity, ArrowUpRight, CheckCircle2, CircleDot, Clock3, ShieldCheck } from 'lucide-react';
 
 const statusClass: Record<ProofStatus, string> = {
   LIVE: 'border-accent/30 text-accent bg-accent/[0.035]',
+  BETA: 'border-violet-300/20 text-violet-200/85 bg-violet-300/[0.025]',
   PARTIAL: 'border-amber-300/20 text-amber-200/80 bg-amber-200/[0.025]',
   'IN DEVELOPMENT': 'border-sky-300/20 text-sky-200/80 bg-sky-200/[0.025]',
   ROADMAP: 'border-white/[0.08] text-text-dim bg-white/[0.015]',
@@ -24,7 +25,7 @@ export default function TechnologyStatusPage() {
 
   const counts = TECHNOLOGY_PROOF.reduce<Record<ProofStatus, number>>(
     (acc, item) => ({ ...acc, [item.status]: acc[item.status] + 1 }),
-    { LIVE: 0, PARTIAL: 0, 'IN DEVELOPMENT': 0, ROADMAP: 0 }
+    { LIVE: 0, BETA: 0, PARTIAL: 0, 'IN DEVELOPMENT': 0, ROADMAP: 0 },
   );
 
   return (
@@ -42,14 +43,14 @@ export default function TechnologyStatusPage() {
               </h1>
               <p className="text-sm sm:text-base text-text-muted leading-relaxed max-w-3xl">
                 {es
-                  ? 'Este registro separa capacidades productivas, implementaciones parciales, desarrollo activo y roadmap. No funciona como un SLA ni como una página de uptime: es una superficie pública de madurez técnica y evidencia.'
-                  : 'This registry separates production capabilities, partial implementations, active development, and roadmap. It is not an SLA or uptime page; it is a public surface for technical maturity and evidence.'}
+                  ? 'Este registro separa capacidades productivas, betas controladas, implementaciones parciales, desarrollo activo y roadmap. No funciona como un SLA ni como una página de uptime: es una superficie pública de madurez técnica y evidencia.'
+                  : 'This registry separates production capabilities, controlled betas, partial implementations, active development, and roadmap. It is not an SLA or uptime page; it is a public surface for technical maturity and evidence.'}
               </p>
             </div>
           </FadeInSection>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-12">
-            {(['LIVE', 'PARTIAL', 'IN DEVELOPMENT', 'ROADMAP'] as ProofStatus[]).map((status, index) => (
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-12">
+            {PROOF_STATUSES.map((status, index) => (
               <FadeInSection key={status} delay={0.03 + index * 0.03}>
                 <div className="rounded-xl border border-white/[0.055] bg-black/20 p-5">
                   <div className="flex items-center justify-between mb-4"><span className={`text-[8px] uppercase tracking-[0.14em] px-2 py-1 rounded-full border ${statusClass[status]}`}>{status}</span><Activity size={14} className="text-text-dim" /></div>
@@ -86,7 +87,7 @@ export default function TechnologyStatusPage() {
         <Container>
           <FadeInSection>
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="rounded-xl border border-accent/15 p-6 bg-accent/[0.02]"><ShieldCheck size={18} className="text-accent mb-4" /><h3 className="text-white font-outfit mb-2">{es ? 'Criterio de promoción' : 'Promotion criterion'}</h3><p className="text-xs text-text-dim leading-relaxed">{es ? 'Una capacidad solo pasa a LIVE con código, acceso controlado, pruebas y evidencia operativa suficiente.' : 'A capability moves to LIVE only with code, controlled access, tests, and sufficient operating evidence.'}</p></div>
+              <div className="rounded-xl border border-accent/15 p-6 bg-accent/[0.02]"><ShieldCheck size={18} className="text-accent mb-4" /><h3 className="text-white font-outfit mb-2">{es ? 'Criterio de promoción' : 'Promotion criterion'}</h3><p className="text-xs text-text-dim leading-relaxed">{es ? 'Una capacidad solo pasa a LIVE con código, acceso controlado, pruebas y evidencia operativa suficiente. Una beta funcional no equivale a producción abierta.' : 'A capability moves to LIVE only with code, controlled access, tests, and sufficient operating evidence. A functional beta is not equivalent to open production.'}</p></div>
               <div className="rounded-xl border border-white/[0.055] p-6 bg-black/20"><CircleDot size={18} className="text-text-secondary mb-4" /><h3 className="text-white font-outfit mb-2">{es ? 'Sin métricas inventadas' : 'No invented metrics'}</h3><p className="text-xs text-text-dim leading-relaxed">{es ? 'No publicamos adopción, uptime, usuarios, holders o rendimiento sin una fuente verificable.' : 'We do not publish adoption, uptime, users, holders, or performance without a verifiable source.'}</p></div>
               <div className="rounded-xl border border-white/[0.055] p-6 bg-black/20"><Clock3 size={18} className="text-text-secondary mb-4" /><h3 className="text-white font-outfit mb-2">{es ? 'Madurez evolutiva' : 'Evolving maturity'}</h3><p className="text-xs text-text-dim leading-relaxed">{es ? 'El registro cambia cuando cambia el sistema, no cuando cambia el discurso comercial.' : 'The registry changes when the system changes, not when marketing language changes.'}</p></div>
             </div>
