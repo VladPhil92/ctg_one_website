@@ -14,6 +14,7 @@ const migration = await read('supabase/migrations/0020_authoritative_lot_economi
 const partialInventoryMigration = await read('supabase/migrations/0042_partial_inventory_funding_capacity.sql');
 const eligibleSerializationMigration = await read('supabase/migrations/0043_investment_serialization_eligible_capacity.sql');
 const transportMigration = await read('supabase/migrations/0044_transport_cost_and_channel_tax_economics.sql');
+const transportCompatibilityMigration = await read('supabase/migrations/0045_transport_economics_compatibility.sql');
 const privilegeHardening = await read('supabase/migrations/0021_economics_function_privilege_hardening.sql');
 const languageContext = await read('src/contexts/LanguageContext.tsx');
 const economicsTranslations = await read('src/i18n/investmentEconomicsTranslations.ts');
@@ -51,7 +52,7 @@ assert.ok(economicsTranslations.includes('B2B INC · ${match[1]}'), 'Dynamic B2B
 assert.ok(economicsTranslations.includes("en: 'Batch-snapshot simulator'"), 'Simulator copy must have an English translation contract.');
 
 assert.ok(operations.includes("rpc('update_investment_beer_style_economics'"), 'Production OS must provide a database-authoritative preset update path.');
-for (const field of ['production', 'label', 'transport', 'ownPrice', 'b2bPrice', 'inc', 'advertising']) {
+for (const field of ['production', 'label', 'ownPrice', 'b2bPrice', 'inc', 'advertising']) {
   assert.match(
     operations,
     new RegExp(`${field}\\s*:\\s*''`),
@@ -110,5 +111,7 @@ assert.ok(transportMigration.includes('standard_transport_cost_unit_cents'), 'Be
 assert.ok(transportMigration.includes('transport_cost_unit_cents'), 'Lot snapshots must persist transport cost.');
 assert.ok(transportMigration.includes('production_cost_unit_cents + v_lot.label_cost_unit_cents + v_lot.transport_cost_unit_cents'), 'Participant capital must include production, label and transport.');
 assert.ok(transportMigration.includes("'transport_cost_unit_cents', v_transport_cost_unit_cents"), 'Lot audit must preserve transport-cost snapshot.');
+assert.ok(transportCompatibilityMigration.includes('transport cost must be configured before using the compatibility economics RPC'), 'Compatibility RPC must fail closed when transport is missing.');
+assert.ok(transportCompatibilityMigration.includes('v_transport'), 'Compatibility paths must preserve the persisted transport preset.');
 
 console.log('Investment economics invariants: PASS');
