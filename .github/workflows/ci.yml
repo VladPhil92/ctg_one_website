@@ -100,7 +100,7 @@ jobs:
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v3
         with:
-          version: 2.84.2
+          version: 2.111.0
 
       - name: Apply all migrations to fresh local Postgres
         run: supabase db start
