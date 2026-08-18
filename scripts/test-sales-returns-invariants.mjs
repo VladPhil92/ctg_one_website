@@ -7,6 +7,7 @@ const hardening = await read('supabase/migrations/0029_sales_returns_hardening.s
 const settlementClosure = await read('supabase/migrations/0030_sales_returns_settlement_guard.sql');
 const returnsPage = await read('src/app/admin/operations/returns/page.tsx');
 const settlementPage = await read('src/app/admin/operations/settlement/page.tsx');
+const overviewPage = await read('src/app/admin/operations/overview/page.tsx');
 const nav = await read('src/components/admin/AdminNav.tsx');
 
 assert.ok(
@@ -78,6 +79,11 @@ assert.ok(
   'Commercial credit notes must be rejected after a lot has been settled.',
 );
 assert.ok(
+  settlementClosure.includes('from public.investment_production_lots')
+    && settlementClosure.includes('for update'),
+  'Credit-note creation must lock the production lot to serialize against settlement finalization.',
+);
+assert.ok(
   settlementClosure.includes('SALE_RETURNED movement must match credit-note customer custody and return destination'),
   'Commercial return movements must match canonical customer custody and the credit-note receiving location.',
 );
@@ -121,6 +127,12 @@ assert.ok(
   settlementPage.includes("sum('REVENUE_REVERSAL')")
     && settlementPage.includes("sum('TAX_REVERSAL')"),
   'Settlement UI must display net facts after credit-note reversals.',
+);
+assert.ok(
+  overviewPage.includes("amountByType(rows,'REVENUE_REVERSAL')")
+    && overviewPage.includes("amountByType(rows,'TAX_REVERSAL')")
+    && overviewPage.includes('netRevenue:revenue-revenueReversal'),
+  'Operations Overview must report revenue/result net of credit-note reversals.',
 );
 assert.ok(
   nav.includes("href: '/admin/operations/returns'"),
