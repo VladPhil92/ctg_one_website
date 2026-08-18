@@ -10,6 +10,7 @@ import type {
 } from '@/types/investment';
 import type { InvestmentFormulaVersion } from '@/types/investment-economics';
 import { hasCompleteLotEconomics } from '@/lib/investment/economics';
+import { MIN_INVESTMENT_CASES } from '@/lib/investment/constants';
 
 // Public, unauthenticated-safe reads for /inversion marketing pages — the
 // underlying tables have public SELECT RLS policies. Financial truth shown by
@@ -34,7 +35,17 @@ export async function getPublicEconomicsReferenceLot(): Promise<InvestmentProduc
 
 export async function getPublicSimulationLots(): Promise<InvestmentProductionLot[]> {
   const lots = await getPublicLots();
-  return lots.filter((lot) => lot.status === 'FUNDING_OPEN' && hasCompleteLotEconomics(lot));
+  const eligible = lots.filter(
+    (lot) => lot.status !== 'DRAFT'
+      && lot.total_cases >= MIN_INVESTMENT_CASES
+      && hasCompleteLotEconomics(lot),
+  );
+
+  // Prefer opportunities that are currently investable. If none are open,
+  // keep the public calculator usable with the most recent persisted snapshot
+  // instead of coupling the simulator lifecycle to FUNDING_OPEN.
+  const fundingOpen = eligible.filter((lot) => lot.status === 'FUNDING_OPEN');
+  return fundingOpen.length > 0 ? fundingOpen : eligible.slice(0, 1);
 }
 
 export async function getActiveInvestmentFormulaVersion(): Promise<InvestmentFormulaVersion | null> {

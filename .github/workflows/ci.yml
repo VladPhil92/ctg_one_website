@@ -70,8 +70,11 @@ jobs:
       - name: Install pinned Playwright test runtime
         run: npm install --no-save --package-lock=false @playwright/test@1.62.0
 
-      - name: Install Chromium for E2E
-        run: npx playwright install --with-deps chromium
+      - name: Verify runner Chrome availability
+        run: google-chrome --version
+
+      - name: Install Playwright video runtime
+        run: npx playwright install ffmpeg
 
       - name: Run browser E2E tests
         run: npx playwright test --project=chromium

@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 3100);
 const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL ?? `http://127.0.0.1:${port}`;
+const ciBrowserChannel = process.env.CI ? { channel: 'chrome' } : {};
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -23,7 +24,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], ...ciBrowserChannel },
     },
   ],
   webServer: process.env.PLAYWRIGHT_TEST_BASE_URL

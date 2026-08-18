@@ -36,9 +36,11 @@ assert.ok(packageJson.scripts?.test?.includes('test-governance-invariants.mjs'),
 
 // Browser E2E is part of the same required CI job that protects main.
 assert.ok(ci.includes('@playwright/test@1.62.0'), 'CI must pin the Playwright test runtime to an explicit version.');
-assert.ok(ci.includes('playwright install --with-deps chromium'), 'CI must install Chromium and its Linux dependencies before E2E.');
+assert.ok(ci.includes('Verify runner Chrome availability'), 'CI must verify the hosted runner browser before E2E.');
+assert.ok(ci.includes('google-chrome --version'), 'CI must fail closed if the hosted runner does not provide Google Chrome.');
 assert.ok(ci.includes('Run browser E2E tests'), 'The protected CI job must execute browser E2E tests.');
 assert.ok(ci.includes('playwright test --project=chromium'), 'CI must run the Chromium project explicitly.');
+assert.ok(playwrightConfig.includes("channel: 'chrome'"), 'CI Playwright must use the Chrome channel already provisioned on the hosted runner.');
 assert.ok(playwrightConfig.includes("testDir: './tests/e2e'"), 'Playwright must keep browser tests isolated under tests/e2e.');
 assert.ok(playwrightConfig.includes('workers: process.env.CI ? 1'), 'CI browser tests must run with one worker for deterministic execution.');
 assert.ok(playwrightConfig.includes('npm run start'), 'E2E must exercise the production Next.js server rather than next dev.');

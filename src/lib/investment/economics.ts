@@ -5,6 +5,7 @@ import type {
   LotScenarioResult,
   UnitEconomicsResult,
 } from '@/types/investment-economics';
+import { MIN_INVESTMENT_CASES } from '@/lib/investment/constants';
 
 function finiteNonNegative(value: number): number {
   return Number.isFinite(value) ? Math.max(0, value) : 0;
@@ -72,7 +73,10 @@ export function deriveLotScenario(
   requestedCases: number,
   formula: InvestmentFormulaVersion | null,
 ): LotScenarioResult {
-  const cases = Math.max(1, Math.min(lot.total_cases, Math.trunc(requestedCases || 1)));
+  const cases = Math.min(
+    lot.total_cases,
+    Math.max(MIN_INVESTMENT_CASES, Math.trunc(requestedCases || MIN_INVESTMENT_CASES)),
+  );
   const units = cases * lot.case_size_units;
   const unit = deriveUnitEconomics(lot);
   const capitalRequiredCents = unit.totalUnitCostCents * units;
