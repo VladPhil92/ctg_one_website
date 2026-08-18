@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { Card } from '@/components/ui';
 import { formatCents } from '@/lib/format';
+import { MIN_INVESTMENT_CASES } from '@/lib/investment/constants';
 import { deriveLotScenario } from '@/lib/investment/economics';
 import type { InvestmentProductionLot } from '@/types/investment';
 import type { InvestmentFormulaVersion } from '@/types/investment-economics';
@@ -46,7 +47,7 @@ export function InvestmentSimulatorClient({
 }) {
   const [selectedId, setSelectedId] = useState(lots[0]?.id ?? '');
   const selected = lots.find((lot) => lot.id === selectedId) ?? lots[0] ?? null;
-  const [cases, setCases] = useState(1);
+  const [cases, setCases] = useState(MIN_INVESTMENT_CASES);
 
   const result = useMemo(
     () => selected ? deriveLotScenario(selected, cases, formula) : null,
@@ -56,8 +57,9 @@ export function InvestmentSimulatorClient({
   if (!selected) {
     return (
       <Card variant="bordered" padding="lg">
+        <p className="text-sm text-white font-medium mb-2">Simulador disponible desde {MIN_INVESTMENT_CASES} cajas</p>
         <p className="text-sm text-text-muted leading-relaxed">
-          No hay lotes con financiación abierta y snapshot económico completo. El simulador permanece deshabilitado para evitar mostrar cifras que no provengan de una oportunidad real publicada en la base de datos.
+          El motor de cálculo está operativo, pero en este momento no existe ningún snapshot económico de lote publicado en la base de datos. Para proteger al inversor, la plataforma no inventa costos, precios ni rentabilidades. En cuanto exista un lote con economía persistida, el simulador lo cargará automáticamente y mantendrá como entrada mínima {MIN_INVESTMENT_CASES} cajas.
         </p>
       </Card>
     );
@@ -66,19 +68,26 @@ export function InvestmentSimulatorClient({
   if (!result) return null;
 
   const participantShare = formula ? Number(formula.participant_profit_share) : null;
+  const isFundingOpen = selected.status === 'FUNDING_OPEN';
 
   return (
     <>
+      {!isFundingOpen && (
+        <div className="mb-6 rounded-xl border border-amber-400/20 bg-amber-400/[0.04] p-4 text-xs text-text-muted leading-relaxed">
+          Este cálculo usa el snapshot persistido más reciente como referencia histórica. El lote seleccionado no está abierto actualmente para recibir nuevas inversiones.
+        </div>
+      )}
+
       <Card variant="bordered" padding="lg" className="mb-6">
         <div className="grid sm:grid-cols-2 gap-5">
           <div>
             <label className="text-[11px] uppercase tracking-[0.15em] text-text-dim block mb-3" htmlFor="simulator-lot">
-              Lote publicado
+              Snapshot de lote
             </label>
             <select
               id="simulator-lot"
               value={selected.id}
-              onChange={(event) => { setSelectedId(event.target.value); setCases(1); }}
+              onChange={(event) => { setSelectedId(event.target.value); setCases(MIN_INVESTMENT_CASES); }}
               className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none"
             >
               {lots.map((lot) => <option key={lot.id} value={lot.id}>{lot.code} · {lot.beer_style}</option>)}
@@ -86,16 +95,16 @@ export function InvestmentSimulatorClient({
           </div>
           <div>
             <label className="text-[11px] uppercase tracking-[0.15em] text-text-dim block mb-3" htmlFor="simulator-cases">
-              Cajas equivalentes
+              Cajas a simular · mínimo {MIN_INVESTMENT_CASES}
             </label>
             <input
               id="simulator-cases"
               type="number"
-              min={1}
+              min={MIN_INVESTMENT_CASES}
               max={selected.total_cases}
               step={1}
               value={cases}
-              onChange={(event) => setCases(Math.max(1, Math.min(selected.total_cases, Number(event.target.value) || 1)))}
+              onChange={(event) => setCases(Math.max(MIN_INVESTMENT_CASES, Math.min(selected.total_cases, Number(event.target.value) || MIN_INVESTMENT_CASES)))}
               className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none"
             />
           </div>
