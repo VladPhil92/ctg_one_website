@@ -5,6 +5,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const migration = await read('supabase/migrations/0034_provider_reconciliation_engine.sql');
 const hardening = await read('supabase/migrations/0035_provider_reconciliation_target_hardening.sql');
 const fkIndexes = await read('supabase/migrations/0036_provider_reconciliation_fk_indexes.sql');
+const queueHardening = await read('supabase/migrations/0040_provider_reconciliation_queue_hardening.sql');
 const importApi = await read('src/app/api/investment/admin/finance/events/import/route.ts');
 const page = await read('src/app/admin/finance/reconciliation/page.tsx');
 const adapter = await read('src/lib/investment/provider-adapter.ts');
@@ -39,6 +40,17 @@ assert.ok(fkIndexes.includes('investment_financial_provider_events_ingested_by_i
 assert.ok(fkIndexes.includes('investment_financial_event_matches_actor_id_idx') && fkIndexes.includes('(actor_id)'), 'Provider match actor foreign key must have a covering index.');
 assert.ok(fkIndexes.includes('investment_financial_event_matches_receipt_id_idx') && fkIndexes.includes('(receipt_id)'), 'Provider match receipt foreign key must have a covering index.');
 
+assert.ok(queueHardening.includes('create table public.investment_financial_event_retry_state'), 'Unresolved provider events need dedicated retry scheduler state instead of repeatedly selecting the same oldest rows.');
+assert.ok(queueHardening.includes('last_attempt_at timestamptz') && queueHardening.includes('order by s.last_attempt_at asc nulls first'), 'Bounded auto-match batches must rotate by least-recent attempt so later unresolved events cannot starve.');
+assert.ok(queueHardening.includes("pg_advisory_xact_lock(hashtextextended('ctg-provider-batch-auto-match'"), 'Batch retry scheduling must be serialized to preserve deterministic queue rotation.');
+assert.ok(queueHardening.includes('on conflict (provider_event_id) do update') && queueHardening.includes('attempt_count=public.investment_financial_event_retry_state.attempt_count+1'), 'Every batch attempt must advance retry metadata even when an event remains unresolved.');
+assert.ok(queueHardening.includes('exception when others') && queueHardening.includes('v_errors:=v_errors+1'), 'A single provider-event error must not prevent later unresolved events from being attempted.');
+assert.ok(queueHardening.includes('create or replace function public._append_investment_financial_nonterminal_match'), 'Nonterminal provider decisions need a latest-state append helper.');
+assert.ok(queueHardening.includes('order by m.created_at desc,m.id desc') && queueHardening.includes('v_latest_outcome=v_outcome'), 'NO_MATCH/CONFLICT suppression must compare only with the latest decision, not any historical occurrence.');
+assert.ok(queueHardening.includes("v_event.id,'NO_MATCH','SYSTEM_NO_MATCH'") && queueHardening.includes("v_event.id,'CONFLICT','SYSTEM_CONFLICT'"), 'Auto-match must route both nonterminal outcomes through latest-state genealogy.');
+assert.ok(!queueHardening.includes("not exists(select 1 from public.investment_financial_event_matches where provider_event_id=v_event.id and outcome='NO_MATCH')"), 'Queue hardening must not restore historical-existence suppression for NO_MATCH.');
+assert.ok(!queueHardening.includes("not exists(select 1 from public.investment_financial_event_matches where provider_event_id=v_event.id and outcome='CONFLICT')"), 'Queue hardening must not restore historical-existence suppression for CONFLICT.');
+
 assert.ok(importApi.includes("createHash('sha256')") && importApi.includes("rpc('ingest_investment_financial_event'"), 'Import API must hash normalized payloads and ingest through the domain RPC.');
 assert.ok(importApi.includes("rpc('auto_match_investment_financial_event'"), 'Import API must invoke deterministic auto-match after ingestion.');
 assert.ok(!importApi.includes('createAdminClient'), 'Unsigned/manual import must remain user-session + finance.manage scoped, not service-role bypassed.');
@@ -48,6 +60,6 @@ assert.ok(adapter.includes('InvestmentFinancialProviderAdapter') && adapter.incl
 assert.ok(nav.includes("href: '/admin/finance/reconciliation'"), 'Provider Reconciliation must be reachable from Admin OS.');
 
 const expectedVersion = Number(schemaVersion.match(/'(\d{4})'/)?.[1] ?? '0');
-assert.ok(expectedVersion >= 36, 'Runtime expected migration must not regress below provider reconciliation 0036.');
+assert.ok(expectedVersion >= 40, 'Runtime expected migration must not regress below provider reconciliation queue hardening 0040.');
 
 console.log('Provider integration & automated reconciliation invariants: PASS');
