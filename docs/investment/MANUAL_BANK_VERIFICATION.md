@@ -1,6 +1,6 @@
 # Manual Bancolombia Verification — CTG Craft Beer Investment
 
-Status: current production operating policy introduced by migration `0037_manual_bancolombia_bank_verification.sql`.
+Status: current operating policy implemented by migrations `0037_manual_bancolombia_bank_verification.sql` and `0038_payment_proof_server_trust_boundary.sql`.
 
 ## Principle
 
@@ -56,16 +56,19 @@ The source repository deliberately does not invent or embed banking account numb
 `POST /api/investment/orders/[orderId]/payment-proof`:
 
 - requires the authenticated participant session;
-- confirms the order belongs to that participant and is `AWAITING_PAYMENT`;
+- confirms through participant RLS that the order belongs to that participant and is `AWAITING_PAYMENT`;
 - accepts only JPEG, PNG, WEBP or PDF;
 - enforces an 8 MB maximum;
-- computes SHA-256 on the server, not in the browser;
+- computes SHA-256 on the Next.js server, never from a digest supplied by the browser;
+- after session/ownership verification, uses the server-only service-role client only for the approved private upload and proof-persistence RPC;
 - stores the proof in the private `payment-proofs` bucket;
-- passes the server-computed digest into `submit_investment_order_bank_proof()`.
+- persists the server-computed digest through `submit_investment_order_bank_proof_server()`.
+
+Migration `0038` revokes the browser-executable proof-persistence RPC from `authenticated`. `submit_investment_order_bank_proof_server()` is executable only by `service_role`, preventing a participant from fabricating a SHA-256 value through a direct Supabase RPC call.
 
 `investment_orders.payment_proof_sha256` has a unique index, so the exact same file cannot finance two orders.
 
-This does not prove authenticity. A forged file that has never been seen before can still have a unique hash.
+This does not prove authenticity. A forged file that has never been seen before can still have a unique hash. The hash is a duplicate/reuse control, not a bank-confirmation mechanism.
 
 ## Human verification command
 
