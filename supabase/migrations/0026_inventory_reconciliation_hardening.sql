@@ -1,6 +1,8 @@
 -- CTG Craft Beer Investment OS — Inventory Reconciliation hardening
--- Follow-up to 0024 after static preflight. Keeps migration history append-only.
+-- Follow-up to 0025 after static preflight. Keeps migration history append-only.
 
+-- Make UUID-array normalization unambiguous for PostgreSQL and preserve exact
+-- bottle genealogy for every movement written through the canonical helper.
 create or replace function public._write_unit_inventory_movement(
   p_lot_id uuid,
   p_movement_type text,
@@ -59,6 +61,75 @@ $$;
 revoke all on function public._write_unit_inventory_movement(uuid,text,uuid,uuid,uuid[],uuid,text)
   from public, anon, authenticated;
 
+-- A movement row is inserted before its unit links, so the exact quantity/link
+-- equality must be checked at COMMIT, not at the initial INSERT. This prevents
+-- an orphan/coarse movement from becoming durable even through privileged code.
+create or replace function public._assert_inventory_movement_unit_count()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_linked bigint;
+begin
+  select count(*)::bigint into v_linked
+  from public.investment_inventory_movement_units
+  where movement_id = new.id;
+
+  if v_linked <> new.quantity_units then
+    raise exception 'inventory movement quantity/link mismatch: movement %, quantity %, linked %',
+      new.id,new.quantity_units,v_linked;
+  end if;
+
+  return null;
+end;
+$$;
+
+revoke all on function public._assert_inventory_movement_unit_count()
+  from public, anon, authenticated;
+
+drop trigger if exists investment_inventory_movement_unit_count_guard
+  on public.investment_inventory_movements;
+create constraint trigger investment_inventory_movement_unit_count_guard
+after insert on public.investment_inventory_movements
+deferrable initially deferred
+for each row execute function public._assert_inventory_movement_unit_count();
+
+-- SOLD genealogy must point to a confirmed sale from the same lot. The FK alone
+-- proves existence, but not domain ownership.
+create or replace function public.guard_inventory_sale_genealogy()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.source_sale_id is not null and not exists (
+    select 1
+    from public.investment_sales s
+    where s.id = new.source_sale_id
+      and s.lot_id = new.lot_id
+      and s.status = 'CONFIRMED'
+  ) then
+    raise exception 'inventory movement source sale must be a confirmed sale from the same lot';
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.guard_inventory_sale_genealogy()
+  from public, anon, authenticated;
+
+drop trigger if exists investment_inventory_sale_genealogy_guard
+  on public.investment_inventory_movements;
+create trigger investment_inventory_sale_genealogy_guard
+before insert on public.investment_inventory_movements
+for each row execute function public.guard_inventory_sale_genealogy();
+
+-- System locations are semantic infrastructure. Operators may refine their
+-- display name/address but cannot deactivate them or change their location type.
 create or replace function public.upsert_inventory_location(
   p_code text,
   p_name text,
