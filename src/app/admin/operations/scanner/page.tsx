@@ -96,7 +96,7 @@ export default function ScannerPage() {
   const [tax, setTax] = useState('0');
   const [saleReference, setSaleReference] = useState('');
   const [channelCode, setChannelCode] = useState('');
-  const [idempotencyKey, setIdempotencyKey] = useState(() => browserIdempotencyKey());
+  const [idempotencyKey, setIdempotencyKey] = useState('');
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraSupported, setCameraSupported] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
@@ -257,12 +257,15 @@ export default function ScannerPage() {
         if (!Number.isFinite(price) || price <= 0) throw new Error('Ingresa un precio unitario válido.');
         if (!channelCode) throw new Error('Selecciona un canal de venta.');
 
+        const key = idempotencyKey || browserIdempotencyKey();
+        if (!idempotencyKey) setIdempotencyKey(key);
+
         const { error: saleError } = await supabase.rpc('record_bottle_sale_document', {
           p_lot_id: lotId,
           p_serial_codes: serials,
           p_unit_price_cents: price,
           p_channel_code: channelCode,
-          p_idempotency_key: idempotencyKey,
+          p_idempotency_key: key,
           p_sale_reference: saleReference.trim() || null,
           p_location: locationCode || null,
           p_tax_cents: taxCents,
@@ -288,7 +291,7 @@ export default function ScannerPage() {
       if (action === 'SOLD') {
         setSaleReference('');
         setTax('0');
-        setIdempotencyKey(browserIdempotencyKey());
+        setIdempotencyKey('');
       }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'No se pudo completar la operación.');
@@ -445,9 +448,12 @@ export default function ScannerPage() {
                   <option key={location.id} value={location.code}>{location.name} · {location.code}</option>
                 ))}
               </select>
-              {action === 'IN_MARKET' && locationOptions.length === 0 && (
-                <p className="text-[10px] text-amber-300 mt-2">Registra primero el punto en Inventory Reconciliation.</p>
-              )}
+            </div>
+          )}
+
+          {action === 'IN_MARKET' && locationOptions.length === 0 && (
+            <div className="mb-4 rounded-xl border border-amber-400/20 bg-amber-400/[.04] px-3 py-3 text-[10px] text-amber-300">
+              Registra primero el punto de venta o aliado en Inventory Reconciliation.
             </div>
           )}
 
@@ -474,7 +480,7 @@ export default function ScannerPage() {
                 <input className="adminInput" value={saleReference} onChange={(event) => setSaleReference(event.target.value)} placeholder="POS-000123" />
               </div>
               <div className="sm:col-span-2 rounded-xl border border-white/[.07] p-3 text-[10px] text-text-dim font-mono break-all">
-                Idempotency: {idempotencyKey}
+                Idempotency: {idempotencyKey || 'se generará al confirmar'}
               </div>
             </div>
           )}
@@ -486,7 +492,7 @@ export default function ScannerPage() {
           <Button
             onClick={() => void execute()}
             loading={busy}
-            disabled={queue.length === 0 || (locationRequired && !locationCode)}
+            disabled={queue.length === 0 || (locationRequired && !locationCode) || (action === 'SOLD' && !channelCode)}
             variant="primary"
             size="sm"
             fullWidth
