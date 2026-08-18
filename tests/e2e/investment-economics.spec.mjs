@@ -35,4 +35,19 @@ test.describe('CTG Craft Beer authoritative economics', () => {
     await expect(cases).toHaveValue('3');
     await expect(page.getByText('3 cajas · 72 botellas equivalentes')).toBeVisible();
   });
+
+  test('restored simulator is fully translated when English is selected', async ({ page }) => {
+    await page.addInitScript(() => window.localStorage.setItem('ctg-one-language', 'en'));
+    await page.goto('/inversion/simulador');
+
+    await expect(page.getByRole('heading', { name: 'Participation simulator' })).toBeVisible();
+    await expect(page.getByText('Illustrative reference scenario')).toBeVisible();
+    await expect(page.getByText(/It is not a current offer/i)).toBeVisible();
+
+    const cases = page.getByLabel(/Number of cases · minimum 2/i);
+    await expect(cases).toHaveValue('2');
+    await expect(page.getByText('2 cases · 48 bottle equivalents')).toBeVisible();
+    await expect(page.getByText(/The current minimum investment is 2 cases\./i)).toBeVisible();
+    await expect(page.getByText('Simulador de participación')).toHaveCount(0);
+  });
 });
