@@ -6,6 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const preflight = await read('supabase/migrations/0024_inventory_reconciliation_preflight.sql');
 const migration = await read('supabase/migrations/0025_inventory_reconciliation.sql');
 const hardening = await read('supabase/migrations/0026_inventory_reconciliation_hardening.sql');
+const performance = await read('supabase/migrations/0027_inventory_location_fk_index.sql');
 const scanner = await read('src/app/admin/operations/scanner/page.tsx');
 const inventoryPage = await read('src/app/admin/operations/inventory/page.tsx');
 const adminNav = await read('src/components/admin/AdminNav.tsx');
@@ -53,6 +54,11 @@ assert.ok(
 assert.ok(
   hardening.includes('deferrable initially deferred'),
   'Movement quantity/link enforcement must run after unit links can be inserted in the same transaction.',
+);
+assert.ok(
+  performance.includes('investment_inventory_locations_created_by_idx')
+    && performance.includes('investment_inventory_locations(created_by)'),
+  'Canonical location creator foreign key must retain a covering index.',
 );
 
 assert.ok(
