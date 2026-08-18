@@ -6,6 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const migration = await read('supabase/migrations/0022_closed_loop_integrity.sql');
 const reviewHardening = await read('supabase/migrations/0023_closed_loop_review_hardening.sql');
 const operations = await read('src/app/admin/operations/page.tsx');
+const operationsRepository = await read('src/modules/operations/infrastructure/browser-repository.ts');
 const settlementPage = await read('src/app/admin/operations/settlement/page.tsx');
 const investmentTypes = await read('src/types/investment.ts');
 const summaryHook = await read('src/hooks/useInvestmentSummary.ts');
@@ -19,11 +20,15 @@ assert.ok(
   'Legacy bottle-sale RPC must not remain client executable.',
 );
 assert.ok(
-  operations.includes("rpc('record_bottle_sale_document'"),
-  'Production OS must use the authoritative Sales OS document RPC.',
+  operationsRepository.includes("rpc('record_bottle_sale_document'"),
+  'Production OS infrastructure must use the authoritative Sales OS document RPC.',
 );
 assert.ok(
-  !operations.includes("rpc('record_bottle_sales'"),
+  !operations.includes("rpc('record_bottle_sale_document'"),
+  'Production OS page must not bypass the operations infrastructure repository for authoritative sales.',
+);
+assert.ok(
+  !operationsRepository.includes("rpc('record_bottle_sales'") && !operations.includes("rpc('record_bottle_sales'"),
   'Production OS must not call the legacy unit-sale RPC.',
 );
 assert.ok(
