@@ -66,6 +66,7 @@ export async function UnitEconomics() {
               <p className="text-[10px] uppercase tracking-[0.18em] text-text-dim mb-4">Costo por botella</p>
               <Metric label="Producción" value={formatCents(lot.production_cost_unit_cents)} />
               <Metric label="Etiqueta" value={formatCents(lot.label_cost_unit_cents)} />
+              <Metric label="Transporte" value={formatCents(lot.transport_cost_unit_cents ?? 0)} />
               <Metric label="Costo total unitario" value={formatCents(economics.totalUnitCostCents)} emphasis />
             </div>
           </FadeInSection>
@@ -86,6 +87,9 @@ export async function UnitEconomics() {
             <div className="h-full rounded-xl border border-white/[0.08] bg-white/[0.025] p-6">
               <p className="text-[10px] uppercase tracking-[0.18em] text-text-dim mb-4">Canal B2B</p>
               <Metric label="Precio B2B" value={formatCents(lot.b2b_price_unit_cents)} />
+              <Metric label="Base B2B antes de INC" value={formatCents(economics.b2bPreIncCents)} />
+              <Metric label={`INC B2B · ${rate(lot.inc_rate)}`} value={formatCents(economics.b2bIncCents)} />
+              <Metric label="Marketing B2B" value="No aplica" />
               <Metric label="Costo total unitario" value={formatCents(economics.totalUnitCostCents)} />
               <Metric label="Contribución estimada / botella" value={formatCents(economics.b2bContributionCents)} emphasis />
               <Metric label="Margen sobre precio B2B" value={percent(economics.b2bMargin)} />
