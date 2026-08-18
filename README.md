@@ -200,11 +200,14 @@ Migraciones versionadas actualmente en el repositorio:
 0021_economics_function_privilege_hardening.sql
 0022_closed_loop_integrity.sql
 0023_closed_loop_review_hardening.sql
-0024_inventory_reconciliation.sql
-0025_inventory_reconciliation_hardening.sql
+0024_inventory_reconciliation_preflight.sql
+0025_inventory_reconciliation.sql
+0026_inventory_reconciliation_hardening.sql
 ```
 
 La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno. Producción debe verificarse mediante migration history/System Health y procedimientos operacionales documentados. `EXPECTED_DATABASE_MIGRATION` debe coincidir con la última migración del repositorio; CI valida continuidad y ausencia de huecos.
+
+La secuencia de Inventory Reconciliation es deliberadamente fail-closed: `0024` aborta antes de instalar el modelo canónico si detecta historia física o comercial previa que requiera backfill explícito.
 
 ## Principios financieros
 
@@ -228,10 +231,10 @@ La presencia de una migración en Git no prueba por sí sola que esté aplicada 
 - la botella serializada es la unidad física mínima trazable;
 - `current_location_id` es la ubicación canónica; el texto de ubicación es solo proyección de presentación;
 - todo movimiento autoritativo registra origen, destino y seriales afectados;
-- la cantidad del movimiento debe reconciliar con el número de unidades vinculadas;
+- la cantidad del movimiento debe coincidir exactamente con el número de unidades vinculadas antes de `COMMIT`;
 - la historia de movimientos es append-only;
 - una transición física inválida o un lote parcial de seriales falla de forma atómica;
-- `SOLD` solo nace de Sales OS y conserva vínculo con el documento de venta;
+- `SOLD` solo nace de Sales OS y conserva vínculo con un documento de venta confirmado del mismo lote;
 - una venta no puede abarcar inventario localizado físicamente en múltiples ubicaciones;
 - `get_inventory_reconciliation()` detecta divergencias entre proyección física, historia y Sales OS.
 
