@@ -10,6 +10,7 @@ import {
   INVESTMENT_BANK_TRANSFER_CONFIGURED,
   INVESTMENT_BANK_TRANSFER_INSTRUCTIONS,
 } from '@/lib/payment-instructions';
+import { MIN_INVESTMENT_CASES } from '@/lib/investment/commercial-rules';
 import type { InvestmentProductionLot, LotFundingSummary } from '@/types/investment';
 import { Boxes, Check, FileCheck2, Landmark, Minus, Plus, QrCode, ShieldCheck, X } from 'lucide-react';
 
@@ -18,7 +19,8 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024;
 export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProductionLot; funding: LotFundingSummary }) {
   const { userId, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [cases, setCases] = useState(Math.min(5, Math.max(1, funding.availableCasesEquivalent)));
+  const hasMinimumCapacity = funding.availableCasesEquivalent >= MIN_INVESTMENT_CASES;
+  const [cases, setCases] = useState(hasMinimumCapacity ? MIN_INVESTMENT_CASES : funding.availableCasesEquivalent);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [capitalRequired, setCapitalRequired] = useState<number | null>(null);
   const [proof, setProof] = useState<File | null>(null);
@@ -32,11 +34,11 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
     const unit = (lot.production_cost_unit_cents ?? 0) + (lot.label_cost_unit_cents ?? 0);
     return unit * lot.case_size_units;
   }, [lot]);
-  const estimate = capitalPerCase * cases;
+  const estimate = capitalPerCase * Math.max(cases, 0);
   const displayCapital = orderId ? capitalRequired ?? estimate : estimate;
-  const bottles = cases * lot.case_size_units;
+  const bottles = Math.max(cases, 0) * lot.case_size_units;
   const capacityPercent = funding.totalCases > 0
-    ? Math.min(100, Math.round(((funding.allocatedCases + cases) / funding.totalCases) * 100))
+    ? Math.min(100, Math.round(((funding.allocatedCases + Math.max(cases, 0)) / funding.totalCases) * 100))
     : 0;
 
   if (!isLoading && !isAuthenticated) {
@@ -47,9 +49,19 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
     return <div className="rounded-2xl border border-white/10 p-6 text-sm text-text-dim">Sincronizando identidad y permisos...</div>;
   }
 
-  const setSafeCases = (next: number) => setCases(Math.max(1, Math.min(funding.availableCasesEquivalent, next || 1)));
+  const setSafeCases = (next: number) => {
+    if (!hasMinimumCapacity) {
+      setCases(funding.availableCasesEquivalent);
+      return;
+    }
+    setCases(Math.max(MIN_INVESTMENT_CASES, Math.min(funding.availableCasesEquivalent, next || MIN_INVESTMENT_CASES)));
+  };
 
   const createOrder = async () => {
+    if (!hasMinimumCapacity || cases < MIN_INVESTMENT_CASES) {
+      setError(`La inversión mínima vigente es de ${MIN_INVESTMENT_CASES} cajas. Este lote no tiene capacidad suficiente disponible.`);
+      return;
+    }
     if (!accepted) {
       setError('Debes confirmar que entiendes las condiciones y riesgos antes de crear la orden.');
       return;
@@ -110,12 +122,13 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
           </div>
 
           <div className="rounded-2xl border border-white/[.08] p-4 sm:p-5 mb-5" style={{background:'rgba(0,0,0,.18)'}}>
-            <div className="flex items-center justify-between gap-4 mb-4"><span className="text-xs text-text-muted">Cantidad de cajas</span><span className="text-[9px] uppercase tracking-[.15em] text-text-dim">máx. {funding.availableCasesEquivalent}</span></div>
+            <div className="flex items-center justify-between gap-4 mb-4"><span className="text-xs text-text-muted">Cantidad de cajas · mínimo {MIN_INVESTMENT_CASES}</span><span className="text-[9px] uppercase tracking-[.15em] text-text-dim">máx. {funding.availableCasesEquivalent}</span></div>
             <div className="grid grid-cols-[48px_1fr_48px] gap-3 items-center">
-              <button type="button" disabled={!!orderId || cases <= 1} onClick={() => setSafeCases(cases - 1)} className="h-12 rounded-xl border border-white/10 text-text-muted hover:text-accent disabled:opacity-30 flex items-center justify-center"><Minus size={16}/></button>
-              <input type="number" min={1} max={funding.availableCasesEquivalent} value={cases} disabled={!!orderId} onChange={(event) => setSafeCases(Number(event.target.value))} className="h-12 text-center rounded-xl text-2xl font-outfit font-semibold text-white outline-none" style={{background:'rgba(255,255,255,.035)',border:'1px solid rgba(255,255,255,.08)'}} />
-              <button type="button" disabled={!!orderId || cases >= funding.availableCasesEquivalent} onClick={() => setSafeCases(cases + 1)} className="h-12 rounded-xl border border-white/10 text-text-muted hover:text-accent disabled:opacity-30 flex items-center justify-center"><Plus size={16}/></button>
+              <button type="button" disabled={!!orderId || !hasMinimumCapacity || cases <= MIN_INVESTMENT_CASES} onClick={() => setSafeCases(cases - 1)} className="h-12 rounded-xl border border-white/10 text-text-muted hover:text-accent disabled:opacity-30 flex items-center justify-center"><Minus size={16}/></button>
+              <input type="number" min={MIN_INVESTMENT_CASES} max={funding.availableCasesEquivalent} value={cases} disabled={!!orderId || !hasMinimumCapacity} onChange={(event) => setSafeCases(Number(event.target.value))} className="h-12 text-center rounded-xl text-2xl font-outfit font-semibold text-white outline-none" style={{background:'rgba(255,255,255,.035)',border:'1px solid rgba(255,255,255,.08)'}} />
+              <button type="button" disabled={!!orderId || !hasMinimumCapacity || cases >= funding.availableCasesEquivalent} onClick={() => setSafeCases(cases + 1)} className="h-12 rounded-xl border border-white/10 text-text-muted hover:text-accent disabled:opacity-30 flex items-center justify-center"><Plus size={16}/></button>
             </div>
+            {!hasMinimumCapacity && <p className="text-[11px] text-amber-300/80 mt-3">Quedan {funding.availableCasesEquivalent} cajas. Se requieren al menos {MIN_INVESTMENT_CASES} cajas disponibles para abrir una nueva inversión.</p>}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -131,12 +144,12 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
           </div>
 
           <label className="flex items-start gap-3 rounded-xl border border-white/[.07] p-4 cursor-pointer mb-5" style={{background:'rgba(255,255,255,.018)'}}>
-            <input type="checkbox" checked={accepted} disabled={!!orderId} onChange={(event) => setAccepted(event.target.checked)} className="mt-1 accent-accent" />
+            <input type="checkbox" checked={accepted} disabled={!!orderId || !hasMinimumCapacity} onChange={(event) => setAccepted(event.target.checked)} className="mt-1 accent-accent" />
             <span className="text-xs text-text-muted leading-relaxed">Entiendo que esta participación financia un equivalente productivo dentro de un lote físico, que no existe rentabilidad garantizada y que la inversión solo se activa después de la verificación bancaria humana.</span>
           </label>
 
           {!orderId
-            ? <Button onClick={createOrder} loading={busy} variant="primary" size="md" fullWidth>Crear orden y reservar cajas</Button>
+            ? <Button onClick={createOrder} disabled={!hasMinimumCapacity} loading={busy} variant="primary" size="md" fullWidth>Crear orden y reservar desde {MIN_INVESTMENT_CASES} cajas</Button>
             : <div className="rounded-xl border border-accent/20 p-4 flex items-center gap-3" style={{background:'rgba(201,169,98,.055)'}}><div className="w-8 h-8 rounded-full border border-accent/30 flex items-center justify-center text-accent"><Check size={15}/></div><div><p className="text-sm text-white font-medium">Orden creada</p><p className="text-[10px] text-text-dim mt-1 font-mono">{orderId}</p></div></div>}
         </section>
 
@@ -186,7 +199,6 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
           <h3 className="text-xl font-outfit font-semibold text-white">QR Bancolombia</h3>
           <p className="text-xs text-text-muted mt-2 mb-5">{INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName} · {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.accountType}</p>
           <div className="rounded-2xl bg-white p-4">
-            {/* QR is an approved public payment asset configured outside source code. */}
             <img src={INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl} alt="QR oficial de la cuenta de ahorros Bancolombia para CTG Craft Beer Inversión" className="mx-auto block max-h-[360px] w-auto max-w-full" />
           </div>
           <p className="text-[11px] text-text-dim mt-4 leading-relaxed">Después de transferir, vuelve a esta ventana y sube el comprobante. El comprobante será tratado como evidencia, no como confirmación de fondos.</p>
