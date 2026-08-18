@@ -18,6 +18,7 @@ const supabaseMiddleware = await read('src/lib/supabase/middleware.ts');
 const adminNav = await read('src/components/admin/AdminNav.tsx');
 const labelsPage = await read('src/app/admin/operations/labels/page.tsx');
 const operationsPage = await read('src/app/admin/operations/page.tsx');
+const operationsRepository = await read('src/modules/operations/infrastructure/browser-repository.ts');
 const beerMasterMigration = await read('supabase/migrations/0013_beer_style_master_and_lot_codes.sql');
 const salesMigration = await read('supabase/migrations/0014_sales_os_foundation.sql');
 const securityDefinerMigration = await read('supabase/migrations/0015_security_definer_execution_hardening.sql');
@@ -98,10 +99,13 @@ assert.ok(!labelsPage.includes('capital_committed'), 'Printed labels must never 
 for (const code of ['GOLD','IRA','POR','HEF']) assert.ok(beerMasterMigration.includes(`('${code}'`), `Beer master migration must retain canonical style ${code}.`);
 assert.ok(beerMasterMigration.includes('pg_advisory_xact_lock'), 'Lot-code allocation must retain transaction-level serialization.');
 assert.ok(beerMasterMigration.includes("has_investment_permission('production.manage')"), 'Authoritative lot creation must revalidate production authorization.');
-assert.ok(operationsPage.includes("from('investment_beer_styles')"), 'Production OS must read beer styles from master data.');
-assert.ok(operationsPage.includes("rpc('create_production_lot_from_style'"), 'Production OS must create lots through the database-authoritative RPC.');
+assert.ok(operationsRepository.includes("from('investment_beer_styles')"), 'Production OS repository must read beer styles from master data.');
+assert.ok(operationsRepository.includes("rpc('create_production_lot_from_style'"), 'Production OS repository must create lots through the database-authoritative RPC.');
+assert.ok(operationsPage.includes('createOperationsBrowserRepository'), 'Production OS page must use the operations infrastructure boundary.');
+assert.ok(!operationsPage.includes('.from('), 'Production OS page must not issue direct table queries.');
+assert.ok(!operationsPage.includes('.rpc('), 'Production OS page must not invoke Supabase RPCs directly.');
 assert.ok(!operationsPage.includes('const BEER_STYLES = ['), 'Production OS must not reintroduce a hard-coded beer-style catalog.');
-assert.ok(!operationsPage.includes("rpc('create_production_lot', payload)"), 'Production OS must not use the legacy frontend-code lot creation path.');
+assert.ok(!operationsRepository.includes("rpc('create_production_lot', payload)"), 'Production OS must not use the legacy frontend-code lot creation path.');
 
 // Sales OS must preserve one commercial document per idempotency key and one sale item per bottle.
 for (const table of ['investment_sales_channels','investment_sales','investment_sale_items']) assert.ok(salesMigration.includes(`public.${table}`), `Sales OS migration must include ${table}.`);
