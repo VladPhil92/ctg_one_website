@@ -2,6 +2,7 @@ import React from 'react';
 import { Container, Badge } from '@/components/ui';
 import { InvestmentSimulatorClient } from '@/components/inversion/InvestmentSimulatorClient';
 import { getActiveInvestmentFormulaVersion, getPublicSimulationLots } from '@/lib/investment/queries';
+import { PUBLIC_INVESTMENT_SIMULATOR_PROFILE } from '@/lib/investment/public-simulator';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,13 +17,17 @@ export default async function SimuladorPage() {
       <Container size="small">
         <Badge variant="accent" className="mb-6">Simulador</Badge>
         <h1 className="text-3xl sm:text-4xl font-outfit font-semibold text-white mb-4">
-          Simulador por snapshot de lote
+          Simulador de participación
         </h1>
         <p className="text-base text-text-muted leading-relaxed mb-10">
-          Explora escenarios construidos con costos, precios y tasas almacenados en un lote real con financiación abierta. La plataforma ya no utiliza una rentabilidad proyectada fija ni un capital por caja escrito en el frontend.
+          Ajusta el número de cajas para explorar una participación. Si existe un lote con financiación abierta, el cálculo usa su snapshot económico real; mientras no exista uno, se utiliza un escenario ilustrativo de referencia claramente identificado.
         </p>
 
-        <InvestmentSimulatorClient lots={lots} formula={formula} />
+        <InvestmentSimulatorClient
+          lots={lots}
+          formula={formula}
+          referenceProfile={PUBLIC_INVESTMENT_SIMULATOR_PROFILE}
+        />
 
         <p className="text-[11px] text-text-dim leading-relaxed mt-10">
           Los escenarios son estimados y no constituyen una rentabilidad garantizada. La liquidación real depende de las ventas, costos, impuestos, ajustes y reglas contractuales efectivamente aplicables al lote y a la versión de fórmula financiera que quede fijada en cada allocation. Consulta <a href="/inversion/riesgos" className="text-accent hover:underline">riesgos</a>{' '}
