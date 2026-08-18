@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useInvestmentOrders } from '@/hooks/useInvestmentOrders';
 import { useInvestmentSummary } from '@/hooks/useInvestmentSummary';
 import { InvestmentTrackingChart } from '@/components/inversion/InvestmentTrackingChart';
+import { InvestmentLiquidityPanel } from '@/components/inversion/InvestmentLiquidityPanel';
 import { formatCents } from '@/lib/format';
 import { INVESTMENT_ORDER_STATUS_LABELS } from '@/types/investment';
 import { Activity, ArrowLeft, Beer, Boxes, CircleDollarSign, FileText, PackageCheck, Radar } from 'lucide-react';
@@ -16,7 +17,7 @@ export default function DashboardInvestmentPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const { orders, isLoading: ordersLoading } = useInvestmentOrders();
-  const { summary, isLoading: summaryLoading } = useInvestmentSummary();
+  const { summary, isLoading: summaryLoading, refresh: refreshSummary } = useInvestmentSummary();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push('/iniciar-sesion?next=/dashboard/inversion');
@@ -51,10 +52,16 @@ export default function DashboardInvestmentPage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
             <Metric code="INV-CAP" icon={<CircleDollarSign size={16} />} label="Capital activo" value={summaryLoading ? '—' : formatCents(summary.activeCapitalCents)} />
+            <Metric code="INV-LIQ" icon={<CircleDollarSign size={16} />} label="Saldo liquidado" value={summaryLoading ? '—' : formatCents(summary.availableBalanceCents)} />
             <Metric code="INV-ALC" icon={<PackageCheck size={16} />} label="Asignaciones" value={summaryLoading ? '—' : String(summary.allocations.length)} />
-            <Metric code="INV-ORD" icon={<FileText size={16} />} label="Órdenes" value={ordersLoading ? '—' : String(orders.length)} />
             <Metric code="INV-TRK" icon={<Beer size={16} />} label="Lotes en tracking" value={ordersLoading ? '—' : String(activeLots)} />
           </div>
+
+          <InvestmentLiquidityPanel
+            availableBalanceCents={summary.availableBalanceCents}
+            withdrawals={summary.withdrawalRequests}
+            onRefresh={refreshSummary}
+          />
 
           <div className="flex items-center justify-between gap-4 mb-5">
             <div><p className="micro-label">Portfolio Stream</p><h2 className="text-2xl sm:text-3xl font-outfit font-semibold mt-2">Órdenes y tracking</h2></div>
@@ -101,11 +108,11 @@ export default function DashboardInvestmentPage() {
                         <p className="micro-label mb-2">Order status</p>
                         <p className="text-xs text-text-muted leading-relaxed">
                           {order.status === 'AWAITING_PAYMENT' && 'Tu orden está reservada y pendiente de registrar el pago.'}
-                          {order.status === 'PAYMENT_SUBMITTED' && 'Recibimos tu soporte de pago. Está pendiente de validación administrativa.'}
+                          {order.status === 'PAYMENT_SUBMITTED' && 'Recibimos tu declaración de pago. Finanzas debe conciliarla contra una referencia externa antes de activar la participación.'}
                           {order.status === 'REJECTED' && 'La orden fue rechazada. Revisa las observaciones antes de iniciar una nueva participación.'}
                           {order.status === 'CANCELLED' && 'La orden fue cancelada.'}
                           {order.status === 'EXPIRED' && 'La reserva expiró antes de completar el pago.'}
-                          {order.status === 'PAYMENT_VERIFIED' && 'El pago fue verificado y la asignación está siendo consolidada.'}
+                          {order.status === 'PAYMENT_VERIFIED' && 'El pago fue conciliado y la asignación está siendo consolidada.'}
                         </p>
                       </div>
                     )}
