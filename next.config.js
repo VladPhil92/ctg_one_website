@@ -1,6 +1,20 @@
 /** @type {import('next').NextConfig} */
 const isProduction = process.env.NODE_ENV === 'production';
 
+function getConfiguredSupabaseConnectSources() {
+  if (isProduction) return '';
+  const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!configuredUrl) return '';
+
+  try {
+    const url = new URL(configuredUrl);
+    const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    return ` ${url.origin} ${wsProtocol}//${url.host}`;
+  } catch {
+    return '';
+  }
+}
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -11,7 +25,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
   `script-src 'self' 'unsafe-inline'${isProduction ? '' : " 'unsafe-eval'"}`,
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  `connect-src 'self' https://*.supabase.co wss://*.supabase.co${getConfiguredSupabaseConnectSources()}`,
   "worker-src 'self' blob:",
   "media-src 'self'",
   "manifest-src 'self'",
