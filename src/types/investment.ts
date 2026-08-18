@@ -66,18 +66,8 @@ export interface InvestmentFundingAllocation {
   created_at: string;
 }
 
-// Lightweight projection used by inventory aggregation queries.
-export interface InvestmentInventoryMovement {
-  movement_type: string;
-  quantity_units: number;
-}
-
-export interface InvestmentInventoryMovementRow extends InvestmentInventoryMovement {
-  id: string;
-  lot_id: string;
-  actor_id: string | null;
-  occurred_at: string;
-}
+export interface InvestmentInventoryMovement { movement_type: string; quantity_units: number; }
+export interface InvestmentInventoryMovementRow extends InvestmentInventoryMovement { id: string; lot_id: string; actor_id: string | null; occurred_at: string; }
 
 export type InvestmentRole =
   | 'SUPER_ADMIN' | 'FINANCE_ADMIN' | 'PRODUCTION_MANAGER' | 'INVENTORY_MANAGER'
@@ -131,8 +121,8 @@ export interface InvestmentWithdrawalRequest {
 }
 
 export type InvestmentOrderStatus =
-  | 'AWAITING_PAYMENT' | 'PAYMENT_SUBMITTED' | 'PAYMENT_VERIFIED' | 'ALLOCATED'
-  | 'REJECTED' | 'CANCELLED' | 'EXPIRED';
+  | 'AWAITING_PAYMENT' | 'PENDING_BANK_VERIFICATION' | 'PAYMENT_SUBMITTED'
+  | 'PAYMENT_VERIFIED' | 'ALLOCATED' | 'REJECTED' | 'CANCELLED' | 'EXPIRED';
 
 export type InvestmentPaymentMethod = 'bank_transfer' | 'pse' | 'bre_b_qr' | 'crypto';
 
@@ -146,6 +136,17 @@ export interface InvestmentOrder {
   payment_method: InvestmentPaymentMethod | null;
   payment_reference: string | null;
   payment_proof_storage_path: string | null;
+  payment_proof_sha256: string | null;
+  payment_proof_original_name: string | null;
+  payment_proof_mime: string | null;
+  bank_verified_provider_code: string | null;
+  bank_verified_reference: string | null;
+  bank_verified_amount_cents: number | null;
+  bank_received_at: string | null;
+  bank_verified_at: string | null;
+  bank_verified_by: string | null;
+  contract_reference: string | null;
+  contract_activated_at: string | null;
   allocation_id: string | null;
   admin_notes: string | null;
   payment_submitted_at: string | null;
@@ -157,8 +158,12 @@ export interface InvestmentOrder {
 }
 
 export const INVESTMENT_ORDER_STATUS_LABELS: Record<InvestmentOrderStatus, string> = {
-  AWAITING_PAYMENT: 'Pendiente de pago', PAYMENT_SUBMITTED: 'Pago enviado', PAYMENT_VERIFIED: 'Pago verificado',
-  ALLOCATED: 'Participación activa', REJECTED: 'Rechazada', CANCELLED: 'Cancelada', EXPIRED: 'Expirada',
+  AWAITING_PAYMENT: 'Pendiente de transferencia',
+  PENDING_BANK_VERIFICATION: 'Pendiente de verificación bancaria',
+  PAYMENT_SUBMITTED: 'Verificación en proceso',
+  PAYMENT_VERIFIED: 'Pago verificado',
+  ALLOCATED: 'Participación activa',
+  REJECTED: 'Rechazada', CANCELLED: 'Cancelada', EXPIRED: 'Expirada',
 };
 
 export type BottleUnitStatus =
@@ -181,54 +186,16 @@ export interface InvestmentBottleUnit {
   updated_at: string;
 }
 
-export interface InvestmentSalesChannel {
-  id: string;
-  code: string;
-  name: string;
-  active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
+export interface InvestmentSalesChannel { id: string; code: string; name: string; active: boolean; created_at: string; updated_at: string; }
 export interface InvestmentSale {
-  id: string;
-  lot_id: string;
-  channel_id: string;
-  sale_reference: string | null;
-  idempotency_key: string;
-  location: string | null;
-  customer_label: string | null;
-  status: 'CONFIRMED' | 'VOID';
-  gross_revenue_cents: number;
-  tax_recognized_cents: number;
-  created_by: string;
-  sold_at: string;
-  created_at: string;
+  id: string; lot_id: string; channel_id: string; sale_reference: string | null; idempotency_key: string;
+  location: string | null; customer_label: string | null; status: 'CONFIRMED' | 'VOID'; gross_revenue_cents: number;
+  tax_recognized_cents: number; created_by: string; sold_at: string; created_at: string;
 }
-
 export interface InvestmentSaleItem {
-  id: string;
-  sale_id: string;
-  lot_id: string;
-  bottle_unit_id: string;
-  serial_code: string;
-  quantity_units: 1;
-  unit_price_cents: number;
-  line_total_cents: number;
-  created_at: string;
+  id: string; sale_id: string; lot_id: string; bottle_unit_id: string; serial_code: string; quantity_units: 1;
+  unit_price_cents: number; line_total_cents: number; created_at: string;
 }
 
-export interface LotFundingSummary {
-  totalCases: number;
-  allocatedCases: number;
-  fundedPercent: number;
-  availableCasesEquivalent: number;
-}
-
-export interface LotInventorySummary {
-  produced: number;
-  warehouse: number;
-  dispatched: number;
-  sold: number;
-  damaged: number;
-}
+export interface LotFundingSummary { totalCases: number; allocatedCases: number; fundedPercent: number; availableCasesEquivalent: number; }
+export interface LotInventorySummary { produced: number; warehouse: number; dispatched: number; sold: number; damaged: number; }
