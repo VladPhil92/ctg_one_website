@@ -74,11 +74,11 @@ export const AccountCtaSection: React.FC = () => {
             <div className="relative z-10 grid lg:grid-cols-[1fr_0.72fr] gap-12 lg:gap-16 items-center">
               <div>
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="relative flex w-3 h-3">
+                  <span className="relative flex w-3 h-3 shrink-0">
                     <span className="absolute inset-0 rounded-full bg-accent/20 animate-ping" />
                     <span className="relative m-auto w-1.5 h-1.5 rounded-full bg-accent" />
                   </span>
-                  <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.26em] text-accent">{copy.eyebrow}</span>
+                  <span className="min-w-0 text-[9px] sm:text-[10px] uppercase tracking-[0.26em] text-accent leading-tight">{copy.eyebrow}</span>
                 </div>
 
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-semibold tracking-[-0.035em] leading-[1.03] text-white mb-5 max-w-2xl">
@@ -106,19 +106,19 @@ export const AccountCtaSection: React.FC = () => {
                 </div>
               </div>
 
-              <div className="relative">
-                <div className="absolute left-5 top-6 bottom-6 w-px bg-gradient-to-b from-transparent via-accent/20 to-transparent" />
+              <div className="relative min-w-0">
+                <div className="absolute left-9 top-6 bottom-6 w-px bg-gradient-to-b from-transparent via-accent/20 to-transparent" aria-hidden="true" />
                 <div className="space-y-3">
                   {signals.map(({ icon: Icon, label }, index) => (
-                    <div key={label} className="group relative flex items-center gap-4 border border-white/[0.055] bg-white/[0.012] p-4 sm:p-5 hover:border-accent/25 hover:bg-accent/[0.018] transition-all duration-500">
-                      <span className="relative z-10 w-10 h-10 rounded-full border border-accent/25 bg-[#090909] flex items-center justify-center shrink-0">
-                        <Icon size={17} className="text-accent" strokeWidth={1.4} />
+                    <div key={label} className="group relative flex min-w-0 items-center gap-4 overflow-hidden border border-white/[0.055] bg-[#0a0a0a]/95 p-4 sm:p-5 hover:border-accent/25 hover:bg-[#0c0c0c] transition-all duration-500">
+                      <span className="relative z-10 w-10 h-10 rounded-full overflow-hidden border border-accent/25 bg-[#090909] flex items-center justify-center shrink-0">
+                        <Icon className="w-[17px] h-[17px] shrink-0 text-accent" strokeWidth={1.4} />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <span className="block text-[9px] uppercase tracking-[0.22em] text-text-dim mb-1">0{index + 1}</span>
-                        <span className="text-sm text-text-secondary">{label}</span>
+                        <span className="block text-[9px] uppercase tracking-[0.22em] text-text-dim mb-1 leading-tight">0{index + 1}</span>
+                        <span className="block truncate text-sm text-text-secondary">{label}</span>
                       </div>
-                      <ArrowUpRight size={14} className="text-text-dim group-hover:text-accent transition-colors duration-300" />
+                      <ArrowUpRight className="w-3.5 h-3.5 shrink-0 text-text-dim group-hover:text-accent transition-colors duration-300" />
                     </div>
                   ))}
                 </div>
