@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { formatCents } from '@/lib/format';
+import { MIN_INVESTMENT_CASES } from '@/lib/investment/constants';
 import {
   INVESTMENT_BANK_TRANSFER_CONFIGURED,
   INVESTMENT_BANK_TRANSFER_INSTRUCTIONS,
@@ -18,7 +19,9 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024;
 export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProductionLot; funding: LotFundingSummary }) {
   const { userId, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [cases, setCases] = useState(Math.min(5, Math.max(1, funding.availableCasesEquivalent)));
+  const canInvest = funding.availableCasesEquivalent >= MIN_INVESTMENT_CASES;
+  const initialCases = canInvest ? MIN_INVESTMENT_CASES : funding.availableCasesEquivalent;
+  const [cases, setCases] = useState(initialCases);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [capitalRequired, setCapitalRequired] = useState<number | null>(null);
   const [proof, setProof] = useState<File | null>(null);
@@ -47,9 +50,16 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
     return <div className="rounded-2xl border border-white/10 p-6 text-sm text-text-dim">Sincronizando identidad y permisos...</div>;
   }
 
-  const setSafeCases = (next: number) => setCases(Math.max(1, Math.min(funding.availableCasesEquivalent, next || 1)));
+  const setSafeCases = (next: number) => {
+    if (!canInvest) return;
+    setCases(Math.max(MIN_INVESTMENT_CASES, Math.min(funding.availableCasesEquivalent, next || MIN_INVESTMENT_CASES)));
+  };
 
   const createOrder = async () => {
+    if (!canInvest || cases < MIN_INVESTMENT_CASES) {
+      setError(`La inversión mínima es de ${MIN_INVESTMENT_CASES} cajas.`);
+      return;
+    }
     if (!accepted) {
       setError('Debes confirmar que entiendes las condiciones y riesgos antes de crear la orden.');
       return;
@@ -110,12 +120,13 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
           </div>
 
           <div className="rounded-2xl border border-white/[.08] p-4 sm:p-5 mb-5" style={{background:'rgba(0,0,0,.18)'}}>
-            <div className="flex items-center justify-between gap-4 mb-4"><span className="text-xs text-text-muted">Cantidad de cajas</span><span className="text-[9px] uppercase tracking-[.15em] text-text-dim">máx. {funding.availableCasesEquivalent}</span></div>
+            <div className="flex items-center justify-between gap-4 mb-4"><span className="text-xs text-text-muted">Cantidad de cajas · mínimo {MIN_INVESTMENT_CASES}</span><span className="text-[9px] uppercase tracking-[.15em] text-text-dim">máx. {funding.availableCasesEquivalent}</span></div>
             <div className="grid grid-cols-[48px_1fr_48px] gap-3 items-center">
-              <button type="button" disabled={!!orderId || cases <= 1} onClick={() => setSafeCases(cases - 1)} className="h-12 rounded-xl border border-white/10 text-text-muted hover:text-accent disabled:opacity-30 flex items-center justify-center"><Minus size={16}/></button>
-              <input type="number" min={1} max={funding.availableCasesEquivalent} value={cases} disabled={!!orderId} onChange={(event) => setSafeCases(Number(event.target.value))} className="h-12 text-center rounded-xl text-2xl font-outfit font-semibold text-white outline-none" style={{background:'rgba(255,255,255,.035)',border:'1px solid rgba(255,255,255,.08)'}} />
-              <button type="button" disabled={!!orderId || cases >= funding.availableCasesEquivalent} onClick={() => setSafeCases(cases + 1)} className="h-12 rounded-xl border border-white/10 text-text-muted hover:text-accent disabled:opacity-30 flex items-center justify-center"><Plus size={16}/></button>
+              <button type="button" disabled={!!orderId || !canInvest || cases <= MIN_INVESTMENT_CASES} onClick={() => setSafeCases(cases - 1)} className="h-12 rounded-xl border border-white/10 text-text-muted hover:text-accent disabled:opacity-30 flex items-center justify-center"><Minus size={16}/></button>
+              <input type="number" min={MIN_INVESTMENT_CASES} max={funding.availableCasesEquivalent} value={cases} disabled={!!orderId || !canInvest} onChange={(event) => setSafeCases(Number(event.target.value))} className="h-12 text-center rounded-xl text-2xl font-outfit font-semibold text-white outline-none" style={{background:'rgba(255,255,255,.035)',border:'1px solid rgba(255,255,255,.08)'}} />
+              <button type="button" disabled={!!orderId || !canInvest || cases >= funding.availableCasesEquivalent} onClick={() => setSafeCases(cases + 1)} className="h-12 rounded-xl border border-white/10 text-text-muted hover:text-accent disabled:opacity-30 flex items-center justify-center"><Plus size={16}/></button>
             </div>
+            {!canInvest && <p className="mt-3 text-[11px] text-amber-300/80">Este lote tiene menos de {MIN_INVESTMENT_CASES} cajas disponibles y ya no admite una nueva inversión mínima.</p>}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -131,12 +142,12 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
           </div>
 
           <label className="flex items-start gap-3 rounded-xl border border-white/[.07] p-4 cursor-pointer mb-5" style={{background:'rgba(255,255,255,.018)'}}>
-            <input type="checkbox" checked={accepted} disabled={!!orderId} onChange={(event) => setAccepted(event.target.checked)} className="mt-1 accent-accent" />
+            <input type="checkbox" checked={accepted} disabled={!!orderId || !canInvest} onChange={(event) => setAccepted(event.target.checked)} className="mt-1 accent-accent" />
             <span className="text-xs text-text-muted leading-relaxed">Entiendo que esta participación financia un equivalente productivo dentro de un lote físico, que no existe rentabilidad garantizada y que la inversión solo se activa después de la verificación bancaria humana.</span>
           </label>
 
           {!orderId
-            ? <Button onClick={createOrder} loading={busy} variant="primary" size="md" fullWidth>Crear orden y reservar cajas</Button>
+            ? <Button onClick={createOrder} disabled={!canInvest} loading={busy} variant="primary" size="md" fullWidth>Crear orden y reservar cajas</Button>
             : <div className="rounded-xl border border-accent/20 p-4 flex items-center gap-3" style={{background:'rgba(201,169,98,.055)'}}><div className="w-8 h-8 rounded-full border border-accent/30 flex items-center justify-center text-accent"><Check size={15}/></div><div><p className="text-sm text-white font-medium">Orden creada</p><p className="text-[10px] text-text-dim mt-1 font-mono">{orderId}</p></div></div>}
         </section>
 
