@@ -1,6 +1,6 @@
 # Manual Bancolombia Verification — CTG Craft Beer Investment
 
-Status: current operating policy implemented by migrations `0037_manual_bancolombia_bank_verification.sql` and `0038_payment_proof_server_trust_boundary.sql`.
+Status: current operating policy implemented by migrations `0037_manual_bancolombia_bank_verification.sql`, `0038_payment_proof_server_trust_boundary.sql` and `0039_manual_bank_reference_normalization.sql`.
 
 ## Principle
 
@@ -55,10 +55,11 @@ The source repository deliberately does not invent or embed banking account numb
 
 `POST /api/investment/orders/[orderId]/payment-proof`:
 
-- requires the authenticated participant session;
-- confirms through participant RLS that the order belongs to that participant and is `AWAITING_PAYMENT`;
+- authenticates the participant and confirms order ownership **before consuming the upload body**;
+- receives the file as a raw body rather than multipart `FormData`;
+- rejects `Content-Length` above 8 MB when provided and independently enforces the same limit while streaming the request body;
 - accepts only JPEG, PNG, WEBP or PDF;
-- enforces an 8 MB maximum;
+- verifies that the actual file signature matches the declared MIME type;
 - computes SHA-256 on the Next.js server, never from a digest supplied by the browser;
 - after session/ownership verification, uses the server-only service-role client only for the approved private upload and proof-persistence RPC;
 - stores the proof in the private `payment-proofs` bucket;
@@ -66,7 +67,7 @@ The source repository deliberately does not invent or embed banking account numb
 
 Migration `0038` revokes the browser-executable proof-persistence RPC from `authenticated`. `submit_investment_order_bank_proof_server()` is executable only by `service_role`, preventing a participant from fabricating a SHA-256 value through a direct Supabase RPC call.
 
-`investment_orders.payment_proof_sha256` has a unique index, so the exact same file cannot finance two orders.
+`investment_orders.payment_proof_sha256` has a unique index, so the exact same file cannot finance two orders. Concurrent identical submissions use a deterministic storage path; cleanup never deletes a proof that another successful request has already made authoritative on the order.
 
 This does not prove authenticity. A forged file that has never been seen before can still have a unique hash. The hash is a duplicate/reuse control, not a bank-confirmation mechanism.
 
@@ -88,6 +89,8 @@ The database requires:
 - credited amount = exact order capital requirement;
 - Bancolombia reference has not already been used;
 - KYC and all existing allocation/money-rail guards still pass.
+
+Migration `0039` canonicalizes Finance-entered bank references to uppercase alphanumerics before storage and enforces uniqueness on the same normalized representation. Variants such as `ABC-123`, `abc123` and `ABC 123` therefore cannot be used to fund different orders from the same observed bank movement.
 
 The function temporarily moves the order through the internal `PAYMENT_SUBMITTED` state and delegates to the existing authoritative Payment Rail. The receipt trigger only permits `BANCOLOMBIA_MANUAL` when the same current Finance actor has already recorded the independent bank verification in that transaction.
 
