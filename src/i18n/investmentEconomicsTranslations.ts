@@ -19,6 +19,19 @@ const PAIRS: Pair[] = [
   { en: '. This view is explanatory and does not constitute guaranteed returns. Historical batch values are not recalculated with later master-catalog presets.', es: '. Esta vista es explicativa y no constituye una rentabilidad garantizada. Los valores históricos del lote no se recalculan con presets posteriores del catálogo maestro.' },
 
   { en: 'Simulator', es: 'Simulador' },
+  { en: 'Participation simulator', es: 'Simulador de participación' },
+  { en: 'Adjust the number of cases to explore a participation scenario. If there is a batch open for funding, the calculation uses its real economics snapshot; while none exists, an explicitly identified illustrative reference scenario is used.', es: 'Ajusta el número de cajas para explorar una participación. Si existe un lote con financiación abierta, el cálculo usa su snapshot económico real; mientras no exista uno, se utiliza un escenario ilustrativo de referencia claramente identificado.' },
+  { en: 'Illustrative reference scenario', es: 'Escenario ilustrativo de referencia' },
+  { en: 'There is no batch open for funding yet. To keep the simulator useful, we show the previously published illustrative reference scenario. It is not a current offer and does not replace the economics of the batch you eventually select for investment.', es: 'Todavía no hay un lote con financiación abierta. Para que el simulador siga siendo útil, mostramos el escenario ilustrativo de referencia previamente publicado. No representa una oferta vigente ni sustituye los valores económicos del lote que finalmente selecciones para invertir.' },
+  { en: 'Scenario basis', es: 'Base del escenario' },
+  { en: 'Illustrative reference · no open batch', es: 'Referencia ilustrativa · sin lote abierto' },
+  { en: 'Estimated required capital', es: 'Capital estimado requerido' },
+  { en: 'Projected sales · illustrative', es: 'Ventas proyectadas · ilustrativo' },
+  { en: 'Net distributable profit · illustrative', es: 'Utilidad neta distribuible · ilustrativo' },
+  { en: 'Projected participant share · illustrative', es: 'Participación proyectada · ilustrativo' },
+  { en: 'There is no active financial formula for this batch. Capital, revenue and contribution are shown, but participant share and ROI are not calculated.', es: 'No existe una fórmula financiera activa para este lote. Se muestran capital, ingresos y contribución, pero no se calcula participación ni ROI del participante.' },
+  { en: 'The simulator is informational. When an open batch exists, its persisted costs and prices automatically replace the reference profile. A real order never uses the illustrative figures on this page: PostgreSQL calculates capital exclusively from the economics snapshot of the selected batch. The current minimum investment is', es: 'El simulador es informativo. Cuando exista un lote abierto, sus costos y precios persistidos sustituyen automáticamente el perfil de referencia. Una orden real nunca usa las cifras ilustrativas de esta página: PostgreSQL calcula el capital exclusivamente desde el snapshot económico del lote seleccionado. La inversión mínima vigente es de' },
+
   { en: 'Batch-snapshot simulator', es: 'Simulador por snapshot de lote' },
   { en: 'Explore scenarios built with costs, prices and rates stored in a real batch that is open for funding. The platform no longer uses a fixed projected return or a capital-per-case value written in the frontend.', es: 'Explora escenarios construidos con costos, precios y tasas almacenados en un lote real con financiación abierta. La plataforma ya no utiliza una rentabilidad proyectada fija ni un capital por caja escrito en el frontend.' },
   { en: 'There are no funding-open batches with a complete economics snapshot. The simulator remains disabled to avoid showing figures that do not come from a real opportunity published in the database.', es: 'No hay lotes con financiación abierta y snapshot económico completo. El simulador permanece deshabilitado para evitar mostrar cifras que no provengan de una oportunidad real publicada en la base de datos.' },
@@ -64,6 +77,15 @@ function translatePatterns(trimmed: string, locale: Locale): string | null {
 
     match = trimmed.match(/^Publicidad · (.+) sobre base sin INC$/);
     if (match) return `Advertising · ${match[1]} on pre-INC base`;
+
+    match = trimmed.match(/^Número de cajas · mínimo (\d+)$/);
+    if (match) return `Number of cases · minimum ${match[1]}`;
+
+    match = trimmed.match(/^(\d+) cajas · (\d+) botellas equivalentes$/);
+    if (match) return `${match[1]} cases · ${match[2]} bottle equivalents`;
+
+    match = trimmed.match(/^ROI ilustrativo: (.+)$/);
+    if (match) return `Illustrative ROI: ${match[1]}`;
   } else {
     let match = trimmed.match(/^Unit economics · (.+)$/);
     if (match) return `Economía unitaria · ${match[1]}`;
@@ -73,6 +95,15 @@ function translatePatterns(trimmed: string, locale: Locale): string | null {
 
     match = trimmed.match(/^Advertising · (.+) on pre-INC base$/);
     if (match) return `Publicidad · ${match[1]} sobre base sin INC`;
+
+    match = trimmed.match(/^Number of cases · minimum (\d+)$/);
+    if (match) return `Número de cajas · mínimo ${match[1]}`;
+
+    match = trimmed.match(/^(\d+) cases · (\d+) bottle equivalents$/);
+    if (match) return `${match[1]} cajas · ${match[2]} botellas equivalentes`;
+
+    match = trimmed.match(/^Illustrative ROI: (.+)$/);
+    if (match) return `ROI ilustrativo: ${match[1]}`;
   }
 
   return null;
