@@ -5,7 +5,7 @@ import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { HERO, CONTACT } from '@/data/content';
+import { HERO } from '@/data/content';
 import { BlockchainNetwork } from '@/components/BlockchainNetwork';
 import { Cpu, Sparkles, Network, Layers3 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -16,6 +16,9 @@ const capabilityRail = [
   { icon: Network, en: 'Infrastructure · Live', es: 'Infraestructura · Activa' },
   { icon: Layers3, en: 'Real ecosystem · Live', es: 'Ecosistema real · Activo' },
 ];
+
+const WHATSAPP_CONVERSATION_URL =
+  'https://wa.me/573186428218?text=Hola%20CTG%20One%2C%20quiero%20conocer%20m%C3%A1s%20sobre%20su%20ecosistema%20y%20servicios.';
 
 export const HeroSection: React.FC = () => {
   const { locale, t } = useLanguage();
@@ -73,7 +76,7 @@ export const HeroSection: React.FC = () => {
             <FadeInSection delay={0.36}>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-11 sm:mb-12">
                 <Button href="/ecosystem" variant="primary" size="md" arrow>{t(HERO.ctaPrimary)}</Button>
-                <Button href={`mailto:${CONTACT.email}`} variant="secondary" size="md">{t(HERO.ctaSecondary)}</Button>
+                <Button href={WHATSAPP_CONVERSATION_URL} variant="secondary" size="md">{t(HERO.ctaSecondary)}</Button>
               </div>
             </FadeInSection>
 
@@ -81,10 +84,10 @@ export const HeroSection: React.FC = () => {
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-x-5 gap-y-5 py-5 border-y border-white/[0.045]">
                 {capabilityRail.map(({ icon: Icon, en, es }) => (
                   <div key={en} className="flex items-center gap-2.5 min-w-0">
-                    <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-accent/20 bg-accent/[0.035]">
-                      <Icon size={14} className="text-accent" strokeWidth={1.5} />
+                    <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-accent/20 bg-accent/[0.035]">
+                      <Icon className="w-3.5 h-3.5 shrink-0 text-accent" strokeWidth={1.5} />
                     </span>
-                    <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.13em] text-text-dim leading-tight">
+                    <span className="min-w-0 text-[9px] sm:text-[10px] uppercase tracking-[0.13em] text-text-dim leading-tight">
                       {locale === 'es' ? es : en}
                     </span>
                   </div>
@@ -95,18 +98,18 @@ export const HeroSection: React.FC = () => {
             <FadeInSection delay={0.5}>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 pt-7 sm:pt-8">
                 {HERO.metrics.map((metric, idx) => (
-                  <div key={idx}>
+                  <div key={idx} className="min-w-0">
                     <span className="block text-xl sm:text-2xl font-outfit font-medium text-white mb-1">{t(metric.value)}</span>
-                    <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.15em] text-text-dim">{t(metric.label)}</span>
+                    <span className="block text-[9px] sm:text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.15em] text-text-dim leading-tight">{t(metric.label)}</span>
                   </div>
                 ))}
               </div>
             </FadeInSection>
           </div>
 
-          <div className="order-1 lg:order-2 flex justify-center lg:justify-end lg:-mr-4 xl:-mr-8">
+          <div className="order-1 lg:order-2 flex min-w-0 justify-center lg:justify-end lg:-mr-4 xl:-mr-8">
             <FadeInSection delay={0.22} direction="right">
-              <div className="relative scale-[0.72] sm:scale-[0.86] md:scale-[0.92] lg:scale-[0.96] xl:scale-100 origin-center">
+              <div className="relative max-w-full scale-[0.72] sm:scale-[0.86] md:scale-[0.92] lg:scale-[0.96] xl:scale-100 origin-center">
                 <div
                   className="absolute inset-[8%] rounded-full pointer-events-none"
                   style={{ boxShadow: '0 0 120px rgba(212,162,89,0.055), inset 0 0 80px rgba(212,162,89,0.02)' }}
