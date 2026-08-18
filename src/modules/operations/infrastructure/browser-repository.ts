@@ -74,32 +74,32 @@ export function createOperationsBrowserRepository() {
       return (data ?? []) as BottleUnit[];
     },
 
-    createLot(payload: RpcPayload): OperationsCommandResult {
-      return supabase.rpc('create_production_lot_from_style', payload);
+    async createLot(payload: RpcPayload): OperationsCommandResult {
+      return await supabase.rpc('create_production_lot_from_style', payload);
     },
 
-    saveBeerStyleEconomics(payload: RpcPayload): OperationsCommandResult {
-      return supabase.rpc('update_investment_beer_style_economics', payload);
+    async saveBeerStyleEconomics(payload: RpcPayload): OperationsCommandResult {
+      return await supabase.rpc('update_investment_beer_style_economics', payload);
     },
 
-    transitionLot(payload: RpcPayload): OperationsCommandResult {
-      return supabase.rpc('transition_lot_status', payload);
+    async transitionLot(payload: RpcPayload): OperationsCommandResult {
+      return await supabase.rpc('transition_lot_status', payload);
     },
 
-    generateBottleUnits(payload: RpcPayload): OperationsCommandResult {
-      return supabase.rpc('generate_bottle_units', payload);
+    async generateBottleUnits(payload: RpcPayload): OperationsCommandResult {
+      return await supabase.rpc('generate_bottle_units', payload);
     },
 
-    updateBottleUnits(payload: RpcPayload): OperationsCommandResult {
-      return supabase.rpc('update_bottle_units_status', payload);
+    async updateBottleUnits(payload: RpcPayload): OperationsCommandResult {
+      return await supabase.rpc('update_bottle_units_status', payload);
     },
 
-    recordBottleSale(payload: RpcPayload): OperationsCommandResult {
-      return supabase.rpc('record_bottle_sale_document', payload);
+    async recordBottleSale(payload: RpcPayload): OperationsCommandResult {
+      return await supabase.rpc('record_bottle_sale_document', payload);
     },
 
-    recordLotFinancialEntry(payload: RpcPayload): OperationsCommandResult {
-      return supabase.rpc('record_lot_financial_entry', payload);
+    async recordLotFinancialEntry(payload: RpcPayload): OperationsCommandResult {
+      return await supabase.rpc('record_lot_financial_entry', payload);
     },
   };
 }
