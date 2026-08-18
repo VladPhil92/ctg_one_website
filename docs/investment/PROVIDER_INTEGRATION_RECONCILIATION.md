@@ -1,6 +1,6 @@
 # Provider Integration & Automated Reconciliation — CTG Craft Beer Investment OS
 
-Status: provider-neutral foundation in `0034_provider_reconciliation_engine.sql`.
+Status: provider-neutral foundation in `0034_provider_reconciliation_engine.sql`, with manual-target hardening in `0035_provider_reconciliation_target_hardening.sql`.
 
 ## Objective
 
@@ -120,7 +120,17 @@ IGNORED
 
 `resolve_investment_financial_event()` handles events that cannot be safely automated.
 
-Inbound events may be manually attached to an order and still pass through `reconcile_investment_order_payment()`. Outbound events may be manually attached to a payout and still pass through `confirm_investment_payout()` or `fail_investment_payout()`.
+Inbound events may be manually attached to an order and still pass through `reconcile_investment_order_payment()`.
+
+Outbound events may be manually attached to a payout, but `0035` first loads the selected authoritative payout and requires all three financial identities to match the provider event:
+
+```text
+selected payout provider = event provider
+selected payout rail = event rail
+selected payout amount = event amount
+```
+
+Only after those checks does the resolver delegate to `confirm_investment_payout()` or `fail_investment_payout()`. Pasting the UUID of an unrelated processing payout therefore cannot cause that payout to be confirmed or failed from a different provider event.
 
 Finance can also mark an event `IGNORED`, which is terminal and auditable.
 
@@ -157,6 +167,11 @@ The UI warns operators not to paste full statements or account numbers.
 - reconciled receipt mismatches;
 - confirmed payout mismatches;
 - failed payout mismatches.
+
+## Migration sequence
+
+1. `0034_provider_reconciliation_engine.sql` — normalized provider-event store, decision genealogy, ingestion, deterministic matching, manual inbox and health.
+2. `0035_provider_reconciliation_target_hardening.sql` — validate provider, rail and amount before any manual outbound payout resolution.
 
 ## Next provider-specific step
 
