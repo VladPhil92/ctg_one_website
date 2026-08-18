@@ -3,11 +3,24 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const migration = await read('supabase/migrations/0024_inventory_reconciliation.sql');
-const hardening = await read('supabase/migrations/0025_inventory_reconciliation_hardening.sql');
+const preflight = await read('supabase/migrations/0024_inventory_reconciliation_preflight.sql');
+const migration = await read('supabase/migrations/0025_inventory_reconciliation.sql');
+const hardening = await read('supabase/migrations/0026_inventory_reconciliation_hardening.sql');
 const scanner = await read('src/app/admin/operations/scanner/page.tsx');
 const inventoryPage = await read('src/app/admin/operations/inventory/page.tsx');
 const adminNav = await read('src/components/admin/AdminNav.tsx');
+
+assert.ok(
+  preflight.includes('historical physical data requires an explicit backfill'),
+  'Canonical inventory cutover must fail closed when historical physical data exists.',
+);
+assert.ok(
+  preflight.includes('from public.investment_bottle_units')
+    && preflight.includes('from public.investment_inventory_movements')
+    && preflight.includes('from public.investment_sales')
+    && preflight.includes('from public.investment_sale_items'),
+  'Preflight must inspect all pre-canonical physical/sales history surfaces.',
+);
 
 assert.ok(
   migration.includes('create table if not exists public.investment_inventory_locations'),
@@ -32,6 +45,14 @@ assert.ok(
 assert.ok(
   migration.includes('inventory movement history is append-only'),
   'Physical inventory history must be immutable.',
+);
+assert.ok(
+  hardening.includes('create constraint trigger investment_inventory_movement_unit_count_guard'),
+  'Movement quantity/link equality must also be enforced at transaction commit.',
+);
+assert.ok(
+  hardening.includes('deferrable initially deferred'),
+  'Movement quantity/link enforcement must run after unit links can be inserted in the same transaction.',
 );
 
 assert.ok(
@@ -77,6 +98,10 @@ assert.ok(
   migration.includes('a sale document cannot span multiple physical inventory locations'),
   'One sale document must represent one physical source location.',
 );
+assert.ok(
+  hardening.includes('source sale must be a confirmed sale from the same lot'),
+  'SOLD movement genealogy must validate sale ownership and status.',
+);
 
 assert.ok(
   migration.includes('revoke execute on function public.record_inventory_movement'),
@@ -97,6 +122,14 @@ assert.ok(
 assert.ok(
   scanner.includes('investment_inventory_locations'),
   'Bottle Scanner must select canonical registered locations.',
+);
+assert.ok(
+  scanner.includes("const [idempotencyKey, setIdempotencyKey] = useState('')"),
+  'Scanner must not generate a random idempotency key during initial render.',
+);
+assert.ok(
+  scanner.includes('const key = idempotencyKey || browserIdempotencyKey()'),
+  'Scanner must preserve one idempotency key across retries of the same sale.',
 );
 
 assert.ok(
