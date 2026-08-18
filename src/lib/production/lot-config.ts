@@ -2,11 +2,11 @@ import type { InvestmentBeerStyle } from '@/types/beer-style';
 
 export type LotDraftInputs = {
   cases: number;
-  eligibleCases: number;
+  eligibleCases?: number;
   caseSize: number;
   productionCostCop: number;
   labelCostCop: number;
-  transportCostCop: number;
+  transportCostCop?: number;
   ownPriceCop: number;
   b2bPriceCop: number;
 };
@@ -58,11 +58,11 @@ export function hasCompleteStyleEconomics(style: InvestmentBeerStyle | null): bo
 
 export function deriveLotMetrics(input: LotDraftInputs) {
   const cases = Math.max(0, input.cases || 0);
-  const eligibleCases = Math.min(cases, Math.max(0, input.eligibleCases || 0));
+  const eligibleCases = Math.min(cases, Math.max(0, input.eligibleCases ?? cases));
   const caseSize = Math.max(0, input.caseSize || 0);
   const productionCostCop = Math.max(0, input.productionCostCop || 0);
   const labelCostCop = Math.max(0, input.labelCostCop || 0);
-  const transportCostCop = Math.max(0, input.transportCostCop || 0);
+  const transportCostCop = Math.max(0, input.transportCostCop ?? 0);
   const ownPriceCop = Math.max(0, input.ownPriceCop || 0);
   const b2bPriceCop = Math.max(0, input.b2bPriceCop || 0);
 
