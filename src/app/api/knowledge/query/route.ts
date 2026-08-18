@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { embedTexts, generateGroundedAnswer, isKnowledgeAIConfigured, type GroundingSource } from '@/lib/ai/openai';
 import { logger } from '@/lib/observability/logger';
+import { consumeAuthenticatedRateLimit } from '@/lib/security/api-rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,6 +50,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Authentication required.', code: 'AUTH_REQUIRED' }, { status: 401 });
     }
 
+    const rateLimit = await consumeAuthenticatedRateLimit(supabase, 'knowledge.query');
+    if (!rateLimit.allowed) {
+      logger.info('knowledge.query.rate_limited', {
+        requestId,
+        userId: user.id,
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      });
+      return NextResponse.json(
+        { error: 'Too many knowledge queries. Please retry later.', code: 'RATE_LIMITED', requestId },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimit.retryAfterSeconds),
+            'X-RateLimit-Remaining': '0',
+          },
+        },
+      );
+    }
+
     const [queryEmbedding] = await embedTexts([parsed.data.question]);
     if (!queryEmbedding) throw new Error('Embedding generation returned no vector');
 
@@ -74,6 +94,8 @@ export async function POST(request: Request) {
         sources: [],
         grounded: false,
         requestId,
+      }, {
+        headers: { 'X-RateLimit-Remaining': String(rateLimit.remaining) },
       });
     }
 
@@ -110,6 +132,8 @@ export async function POST(request: Request) {
         chunkIndex: row.chunk_index,
         similarity: Number(row.similarity),
       })),
+    }, {
+      headers: { 'X-RateLimit-Remaining': String(rateLimit.remaining) },
     });
   } catch (error) {
     logger.error('knowledge.query.failed', {
