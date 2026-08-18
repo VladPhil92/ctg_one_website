@@ -1,6 +1,12 @@
 # Inventory Model — CTG Craft Beer Inversión
 
-Status: implemented baseline through migration `0024_inventory_reconciliation.sql`.
+Status: implemented baseline through migrations `0024_inventory_reconciliation_preflight.sql`, `0025_inventory_reconciliation.sql` and `0026_inventory_reconciliation_hardening.sql`.
+
+## Cutover contract
+
+Inventory Reconciliation deliberately does not invent historical physical locations. Migration `0024` is a fail-closed preflight: if an environment already contains bottle units, inventory movements, sales or sale items, the sequence stops before installing the canonical model and requires an explicit audited backfill plan.
+
+The production cutover for this project was designed while those physical/commerce tables contained zero rows, so no synthetic history is required.
 
 ## Core principle
 
@@ -32,7 +38,7 @@ System locations provisioned by the baseline:
 - `CTG_WAREHOUSE`
 - `IN_TRANSIT`
 
-Operational sales points and partners are registered through `upsert_inventory_location()` before units can be received there.
+Operational sales points and partners are registered through `upsert_inventory_location()` before units can be received there. System location types cannot be changed or deactivated.
 
 `investment_bottle_units.current_location_id` is the canonical foreign key. The legacy `current_location` text column remains only as a denormalized display label maintained by domain RPCs.
 
@@ -54,9 +60,9 @@ Each authoritative unit movement records:
 - linked bottle units;
 - optional Sales OS source document for `SOLD`.
 
-`investment_inventory_movement_units` provides unit genealogy. For an authoritative movement, `movement.quantity_units` must equal the number of linked bottle units.
+`investment_inventory_movement_units` provides unit genealogy. A deferred database constraint validates at transaction commit that `movement.quantity_units` equals the exact number of linked bottle units. Movement rows and movement-unit links are append-only.
 
-Movement rows and movement-unit links are append-only.
+For `SOLD`, the source sale must also be a confirmed Sales OS document from the same lot.
 
 ## Bottle transition state machine
 
@@ -96,6 +102,8 @@ Sales document
 
 A sale cannot span multiple physical source locations. An explicitly supplied sale location must match the current canonical location of every bottle; Sales OS never silently relocates inventory.
 
+The Bottle Scanner uses the same idempotent Sales OS RPC. Its idempotency key is generated on first submission and retained across retries of the same attempt.
+
 The historical `record_bottle_sales()` and coarse `record_inventory_movement()` RPCs are not executable by `anon` or `authenticated` roles.
 
 ## Stock by location
@@ -129,7 +137,7 @@ Per lot it detects:
 - bottle status different from the status implied by the last movement;
 - SOLD bottles without the corresponding sale item / Sales OS movement genealogy.
 
-A lot is `is_reconciled = true` only when all discrepancy counters are zero.
+A lot is `is_reconciled = true` only when all discrepancy counters are zero. The commit-time quantity/link constraint prevents the most fundamental movement mismatch from becoming durable in the first place; reconciliation remains defense in depth for projection drift and cross-domain genealogy.
 
 ## Security model
 
@@ -137,7 +145,7 @@ Direct client mutation of bottle units, inventory movements, movement-unit links
 
 Operational inventory reads require `ops.read`. Location administration requires `inventory.manage`. Sales-generated `SOLD` movements require `sales.manage` and an authoritative `source_sale_id`.
 
-The historical anonymous `SELECT USING (true)` policy on `investment_inventory_movements` is removed by migration `0024`.
+The historical anonymous `SELECT USING (true)` policy on `investment_inventory_movements` is removed by migration `0025`.
 
 ## Participant-facing metrics
 
