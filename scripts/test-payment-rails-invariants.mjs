@@ -45,6 +45,7 @@ assert.ok(liquidity.includes("rpc('set_investment_payout_destination'") && liqui
 assert.ok(liquidity.includes("crypto.subtle.digest('SHA-256'") && liquidity.includes('No escribas el número completo de cuenta'), 'Participant UI must derive a non-secret fingerprint and explicitly avoid raw bank account storage.');
 assert.ok(investmentApp.includes('InvestmentLiquidityPanel'), 'Canonical /inversion/app participant route must expose the payout-destination/withdrawal flow before withdrawal enforcement.');
 assert.ok(nav.includes("href: '/admin/finance/rails'"), 'Payment Rails console must be reachable from Admin OS.');
-assert.ok(schemaVersion.includes("'0033'"), 'Runtime expected migration must advance to 0033.');
+const schemaMatch = schemaVersion.match(/'(\d{4})'/);
+assert.ok(schemaMatch && Number(schemaMatch[1]) >= 33, 'Runtime expected migration must remain at or beyond Payment Rails schema 0033.');
 
 console.log('Payment reconciliation & payout rail invariants: PASS');

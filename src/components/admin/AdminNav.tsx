@@ -20,6 +20,7 @@ const ITEMS: Item[] = [
   { href: '/admin/operations/settlement', label: 'Settlement', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
   { href: '/inversion/admin/orders', label: 'Inversiones', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
   { href: '/admin/finance/rails', label: 'Payment Rails', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
+  { href: '/admin/finance/reconciliation', label: 'Provider Reconciliation', roles: ['SUPER_ADMIN','FINANCE_ADMIN','AUDITOR'] },
   { href: '/admin/roles', label: 'Roles', roles: ['SUPER_ADMIN'] },
   { href: '/admin/usuarios', label: 'Usuarios' },
   { href: '/admin/kyc', label: 'KYC' },
