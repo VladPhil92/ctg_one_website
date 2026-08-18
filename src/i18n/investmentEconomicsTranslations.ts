@@ -30,7 +30,6 @@ const PAIRS: Pair[] = [
   { en: 'Net distributable profit · illustrative', es: 'Utilidad neta distribuible · ilustrativo' },
   { en: 'Projected participant share · illustrative', es: 'Participación proyectada · ilustrativo' },
   { en: 'There is no active financial formula for this batch. Capital, revenue and contribution are shown, but participant share and ROI are not calculated.', es: 'No existe una fórmula financiera activa para este lote. Se muestran capital, ingresos y contribución, pero no se calcula participación ni ROI del participante.' },
-  { en: 'The simulator is informational. When an open batch exists, its persisted costs and prices automatically replace the reference profile. A real order never uses the illustrative figures on this page: PostgreSQL calculates capital exclusively from the economics snapshot of the selected batch. The current minimum investment is', es: 'El simulador es informativo. Cuando exista un lote abierto, sus costos y precios persistidos sustituyen automáticamente el perfil de referencia. Una orden real nunca usa las cifras ilustrativas de esta página: PostgreSQL calcula el capital exclusivamente desde el snapshot económico del lote seleccionado. La inversión mínima vigente es de' },
 
   { en: 'Batch-snapshot simulator', es: 'Simulador por snapshot de lote' },
   { en: 'Explore scenarios built with costs, prices and rates stored in a real batch that is open for funding. The platform no longer uses a fixed projected return or a capital-per-case value written in the frontend.', es: 'Explora escenarios construidos con costos, precios y tasas almacenados en un lote real con financiación abierta. La plataforma ya no utiliza una rentabilidad proyectada fija ni un capital por caja escrito en el frontend.' },
@@ -86,6 +85,9 @@ function translatePatterns(trimmed: string, locale: Locale): string | null {
 
     match = trimmed.match(/^ROI ilustrativo: (.+)$/);
     if (match) return `Illustrative ROI: ${match[1]}`;
+
+    match = trimmed.match(/^El simulador es informativo\. Cuando exista un lote abierto, sus costos y precios persistidos sustituyen automáticamente el perfil de referencia\. Una orden real nunca usa las cifras ilustrativas de esta página: PostgreSQL calcula el capital exclusivamente desde el snapshot económico del lote seleccionado\. La inversión mínima vigente es de (\d+) cajas\.$/);
+    if (match) return `The simulator is informational. When an open batch exists, its persisted costs and prices automatically replace the reference profile. A real order never uses the illustrative figures on this page: PostgreSQL calculates capital exclusively from the economics snapshot of the selected batch. The current minimum investment is ${match[1]} cases.`;
   } else {
     let match = trimmed.match(/^Unit economics · (.+)$/);
     if (match) return `Economía unitaria · ${match[1]}`;
@@ -104,6 +106,9 @@ function translatePatterns(trimmed: string, locale: Locale): string | null {
 
     match = trimmed.match(/^Illustrative ROI: (.+)$/);
     if (match) return `ROI ilustrativo: ${match[1]}`;
+
+    match = trimmed.match(/^The simulator is informational\. When an open batch exists, its persisted costs and prices automatically replace the reference profile\. A real order never uses the illustrative figures on this page: PostgreSQL calculates capital exclusively from the economics snapshot of the selected batch\. The current minimum investment is (\d+) cases\.$/);
+    if (match) return `El simulador es informativo. Cuando exista un lote abierto, sus costos y precios persistidos sustituyen automáticamente el perfil de referencia. Una orden real nunca usa las cifras ilustrativas de esta página: PostgreSQL calcula el capital exclusivamente desde el snapshot económico del lote seleccionado. La inversión mínima vigente es de ${match[1]} cajas.`;
   }
 
   return null;
