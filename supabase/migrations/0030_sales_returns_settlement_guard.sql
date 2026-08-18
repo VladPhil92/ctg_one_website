@@ -26,6 +26,15 @@ begin
   if v_sale_status <> 'CONFIRMED' then raise exception 'only confirmed sales can be credited'; end if;
   if new.lot_id <> v_sale_lot then raise exception 'credit note lot does not match sale lot'; end if;
 
+  -- Serialize credit-note creation against finalize_settlement(), which locks the
+  -- same production-lot row before creating its immutable settlement snapshot.
+  perform 1
+  from public.investment_production_lots
+  where id = new.lot_id
+  for update;
+
+  if not found then raise exception 'lot not found'; end if;
+
   if exists (
     select 1 from public.investment_settlements st
     where st.lot_id = new.lot_id
