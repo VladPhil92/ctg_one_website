@@ -30,11 +30,14 @@ type Draft = {
   paidAt: string;
 };
 
+type RpcResult = PromiseLike<{ error: { message: string } | null }>;
+
 const localNow = () => {
-  const d = new Date();
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60_000);
+  const date = new Date();
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
   return local.toISOString().slice(0, 16);
 };
+
 const freshDraft = (): Draft => ({
   payoutRail: 'bank_transfer',
   providerCode: '',
@@ -57,6 +60,7 @@ export default function PaymentRailsAdminPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     const [{ data: withdrawalData, error: withdrawalError }, { data: railData, error: railError }] = await Promise.all([
       supabase
         .from('investment_withdrawal_requests')
@@ -90,22 +94,27 @@ export default function PaymentRailsAdminPage() {
         .in('user_id', userIds);
       if (destinationError) setError(destinationError.message);
       else {
-        setDestinations(Object.fromEntries(((destinationData ?? []) as Destination[]).map((row) => [row.user_id, row])));
+        const destinationRows = (destinationData ?? []) as Destination[];
+        setDestinations(Object.fromEntries(destinationRows.map((row) => [row.user_id, row])));
       }
-    } else setDestinations({});
+    } else {
+      setDestinations({});
+    }
 
     const railRows = (railData ?? []) as InvestmentPayoutReconciliation[];
     setReconciliation(Object.fromEntries(railRows.map((row) => [row.withdrawal_request_id, row])));
     setLoading(false);
   }, [supabase]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const patchDraft = (id: string, patch: Partial<Draft>) => {
     setDrafts((current) => ({ ...current, [id]: { ...(current[id] ?? freshDraft()), ...patch } }));
   };
 
-  const run = async (id: string, fn: () => Promise<{ error: { message: string } | null }>, success: string) => {
+  const run = async (id: string, fn: () => RpcResult, success: string) => {
     setBusyId(id);
     setError(null);
     setMessage(null);
@@ -211,57 +220,41 @@ export default function PaymentRailsAdminPage() {
       </header>
 
       <section className="grid sm:grid-cols-4 gap-3">
-        <Metric icon={<ArrowDownToLine size={15} />} label="Solicitados" value={withdrawals.filter((w) => w.status === 'REQUESTED').length} />
-        <Metric icon={<WalletCards size={15} />} label="Aprobados" value={withdrawals.filter((w) => w.status === 'APPROVED').length} />
-        <Metric icon={<Send size={15} />} label="Procesando" value={withdrawals.filter((w) => w.status === 'PAYMENT_PROCESSING').length} />
-        <Metric icon={<CheckCircle2 size={15} />} label="Pagados" value={withdrawals.filter((w) => w.status === 'PAID').length} />
+        <Metric icon={<ArrowDownToLine size={15} />} label="Solicitados" value={withdrawals.filter((row) => row.status === 'REQUESTED').length} />
+        <Metric icon={<WalletCards size={15} />} label="Aprobados" value={withdrawals.filter((row) => row.status === 'APPROVED').length} />
+        <Metric icon={<Send size={15} />} label="Procesando" value={withdrawals.filter((row) => row.status === 'PAYMENT_PROCESSING').length} />
+        <Metric icon={<CheckCircle2 size={15} />} label="Pagados" value={withdrawals.filter((row) => row.status === 'PAID').length} />
       </section>
 
-      {(message || error) && <div className="rounded-xl border px-4 py-3 text-sm" style={{ borderColor: error ? 'rgba(239,68,68,.3)' : 'rgba(201,169,98,.28)', background: error ? 'rgba(239,68,68,.06)' : 'rgba(201,169,98,.05)', color: error ? '#fca5a5' : 'var(--accent)' }}>{error ?? message}</div>}
+      {(message || error) && (
+        <div className="rounded-xl border px-4 py-3 text-sm" style={{
+          borderColor: error ? 'rgba(239,68,68,.3)' : 'rgba(201,169,98,.28)',
+          background: error ? 'rgba(239,68,68,.06)' : 'rgba(201,169,98,.05)',
+          color: error ? '#fca5a5' : 'var(--accent)',
+        }}>{error ?? message}</div>
+      )}
 
-      {loading ? <p className="text-sm text-text-dim">Sincronizando payout rails...</p> : withdrawals.length === 0 ? (
+      {loading ? (
+        <p className="text-sm text-text-dim">Sincronizando payout rails...</p>
+      ) : withdrawals.length === 0 ? (
         <div className="rounded-2xl border border-white/[.08] bg-white/[.02] p-7"><p className="text-sm text-text-dim">No hay solicitudes de retiro en el rail.</p></div>
       ) : (
         <section className="grid lg:grid-cols-2 gap-5">
-          {withdrawals.map((withdrawal) => {
-            const destination = destinations[withdrawal.participant_user_id];
-            const rail = reconciliation[withdrawal.id];
-            const draft = drafts[withdrawal.id] ?? freshDraft();
-            const destinationReady = !!destination?.bank_account_masked && !!destination?.payout_destination_fingerprint;
-            return <article key={withdrawal.id} className="rounded-2xl border border-white/[.08] bg-white/[.02] p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-4 mb-5">
-                <div><p className="text-[9px] uppercase tracking-[.16em] text-text-dim">Withdrawal</p><p className="text-xl text-white font-semibold mt-1">{formatCents(withdrawal.amount_cents)}</p><p className="text-[9px] font-mono text-text-dim mt-1">{withdrawal.id}</p></div>
-                <span className="rounded-full border border-accent/20 bg-accent/[.04] px-2.5 py-1 text-[8px] uppercase tracking-[.12em] text-accent">{withdrawal.status}</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                <Mini label="Participante" value={withdrawal.participant_user_id.slice(0, 12)} />
-                <Mini label="Destino" value={destination?.bank_account_masked ?? 'No registrado'} alert={!destinationReady} />
-                <Mini label="Rail state" value={rail?.payout_state ?? 'NOT_INITIATED'} />
-                <Mini label="Ref. externa" value={rail?.external_reference ?? '—'} />
-              </div>
-
-              {withdrawal.status === 'REQUESTED' && <div className="border-t border-white/[.07] pt-4"><Button onClick={() => void approve(withdrawal)} disabled={!destinationReady} loading={busyId === withdrawal.id} variant="primary" size="sm">Aprobar retiro</Button>{!destinationReady && <p className="text-[11px] text-amber-300/80 mt-2">El participante debe registrar primero un destino de payout.</p>}</div>}
-
-              {withdrawal.status === 'APPROVED' && <div className="space-y-3 border-t border-white/[.07] pt-4">
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <label className="railLabel">Rail<select className="railInput mt-1.5" value={draft.payoutRail} onChange={(e) => patchDraft(withdrawal.id, { payoutRail: e.target.value as InvestmentPayoutRail })}><option value="bank_transfer">Bank transfer</option><option value="bre_b">Bre-B</option><option value="crypto">Crypto</option><option value="other">Other</option></select></label>
-                  <label className="railLabel">Proveedor / banco<input className="railInput mt-1.5" value={draft.providerCode} onChange={(e) => patchDraft(withdrawal.id, { providerCode: e.target.value })} placeholder="BANCOLOMBIA" /></label>
-                </div>
-                <Button onClick={() => void initiate(withdrawal)} disabled={!destinationReady} loading={busyId === withdrawal.id} variant="primary" size="sm"><Send size={13} /> Iniciar payout</Button>
-              </div>}
-
-              {withdrawal.status === 'PAYMENT_PROCESSING' && <div className="space-y-3 border-t border-white/[.07] pt-4">
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <label className="railLabel">Referencia confirmada<input className="railInput mt-1.5" value={draft.externalReference} onChange={(e) => patchDraft(withdrawal.id, { externalReference: e.target.value })} placeholder="PAYOUT-..." /></label>
-                  <label className="railLabel">Fecha/hora pagada<input type="datetime-local" className="railInput mt-1.5" value={draft.paidAt} onChange={(e) => patchDraft(withdrawal.id, { paidAt: e.target.value })} /></label>
-                </div>
-                <div className="flex flex-wrap gap-2"><Button onClick={() => void confirm(withdrawal)} loading={busyId === withdrawal.id} variant="primary" size="sm"><CheckCircle2 size={13} /> Confirmar payout</Button><Button onClick={() => void fail(withdrawal)} disabled={busyId === withdrawal.id} variant="secondary" size="sm"><ShieldAlert size={13} /> Registrar fallo</Button></div>
-              </div>}
-
-              {withdrawal.status === 'PAID' && <div className="border-t border-white/[.07] pt-4 text-xs text-text-muted">Payout conciliado: {rail?.is_reconciled ? 'documento, confirmación y ledger coinciden.' : 'revisar mismatch de conciliación.'}</div>}
-            </article>;
-          })}
+          {withdrawals.map((withdrawal) => (
+            <WithdrawalCard
+              key={withdrawal.id}
+              withdrawal={withdrawal}
+              destination={destinations[withdrawal.participant_user_id]}
+              rail={reconciliation[withdrawal.id]}
+              draft={drafts[withdrawal.id] ?? freshDraft()}
+              busy={busyId === withdrawal.id}
+              patchDraft={(patch) => patchDraft(withdrawal.id, patch)}
+              onApprove={() => void approve(withdrawal)}
+              onInitiate={() => void initiate(withdrawal)}
+              onConfirm={() => void confirm(withdrawal)}
+              onFail={() => void fail(withdrawal)}
+            />
+          ))}
         </section>
       )}
       <style jsx global>{`.railInput{width:100%;border-radius:11px;padding:10px 12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);color:#fff;outline:none}.railInput:focus{border-color:rgba(201,169,98,.38)}.railLabel{display:block;font-size:10px;color:var(--text-muted)}`}</style>
@@ -269,5 +262,89 @@ export default function PaymentRailsAdminPage() {
   );
 }
 
-function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) { return <div className="rounded-xl border border-white/[.07] bg-white/[.018] p-4"><div className="text-accent mb-3">{icon}</div><p className="text-[9px] uppercase tracking-[.13em] text-text-dim">{label}</p><p className="text-xl font-semibold text-white mt-1">{value}</p></div>; }
-function Mini({ label, value, alert = false }: { label: string; value: string; alert?: boolean }) { return <div className="rounded-lg border border-white/[.06] p-3"><p className="text-[8px] uppercase tracking-[.12em] text-text-dim">{label}</p><p className={`text-xs mt-1.5 break-all ${alert ? 'text-amber-300/80' : 'text-white'}`}>{value}</p></div>; }
+function WithdrawalCard({ withdrawal, destination, rail, draft, busy, patchDraft, onApprove, onInitiate, onConfirm, onFail }: {
+  withdrawal: Withdrawal;
+  destination?: Destination;
+  rail?: InvestmentPayoutReconciliation;
+  draft: Draft;
+  busy: boolean;
+  patchDraft: (patch: Partial<Draft>) => void;
+  onApprove: () => void;
+  onInitiate: () => void;
+  onConfirm: () => void;
+  onFail: () => void;
+}) {
+  const destinationReady = !!destination?.bank_account_masked && !!destination?.payout_destination_fingerprint;
+
+  return (
+    <article className="rounded-2xl border border-white/[.08] bg-white/[.02] p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-4 mb-5">
+        <div>
+          <p className="text-[9px] uppercase tracking-[.16em] text-text-dim">Withdrawal</p>
+          <p className="text-xl text-white font-semibold mt-1">{formatCents(withdrawal.amount_cents)}</p>
+          <p className="text-[9px] font-mono text-text-dim mt-1">{withdrawal.id}</p>
+        </div>
+        <span className="rounded-full border border-accent/20 bg-accent/[.04] px-2.5 py-1 text-[8px] uppercase tracking-[.12em] text-accent">{withdrawal.status}</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <Mini label="Participante" value={withdrawal.participant_user_id.slice(0, 12)} />
+        <Mini label="Destino" value={destination?.bank_account_masked ?? 'No registrado'} alert={!destinationReady} />
+        <Mini label="Rail state" value={rail?.payout_state ?? 'NOT_INITIATED'} />
+        <Mini label="Ref. externa" value={rail?.external_reference ?? '—'} />
+      </div>
+
+      {withdrawal.status === 'REQUESTED' && (
+        <div className="border-t border-white/[.07] pt-4">
+          <Button onClick={onApprove} disabled={!destinationReady} loading={busy} variant="primary" size="sm">Aprobar retiro</Button>
+          {!destinationReady && <p className="text-[11px] text-amber-300/80 mt-2">El participante debe registrar primero un destino de payout.</p>}
+        </div>
+      )}
+
+      {withdrawal.status === 'APPROVED' && (
+        <div className="space-y-3 border-t border-white/[.07] pt-4">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <label className="railLabel">Rail
+              <select className="railInput mt-1.5" value={draft.payoutRail} onChange={(event) => patchDraft({ payoutRail: event.target.value as InvestmentPayoutRail })}>
+                <option value="bank_transfer">Bank transfer</option><option value="bre_b">Bre-B</option><option value="crypto">Crypto</option><option value="other">Other</option>
+              </select>
+            </label>
+            <label className="railLabel">Proveedor / banco
+              <input className="railInput mt-1.5" value={draft.providerCode} onChange={(event) => patchDraft({ providerCode: event.target.value })} placeholder="BANCOLOMBIA" />
+            </label>
+          </div>
+          <Button onClick={onInitiate} disabled={!destinationReady} loading={busy} variant="primary" size="sm"><Send size={13} /> Iniciar payout</Button>
+        </div>
+      )}
+
+      {withdrawal.status === 'PAYMENT_PROCESSING' && (
+        <div className="space-y-3 border-t border-white/[.07] pt-4">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <label className="railLabel">Referencia confirmada
+              <input className="railInput mt-1.5" value={draft.externalReference} onChange={(event) => patchDraft({ externalReference: event.target.value })} placeholder="PAYOUT-..." />
+            </label>
+            <label className="railLabel">Fecha/hora pagada
+              <input type="datetime-local" className="railInput mt-1.5" value={draft.paidAt} onChange={(event) => patchDraft({ paidAt: event.target.value })} />
+            </label>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={onConfirm} loading={busy} variant="primary" size="sm"><CheckCircle2 size={13} /> Confirmar payout</Button>
+            <Button onClick={onFail} disabled={busy} variant="secondary" size="sm"><ShieldAlert size={13} /> Registrar fallo</Button>
+          </div>
+        </div>
+      )}
+
+      {withdrawal.status === 'PAID' && (
+        <div className="border-t border-white/[.07] pt-4 text-xs text-text-muted">Payout conciliado: {rail?.is_reconciled ? 'documento, confirmación y ledger coinciden.' : 'revisar mismatch de conciliación.'}</div>
+      )}
+    </article>
+  );
+}
+
+function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+  return <div className="rounded-xl border border-white/[.07] bg-white/[.018] p-4"><div className="text-accent mb-3">{icon}</div><p className="text-[9px] uppercase tracking-[.13em] text-text-dim">{label}</p><p className="text-xl font-semibold text-white mt-1">{value}</p></div>;
+}
+
+function Mini({ label, value, alert = false }: { label: string; value: string; alert?: boolean }) {
+  return <div className="rounded-lg border border-white/[.06] p-3"><p className="text-[8px] uppercase tracking-[.12em] text-text-dim">{label}</p><p className={`text-xs mt-1.5 break-all ${alert ? 'text-amber-300/80' : 'text-white'}`}>{value}</p></div>;
+}
