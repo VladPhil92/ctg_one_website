@@ -120,7 +120,10 @@ Bounded context para:
 - master data de estilos cerveceros
 - eventos de producción
 - serialización por botella
-- movimientos de inventario
+- ubicaciones canónicas de inventario
+- movimientos físicos vinculados a seriales, origen y destino
+- stock derivado por ubicación
+- reconciliación botella ↔ movimiento ↔ Sales OS
 - Sales OS con documentos e idempotencia
 - hechos financieros por lote vinculados a ventas
 - participant ledger
@@ -161,6 +164,9 @@ Pilot de conocimiento institucional con ingestión, chunking, retrieval, control
 | `/dashboard/inversion` | Investment experience integrada |
 | `/admin` | Admin OS protegido |
 | `/admin/operations` | Production / Traceability / Sales OS |
+| `/admin/operations/inventory` | Inventory Reconciliation, ubicaciones y stock |
+| `/admin/operations/scanner` | Operación física por QR/serial |
+| `/admin/operations/settlement` | Reconciliación y cierre financiero de lote |
 | `/admin/system-health` | Diagnóstico técnico administrativo |
 | `/inversion` | CTG Craft Beer Investment público |
 | `/inversion/simulador` | Escenarios derivados de snapshots de lotes publicados |
@@ -194,9 +200,15 @@ Migraciones versionadas actualmente en el repositorio:
 0021_economics_function_privilege_hardening.sql
 0022_closed_loop_integrity.sql
 0023_closed_loop_review_hardening.sql
+0024_inventory_reconciliation_preflight.sql
+0025_inventory_reconciliation.sql
+0026_inventory_reconciliation_hardening.sql
+0027_inventory_location_fk_index.sql
 ```
 
 La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno. Producción debe verificarse mediante migration history/System Health y procedimientos operacionales documentados. `EXPECTED_DATABASE_MIGRATION` debe coincidir con la última migración del repositorio; CI valida continuidad y ausencia de huecos.
+
+La secuencia de Inventory Reconciliation es deliberadamente fail-closed: `0024` aborta antes de instalar el modelo canónico si detecta historia física o comercial previa que requiera backfill explícito. `0027` cubre el foreign key `investment_inventory_locations.created_by` detectado por el Performance Advisor.
 
 ## Principios financieros
 
@@ -215,6 +227,18 @@ La presencia de una migración en Git no prueba por sí sola que esté aplicada 
 - liquidación basada en hechos reales reconciliados, no en proyecciones de UI;
 - operaciones sensibles mediante funciones server-side/database-side con autorización revalidada.
 
+## Principios de inventario
+
+- la botella serializada es la unidad física mínima trazable;
+- `current_location_id` es la ubicación canónica; el texto de ubicación es solo proyección de presentación;
+- todo movimiento autoritativo registra origen, destino y seriales afectados;
+- la cantidad del movimiento debe coincidir exactamente con el número de unidades vinculadas antes de `COMMIT`;
+- la historia de movimientos es append-only;
+- una transición física inválida o un lote parcial de seriales falla de forma atómica;
+- `SOLD` solo nace de Sales OS y conserva vínculo con un documento de venta confirmado del mismo lote;
+- una venta no puede abarcar inventario localizado físicamente en múltiples ubicaciones;
+- `get_inventory_reconciliation()` detecta divergencias entre proyección física, historia y Sales OS.
+
 ## Seguridad
 
 Arquitectura base:
@@ -226,6 +250,8 @@ Arquitectura base:
 - funciones `SECURITY DEFINER` con comprobaciones explícitas;
 - Storage privado + signed URLs para documentos sensibles;
 - feature flags y canales financieros fail-closed;
+- inventario operacional no expuesto a `anon`;
+- mutaciones físicas únicamente mediante RPCs autorizados, no DML directo del cliente;
 - headers de seguridad baseline;
 - dependency audit en CI;
 - PR obligatorio + required checks + conversación resuelta + rama actualizada antes de merge.
@@ -244,7 +270,7 @@ npm run build
 npx playwright test --project=chromium
 ```
 
-`npm test` incluye invariantes críticos, master data, migraciones, gobernanza, economía y Closed Loop.
+`npm test` incluye invariantes críticos, master data, migraciones, gobernanza, economía, Closed Loop e Inventory Reconciliation.
 
 CI se ejecuta en pull requests y pushes a `main`. Render espera checks aprobados antes del auto-deploy.
 
@@ -279,7 +305,8 @@ Identity
 → Allocation
 → Production
 → Serialization
-→ Inventory
+→ Canonical Inventory
+→ Inventory Reconciliation
 → Sales OS
 → Financial Facts
 → Settlement
@@ -287,6 +314,6 @@ Identity
 → Withdrawal / Reinvestment
 ```
 
-El circuito base ya tiene invariantes transaccionales en PostgreSQL. Las próximas etapas se concentran en inventario por ubicación, reconciliación operativa, returns/credit notes, payout rails y read models de portafolio.
+El circuito base ya tiene invariantes transaccionales en PostgreSQL, incluido inventario físico por ubicación y reconciliación unitaria. Las siguientes etapas se concentran en devoluciones comerciales/credit notes, payout rails, conciliación de pagos y read models de portafolio.
 
 El primer caso vertical de referencia es CTG Craft Beer. El objetivo es que una operación completa pueda reconstruirse a partir de evidencia persistida y auditable.
