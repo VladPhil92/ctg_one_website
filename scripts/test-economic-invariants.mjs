@@ -6,11 +6,15 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const unitEconomics = await read('src/components/inversion/UnitEconomics.tsx');
 const simulatorPage = await read('src/app/inversion/simulador/page.tsx');
 const simulatorClient = await read('src/components/inversion/InvestmentSimulatorClient.tsx');
+const simulatorProfile = await read('src/lib/investment/public-simulator.ts');
+const commercialRules = await read('src/lib/investment/commercial-rules.ts');
+const checkout = await read('src/components/inversion/InvestmentCheckoutClient.tsx');
 const economics = await read('src/lib/investment/economics.ts');
 const queries = await read('src/lib/investment/queries.ts');
 const operations = await read('src/app/admin/operations/page.tsx');
 const migration = await read('supabase/migrations/0020_authoritative_lot_economics.sql');
 const privilegeHardening = await read('supabase/migrations/0021_economics_function_privilege_hardening.sql');
+const minimumMigration = await read('supabase/migrations/0041_investment_minimum_two_cases.sql');
 const languageContext = await read('src/contexts/LanguageContext.tsx');
 const economicsTranslations = await read('src/i18n/investmentEconomicsTranslations.ts');
 
@@ -20,21 +24,34 @@ for (const forbidden of ['const productionCost = 6000', 'const labelCost = 900',
   assert.ok(!unitEconomics.includes(forbidden), `UnitEconomics must not reintroduce hard-coded economics: ${forbidden}`);
 }
 
-assert.ok(simulatorPage.includes('getPublicSimulationLots'), 'Simulator must load real funding-open lots.');
+assert.ok(simulatorPage.includes('getPublicSimulationLots'), 'Simulator must still load real funding-open lots when available.');
 assert.ok(simulatorPage.includes('getActiveInvestmentFormulaVersion'), 'Simulator must load the active formula version from Supabase.');
+assert.ok(simulatorPage.includes('PUBLIC_INVESTMENT_SIMULATOR_PROFILE'), 'Simulator must remain available through an explicitly isolated reference profile when no live lot exists.');
 for (const forbidden of ['CAPITAL_PER_CASE_CENTS', 'PROJECTED_NDLP_RATIO', 'PARTICIPANT_PROFIT_SHARE', 'CASE_SIZE_UNITS']) {
-  assert.ok(!simulatorPage.includes(forbidden), `Simulator page must not contain legacy financial constant ${forbidden}.`);
-  assert.ok(!simulatorClient.includes(forbidden), `Simulator client must not contain legacy financial constant ${forbidden}.`);
+  assert.ok(!simulatorPage.includes(forbidden), `Simulator page must not contain legacy transactional-looking constant ${forbidden}.`);
+  assert.ok(!simulatorClient.includes(forbidden), `Simulator client must not contain legacy transactional-looking constant ${forbidden}.`);
 }
-assert.ok(simulatorClient.includes('deriveLotScenario'), 'Simulator scenarios must use the shared lot-snapshot calculator.');
+assert.ok(simulatorClient.includes('deriveLotScenario'), 'Live-lot simulator scenarios must use the shared lot-snapshot calculator.');
+assert.ok(simulatorClient.includes('escenario ilustrativo de referencia'), 'No-lot simulator state must be disclosed as illustrative rather than a live offer.');
+assert.ok(simulatorClient.includes('Una orden real nunca usa las cifras ilustrativas'), 'Simulator must explicitly separate illustrative assumptions from transactional order economics.');
+assert.ok(simulatorProfile.includes("id: 'reference-v1'"), 'Public fallback assumptions must be isolated in a named/versionable profile.');
+assert.ok(simulatorProfile.includes('capitalPerCaseCents: 33_600_000'), 'Reference profile must preserve the previously published capital-per-case assumption.');
+assert.ok(simulatorProfile.includes('projectedNdlpRatio: 0.357'), 'Reference profile must preserve the previously published illustrative NDLP assumption.');
 assert.ok(economics.includes('lot.production_cost_unit_cents'), 'Shared economics must derive capital from the lot production-cost snapshot.');
-assert.ok(economics.includes('formula.participant_profit_share'), 'Participant scenario share must come from the versioned formula record.');
-assert.ok(queries.includes("lot.status === 'FUNDING_OPEN'"), 'Public simulator must only use funding-open lots.');
+assert.ok(economics.includes('formula.participant_profit_share'), 'Participant live-lot scenario share must come from the versioned formula record.');
+assert.ok(queries.includes("lot.status === 'FUNDING_OPEN'"), 'Public live-lot simulator must only use funding-open lots.');
+
+assert.ok(commercialRules.includes('MIN_INVESTMENT_CASES = 2'), 'Commercial rule must define the new two-case minimum.');
+assert.ok(checkout.includes('MIN_INVESTMENT_CASES'), 'Checkout must consume the shared two-case minimum rule.');
+assert.ok(checkout.includes('cases <= MIN_INVESTMENT_CASES'), 'Checkout decrement control must stop at the minimum.');
+assert.ok(checkout.includes('min={MIN_INVESTMENT_CASES}'), 'Checkout numeric input must expose the two-case minimum.');
+assert.ok(minimumMigration.includes('check (case_equivalent_units >= 2)'), 'Database constraint must reject investment orders below two cases.');
+assert.ok(minimumMigration.includes("p_case_equivalent_units < 2"), 'Order RPC must reject requests below two cases.');
+assert.ok(minimumMigration.includes("raise exception 'minimum investment is 2 cases'"), 'Order RPC must fail with an explicit minimum-investment reason.');
 
 assert.ok(languageContext.includes('translateInvestmentEconomicsPhrase'), 'LanguageContext must route investment economics through parameter-aware translations.');
 assert.ok(economicsTranslations.includes('Economía unitaria · (.+)'), 'Dynamic lot-code economics badges must have translation coverage.');
 assert.ok(economicsTranslations.includes('Advertising · ${match[1]} on pre-INC base'), 'Dynamic advertising-rate labels must have translation coverage.');
-assert.ok(economicsTranslations.includes("en: 'Batch-snapshot simulator'"), 'Simulator copy must have an English translation contract.');
 
 assert.ok(operations.includes("rpc('update_investment_beer_style_economics'"), 'Production OS must provide a database-authoritative preset update path.');
 for (const field of ['production', 'label', 'ownPrice', 'b2bPrice', 'inc', 'advertising']) {
