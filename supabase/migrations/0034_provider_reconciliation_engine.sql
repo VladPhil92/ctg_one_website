@@ -73,7 +73,7 @@ create table public.investment_financial_event_matches (
     or (target_type='PAYOUT' and payout_id is not null and order_id is null)
     or (target_type='NONE' and order_id is null and payout_id is null and receipt_id is null)
   ),
-  constraint investment_financial_event_matches_outcome_check check (
+  constraint investment_financial_event_matches_target_outcome_check check (
     (outcome='RECONCILED' and target_type='ORDER' and receipt_id is not null)
     or (outcome in ('CONFIRMED','FAILED') and target_type='PAYOUT' and receipt_id is null)
     or (outcome in ('NO_MATCH','CONFLICT','IGNORED') and target_type='NONE')
