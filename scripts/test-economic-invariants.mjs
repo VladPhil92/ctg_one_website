@@ -9,16 +9,23 @@ const simulatorClient = await read('src/components/inversion/InvestmentSimulator
 const economics = await read('src/lib/investment/economics.ts');
 const queries = await read('src/lib/investment/queries.ts');
 const operations = await read('src/app/admin/operations/page.tsx');
+const createLotRoute = await read('src/app/api/investment/admin/lots/route.ts');
 const migration = await read('supabase/migrations/0020_authoritative_lot_economics.sql');
+const partialInventoryMigration = await read('supabase/migrations/0042_partial_inventory_funding_capacity.sql');
+const eligibleSerializationMigration = await read('supabase/migrations/0043_investment_serialization_eligible_capacity.sql');
+const transportMigration = await read('supabase/migrations/0044_transport_cost_and_channel_tax_economics.sql');
+const transportCompatibilityMigration = await read('supabase/migrations/0045_transport_economics_compatibility.sql');
 const privilegeHardening = await read('supabase/migrations/0021_economics_function_privilege_hardening.sql');
 const languageContext = await read('src/contexts/LanguageContext.tsx');
 const economicsTranslations = await read('src/i18n/investmentEconomicsTranslations.ts');
 
 assert.ok(unitEconomics.includes('getPublicEconomicsReferenceLot'), 'Public unit economics must come from a persisted lot snapshot.');
 assert.ok(unitEconomics.includes('deriveUnitEconomics'), 'Public unit economics must use the shared economics calculator.');
-for (const forbidden of ['const productionCost = 6000', 'const labelCost = 900', 'const ownPointGrossPrice = 18000', 'const b2bPrice = 8000', 'const incRate = 0.08', 'const advertisingRate = 0.035']) {
+for (const forbidden of ['const productionCost = 6000', 'const labelCost = 900', 'const transportCost = 100', 'const ownPointGrossPrice = 18000', 'const b2bPrice = 10000', 'const incRate = 0.08', 'const advertisingRate = 0.035']) {
   assert.ok(!unitEconomics.includes(forbidden), `UnitEconomics must not reintroduce hard-coded economics: ${forbidden}`);
 }
+assert.ok(unitEconomics.includes('lot.transport_cost_unit_cents'), 'Public economics must disclose transport as a distinct cost.');
+assert.ok(unitEconomics.includes('economics.b2bIncCents'), 'Public B2B economics must disclose INC.');
 
 assert.ok(simulatorPage.includes('getPublicSimulationLots'), 'Simulator must load real funding-open lots.');
 assert.ok(simulatorPage.includes('getActiveInvestmentFormulaVersion'), 'Simulator must load the active formula version from Supabase.');
@@ -28,12 +35,20 @@ for (const forbidden of ['CAPITAL_PER_CASE_CENTS', 'PROJECTED_NDLP_RATIO', 'PART
 }
 assert.ok(simulatorClient.includes('deriveLotScenario'), 'Simulator scenarios must use the shared lot-snapshot calculator.');
 assert.ok(economics.includes('lot.production_cost_unit_cents'), 'Shared economics must derive capital from the lot production-cost snapshot.');
+assert.ok(economics.includes('lot.transport_cost_unit_cents'), 'Shared economics must include the lot transport-cost snapshot.');
+assert.ok(economics.includes('b2bGross / (1 + incRate)'), 'B2B gross price must be treated as INC-inclusive.');
+assert.ok(economics.includes('ownPointAdvertisingCents'), 'Owned-location marketing must remain explicit.');
+assert.ok(!economics.includes('b2bAdvertising'), 'B2B economics must not apply the owned-location marketing charge.');
 assert.ok(economics.includes('formula.participant_profit_share'), 'Participant scenario share must come from the versioned formula record.');
-assert.ok(queries.includes("lot.status === 'FUNDING_OPEN'"), 'Public simulator must only use funding-open lots.');
+assert.ok(economics.includes('lot.total_eligible_units'), 'Simulator must cap scenarios at the fundable case capacity, not total physical production.');
+assert.ok(queries.includes("lot.status === 'FUNDING_OPEN'"), 'Public simulator must prefer funding-open lots.');
+assert.ok(queries.includes('lot.total_eligible_units >= MIN_INVESTMENT_CASES'), 'Public simulator eligibility must use fundable case capacity.');
+assert.ok(queries.includes('const fundableCases = lot.total_eligible_units'), 'Funding summaries must derive availability from fundable capacity.');
 
 assert.ok(languageContext.includes('translateInvestmentEconomicsPhrase'), 'LanguageContext must route investment economics through parameter-aware translations.');
 assert.ok(economicsTranslations.includes('Economía unitaria · (.+)'), 'Dynamic lot-code economics badges must have translation coverage.');
 assert.ok(economicsTranslations.includes('Advertising · ${match[1]} on pre-INC base'), 'Dynamic advertising-rate labels must have translation coverage.');
+assert.ok(economicsTranslations.includes('B2B INC · ${match[1]}'), 'Dynamic B2B INC labels must have translation coverage.');
 assert.ok(economicsTranslations.includes("en: 'Batch-snapshot simulator'"), 'Simulator copy must have an English translation contract.');
 
 assert.ok(operations.includes("rpc('update_investment_beer_style_economics'"), 'Production OS must provide a database-authoritative preset update path.');
@@ -45,8 +60,9 @@ for (const field of ['production', 'label', 'ownPrice', 'b2bPrice', 'inc', 'adve
   );
 }
 for (const [field, value] of [
-  ['production', '7000'],
+  ['production', '6000'],
   ['label', '900'],
+  ['transport', '100'],
   ['ownPrice', '18000'],
   ['b2bPrice', '10000'],
   ['inc', '8'],
@@ -64,6 +80,16 @@ assert.match(
   'Sales entry should initialize from the selected lot snapshot, not a fixed sale price.',
 );
 
+for (const forbidden of [
+  '.default(6000)', '.default(900)', '.default(100)', '.default(18000)', '.default(10000)', '.default(0.08)', '.default(0.035)',
+]) {
+  assert.ok(!createLotRoute.includes(forbidden), `Admin lot API must not invent financial defaults: ${forbidden}`);
+}
+assert.ok(createLotRoute.includes('eligibleCases'), 'Admin lot API must accept explicit fundable capacity.');
+assert.ok(createLotRoute.includes('p_total_eligible_units'), 'Admin lot API must persist explicit fundable capacity.');
+assert.ok(createLotRoute.includes('transportCostUnit'), 'Admin lot API must require transport cost.');
+assert.ok(createLotRoute.includes('p_transport_cost_unit_cents'), 'Admin lot API must persist transport cost.');
+
 for (const column of ['production_cost_unit_cents','label_cost_unit_cents','own_point_price_unit_cents','b2b_price_unit_cents','inc_rate','advertising_rate_on_pre_inc']) {
   assert.ok(migration.includes(`alter column ${column} drop default`), `Migration 0020 must remove implicit lot default for ${column}.`);
 }
@@ -73,5 +99,19 @@ assert.ok(migration.includes('update_investment_beer_style_economics'), 'Migrati
 assert.ok(migration.includes('revoke execute on function public.create_production_lot('), 'Legacy lot creation RPC must no longer be client executable.');
 assert.ok(privilegeHardening.includes('from public, anon'), 'Economics master-data RPC must explicitly revoke anonymous execution.');
 assert.ok(privilegeHardening.includes('to authenticated'), 'Economics master-data RPC must explicitly grant authenticated execution after revocation.');
+
+assert.ok(partialInventoryMigration.includes('total_eligible_units <= total_cases'), 'Physical production must never be lower than fundable capacity.');
+assert.ok(partialInventoryMigration.includes('> v_lot.total_eligible_units'), 'Order/allocation capacity checks must enforce eligible cases.');
+assert.ok(partialInventoryMigration.includes('v_allocated <> v_lot.total_eligible_units'), 'FUNDED transition must require only eligible cases to be allocated.');
+assert.ok(partialInventoryMigration.includes("'total_eligible_units', v_eligible"), 'Lot creation audit must preserve the eligible-case snapshot.');
+assert.ok(eligibleSerializationMigration.includes('v_lot.total_eligible_units * v_lot.case_size_units'), 'Investment serial capacity must exclude pre-funding inventory.');
+assert.ok(!eligibleSerializationMigration.includes('v_lot.total_cases * v_lot.case_size_units'), 'Investment serial generation must never fall back to full physical production.');
+
+assert.ok(transportMigration.includes('standard_transport_cost_unit_cents'), 'Beer Style Master Data must persist transport cost.');
+assert.ok(transportMigration.includes('transport_cost_unit_cents'), 'Lot snapshots must persist transport cost.');
+assert.ok(transportMigration.includes('production_cost_unit_cents + v_lot.label_cost_unit_cents + v_lot.transport_cost_unit_cents'), 'Participant capital must include production, label and transport.');
+assert.ok(transportMigration.includes("'transport_cost_unit_cents', v_transport_cost_unit_cents"), 'Lot audit must preserve transport-cost snapshot.');
+assert.ok(transportCompatibilityMigration.includes('transport cost must be configured before using the compatibility economics RPC'), 'Compatibility RPC must fail closed when transport is missing.');
+assert.ok(transportCompatibilityMigration.includes('v_transport'), 'Compatibility paths must preserve the persisted transport preset.');
 
 console.log('Investment economics invariants: PASS');

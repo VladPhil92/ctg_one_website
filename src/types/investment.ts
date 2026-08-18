@@ -38,6 +38,7 @@ export interface InvestmentProductionLot {
   created_at: string;
   production_cost_unit_cents: number;
   label_cost_unit_cents: number;
+  transport_cost_unit_cents: number | null;
   own_point_price_unit_cents: number;
   b2b_price_unit_cents: number;
   inc_rate: number;

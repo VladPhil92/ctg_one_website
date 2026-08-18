@@ -7,7 +7,11 @@ const PAIRS: Pair[] = [
   { en: 'own snapshot', es: 'propio snapshot' },
   { en: 'Costs, prices, taxes and commercial parameters are fixed per batch in the database. We do not display filler figures when there is no published batch with complete economics yet.', es: 'Costos, precios, impuestos y parámetros comerciales se fijan por lote en la base de datos. No mostramos cifras de relleno cuando todavía no existe un lote publicado con economía completa.' },
   { en: 'There is currently no batch economics snapshot available for publication. When Production OS enables a batch, this section will read directly from its persisted values and identify the batch code used as reference.', es: 'En este momento no hay un snapshot económico de lote disponible para publicación. Cuando Production OS habilite un lote, esta sección se alimentará directamente de sus valores persistidos y quedará identificada con el código del lote utilizado como referencia.' },
+  { en: 'Transport', es: 'Transporte' },
   { en: 'B2B price', es: 'Precio B2B' },
+  { en: 'B2B pre-INC base', es: 'Base B2B antes de INC' },
+  { en: 'B2B marketing', es: 'Marketing B2B' },
+  { en: 'Not applicable', es: 'No aplica' },
   { en: 'The result depends on the batch’s effective commercial mix.', es: 'El resultado depende de la mezcla comercial efectiva del lote.' },
   { en: 'For snapshot', es: 'Para el snapshot' },
   { en: ', the simplified contribution per bottle is', es: ', la contribución simplificada por botella es' },
@@ -64,6 +68,9 @@ function translatePatterns(trimmed: string, locale: Locale): string | null {
 
     match = trimmed.match(/^Publicidad · (.+) sobre base sin INC$/);
     if (match) return `Advertising · ${match[1]} on pre-INC base`;
+
+    match = trimmed.match(/^INC B2B · (.+)$/);
+    if (match) return `B2B INC · ${match[1]}`;
   } else {
     let match = trimmed.match(/^Unit economics · (.+)$/);
     if (match) return `Economía unitaria · ${match[1]}`;
@@ -73,6 +80,9 @@ function translatePatterns(trimmed: string, locale: Locale): string | null {
 
     match = trimmed.match(/^Advertising · (.+) on pre-INC base$/);
     if (match) return `Publicidad · ${match[1]} sobre base sin INC`;
+
+    match = trimmed.match(/^B2B INC · (.+)$/);
+    if (match) return `INC B2B · ${match[1]}`;
   }
 
   return null;

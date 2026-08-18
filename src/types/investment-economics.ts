@@ -16,6 +16,7 @@ export type LotEconomicsSnapshot = Pick<
   InvestmentProductionLot,
   | 'production_cost_unit_cents'
   | 'label_cost_unit_cents'
+  | 'transport_cost_unit_cents'
   | 'own_point_price_unit_cents'
   | 'b2b_price_unit_cents'
   | 'inc_rate'
@@ -29,6 +30,8 @@ export type UnitEconomicsResult = {
   ownPointIncCents: number;
   ownPointAdvertisingCents: number;
   ownPointContributionCents: number;
+  b2bPreIncCents: number;
+  b2bIncCents: number;
   b2bContributionCents: number;
   ownPointMargin: number | null;
   b2bMargin: number | null;
