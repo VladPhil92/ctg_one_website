@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
+import { consumeAuthenticatedRateLimit } from '@/lib/security/api-rate-limit';
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MIME_EXTENSIONS: Record<string, string> = {
@@ -84,6 +85,20 @@ export async function POST(
   if (!order || order.participant_user_id !== user.id) return NextResponse.json({ error: 'order not found' }, { status: 404 });
   if (order.status !== 'AWAITING_PAYMENT') return NextResponse.json({ error: 'order is not awaiting payment evidence' }, { status: 409 });
 
+  const rateLimit = await consumeAuthenticatedRateLimit(participantClient, 'investment.payment-proof');
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'too many payment-proof attempts', code: 'RATE_LIMITED' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(rateLimit.retryAfterSeconds),
+          'X-RateLimit-Remaining': '0',
+        },
+      },
+    );
+  }
+
   const mime = (request.headers.get('content-type') ?? '').split(';', 1)[0].trim().toLowerCase();
   const extension = MIME_EXTENSIONS[mime];
   if (!extension) return NextResponse.json({ error: 'unsupported payment proof type' }, { status: 415 });
@@ -146,5 +161,7 @@ export async function POST(
     orderId,
     status: data?.status ?? 'PENDING_BANK_VERIFICATION',
     proofSha256: sha256,
+  }, {
+    headers: { 'X-RateLimit-Remaining': String(rateLimit.remaining) },
   });
 }
