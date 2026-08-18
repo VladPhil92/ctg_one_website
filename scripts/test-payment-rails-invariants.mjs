@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const migration = await read('supabase/migrations/0031_payment_reconciliation_payout_rails.sql');
 const hardening = await read('supabase/migrations/0032_payment_rails_hardening.sql');
+const rlsPerformance = await read('supabase/migrations/0033_payment_rails_rls_performance.sql');
 const orderAdmin = await read('src/app/inversion/admin/orders/page.tsx');
 const payoutAdmin = await read('src/app/admin/finance/rails/page.tsx');
 const liquidity = await read('src/components/inversion/InvestmentLiquidityPanel.tsx');
@@ -33,13 +34,17 @@ assert.ok(hardening.includes('retry_investment_payout') && hardening.includes("s
 assert.ok(hardening.includes('v_confirmed_reference=v_reference') && hardening.includes("v_req.status='PAID'") && hardening.includes('v_debit=-v_payout.amount_cents'), 'Payout confirmation retries must be idempotent only when external reference, PAID state and debit already reconcile.');
 assert.ok(hardening.includes("p_paid_at > now() + interval '5 minutes'") && hardening.includes("new.settled_at > now() + interval '5 minutes'"), 'Provider settlement timestamps must reject materially future evidence.');
 
+assert.ok(rlsPerformance.includes('alter policy investment_payment_receipts_read_authorized') && rlsPerformance.includes('participant_user_id = (select auth.uid())'), 'Receipt RLS must evaluate auth.uid once per statement.');
+assert.ok(rlsPerformance.includes('alter policy investment_payouts_read_authorized') && rlsPerformance.includes("(select public.has_investment_permission('finance.manage'))"), 'Payout RLS must evaluate auth/RBAC context through statement initplans.');
+assert.ok(rlsPerformance.includes('alter policy investment_payout_events_read_authorized') && rlsPerformance.includes('p.participant_user_id = (select auth.uid())'), 'Payout-event RLS must avoid per-row auth context evaluation.');
+
 assert.ok(orderAdmin.includes("rpc('reconcile_investment_order_payment'") && !orderAdmin.includes("rpc('approve_investment_order'"), 'Investment order admin must reconcile receipts instead of manually approving evidence.');
 assert.ok(payoutAdmin.includes("rpc('initiate_investment_payout'") && payoutAdmin.includes("rpc('confirm_investment_payout'") && payoutAdmin.includes("rpc('fail_investment_payout'"), 'Finance Admin OS must operate the payout lifecycle through authoritative RPCs.');
-assert.ok(payoutAdmin.includes("['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'PAYMENT_PROCESSING']") || payoutAdmin.includes("'PAYMENT_PROCESSING'"), 'Finance console must retain active withdrawals independently from historical paid rows.');
+assert.ok(payoutAdmin.includes('ACTIVE_STATUSES') && payoutAdmin.includes(".eq('status', 'PAID')") && payoutAdmin.includes('.limit(60)'), 'Finance console must load all active withdrawals independently from capped paid history.');
 assert.ok(liquidity.includes("rpc('set_investment_payout_destination'") && liquidity.includes("rpc('request_withdrawal'"), 'Participant liquidity UI must register a masked destination before withdrawal requests.');
 assert.ok(liquidity.includes("crypto.subtle.digest('SHA-256'") && liquidity.includes('No escribas el número completo de cuenta'), 'Participant UI must derive a non-secret fingerprint and explicitly avoid raw bank account storage.');
 assert.ok(investmentApp.includes('InvestmentLiquidityPanel'), 'Canonical /inversion/app participant route must expose the payout-destination/withdrawal flow before withdrawal enforcement.');
 assert.ok(nav.includes("href: '/admin/finance/rails'"), 'Payment Rails console must be reachable from Admin OS.');
-assert.ok(schemaVersion.includes("'0032'"), 'Runtime expected migration must advance to 0032.');
+assert.ok(schemaVersion.includes("'0033'"), 'Runtime expected migration must advance to 0033.');
 
 console.log('Payment reconciliation & payout rail invariants: PASS');
