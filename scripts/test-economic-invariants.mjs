@@ -9,6 +9,7 @@ const simulatorClient = await read('src/components/inversion/InvestmentSimulator
 const economics = await read('src/lib/investment/economics.ts');
 const queries = await read('src/lib/investment/queries.ts');
 const operations = await read('src/app/admin/operations/page.tsx');
+const operationsRepository = await read('src/modules/operations/infrastructure/browser-repository.ts');
 const createLotRoute = await read('src/app/api/investment/admin/lots/route.ts');
 const migration = await read('supabase/migrations/0020_authoritative_lot_economics.sql');
 const partialInventoryMigration = await read('supabase/migrations/0042_partial_inventory_funding_capacity.sql');
@@ -51,8 +52,15 @@ assert.ok(economicsTranslations.includes('Advertising · ${match[1]} on pre-INC 
 assert.ok(economicsTranslations.includes('B2B INC · ${match[1]}'), 'Dynamic B2B INC labels must have translation coverage.');
 assert.ok(economicsTranslations.includes("en: 'Batch-snapshot simulator'"), 'Simulator copy must have an English translation contract.');
 
-assert.ok(operations.includes("rpc('update_investment_beer_style_economics'"), 'Production OS must provide a database-authoritative preset update path.');
-for (const field of ['production', 'label', 'ownPrice', 'b2bPrice', 'inc', 'advertising']) {
+assert.ok(
+  operationsRepository.includes("rpc('update_investment_beer_style_economics'"),
+  'Production OS infrastructure must provide a database-authoritative preset update path.',
+);
+assert.ok(
+  !operations.includes("rpc('update_investment_beer_style_economics'"),
+  'Production OS page must not bypass the operations infrastructure repository for preset updates.',
+);
+for (const field of ['production', 'label', 'transport', 'ownPrice', 'b2bPrice', 'inc', 'advertising']) {
   assert.match(
     operations,
     new RegExp(`${field}\\s*:\\s*''`),
