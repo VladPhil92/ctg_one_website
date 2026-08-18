@@ -12,11 +12,8 @@ type Destination = { user_id: string; bank_account_masked: string | null; payout
 type Draft = { payoutRail: InvestmentPayoutRail; providerCode: string; idempotencyKey: string; externalReference: string; paidAt: string };
 type RpcResult = PromiseLike<{ error: { message: string } | null }>;
 
-const localNow = () => {
-  const date = new Date();
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
-};
+const ACTIVE_STATUSES = ['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'PAYMENT_PROCESSING'] as const;
+const localNow = () => { const date = new Date(); const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000); return local.toISOString().slice(0, 16); };
 const freshDraft = (): Draft => ({ payoutRail: 'bank_transfer', providerCode: '', idempotencyKey: crypto.randomUUID(), externalReference: '', paidAt: localNow() });
 
 export default function PaymentRailsAdminPage() {
@@ -30,23 +27,23 @@ export default function PaymentRailsAdminPage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     const supabase = createClient();
-    const [{ data: withdrawalData, error: withdrawalError }, { data: railData, error: railError }] = await Promise.all([
-      supabase.from('investment_withdrawal_requests').select('id,participant_user_id,amount_cents,status,admin_notes,created_at').in('status', ['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'PAYMENT_PROCESSING', 'PAID']).order('created_at', { ascending: false }).limit(60),
+    const [activeResult, paidResult, railResult] = await Promise.all([
+      supabase.from('investment_withdrawal_requests').select('id,participant_user_id,amount_cents,status,admin_notes,created_at').in('status', [...ACTIVE_STATUSES]).order('created_at', { ascending: true }),
+      supabase.from('investment_withdrawal_requests').select('id,participant_user_id,amount_cents,status,admin_notes,created_at').eq('status', 'PAID').order('created_at', { ascending: false }).limit(60),
       supabase.rpc('get_investment_payout_reconciliation', { p_withdrawal_id: null }),
     ]);
 
-    if (withdrawalError) { setError(withdrawalError.message); setLoading(false); return; }
-    if (railError) setError(railError.message);
-    const rows = (withdrawalData ?? []) as Withdrawal[];
+    if (activeResult.error) { setError(activeResult.error.message); setLoading(false); return; }
+    if (paidResult.error) { setError(paidResult.error.message); setLoading(false); return; }
+    if (railResult.error) setError(railResult.error.message);
+
+    const activeRows = (activeResult.data ?? []) as Withdrawal[];
+    const paidRows = (paidResult.data ?? []) as Withdrawal[];
+    const rows = [...activeRows, ...paidRows.filter((paid) => !activeRows.some((active) => active.id === paid.id))];
     setWithdrawals(rows);
-    setDrafts((current) => {
-      const next = { ...current };
-      for (const row of rows) if (!next[row.id]) next[row.id] = freshDraft();
-      return next;
-    });
+    setDrafts((current) => { const next = { ...current }; for (const row of rows) if (!next[row.id]) next[row.id] = freshDraft(); return next; });
 
     const userIds = [...new Set(rows.map((row) => row.participant_user_id))];
     if (userIds.length) {
@@ -55,71 +52,44 @@ export default function PaymentRailsAdminPage() {
       else setDestinations(Object.fromEntries(((destinationData ?? []) as Destination[]).map((row) => [row.user_id, row])));
     } else setDestinations({});
 
-    const railRows = (railData ?? []) as InvestmentPayoutReconciliation[];
+    const railRows = (railResult.data ?? []) as InvestmentPayoutReconciliation[];
     setReconciliation(Object.fromEntries(railRows.map((row) => [row.withdrawal_request_id, row])));
     setLoading(false);
   }, []);
 
   useEffect(() => { void load(); }, [load]);
-
   const patchDraft = (id: string, patch: Partial<Draft>) => setDrafts((current) => ({ ...current, [id]: { ...(current[id] ?? freshDraft()), ...patch } }));
 
   const run = async (id: string, fn: () => RpcResult, success: string) => {
     setBusyId(id); setError(null); setMessage(null);
-    try {
-      const result = await fn();
-      if (result.error) throw new Error(result.error.message);
-      setMessage(success);
-      await load();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'No se pudo completar la operación');
-    } finally { setBusyId(null); }
+    try { const result = await fn(); if (result.error) throw new Error(result.error.message); setMessage(success); await load(); }
+    catch (caught) { setError(caught instanceof Error ? caught.message : 'No se pudo completar la operación'); }
+    finally { setBusyId(null); }
   };
 
   const approve = (withdrawal: Withdrawal) => run(withdrawal.id, () => createClient().rpc('approve_withdrawal', { p_request_id: withdrawal.id }), 'Retiro aprobado y reservado. Aún no se ha debitado el ledger.');
-
   const initiate = (withdrawal: Withdrawal) => {
-    const destination = destinations[withdrawal.participant_user_id];
-    const draft = drafts[withdrawal.id] ?? freshDraft();
+    const destination = destinations[withdrawal.participant_user_id]; const draft = drafts[withdrawal.id] ?? freshDraft();
     if (!destination?.bank_account_masked || !destination.payout_destination_fingerprint) { setError('El participante no tiene destino de payout registrado.'); return Promise.resolve(); }
     if (!draft.providerCode.trim()) { setError('Debes indicar el proveedor/banco que procesará el payout.'); return Promise.resolve(); }
-    return run(withdrawal.id, () => createClient().rpc('initiate_investment_payout', {
-      p_request_id: withdrawal.id,
-      p_payout_rail: draft.payoutRail,
-      p_provider_code: draft.providerCode.trim(),
-      p_destination_masked: destination.bank_account_masked,
-      p_destination_fingerprint: destination.payout_destination_fingerprint,
-      p_idempotency_key: draft.idempotencyKey,
-      p_notes: null,
-    }), 'Payout iniciado. El retiro permanece reservado hasta confirmación externa.');
+    return run(withdrawal.id, () => createClient().rpc('initiate_investment_payout', { p_request_id: withdrawal.id, p_payout_rail: draft.payoutRail, p_provider_code: draft.providerCode.trim(), p_destination_masked: destination.bank_account_masked, p_destination_fingerprint: destination.payout_destination_fingerprint, p_idempotency_key: draft.idempotencyKey, p_notes: null }), 'Payout iniciado. El retiro permanece reservado hasta confirmación externa.');
   };
-
   const confirm = (withdrawal: Withdrawal) => {
-    const rail = reconciliation[withdrawal.id];
-    const draft = drafts[withdrawal.id] ?? freshDraft();
+    const rail = reconciliation[withdrawal.id]; const draft = drafts[withdrawal.id] ?? freshDraft();
     if (!rail?.payout_id) { setError('No existe payout autoritativo para este retiro.'); return Promise.resolve(); }
     if (!draft.externalReference.trim() || !draft.paidAt) { setError('Referencia externa y fecha de pago son obligatorias.'); return Promise.resolve(); }
-    const paidAt = new Date(draft.paidAt);
-    if (Number.isNaN(paidAt.getTime())) { setError('Fecha de pago inválida.'); return Promise.resolve(); }
-    return run(withdrawal.id, () => createClient().rpc('confirm_investment_payout', {
-      p_payout_id: rail.payout_id,
-      p_external_reference: draft.externalReference.trim(),
-      p_paid_at: paidAt.toISOString(),
-      p_notes: null,
-    }), 'Payout confirmado: retiro PAID y WITHDRAWAL_DEBIT registrados atómicamente.');
+    const paidAt = new Date(draft.paidAt); if (Number.isNaN(paidAt.getTime())) { setError('Fecha de pago inválida.'); return Promise.resolve(); }
+    return run(withdrawal.id, () => createClient().rpc('confirm_investment_payout', { p_payout_id: rail.payout_id, p_external_reference: draft.externalReference.trim(), p_paid_at: paidAt.toISOString(), p_notes: null }), 'Payout confirmado: retiro PAID y WITHDRAWAL_DEBIT registrados atómicamente.');
   };
-
   const fail = (withdrawal: Withdrawal) => {
-    const rail = reconciliation[withdrawal.id];
-    if (!rail?.payout_id) return Promise.resolve();
-    const reason = window.prompt('Motivo del fallo del payout');
-    if (!reason?.trim()) return Promise.resolve();
+    const rail = reconciliation[withdrawal.id]; if (!rail?.payout_id) return Promise.resolve();
+    const reason = window.prompt('Motivo del fallo del payout'); if (!reason?.trim()) return Promise.resolve();
     return run(withdrawal.id, () => createClient().rpc('fail_investment_payout', { p_payout_id: rail.payout_id, p_reason: reason.trim(), p_external_reference: null }), 'Payout fallido registrado sin débito. El retiro vuelve a APPROVED para reintento.');
   };
 
   return <div className="space-y-7">
     <header className="rounded-[28px] border border-white/10 p-6 sm:p-8" style={{ background: 'linear-gradient(135deg,rgba(18,18,18,.98),rgba(7,7,7,.95))' }}><div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5"><div><p className="text-[9px] uppercase tracking-[.28em] text-accent mb-3">CTG One · Finance OS</p><h1 className="text-3xl sm:text-5xl font-outfit font-semibold">Payment & Payout Rails</h1><p className="text-sm text-text-muted mt-3 max-w-3xl leading-relaxed">Control del dinero saliente: aprobación, instrucción de payout, confirmación externa y conciliación exacta contra ledger.</p></div><Button onClick={() => void load()} variant="secondary" size="sm"><RefreshCw size={14} /> Actualizar</Button></div></header>
-    <section className="grid sm:grid-cols-4 gap-3"><Metric icon={<ArrowDownToLine size={15} />} label="Solicitados" value={withdrawals.filter((row) => row.status === 'REQUESTED').length} /><Metric icon={<WalletCards size={15} />} label="Aprobados" value={withdrawals.filter((row) => row.status === 'APPROVED').length} /><Metric icon={<Send size={15} />} label="Procesando" value={withdrawals.filter((row) => row.status === 'PAYMENT_PROCESSING').length} /><Metric icon={<CheckCircle2 size={15} />} label="Pagados" value={withdrawals.filter((row) => row.status === 'PAID').length} /></section>
+    <section className="grid sm:grid-cols-4 gap-3"><Metric icon={<ArrowDownToLine size={15} />} label="Solicitados" value={withdrawals.filter((row) => row.status === 'REQUESTED').length} /><Metric icon={<WalletCards size={15} />} label="Aprobados" value={withdrawals.filter((row) => row.status === 'APPROVED').length} /><Metric icon={<Send size={15} />} label="Procesando" value={withdrawals.filter((row) => row.status === 'PAYMENT_PROCESSING').length} /><Metric icon={<CheckCircle2 size={15} />} label="Pagados recientes" value={withdrawals.filter((row) => row.status === 'PAID').length} /></section>
     {(message || error) && <div className="rounded-xl border px-4 py-3 text-sm" style={{ borderColor: error ? 'rgba(239,68,68,.3)' : 'rgba(201,169,98,.28)', background: error ? 'rgba(239,68,68,.06)' : 'rgba(201,169,98,.05)', color: error ? '#fca5a5' : 'var(--accent)' }}>{error ?? message}</div>}
     {loading ? <p className="text-sm text-text-dim">Sincronizando payout rails...</p> : withdrawals.length === 0 ? <div className="rounded-2xl border border-white/[.08] bg-white/[.02] p-7"><p className="text-sm text-text-dim">No hay solicitudes de retiro en el rail.</p></div> : <section className="grid lg:grid-cols-2 gap-5">{withdrawals.map((withdrawal) => <WithdrawalCard key={withdrawal.id} withdrawal={withdrawal} destination={destinations[withdrawal.participant_user_id]} rail={reconciliation[withdrawal.id]} draft={drafts[withdrawal.id] ?? freshDraft()} busy={busyId === withdrawal.id} patchDraft={(patch) => patchDraft(withdrawal.id, patch)} onApprove={() => void approve(withdrawal)} onInitiate={() => void initiate(withdrawal)} onConfirm={() => void confirm(withdrawal)} onFail={() => void fail(withdrawal)} />)}</section>}
     <style jsx global>{`.railInput{width:100%;border-radius:11px;padding:10px 12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);color:#fff;outline:none}.railInput:focus{border-color:rgba(201,169,98,.38)}.railLabel{display:block;font-size:10px;color:var(--text-muted)}`}</style>
