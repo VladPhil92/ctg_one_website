@@ -1,6 +1,6 @@
 # Sales Returns & Credit Notes — CTG Craft Beer Investment OS
 
-Status: implementation baseline through `0028_sales_returns_credit_notes.sql` and `0029_sales_returns_hardening.sql`.
+Status: implementation baseline through `0028_sales_returns_credit_notes.sql`, `0029_sales_returns_hardening.sql` and `0030_sales_returns_settlement_guard.sql`.
 
 ## Principle
 
@@ -106,6 +106,8 @@ Allowed receiving types are:
 
 The generic operational `RETURNED` movement remains available for non-commercial logistics. `SALE_RETURNED` is reserved for a return backed by an authoritative credit note.
 
+Migration `0030` hardens this genealogy: a `SALE_RETURNED` movement that references a credit note must originate exactly in `CUSTOMER_POSSESSION` and terminate at the `return_location_id` stored by that credit note.
+
 ## Non-resale rule
 
 A bottle with historical `investment_sale_items` genealogy is not commercially sellable again.
@@ -139,6 +141,8 @@ validate sales.manage
 ```
 
 The same idempotency key with the same payload returns the original document. Reusing the key with a different payload fails closed.
+
+A lot that already has an immutable settlement cannot receive a new commercial credit note. Post-settlement refunds therefore require a future adjustment workflow rather than silently rewriting a finalized participant distribution.
 
 ## Financial reversals
 
@@ -183,6 +187,8 @@ NDLP = REVENUE
 ```
 
 A return therefore reduces commercial revenue while also reversing the tax liability attributable to the returned units.
+
+`0030` adds a settlement-boundary trigger: before an `investment_settlements` row can be created, every credited bottle in that lot must have a unit-linked `SALE_RETURNED` movement from `CUSTOMER_POSSESSION` to the exact receiving location on its credit note. Settlement therefore fails closed on physical return drift even if document and financial totals happen to match.
 
 ## Reconciliation read model
 
