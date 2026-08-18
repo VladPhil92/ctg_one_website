@@ -84,11 +84,13 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
 
     setError(null); setBusy(true);
     try {
-      const body = new FormData();
-      body.set('proof', proof);
       const response = await fetch(`/api/investment/orders/${orderId}/payment-proof`, {
         method: 'POST',
-        body,
+        headers: {
+          'Content-Type': proof.type,
+          'X-File-Name': encodeURIComponent(proof.name.slice(0, 180)),
+        },
+        body: proof,
       });
       const result = await response.json() as { error?: string };
       if (!response.ok) throw new Error(result.error ?? 'No se pudo registrar el comprobante');
