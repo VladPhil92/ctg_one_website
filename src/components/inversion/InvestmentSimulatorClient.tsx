@@ -83,9 +83,7 @@ export function InvestmentSimulatorClient({
     };
   }, [selected, cases, formula, referenceProfile]);
 
-  const participantShare = formula
-    ? Number(formula.participant_profit_share)
-    : referenceProfile.participantProfitShare;
+  const liveParticipantShare = formula ? Number(formula.participant_profit_share) : null;
 
   return (
     <>
@@ -142,11 +140,16 @@ export function InvestmentSimulatorClient({
 
       {selected && realResult && (
         <>
+          {!formula && (
+            <div className="mb-6 rounded-xl border border-amber-400/20 bg-amber-400/[0.04] p-4 text-xs text-text-muted leading-relaxed">
+              No existe una fórmula financiera activa para este lote. Se muestran capital, ingresos y contribución, pero no se calcula participación ni ROI del participante.
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <Card variant="bordered" padding="md"><p className="text-[9px] uppercase tracking-[0.14em] text-text-dim">Botellas eq.</p><p className="text-lg text-white mt-1">{realResult.units}</p></Card>
             <Card variant="bordered" padding="md"><p className="text-[9px] uppercase tracking-[0.14em] text-text-dim">Capital requerido</p><p className="text-lg text-white mt-1">{formatCents(realResult.capitalRequiredCents)}</p></Card>
             <Card variant="bordered" padding="md"><p className="text-[9px] uppercase tracking-[0.14em] text-text-dim">Fórmula</p><p className="text-lg text-white mt-1">{formula ? `v${formula.version}` : 'No activa'}</p></Card>
-            <Card variant="bordered" padding="md"><p className="text-[9px] uppercase tracking-[0.14em] text-text-dim">Participante</p><p className="text-lg text-white mt-1">{`${(participantShare * 100).toFixed(2)}%`}</p></Card>
+            <Card variant="bordered" padding="md"><p className="text-[9px] uppercase tracking-[0.14em] text-text-dim">Participante</p><p className="text-lg text-white mt-1">{liveParticipantShare == null ? '—' : `${(liveParticipantShare * 100).toFixed(2)}%`}</p></Card>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4 mb-8">
