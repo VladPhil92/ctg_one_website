@@ -99,7 +99,7 @@ export default function OperationsAdminPage() {
     const { data, error: styleError } = await supabase
       .from('investment_beer_styles')
       .select(
-        'id,code,slug,name,description,abv_target,units_per_case,standard_production_cost_unit_cents,standard_label_cost_unit_cents,standard_own_point_price_unit_cents,standard_b2b_price_unit_cents,standard_inc_rate,standard_advertising_rate_on_pre_inc,active',
+        'id,code,slug,name,description,abv_target,units_per_case,standard_production_cost_unit_cents,standard_label_cost_unit_cents,standard_transport_cost_unit_cents,standard_own_point_price_unit_cents,standard_b2b_price_unit_cents,standard_inc_rate,standard_advertising_rate_on_pre_inc,active',
       )
       .eq('active', true)
       .order('name');
@@ -400,6 +400,7 @@ type LotEconomicsForm = {
   caseSize: string;
   production: string;
   label: string;
+  transport: string;
   ownPrice: string;
   b2bPrice: string;
   inc: string;
@@ -418,6 +419,7 @@ function draftFromStyle(style: InvestmentBeerStyle, current?: LotEconomicsForm):
     caseSize: toStringValue(defaults.caseSize),
     production: toStringValue(defaults.productionCostCop),
     label: toStringValue(defaults.labelCostCop),
+    transport: toStringValue(defaults.transportCostCop),
     ownPrice: toStringValue(defaults.ownPriceCop),
     b2bPrice: toStringValue(defaults.b2bPriceCop),
     inc: toStringValue(defaults.incPercent),
@@ -445,6 +447,7 @@ function CreateLotPanel({
     caseSize: '',
     production: '',
     label: '',
+    transport: '',
     ownPrice: '',
     b2bPrice: '',
     inc: '',
@@ -470,6 +473,7 @@ function CreateLotPanel({
   const caseSize = parsedNumber(form.caseSize);
   const production = parsedNumber(form.production);
   const label = parsedNumber(form.label);
+  const transport = parsedNumber(form.transport);
   const ownPrice = parsedNumber(form.ownPrice);
   const b2bPrice = parsedNumber(form.b2bPrice);
   const inc = parsedNumber(form.inc);
@@ -477,7 +481,8 @@ function CreateLotPanel({
 
   const economicsValid =
     production != null && production >= 0 &&
-    label != null && label >= 0 && production + label > 0 &&
+    label != null && label >= 0 &&
+    transport != null && transport >= 0 && production + label + transport > 0 &&
     ownPrice != null && ownPrice > 0 &&
     b2bPrice != null && b2bPrice > 0 &&
     inc != null && inc >= 0 && inc <= 100 &&
@@ -492,6 +497,7 @@ function CreateLotPanel({
     caseSize: caseSize ?? 0,
     productionCostCop: production ?? 0,
     labelCostCop: label ?? 0,
+    transportCostCop: transport ?? 0,
     ownPriceCop: ownPrice ?? 0,
     b2bPriceCop: b2bPrice ?? 0,
   });
@@ -502,6 +508,7 @@ function CreateLotPanel({
     p_style_code: style?.code,
     p_production_cost_unit_cents: Math.round((production ?? 0) * 100),
     p_label_cost_unit_cents: Math.round((label ?? 0) * 100),
+    p_transport_cost_unit_cents: Math.round((transport ?? 0) * 100),
     p_own_point_price_unit_cents: Math.round((ownPrice ?? 0) * 100),
     p_b2b_price_unit_cents: Math.round((b2bPrice ?? 0) * 100),
     p_inc_rate: (inc ?? 0) / 100,
@@ -517,6 +524,7 @@ function CreateLotPanel({
       p_destination: form.destination.trim(),
       p_total_cases: cases,
       p_case_size_units: caseSize,
+      p_total_eligible_units: cases,
     });
   };
 
@@ -545,10 +553,10 @@ function CreateLotPanel({
         <DerivedField label="Unidades totales" value={formatNumber(metrics.totalUnits)} />
         <Field label="Costo producción/unidad COP" value={form.production} onChange={(value) => setForm({ ...form, production: value })} type="number" />
         <Field label="Etiqueta/unidad COP" value={form.label} onChange={(value) => setForm({ ...form, label: value })} type="number" />
-        <DerivedField label="Costo base/unidad" value={formatCop(metrics.baseUnitCost)} />
+        <Field label="Transporte/unidad COP" value={form.transport} onChange={(value) => setForm({ ...form, transport: value })} type="number" />
+        <DerivedField label="Costo base/unidad · producción + etiqueta + transporte" value={formatCop(metrics.baseUnitCost)} />
         <DerivedField label="Costo base/caja" value={formatCop(metrics.baseCaseCost)} />
         <DerivedField label="Capital base del lote" value={formatCop(metrics.baseLotCost)} />
-        <div className="hidden sm:block" />
         <Field label="Precio propio/unidad COP" value={form.ownPrice} onChange={(value) => setForm({ ...form, ownPrice: value })} type="number" />
         <DerivedField label="Venta propia bruta proyectada" value={formatCop(metrics.ownGross)} />
         <Field label="Precio B2B/unidad COP" value={form.b2bPrice} onChange={(value) => setForm({ ...form, b2bPrice: value })} type="number" />
@@ -567,8 +575,8 @@ function CreateLotPanel({
         <p className="text-[9px] uppercase tracking-[.16em] text-accent">Economics source of truth</p>
         <p className="text-[11px] text-text-muted mt-2 leading-relaxed">
           {masterConfigured
-            ? 'Los campos se cargaron desde los presets persistidos del estilo. Puedes ajustar el lote sin alterar esos presets; al crear, PostgreSQL congela los valores enviados como snapshot histórico.'
-            : 'Este estilo aún no tiene presets económicos completos. No se insertan cifras de ejemplo: completa todos los campos financieros antes de crear el lote. Si son los parámetros estándar vigentes, puedes guardarlos como presets del estilo.'}
+            ? 'Los campos se cargaron desde los presets persistidos del estilo. Puedes ajustar el lote sin alterar esos presets; al crear, PostgreSQL congela producción, etiqueta, transporte, precios e impuestos como snapshot histórico.'
+            : 'Este estilo aún no tiene presets económicos completos. No se insertan cifras de ejemplo: completa producción, etiqueta, transporte, precios e impuestos antes de crear el lote. Si son los parámetros estándar vigentes, puedes guardarlos como presets del estilo.'}
         </p>
       </div>
 
