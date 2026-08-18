@@ -1,6 +1,6 @@
 # Inventory Model — CTG Craft Beer Inversión
 
-Status: implemented baseline through migrations `0024_inventory_reconciliation_preflight.sql`, `0025_inventory_reconciliation.sql` and `0026_inventory_reconciliation_hardening.sql`.
+Status: implemented baseline through migrations `0024_inventory_reconciliation_preflight.sql`, `0025_inventory_reconciliation.sql`, `0026_inventory_reconciliation_hardening.sql` and `0027_inventory_location_fk_index.sql`.
 
 ## Cutover contract
 
@@ -41,6 +41,8 @@ System locations provisioned by the baseline:
 Operational sales points and partners are registered through `upsert_inventory_location()` before units can be received there. System location types cannot be changed or deactivated.
 
 `investment_bottle_units.current_location_id` is the canonical foreign key. The legacy `current_location` text column remains only as a denormalized display label maintained by domain RPCs.
+
+Migration `0027` adds the covering index for `investment_inventory_locations.created_by`, the only new unindexed foreign key reported by Supabase Performance Advisor after the canonical cutover.
 
 ## Movement history
 
@@ -160,4 +162,4 @@ Participant views remain aggregated at lot level, for example:
 - Botellas restantes
 - Porcentaje vendido
 
-Participants do not receive operational location-level visibility merely because they hold an economic allocation in the lot.
+Participants do not receive operational location-level visibility merely porque they hold an economic allocation in the lot.
