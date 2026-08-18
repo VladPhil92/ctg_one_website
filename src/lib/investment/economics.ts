@@ -74,7 +74,7 @@ export function deriveLotScenario(
   formula: InvestmentFormulaVersion | null,
 ): LotScenarioResult {
   const cases = Math.min(
-    lot.total_cases,
+    lot.total_eligible_units,
     Math.max(MIN_INVESTMENT_CASES, Math.trunc(requestedCases || MIN_INVESTMENT_CASES)),
   );
   const units = cases * lot.case_size_units;
