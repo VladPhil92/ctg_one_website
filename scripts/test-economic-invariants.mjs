@@ -12,6 +12,7 @@ const operations = await read('src/app/admin/operations/page.tsx');
 const createLotRoute = await read('src/app/api/investment/admin/lots/route.ts');
 const migration = await read('supabase/migrations/0020_authoritative_lot_economics.sql');
 const partialInventoryMigration = await read('supabase/migrations/0042_partial_inventory_funding_capacity.sql');
+const eligibleSerializationMigration = await read('supabase/migrations/0043_investment_serialization_eligible_capacity.sql');
 const privilegeHardening = await read('supabase/migrations/0021_economics_function_privilege_hardening.sql');
 const languageContext = await read('src/contexts/LanguageContext.tsx');
 const economicsTranslations = await read('src/i18n/investmentEconomicsTranslations.ts');
@@ -91,5 +92,7 @@ assert.ok(partialInventoryMigration.includes('total_eligible_units <= total_case
 assert.ok(partialInventoryMigration.includes('> v_lot.total_eligible_units'), 'Order/allocation capacity checks must enforce eligible cases.');
 assert.ok(partialInventoryMigration.includes('v_allocated <> v_lot.total_eligible_units'), 'FUNDED transition must require only eligible cases to be allocated.');
 assert.ok(partialInventoryMigration.includes("'total_eligible_units', v_eligible"), 'Lot creation audit must preserve the eligible-case snapshot.');
+assert.ok(eligibleSerializationMigration.includes('v_lot.total_eligible_units * v_lot.case_size_units'), 'Investment serial capacity must exclude pre-funding inventory.');
+assert.ok(!eligibleSerializationMigration.includes('v_lot.total_cases * v_lot.case_size_units'), 'Investment serial generation must never fall back to full physical production.');
 
 console.log('Investment economics invariants: PASS');
