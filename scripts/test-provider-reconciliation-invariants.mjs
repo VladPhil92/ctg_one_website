@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const migration = await read('supabase/migrations/0034_provider_reconciliation_engine.sql');
 const hardening = await read('supabase/migrations/0035_provider_reconciliation_target_hardening.sql');
+const fkIndexes = await read('supabase/migrations/0036_provider_reconciliation_fk_indexes.sql');
 const importApi = await read('src/app/api/investment/admin/finance/events/import/route.ts');
 const page = await read('src/app/admin/finance/reconciliation/page.tsx');
 const adapter = await read('src/lib/investment/provider-adapter.ts');
@@ -34,6 +35,10 @@ assert.ok(hardening.includes('v_payout.payout_rail<>v_event.payment_rail') && ha
 assert.ok(hardening.includes('v_payout.amount_cents<>v_event.amount_cents') && hardening.includes('selected payout amount does not match provider event'), 'Manual outbound resolution must reject a payout with a different amount.');
 assert.ok(hardening.includes('confirm_investment_payout(') && hardening.includes('fail_investment_payout('), 'Target hardening must still delegate lifecycle mutation to authoritative payout RPCs.');
 
+assert.ok(fkIndexes.includes('investment_financial_provider_events_ingested_by_idx') && fkIndexes.includes('(ingested_by)'), 'Provider event actor foreign key must have a covering index.');
+assert.ok(fkIndexes.includes('investment_financial_event_matches_actor_id_idx') && fkIndexes.includes('(actor_id)'), 'Provider match actor foreign key must have a covering index.');
+assert.ok(fkIndexes.includes('investment_financial_event_matches_receipt_id_idx') && fkIndexes.includes('(receipt_id)'), 'Provider match receipt foreign key must have a covering index.');
+
 assert.ok(importApi.includes("createHash('sha256')") && importApi.includes("rpc('ingest_investment_financial_event'"), 'Import API must hash normalized payloads and ingest through the domain RPC.');
 assert.ok(importApi.includes("rpc('auto_match_investment_financial_event'"), 'Import API must invoke deterministic auto-match after ingestion.');
 assert.ok(!importApi.includes('createAdminClient'), 'Unsigned/manual import must remain user-session + finance.manage scoped, not service-role bypassed.');
@@ -41,6 +46,6 @@ assert.ok(page.includes("rpc('get_investment_financial_reconciliation_inbox'") &
 assert.ok(page.includes('No pegues extractos completos ni números de cuenta'), 'Finance UI must explicitly forbid raw statement/account credential entry.');
 assert.ok(adapter.includes('InvestmentFinancialProviderAdapter') && adapter.includes('NormalizedFinancialProviderEventInput'), 'Future providers must implement the normalized adapter contract.');
 assert.ok(nav.includes("href: '/admin/finance/reconciliation'"), 'Provider Reconciliation must be reachable from Admin OS.');
-assert.ok(schemaVersion.includes("'0035'"), 'Runtime expected migration must advance to 0035 after target hardening.');
+assert.ok(schemaVersion.includes("'0036'"), 'Runtime expected migration must advance to 0036 after provider reconciliation FK indexing.');
 
 console.log('Provider integration & automated reconciliation invariants: PASS');
