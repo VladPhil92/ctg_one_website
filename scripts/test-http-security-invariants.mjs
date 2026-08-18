@@ -23,12 +23,16 @@ assert.ok(
   nextConfig.includes("isProduction ? '' : \" 'unsafe-eval'\""),
   'unsafe-eval must remain development-only',
 );
+assert.ok(nextConfig.includes('NEXT_PUBLIC_SUPABASE_URL'), 'CSP must consider the configured Supabase origin');
+assert.ok(nextConfig.includes("url.protocol === 'https:' ? 'wss:' : 'ws:'"), 'CSP must derive the matching Supabase websocket origin');
 
 assert.match(migration, /alter table public\.api_rate_limit_windows enable row level security;/i);
 assert.match(migration, /revoke all on table public\.api_rate_limit_windows from public, anon, authenticated;/i);
 assert.match(migration, /when 'knowledge\.query' then/i);
 assert.match(migration, /when 'investment\.payment-proof' then/i);
 assert.match(migration, /raise exception 'unsupported rate-limit scope';/i);
+assert.match(migration, /on conflict \(user_id, scope\) do nothing;/i);
+assert.match(migration, /select \* into v_row[\s\S]*for update;/i);
 assert.match(migration, /grant execute on function public\.consume_api_rate_limit\(text\) to authenticated, service_role;/i);
 
 assert.ok(knowledgeRoute.includes("consumeAuthenticatedRateLimit(supabase, 'knowledge.query')"));
