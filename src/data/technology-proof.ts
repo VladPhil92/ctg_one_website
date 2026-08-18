@@ -1,12 +1,14 @@
-export type ProofStatus = 'LIVE' | 'BETA' | 'PARTIAL' | 'IN DEVELOPMENT' | 'ROADMAP';
+export type ProofStatus = 'LIVE' | 'PARTIAL' | 'IN DEVELOPMENT' | 'ROADMAP';
+export type PublicProofStatus = ProofStatus | 'BETA';
 
-export const PROOF_STATUSES: ProofStatus[] = ['LIVE', 'BETA', 'PARTIAL', 'IN DEVELOPMENT', 'ROADMAP'];
+export const PUBLIC_PROOF_STATUSES: PublicProofStatus[] = ['LIVE', 'BETA', 'PARTIAL', 'IN DEVELOPMENT', 'ROADMAP'];
 
 export type ProofItem = {
   id: string;
   area: string;
   capability: string;
   status: ProofStatus;
+  publicStatus?: PublicProofStatus;
   evidence: string[];
   publicPath?: string;
 };
@@ -32,7 +34,8 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
     id: 'investment-platform',
     area: 'Products',
     capability: 'CTG Craft Beer Investment operating model',
-    status: 'BETA',
+    status: 'PARTIAL',
+    publicStatus: 'BETA',
     evidence: [
       'Closed-beta participant and admin surfaces implemented',
       'Order, allocation, inventory, ledger and settlement schema/RPCs implemented',
@@ -77,7 +80,8 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
     id: 'ctg-knowledge-v01',
     area: 'Artificial Intelligence',
     capability: 'CTG Knowledge v0.1 authenticated source-grounded RAG pilot',
-    status: 'BETA',
+    status: 'PARTIAL',
+    publicStatus: 'BETA',
     evidence: [
       'pgvector migration and RLS policies implemented',
       'Admin-only curated text ingestion endpoint',
@@ -102,6 +106,10 @@ export function getCapabilityProof(id: string): ProofItem {
   const item = TECHNOLOGY_PROOF.find((candidate) => candidate.id === id);
   if (!item) throw new Error(`Unknown technology capability: ${id}`);
   return item;
+}
+
+export function getPublicProofStatus(item: ProofItem): PublicProofStatus {
+  return item.publicStatus ?? item.status;
 }
 
 export const TECHNICAL_CHANGELOG = [
