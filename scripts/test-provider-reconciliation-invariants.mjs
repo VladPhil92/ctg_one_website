@@ -14,6 +14,8 @@ assert.ok(migration.includes('create table public.investment_financial_provider_
 assert.ok(migration.includes('payload_sha256 text not null') && !migration.includes('raw_payload'), 'Provider events must persist a hash, not raw bank/provider payloads.');
 assert.ok(migration.includes('investment_financial_provider_events_immutable') && migration.includes('investment_financial_event_matches_immutable'), 'Provider events and matching decisions must be append-only.');
 assert.ok(migration.includes("source text not null default 'ADMIN_IMPORT' check (source = 'ADMIN_IMPORT')"), 'Initial ingestion source must remain admin-import only until a signed provider adapter exists.');
+assert.ok(migration.includes('constraint investment_financial_event_matches_target_outcome_check check'), 'Composite provider match constraint must use a name distinct from PostgreSQL column-check auto names.');
+assert.ok(!migration.includes('constraint investment_financial_event_matches_outcome_check check'), 'Do not reuse the auto-generated outcome column CHECK name for the composite target/outcome constraint.');
 assert.ok(migration.includes("upper(trim(o.payment_reference))=upper(trim(v_event.external_reference))"), 'Inbound auto-match must require exact external-reference identity in addition to rail/amount.');
 assert.ok(migration.includes("p.id::text=v_event.merchant_reference or p.idempotency_key=v_event.merchant_reference"), 'Outbound auto-match must require the provider to echo the payout UUID or idempotency key.');
 assert.ok(migration.includes("w.status='PAYMENT_PROCESSING'") && migration.includes("='PROCESSING'"), 'Outbound auto-match must only act on a processing authoritative payout.');
