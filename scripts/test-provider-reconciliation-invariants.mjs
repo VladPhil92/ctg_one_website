@@ -46,6 +46,8 @@ assert.ok(page.includes("rpc('get_investment_financial_reconciliation_inbox'") &
 assert.ok(page.includes('No pegues extractos completos ni números de cuenta'), 'Finance UI must explicitly forbid raw statement/account credential entry.');
 assert.ok(adapter.includes('InvestmentFinancialProviderAdapter') && adapter.includes('NormalizedFinancialProviderEventInput'), 'Future providers must implement the normalized adapter contract.');
 assert.ok(nav.includes("href: '/admin/finance/reconciliation'"), 'Provider Reconciliation must be reachable from Admin OS.');
-assert.ok(schemaVersion.includes("'0036'"), 'Runtime expected migration must advance to 0036 after provider reconciliation FK indexing.');
+
+const expectedVersion = Number(schemaVersion.match(/'(\d{4})'/)?.[1] ?? '0');
+assert.ok(expectedVersion >= 36, 'Runtime expected migration must not regress below provider reconciliation 0036.');
 
 console.log('Provider integration & automated reconciliation invariants: PASS');
