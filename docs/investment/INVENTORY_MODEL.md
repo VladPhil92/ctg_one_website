@@ -162,4 +162,4 @@ Participant views remain aggregated at lot level, for example:
 - Botellas restantes
 - Porcentaje vendido
 
-Participants do not receive operational location-level visibility merely porque they hold an economic allocation in the lot.
+Participants do not receive operational location-level visibility merely because they hold an economic allocation in the lot.
