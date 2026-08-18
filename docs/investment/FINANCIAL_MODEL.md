@@ -4,7 +4,7 @@ Status: implemented baseline + design reference for further settlement hardening
 
 ## Money model
 
-Integer COP cents everywhere (ADR-007). Authoritative transactional calculations run in PostgreSQL. Frontend calculations are limited to explicitly labeled simulations derived from persisted lot snapshots and versioned formula data; no production-facing UI may invent fallback prices, costs, tax rates or profit shares.
+Integer COP cents everywhere (ADR-007). Authoritative transactional calculations run in PostgreSQL. Frontend calculations may display explicitly labeled simulations, but no simulator value is allowed to create an order, allocation, ledger entry or settlement fact.
 
 ## Economics source of truth
 
@@ -13,16 +13,27 @@ The system deliberately separates **presets**, **historical snapshots** and **re
 1. `investment_beer_styles` may hold current economic presets for new lots: production cost, label cost, own-point price, B2B price, INC rate and advertising rate.
 2. `investment_production_lots` snapshots the resolved values at creation. Once a lot exists, those fields are the authoritative historical assumptions for that lot; later edits to style presets do not recalculate it.
 3. `investment_orders.capital_required_cents` is derived server-side from the lot snapshot at order creation.
-4. Actual settlement never uses the illustrative unit-economics projection. It reads realized `investment_lot_financial_entries`.
+4. Actual settlement never uses the illustrative simulator projection. It reads realized `investment_lot_financial_entries`.
 5. `investment_formula_versions` remains the authority for participant/CTG profit-share rules; every allocation pins a formula version.
 
 Migration `0020_authoritative_lot_economics.sql` removes bootstrap-era implicit defaults from lot rows and canonical lot creation. Missing economics now fail closed. The legacy non-style lot-creation RPC is no longer executable by clients.
 
+## Minimum investment
+
+The commercial entry minimum is **2 cases per new investment order**. The UI shares this rule through `MIN_INVESTMENT_CASES`, while PostgreSQL remains authoritative through the `investment_orders` constraint and `create_investment_order()` guard introduced by migration `0041_investment_minimum_two_cases.sql`.
+
+If fewer than two cases remain available in a lot, the checkout does not allow a new investment order for that residual capacity.
+
 ## Public simulator
 
-`/inversion/simulador` no longer contains a fixed capital-per-case constant, a fixed projected-NDLP ratio or a hard-coded participant share. It only simulates `FUNDING_OPEN` lots with complete persisted economics and reads the active formula version from Supabase.
+`/inversion/simulador` has two clearly separated modes:
 
-The simulator exposes two transparent boundary scenarios — 100% own-point and 100% B2B — instead of assuming an arbitrary channel mix. These are illustrative contribution scenarios, not a settlement forecast. If there is no published lot or active formula, the UI fails closed rather than inventing values.
+1. **Live-lot mode.** When a `FUNDING_OPEN` lot with complete persisted economics exists, the simulator derives capital and channel scenarios from that lot snapshot and the active formula version.
+2. **Reference mode.** When no live lot exists, the simulator remains usable through `PUBLIC_INVESTMENT_SIMULATOR_PROFILE`, an explicitly labeled illustrative profile that reproduces the simulator assumptions previously published by CTG Craft Beer Investment. This profile is not a live offer and is isolated from all transactional paths.
+
+The reference profile must never be imported by order-creation, allocation, ledger or settlement code. As soon as a live lot is available, its persisted snapshot automatically replaces the reference mode for simulation.
+
+Live-lot mode exposes two transparent boundary scenarios — 100% own-point and 100% B2B — instead of assuming an arbitrary channel mix. Reference mode exposes estimated capital, sales, distributable profit and participant return with an explicit non-guarantee disclosure.
 
 ## Net Distributable Lot Profit (NDLP)
 
@@ -80,7 +91,9 @@ label.
 - `withdrawal amount <= eligible available balance`.
 - Every reinvested amount traces back to a specific prior settlement credit.
 - A lot cannot be created with missing economic snapshot values.
-- Public economics and simulator output must come from persisted snapshots, never source-code fallback constants.
+- Transactional capital must always come from the selected lot snapshot in PostgreSQL.
+- Reference simulator assumptions must remain isolated from transactional order/allocation/ledger/settlement code.
+- No investment order may contain fewer than 2 cases.
 
 ## Withdrawal / reinvestment workflow states
 
