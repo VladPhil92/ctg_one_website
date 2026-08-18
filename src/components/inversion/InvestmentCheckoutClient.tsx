@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,9 +30,12 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const orderIdempotencyKey = useRef<string | null>(null);
 
   const capitalPerCase = useMemo(() => {
-    const unit = (lot.production_cost_unit_cents ?? 0) + (lot.label_cost_unit_cents ?? 0);
+    const unit = (lot.production_cost_unit_cents ?? 0)
+      + (lot.label_cost_unit_cents ?? 0)
+      + (lot.transport_cost_unit_cents ?? 0);
     return unit * lot.case_size_units;
   }, [lot]);
   const estimate = capitalPerCase * cases;
@@ -67,9 +70,12 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
     setError(null); setBusy(true);
     try {
       const supabase = createClient();
+      const idempotencyKey = orderIdempotencyKey.current ?? crypto.randomUUID();
+      orderIdempotencyKey.current = idempotencyKey;
       const { data, error: rpcError } = await supabase.rpc('create_investment_order', {
         p_lot_id: lot.id,
         p_case_equivalent_units: cases,
+        p_idempotency_key: idempotencyKey,
       });
       if (rpcError) throw rpcError;
       const row = Array.isArray(data) ? data[0] : data;
