@@ -46,21 +46,24 @@ begin
       raise exception 'unsupported rate-limit scope';
   end case;
 
+  -- Make first-use initialization concurrency-safe. Concurrent requests may both
+  -- attempt the insert, but ON CONFLICT collapses them into one durable row.
+  insert into public.api_rate_limit_windows(
+    user_id,
+    scope,
+    window_started_at,
+    request_count,
+    updated_at
+  )
+  values (v_user_id, p_scope, v_now, 0, v_now)
+  on conflict (user_id, scope) do nothing;
+
+  -- Once the row exists, serialize all consumers for this user/scope so every
+  -- request is counted exactly once within the active window.
   select * into v_row
   from public.api_rate_limit_windows
   where user_id = v_user_id and scope = p_scope
   for update;
-
-  if v_row is null then
-    insert into public.api_rate_limit_windows(user_id, scope, window_started_at, request_count, updated_at)
-    values (v_user_id, p_scope, v_now, 1, v_now);
-
-    allowed := true;
-    remaining := v_limit - 1;
-    retry_after_seconds := 0;
-    return next;
-    return;
-  end if;
 
   if v_row.window_started_at + make_interval(secs => v_window_seconds) <= v_now then
     update public.api_rate_limit_windows
