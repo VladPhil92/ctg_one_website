@@ -122,7 +122,7 @@ export function InvestmentSimulatorClient({
           </div>
           <div>
             <label className="text-[11px] uppercase tracking-[0.15em] text-text-dim block mb-3" htmlFor="simulator-cases">
-              Número de cajas · mínimo {referenceProfile.minCases}
+              {`Número de cajas · mínimo ${referenceProfile.minCases}`}
             </label>
             <input
               id="simulator-cases"
@@ -176,7 +176,7 @@ export function InvestmentSimulatorClient({
           <Card variant="bordered" padding="md">
             <p className="text-[10px] text-text-dim uppercase tracking-[0.15em] mb-2">Capital estimado requerido</p>
             <p className="text-xl font-outfit font-semibold text-white">{formatCents(referenceResult.capitalCents)}</p>
-            <p className="text-[11px] text-text-dim mt-2">{cases} cajas · {referenceResult.units} botellas equivalentes</p>
+            <p className="text-[11px] text-text-dim mt-2">{`${cases} cajas · ${referenceResult.units} botellas equivalentes`}</p>
           </Card>
           <Card variant="bordered" padding="md">
             <p className="text-[10px] text-text-dim uppercase tracking-[0.15em] mb-2">Ventas proyectadas · ilustrativo</p>
@@ -189,13 +189,13 @@ export function InvestmentSimulatorClient({
           <Card variant="gradient" padding="md">
             <p className="text-[10px] text-text-dim uppercase tracking-[0.15em] mb-2">Participación proyectada · ilustrativo</p>
             <p className="text-xl font-outfit font-semibold text-accent">{formatCents(referenceResult.participantProfitCents)}</p>
-            <p className="text-sm text-accent mt-2">ROI ilustrativo: {percent(referenceResult.roi)}</p>
+            <p className="text-sm text-accent mt-2">{`ROI ilustrativo: ${percent(referenceResult.roi)}`}</p>
           </Card>
         </div>
       )}
 
       <p className="text-[11px] text-text-dim leading-relaxed">
-        El simulador es informativo. Cuando exista un lote abierto, sus costos y precios persistidos sustituyen automáticamente el perfil de referencia. Una orden real nunca usa las cifras ilustrativas de esta página: PostgreSQL calcula el capital exclusivamente desde el snapshot económico del lote seleccionado. La inversión mínima vigente es de {referenceProfile.minCases} cajas.
+        {`El simulador es informativo. Cuando exista un lote abierto, sus costos y precios persistidos sustituyen automáticamente el perfil de referencia. Una orden real nunca usa las cifras ilustrativas de esta página: PostgreSQL calcula el capital exclusivamente desde el snapshot económico del lote seleccionado. La inversión mínima vigente es de ${referenceProfile.minCases} cajas.`}
       </p>
     </>
   );
