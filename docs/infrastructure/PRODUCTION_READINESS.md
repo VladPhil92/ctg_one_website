@@ -31,9 +31,9 @@ Never commit secret values. `SUPABASE_SERVICE_ROLE_KEY` is server-only and must 
 
 ## Health verification
 
-`GET /api/health` is the liveness/configuration endpoint. It intentionally does not perform privileged database operations and must never expose secrets.
+`GET /api/health` is the public liveness/configuration endpoint. The route itself never reads or serializes the service-role secret. A separate `server-only` module may use the service-role client to call the restricted runtime schema compatibility RPC; only a sanitized compatibility result reaches the public response.
 
-Expected production response is HTTP 200 with `status: ok`. `degraded` means required public configuration is incomplete and should block a production-readiness sign-off even though the process is alive.
+In production/Render, a schema mismatch is a health failure and should return HTTP 503. A healthy production release returns HTTP 200 with `status: ok`. A degraded state or schema incompatibility blocks production-readiness sign-off even when the Next.js process itself is alive.
 
 ## Release verification checklist
 
@@ -56,6 +56,8 @@ After every material production release:
 
 Production Supabase must have the repository migrations applied in order. Schema drift must be checked before enabling new financial workflows. Do not infer migration state from a successful frontend build.
 
+CI additionally boots a fresh local Supabase/PostgreSQL database, applies the full migration chain from zero and executes the Golden Path database contract. This proves clean schema reconstruction; it does not prove recovery of production data.
+
 ## Dependency risk
 
 CI currently blocks critical production dependency vulnerabilities. High/moderate advisories must be remediated through reviewed dependency upgrades rather than `npm audit fix --force`.
@@ -70,16 +72,14 @@ Upgrade procedure:
 
 ## Backup and recovery
 
-Before enabling material financial operations, document and test:
+The authoritative procedure is `docs/infrastructure/BACKUP_RESTORE.md`.
 
-- Supabase database backup availability and retention.
-- Point-in-time recovery availability for the selected plan.
-- Storage recovery expectations.
-- Recovery owner and escalation path.
-- Restore rehearsal procedure.
+Current production recovery status must not be inferred from successful migrations or CI. Database data and Storage object recovery remain **UNVERIFIED** until a real production-derived backup is restored to a non-production target and the recovery evidence is recorded.
 
 A backup that has never been restored is not considered verified recovery capability.
 
 ## Production sign-off
 
 A release is production-ready only when code, CI, Render deployment, environment configuration, Supabase schema and critical user journeys are all verified. A green build alone is insufficient.
+
+Material financial activation additionally requires the recovery gate in `BACKUP_RESTORE.md` to be satisfied.
