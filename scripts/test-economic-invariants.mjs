@@ -34,6 +34,8 @@ for (const forbidden of ['CAPITAL_PER_CASE_CENTS', 'PROJECTED_NDLP_RATIO', 'PART
 assert.ok(simulatorClient.includes('deriveLotScenario'), 'Live-lot simulator scenarios must use the shared lot-snapshot calculator.');
 assert.ok(simulatorClient.includes('escenario ilustrativo de referencia'), 'No-lot simulator state must be disclosed as illustrative rather than a live offer.');
 assert.ok(simulatorClient.includes('Una orden real nunca usa las cifras ilustrativas'), 'Simulator must explicitly separate illustrative assumptions from transactional order economics.');
+assert.ok(simulatorClient.includes('const liveParticipantShare = formula ? Number(formula.participant_profit_share) : null'), 'Live-lot mode must never fall back to the illustrative participant share when no formula is active.');
+assert.ok(simulatorClient.includes("liveParticipantShare == null ? '—'"), 'Live-lot participant share must display unavailable without an active formula.');
 assert.ok(simulatorProfile.includes("id: 'reference-v1'"), 'Public fallback assumptions must be isolated in a named/versionable profile.');
 assert.ok(simulatorProfile.includes('capitalPerCaseCents: 33_600_000'), 'Reference profile must preserve the previously published capital-per-case assumption.');
 assert.ok(simulatorProfile.includes('projectedNdlpRatio: 0.357'), 'Reference profile must preserve the previously published illustrative NDLP assumption.');
@@ -45,11 +47,14 @@ assert.ok(commercialRules.includes('MIN_INVESTMENT_CASES = 2'), 'Commercial rule
 assert.ok(checkout.includes('MIN_INVESTMENT_CASES'), 'Checkout must consume the shared two-case minimum rule.');
 assert.ok(checkout.includes('cases <= MIN_INVESTMENT_CASES'), 'Checkout decrement control must stop at the minimum.');
 assert.ok(checkout.includes('min={MIN_INVESTMENT_CASES}'), 'Checkout numeric input must expose the two-case minimum.');
-assert.ok(minimumMigration.includes('check (case_equivalent_units >= 2)'), 'Database constraint must reject investment orders below two cases.');
+assert.ok(minimumMigration.includes('check (case_equivalent_units >= 2) not valid'), 'Database constraint must enforce two cases for new writes without invalidating historical one-case orders.');
 assert.ok(minimumMigration.includes("p_case_equivalent_units < 2"), 'Order RPC must reject requests below two cases.');
 assert.ok(minimumMigration.includes("raise exception 'minimum investment is 2 cases'"), 'Order RPC must fail with an explicit minimum-investment reason.');
 
 assert.ok(languageContext.includes('translateInvestmentEconomicsPhrase'), 'LanguageContext must route investment economics through parameter-aware translations.');
+assert.ok(economicsTranslations.includes("en: 'Participation simulator'"), 'Restored simulator heading must have an English translation contract.');
+assert.ok(economicsTranslations.includes('Number of cases · minimum ${match[1]}'), 'Dynamic minimum-case labels must translate to English.');
+assert.ok(economicsTranslations.includes('The simulator is informational.'), 'Dynamic simulator disclaimer must have an English translation pattern.');
 assert.ok(economicsTranslations.includes('Economía unitaria · (.+)'), 'Dynamic lot-code economics badges must have translation coverage.');
 assert.ok(economicsTranslations.includes('Advertising · ${match[1]} on pre-INC base'), 'Dynamic advertising-rate labels must have translation coverage.');
 
