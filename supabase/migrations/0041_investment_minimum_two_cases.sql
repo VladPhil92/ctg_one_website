@@ -2,13 +2,16 @@
 --
 -- Business rule: every new investment order requires at least two cases.
 -- Transactional capital remains derived exclusively from the selected lot snapshot.
+-- The replacement CHECK is NOT VALID so any historical one-case order that was
+-- legitimate under the previous rule remains readable; PostgreSQL still enforces
+-- the new >= 2 rule for every row inserted or updated after this migration.
 
 alter table public.investment_orders
   drop constraint if exists investment_orders_case_equivalent_units_check;
 
 alter table public.investment_orders
   add constraint investment_orders_case_equivalent_units_check
-  check (case_equivalent_units >= 2);
+  check (case_equivalent_units >= 2) not valid;
 
 create or replace function public.create_investment_order(
   p_lot_id uuid,
