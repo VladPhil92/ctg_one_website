@@ -37,7 +37,7 @@ export async function getPublicSimulationLots(): Promise<InvestmentProductionLot
   const lots = await getPublicLots();
   const eligible = lots.filter(
     (lot) => lot.status !== 'DRAFT'
-      && lot.total_cases >= MIN_INVESTMENT_CASES
+      && lot.total_eligible_units >= MIN_INVESTMENT_CASES
       && hasCompleteLotEconomics(lot),
   );
 
@@ -88,11 +88,12 @@ export async function getLotFundingSummary(lot: InvestmentProductionLot): Promis
     .eq('lot_id', lot.id);
 
   const allocatedCases = (data ?? []).reduce((sum, row) => sum + row.case_equivalent_units, 0);
+  const fundableCases = lot.total_eligible_units;
   return {
-    totalCases: lot.total_cases,
+    totalCases: fundableCases,
     allocatedCases,
-    fundedPercent: lot.total_cases > 0 ? Math.round((allocatedCases / lot.total_cases) * 100) : 0,
-    availableCasesEquivalent: Math.max(lot.total_cases - allocatedCases, 0),
+    fundedPercent: fundableCases > 0 ? Math.round((allocatedCases / fundableCases) * 100) : 0,
+    availableCasesEquivalent: Math.max(fundableCases - allocatedCases, 0),
   };
 }
 
