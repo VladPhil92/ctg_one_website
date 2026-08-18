@@ -18,7 +18,7 @@ const ITEMS: Item[] = [
   { href: '/admin/operations/returns', label: 'Devoluciones', roles: ['SUPER_ADMIN','SALES_MANAGER'] },
   { href: '/admin/operations/labels', label: 'QR & Labels', roles: ['SUPER_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER'] },
   { href: '/admin/operations/settlement', label: 'Settlement', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
-  { href: '/inversion/admin/orders', label: 'Inversiones', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
+  { href: '/inversion/admin/orders', label: 'Verificación Bancolombia', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
   { href: '/admin/finance/rails', label: 'Payment Rails', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
   { href: '/admin/finance/reconciliation', label: 'Provider Reconciliation', roles: ['SUPER_ADMIN','FINANCE_ADMIN','AUDITOR'] },
   { href: '/admin/roles', label: 'Roles', roles: ['SUPER_ADMIN'] },
