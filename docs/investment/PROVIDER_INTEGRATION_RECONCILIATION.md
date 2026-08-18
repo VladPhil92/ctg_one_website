@@ -1,6 +1,6 @@
 # Provider Integration & Automated Reconciliation — CTG Craft Beer Investment OS
 
-Status: provider-neutral foundation in `0034_provider_reconciliation_engine.sql`, with manual-target hardening in `0035_provider_reconciliation_target_hardening.sql`.
+Status: provider-neutral foundation in `0034_provider_reconciliation_engine.sql`, manual-target hardening in `0035_provider_reconciliation_target_hardening.sql`, and FK-index hardening in `0036_provider_reconciliation_fk_indexes.sql`.
 
 ## Objective
 
@@ -168,10 +168,21 @@ The UI warns operators not to paste full statements or account numbers.
 - confirmed payout mismatches;
 - failed payout mismatches.
 
+## Performance hardening
+
+`0036` adds covering indexes for the three provider-reconciliation foreign keys reported by Supabase Performance Advisor:
+
+- `investment_financial_provider_events.ingested_by`;
+- `investment_financial_event_matches.actor_id`;
+- `investment_financial_event_matches.receipt_id`.
+
+The order, payout and provider-event relationships were already covered by indexes defined in `0034`.
+
 ## Migration sequence
 
 1. `0034_provider_reconciliation_engine.sql` — normalized provider-event store, decision genealogy, ingestion, deterministic matching, manual inbox and health.
 2. `0035_provider_reconciliation_target_hardening.sql` — validate provider, rail and amount before any manual outbound payout resolution.
+3. `0036_provider_reconciliation_fk_indexes.sql` — cover the remaining actor/receipt foreign keys identified by Performance Advisor.
 
 ## Next provider-specific step
 
