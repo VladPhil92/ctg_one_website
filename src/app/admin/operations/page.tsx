@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import {
   LOT_NEXT_STATUS,
@@ -16,6 +15,11 @@ import {
   hasCompleteStyleEconomics,
   lotCodePreview,
 } from '@/lib/production/lot-config';
+import {
+  createOperationsBrowserRepository,
+  type BottleUnit,
+  type SalesChannel,
+} from '@/modules/operations/infrastructure/browser-repository';
 import {
   Activity,
   Beer,
@@ -46,26 +50,8 @@ const UNIT_STATUS_OPTIONS = [
 // authoritative sale document so settlement can reconcile every commercial peso.
 const FINANCIAL_TYPES = ['PRODUCTION_COST', 'COMMERCIAL_COST', 'ADJUSTMENT'] as const;
 
-type BottleUnit = {
-  id: string;
-  lot_id: string;
-  serial_code: string;
-  unit_number: number;
-  status: string;
-  current_location: string | null;
-  sold_at: string | null;
-  sale_price_cents: number | null;
-};
-
-type SalesChannel = {
-  id: string;
-  code: string;
-  name: string;
-  active: boolean;
-};
-
 export default function OperationsAdminPage() {
-  const supabase = useMemo(() => createClient(), []);
+  const operations = useMemo(() => createOperationsBrowserRepository(), []);
   const [lots, setLots] = useState<InvestmentProductionLot[]>([]);
   const [beerStyles, setBeerStyles] = useState<InvestmentBeerStyle[]>([]);
   const [salesChannels, setSalesChannels] = useState<SalesChannel[]>([]);
@@ -82,51 +68,38 @@ export default function OperationsAdminPage() {
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const { data, error: lotError } = await supabase
-      .from('investment_production_lots')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (lotError) setError(lotError.message);
-    const rows = (data ?? []) as InvestmentProductionLot[];
-    setLots(rows);
-    setSelectedId((previous) => previous || rows[0]?.id || '');
-    setLoading(false);
-  }, [supabase]);
+    try {
+      const rows = await operations.listLots();
+      setLots(rows);
+      setSelectedId((previous) => previous || rows[0]?.id || '');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudieron cargar los lotes');
+      setLots([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [operations]);
 
   const refreshStyles = useCallback(async () => {
     setStylesLoading(true);
-    const { data, error: styleError } = await supabase
-      .from('investment_beer_styles')
-      .select(
-        'id,code,slug,name,description,abv_target,units_per_case,standard_production_cost_unit_cents,standard_label_cost_unit_cents,standard_transport_cost_unit_cents,standard_own_point_price_unit_cents,standard_b2b_price_unit_cents,standard_inc_rate,standard_advertising_rate_on_pre_inc,active',
-      )
-      .eq('active', true)
-      .order('name');
-
-    if (styleError) {
-      setError(`No se pudo cargar Beer Style Master Data: ${styleError.message}`);
+    try {
+      setBeerStyles(await operations.listBeerStyles());
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo cargar Beer Style Master Data');
       setBeerStyles([]);
-    } else {
-      setBeerStyles((data ?? []) as InvestmentBeerStyle[]);
+    } finally {
+      setStylesLoading(false);
     }
-    setStylesLoading(false);
-  }, [supabase]);
+  }, [operations]);
 
   const refreshSalesChannels = useCallback(async () => {
-    const { data, error: channelError } = await supabase
-      .from('investment_sales_channels')
-      .select('id,code,name,active')
-      .eq('active', true)
-      .order('name');
-
-    if (channelError) {
-      setError(`No se pudieron cargar los canales de venta: ${channelError.message}`);
+    try {
+      setSalesChannels(await operations.listSalesChannels());
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudieron cargar los canales de venta');
       setSalesChannels([]);
-      return;
     }
-    setSalesChannels((data ?? []) as SalesChannel[]);
-  }, [supabase]);
+  }, [operations]);
 
   const refreshBottles = useCallback(async () => {
     const lotId = selectedId || lots[0]?.id;
@@ -134,16 +107,13 @@ export default function OperationsAdminPage() {
       setBottles([]);
       return;
     }
-
-    const { data } = await supabase
-      .from('investment_bottle_units')
-      .select('id,lot_id,serial_code,unit_number,status,current_location,sold_at,sale_price_cents')
-      .eq('lot_id', lotId)
-      .order('unit_number', { ascending: false })
-      .limit(250);
-
-    setBottles((data ?? []) as BottleUnit[]);
-  }, [selectedId, lots, supabase]);
+    try {
+      setBottles(await operations.listBottleUnits(lotId));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudieron cargar las unidades serializadas');
+      setBottles([]);
+    }
+  }, [selectedId, lots, operations]);
 
   useEffect(() => {
     void refresh();
@@ -232,13 +202,13 @@ export default function OperationsAdminPage() {
           busy={busy}
           onCreate={(payload) =>
             run(
-              async () => supabase.rpc('create_production_lot_from_style', payload),
+              async () => operations.createLot(payload),
               'Lote creado correctamente con snapshot económico persistido.',
             )
           }
           onSaveDefaults={(payload) =>
             run(
-              async () => supabase.rpc('update_investment_beer_style_economics', payload),
+              async () => operations.saveBeerStyleEconomics(payload),
               'Presets económicos del estilo actualizados.',
             )
           }
@@ -298,13 +268,12 @@ export default function OperationsAdminPage() {
               busy={busy}
               onTransition={(next, notes) =>
                 run(
-                  async () =>
-                    supabase.rpc('transition_lot_status', {
-                      p_lot_id: selected.id,
-                      p_new_status: next,
-                      p_notes: notes || null,
-                      p_evidence_document_id: null,
-                    }),
+                  async () => operations.transitionLot({
+                    p_lot_id: selected.id,
+                    p_new_status: next,
+                    p_notes: notes || null,
+                    p_evidence_document_id: null,
+                  }),
                   `Lote actualizado a ${LOT_STATUS_LABELS[next]}.`,
                 )
               }
@@ -314,7 +283,7 @@ export default function OperationsAdminPage() {
               busy={busy}
               onGenerate={(quantity) =>
                 run(
-                  async () => supabase.rpc('generate_bottle_units', { p_lot_id: selected.id, p_quantity: quantity }),
+                  async () => operations.generateBottleUnits({ p_lot_id: selected.id, p_quantity: quantity }),
                   `${quantity} unidades serializadas.`,
                 )
               }
@@ -327,13 +296,12 @@ export default function OperationsAdminPage() {
               busy={busy}
               onMove={(serials, status, location) =>
                 run(
-                  async () =>
-                    supabase.rpc('update_bottle_units_status', {
-                      p_lot_id: selected.id,
-                      p_serial_codes: serials,
-                      p_new_status: status,
-                      p_location: location || null,
-                    }),
+                  async () => operations.updateBottleUnits({
+                    p_lot_id: selected.id,
+                    p_serial_codes: serials,
+                    p_new_status: status,
+                    p_location: location || null,
+                  }),
                   `${serials.length} unidades actualizadas.`,
                 )
               }
@@ -344,17 +312,16 @@ export default function OperationsAdminPage() {
               busy={busy}
               onSale={(payload) =>
                 run(
-                  async () =>
-                    supabase.rpc('record_bottle_sale_document', {
-                      p_lot_id: selected.id,
-                      p_serial_codes: payload.serials,
-                      p_unit_price_cents: Math.round(payload.unitPriceCop * 100),
-                      p_channel_code: payload.channelCode,
-                      p_idempotency_key: payload.idempotencyKey,
-                      p_sale_reference: payload.reference || null,
-                      p_location: payload.location || null,
-                      p_tax_cents: Math.round(payload.taxCop * 100),
-                    }),
+                  async () => operations.recordBottleSale({
+                    p_lot_id: selected.id,
+                    p_serial_codes: payload.serials,
+                    p_unit_price_cents: Math.round(payload.unitPriceCop * 100),
+                    p_channel_code: payload.channelCode,
+                    p_idempotency_key: payload.idempotencyKey,
+                    p_sale_reference: payload.reference || null,
+                    p_location: payload.location || null,
+                    p_tax_cents: Math.round(payload.taxCop * 100),
+                  }),
                   `Venta Sales OS registrada para ${payload.serials.length} unidades.`,
                 )
               }
@@ -366,13 +333,12 @@ export default function OperationsAdminPage() {
               busy={busy}
               onRecord={(type, amountCop, description) =>
                 run(
-                  async () =>
-                    supabase.rpc('record_lot_financial_entry', {
-                      p_lot_id: selected.id,
-                      p_entry_type: type,
-                      p_amount_cents: Math.round(amountCop * 100),
-                      p_description: description || null,
-                    }),
+                  async () => operations.recordLotFinancialEntry({
+                    p_lot_id: selected.id,
+                    p_entry_type: type,
+                    p_amount_cents: Math.round(amountCop * 100),
+                    p_description: description || null,
+                  }),
                   'Hecho financiero registrado.',
                 )
               }
