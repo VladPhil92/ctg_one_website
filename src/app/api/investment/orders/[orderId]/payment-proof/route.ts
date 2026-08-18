@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
@@ -15,7 +15,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
-  if (!isSupabaseConfigured) return NextResponse.json({ error: 'not available' }, { status: 503 });
+  if (!isSupabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'not available' }, { status: 503 });
+  }
 
   const { orderId } = await params;
   const formData = await request.formData();
@@ -33,11 +35,12 @@ export async function POST(
     return NextResponse.json({ error: 'unsupported payment proof type' }, { status: 415 });
   }
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Authentication/ownership is verified with the participant session first.
+  const participantClient = await createClient();
+  const { data: { user } } = await participantClient.auth.getUser();
   if (!user) return NextResponse.json({ error: 'not authenticated' }, { status: 401 });
 
-  const { data: order, error: orderError } = await supabase
+  const { data: order, error: orderError } = await participantClient
     .from('investment_orders')
     .select('id,participant_user_id,status')
     .eq('id', orderId)
@@ -51,7 +54,11 @@ export async function POST(
   const sha256 = createHash('sha256').update(bytes).digest('hex');
   const storagePath = `${user.id}/investment-orders/${orderId}/${sha256}.${extension}`;
 
-  const { error: uploadError } = await supabase.storage
+  // From here onward the server uses service_role only for two narrowly scoped
+  // operations: writing the already-authorized private proof and persisting the
+  // server-computed digest through a service-role-only RPC.
+  const admin = createAdminClient();
+  const { error: uploadError } = await admin.storage
     .from('payment-proofs')
     .upload(storagePath, bytes, { contentType: candidate.type, upsert: false });
 
@@ -59,7 +66,8 @@ export async function POST(
     return NextResponse.json({ error: uploadError.message }, { status: 400 });
   }
 
-  const { data, error: rpcError } = await supabase.rpc('submit_investment_order_bank_proof', {
+  const { data, error: rpcError } = await admin.rpc('submit_investment_order_bank_proof_server', {
+    p_participant_user_id: user.id,
     p_order_id: orderId,
     p_payment_proof_storage_path: storagePath,
     p_payment_proof_sha256: sha256,
@@ -68,6 +76,9 @@ export async function POST(
   });
 
   if (rpcError) {
+    // The DB is the authority. If it rejects a duplicate/mismatched submission,
+    // remove the just-uploaded object so stale evidence is not left behind.
+    await admin.storage.from('payment-proofs').remove([storagePath]);
     return NextResponse.json({ error: rpcError.message }, { status: 409 });
   }
 
