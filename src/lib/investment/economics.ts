@@ -7,8 +7,8 @@ import type {
 } from '@/types/investment-economics';
 import { MIN_INVESTMENT_CASES } from '@/lib/investment/constants';
 
-function finiteNonNegative(value: number): number {
-  return Number.isFinite(value) ? Math.max(0, value) : 0;
+function finiteNonNegative(value: number | null | undefined): number {
+  return Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
 }
 
 function normalizedRate(value: number): number {
@@ -20,6 +20,7 @@ export function hasCompleteLotEconomics(lot: LotEconomicsSnapshot): boolean {
   return [
     lot.production_cost_unit_cents,
     lot.label_cost_unit_cents,
+    lot.transport_cost_unit_cents,
     lot.own_point_price_unit_cents,
     lot.b2b_price_unit_cents,
     lot.inc_rate,
@@ -28,6 +29,7 @@ export function hasCompleteLotEconomics(lot: LotEconomicsSnapshot): boolean {
   ].every((value) => value != null && Number.isFinite(Number(value)))
     && lot.production_cost_unit_cents >= 0
     && lot.label_cost_unit_cents >= 0
+    && Number(lot.transport_cost_unit_cents) >= 0
     && lot.own_point_price_unit_cents > 0
     && lot.b2b_price_unit_cents > 0
     && lot.case_size_units > 0
@@ -35,18 +37,22 @@ export function hasCompleteLotEconomics(lot: LotEconomicsSnapshot): boolean {
     && lot.inc_rate <= 1
     && lot.advertising_rate_on_pre_inc >= 0
     && lot.advertising_rate_on_pre_inc <= 1
-    && lot.production_cost_unit_cents + lot.label_cost_unit_cents > 0;
+    && lot.production_cost_unit_cents + lot.label_cost_unit_cents + Number(lot.transport_cost_unit_cents) > 0;
 }
 
 export function deriveUnitEconomics(lot: LotEconomicsSnapshot): UnitEconomicsResult {
   const productionCost = finiteNonNegative(lot.production_cost_unit_cents);
   const labelCost = finiteNonNegative(lot.label_cost_unit_cents);
+  const transportCost = finiteNonNegative(lot.transport_cost_unit_cents);
   const ownPointGross = finiteNonNegative(lot.own_point_price_unit_cents);
   const b2bGross = finiteNonNegative(lot.b2b_price_unit_cents);
   const incRate = normalizedRate(lot.inc_rate);
   const advertisingRate = normalizedRate(lot.advertising_rate_on_pre_inc);
 
-  const totalUnitCostCents = productionCost + labelCost;
+  const totalUnitCostCents = productionCost + labelCost + transportCost;
+
+  // Both published sales prices are tax-inclusive. Marketing applies only to
+  // owned-location sales and is calculated on the pre-INC base.
   const ownPointPreIncCents = Math.round(ownPointGross / (1 + incRate));
   const ownPointIncCents = ownPointGross - ownPointPreIncCents;
   const ownPointAdvertisingCents = Math.round(ownPointPreIncCents * advertisingRate);
@@ -54,7 +60,10 @@ export function deriveUnitEconomics(lot: LotEconomicsSnapshot): UnitEconomicsRes
     - ownPointIncCents
     - ownPointAdvertisingCents
     - totalUnitCostCents;
-  const b2bContributionCents = b2bGross - totalUnitCostCents;
+
+  const b2bPreIncCents = Math.round(b2bGross / (1 + incRate));
+  const b2bIncCents = b2bGross - b2bPreIncCents;
+  const b2bContributionCents = b2bGross - b2bIncCents - totalUnitCostCents;
 
   return {
     totalUnitCostCents,
@@ -62,6 +71,8 @@ export function deriveUnitEconomics(lot: LotEconomicsSnapshot): UnitEconomicsRes
     ownPointIncCents,
     ownPointAdvertisingCents,
     ownPointContributionCents,
+    b2bPreIncCents,
+    b2bIncCents,
     b2bContributionCents,
     ownPointMargin: ownPointGross > 0 ? ownPointContributionCents / ownPointGross : null,
     b2bMargin: b2bGross > 0 ? b2bContributionCents / b2bGross : null,
