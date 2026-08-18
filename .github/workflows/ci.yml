@@ -73,6 +73,9 @@ jobs:
       - name: Verify runner Chrome availability
         run: google-chrome --version
 
+      - name: Install Playwright video runtime
+        run: npx playwright install ffmpeg
+
       - name: Run browser E2E tests
         run: npx playwright test --project=chromium
 
