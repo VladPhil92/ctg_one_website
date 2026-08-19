@@ -37,6 +37,12 @@ for (const privatePrefix of ['/dashboard', '/admin', '/knowledge', '/inversion/a
   );
 }
 
+assert.doesNotMatch(
+  sitemap,
+  /lastModified\s*:\s*(?:new\s+Date\s*\(|now\b)/,
+  'Sitemap must not claim synthetic request/build-time lastModified values. Use an authoritative content timestamp or omit the field.',
+);
+
 for (const [path, source] of [
   ['/technology/status', technologyStatusLayout],
   ['/changelog', changelogLayout],
