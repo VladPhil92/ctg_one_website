@@ -40,12 +40,13 @@ export default function RegistroPage() {
     setIsSubmitting(true);
     try {
       const supabase = createClient();
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
       const { error: signUpError } = await supabase.auth.signUp({
         email: parsed.data.email,
         password: parsed.data.password,
         options: {
           data: { full_name: parsed.data.fullName, phone: parsed.data.phone },
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/iniciar-sesion`,
+          emailRedirectTo: `${siteUrl}/auth/callback?next=/dashboard`,
         },
       });
       if (signUpError) throw signUpError;
@@ -63,7 +64,7 @@ export default function RegistroPage() {
         <h1 className="text-lg font-outfit font-semibold text-white mb-3">Revisa tu correo</h1>
         <p className="text-sm text-text-muted leading-relaxed">
           Te enviamos un enlace de confirmación a <strong className="text-white">{email}</strong>.
-          Confírmalo antes de iniciar sesión.
+          Confírmalo para activar tu cuenta.
         </p>
       </div>
     );
