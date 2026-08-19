@@ -65,7 +65,9 @@ assert.doesNotMatch(simulatorClient, /max=\{selected\.total_cases\}/, 'Simulator
 assert.match(simulatorClient, /simulationExceedsLiveCapacity/, 'Simulator must detect scenarios above current reservable capacity.');
 assert.match(simulatorClient, /El cálculo sigue siendo válido como escenario económico del snapshot, no como reserva de cupo/, 'Simulator must explain the distinction between scenario size and live capacity.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION\s*=\s*'0061'/);
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*61/);
+const schemaMatch = schemaVersion.match(/EXPECTED_DATABASE_MIGRATION\s*=\s*'(\d{4})'/);
+const countMatch = schemaVersion.match(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/);
+assert.ok(schemaMatch && Number(schemaMatch[1]) >= 61, 'Runtime schema must remain at or beyond public lot operational boundary 0061.');
+assert.ok(countMatch && Number(countMatch[1]) >= 61, 'Runtime migration count must remain at or beyond public lot operational boundary 0061.');
 
 console.log('Public lot operational truth invariants: PASS');

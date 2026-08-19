@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { ClientPagination } from '@/components/admin/ClientPagination';
+import { pageCount } from '@/lib/pagination';
 import {
   LOT_NEXT_STATUS,
   LOT_STATUS_LABELS,
@@ -46,18 +48,28 @@ const UNIT_STATUS_OPTIONS = [
   'RECALLED',
 ] as const;
 
+const LOT_PAGE_SIZE = 20;
+const BOTTLE_PAGE_SIZE = 60;
+
 // REVENUE and TAX are no longer manual facts. Sales OS writes both from the
 // authoritative sale document so settlement can reconcile every commercial peso.
 const FINANCIAL_TYPES = ['PRODUCTION_COST', 'COMMERCIAL_COST', 'ADJUSTMENT'] as const;
 
 export default function OperationsAdminPage() {
   const operations = useMemo(() => createOperationsBrowserRepository(), []);
+  const inventoryRequestGeneration = useRef(0);
   const [lots, setLots] = useState<InvestmentProductionLot[]>([]);
+  const [lotPage, setLotPage] = useState(1);
+  const [lotTotalCount, setLotTotalCount] = useState(0);
   const [beerStyles, setBeerStyles] = useState<InvestmentBeerStyle[]>([]);
   const [salesChannels, setSalesChannels] = useState<SalesChannel[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [bottles, setBottles] = useState<BottleUnit[]>([]);
+  const [bottlePage, setBottlePage] = useState(1);
+  const [bottleTotalCount, setBottleTotalCount] = useState(0);
+  const [bottleCounts, setBottleCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
   const [stylesLoading, setStylesLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -69,16 +81,26 @@ export default function OperationsAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const rows = await operations.listLots();
-      setLots(rows);
-      setSelectedId((previous) => previous || rows[0]?.id || '');
+      const result = await operations.listLots(lotPage, LOT_PAGE_SIZE);
+      const maxPage = pageCount(result.totalCount, LOT_PAGE_SIZE);
+      setLotTotalCount(result.totalCount);
+      if (lotPage > maxPage) {
+        setLotPage(maxPage);
+        return;
+      }
+      setLots(result.rows);
+      setSelectedId((previous) =>
+        result.rows.some((lot) => lot.id === previous) ? previous : (result.rows[0]?.id ?? ''),
+      );
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'No se pudieron cargar los lotes');
       setLots([]);
+      setLotTotalCount(0);
+      setSelectedId('');
     } finally {
       setLoading(false);
     }
-  }, [operations]);
+  }, [lotPage, operations]);
 
   const refreshStyles = useCallback(async () => {
     setStylesLoading(true);
@@ -103,17 +125,37 @@ export default function OperationsAdminPage() {
 
   const refreshBottles = useCallback(async () => {
     const lotId = selectedId || lots[0]?.id;
+    const requestGeneration = ++inventoryRequestGeneration.current;
     if (!lotId) {
       setBottles([]);
+      setBottleCounts({});
+      setBottleTotalCount(0);
       return;
     }
+
+    setInventoryLoading(true);
     try {
-      setBottles(await operations.listBottleUnits(lotId));
+      const snapshot = await operations.getLotInventorySnapshot(lotId, bottlePage, BOTTLE_PAGE_SIZE);
+      if (requestGeneration !== inventoryRequestGeneration.current || snapshot.lotId !== lotId) return;
+
+      const maxPage = pageCount(snapshot.totalUnits, BOTTLE_PAGE_SIZE);
+      setBottleTotalCount(snapshot.totalUnits);
+      setBottleCounts(snapshot.statusCounts);
+      if (bottlePage > maxPage) {
+        setBottlePage(maxPage);
+        return;
+      }
+      setBottles(snapshot.units);
     } catch (caught) {
+      if (requestGeneration !== inventoryRequestGeneration.current) return;
       setError(caught instanceof Error ? caught.message : 'No se pudieron cargar las unidades serializadas');
       setBottles([]);
+      setBottleCounts({});
+      setBottleTotalCount(0);
+    } finally {
+      if (requestGeneration === inventoryRequestGeneration.current) setInventoryLoading(false);
     }
-  }, [selectedId, lots, operations]);
+  }, [selectedId, lots, bottlePage, operations]);
 
   useEffect(() => {
     void refresh();
@@ -124,6 +166,19 @@ export default function OperationsAdminPage() {
   useEffect(() => {
     void refreshBottles();
   }, [refreshBottles]);
+
+  const selectLot = (lotId: string) => {
+    inventoryRequestGeneration.current += 1;
+    setBottlePage(1);
+    setSelectedId(lotId);
+  };
+
+  const changeLotPage = (page: number) => {
+    inventoryRequestGeneration.current += 1;
+    setBottlePage(1);
+    setSelectedId('');
+    setLotPage(page);
+  };
 
   const run = async (
     fn: () => Promise<{ error?: { message: string } | null }>,
@@ -147,10 +202,6 @@ export default function OperationsAdminPage() {
     }
   };
 
-  const bottleCounts = bottles.reduce<Record<string, number>>((acc, bottle) => {
-    acc[bottle.status] = (acc[bottle.status] || 0) + 1;
-    return acc;
-  }, {});
   const totalPhysicalCapacity = selected ? selected.total_cases * selected.case_size_units : 0;
 
   return (
@@ -173,6 +224,7 @@ export default function OperationsAdminPage() {
               void refresh();
               void refreshStyles();
               void refreshSalesChannels();
+              void refreshBottles();
             }}
             variant="secondary"
             size="sm"
@@ -227,28 +279,37 @@ export default function OperationsAdminPage() {
           ) : lots.length === 0 ? (
             <p className="text-sm text-text-muted">Aún no hay lotes registrados.</p>
           ) : (
-            <div className="grid sm:grid-cols-2 gap-3 max-h-[420px] overflow-y-auto pr-1">
-              {lots.map((lot) => (
-                <button
-                  key={lot.id}
-                  onClick={() => setSelectedId(lot.id)}
-                  className="text-left rounded-xl border p-4 transition-colors"
-                  style={{
-                    borderColor: selected?.id === lot.id ? 'rgba(201,169,98,.35)' : 'rgba(255,255,255,.08)',
-                    background: selected?.id === lot.id ? 'rgba(201,169,98,.06)' : 'rgba(255,255,255,.015)',
-                  }}
-                >
-                  <div className="flex justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-white">{lot.beer_style}</p>
-                      <p className="text-[10px] font-mono text-text-dim mt-1">{lot.code}</p>
+            <>
+              <div className="grid sm:grid-cols-2 gap-3 max-h-[420px] overflow-y-auto pr-1">
+                {lots.map((lot) => (
+                  <button
+                    key={lot.id}
+                    onClick={() => selectLot(lot.id)}
+                    className="text-left rounded-xl border p-4 transition-colors"
+                    style={{
+                      borderColor: selected?.id === lot.id ? 'rgba(201,169,98,.35)' : 'rgba(255,255,255,.08)',
+                      background: selected?.id === lot.id ? 'rgba(201,169,98,.06)' : 'rgba(255,255,255,.015)',
+                    }}
+                  >
+                    <div className="flex justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{lot.beer_style}</p>
+                        <p className="text-[10px] font-mono text-text-dim mt-1">{lot.code}</p>
+                      </div>
+                      <span className="text-[8px] uppercase tracking-[.12em] text-accent">{LOT_STATUS_LABELS[lot.status]}</span>
                     </div>
-                    <span className="text-[8px] uppercase tracking-[.12em] text-accent">{LOT_STATUS_LABELS[lot.status]}</span>
-                  </div>
-                  <p className="text-[11px] text-text-muted mt-3">{lot.total_cases} cajas · {lot.case_size_units} und/caja · {lot.destination}</p>
-                </button>
-              ))}
-            </div>
+                    <p className="text-[11px] text-text-muted mt-3">{lot.total_cases} cajas · {lot.case_size_units} und/caja · {lot.destination}</p>
+                  </button>
+                ))}
+              </div>
+              <ClientPagination
+                page={lotPage}
+                pageSize={LOT_PAGE_SIZE}
+                totalCount={lotTotalCount}
+                onPageChange={changeLotPage}
+                disabled={loading || busy}
+              />
+            </>
           )}
         </div>
       </section>
@@ -257,7 +318,7 @@ export default function OperationsAdminPage() {
         <>
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Metric icon={<Boxes size={15} />} label="Capacidad física" value={`${totalPhysicalCapacity} und.`} />
-            <Metric icon={<QrCode size={15} />} label="Serializadas" value={String(bottles.length)} />
+            <Metric icon={<QrCode size={15} />} label="Serializadas" value={String(bottleTotalCount)} />
             <Metric icon={<PackageCheck size={15} />} label="En mercado" value={String(bottleCounts.IN_MARKET || 0)} />
             <Metric icon={<ShoppingCart size={15} />} label="Vendidas" value={String(bottleCounts.SOLD || 0)} />
           </section>
@@ -343,7 +404,14 @@ export default function OperationsAdminPage() {
                 )
               }
             />
-            <BottleRegistry bottles={bottles} />
+            <BottleRegistry
+              bottles={bottles}
+              loading={inventoryLoading}
+              page={bottlePage}
+              totalCount={bottleTotalCount}
+              onPageChange={setBottlePage}
+              disabled={busy}
+            />
           </section>
         </>
       )}
@@ -714,11 +782,38 @@ function FinancialPanel({
   );
 }
 
-function BottleRegistry({ bottles }: { bottles: BottleUnit[] }) {
+function BottleRegistry({
+  bottles,
+  loading,
+  page,
+  totalCount,
+  onPageChange,
+  disabled,
+}: {
+  bottles: BottleUnit[];
+  loading: boolean;
+  page: number;
+  totalCount: number;
+  onPageChange: (page: number) => void;
+  disabled: boolean;
+}) {
   return (
     <div className="adminPanel rounded-2xl p-5 sm:p-6 overflow-hidden">
-      <div className="flex justify-between gap-4 mb-5"><div><p className="micro">SERIAL REGISTRY</p><h2 className="text-xl font-outfit font-semibold text-white mt-1">Últimas unidades</h2></div><QrCode className="text-accent" size={19} /></div>
-      {bottles.length === 0 ? <p className="text-sm text-text-muted">No hay botellas serializadas para este lote.</p> : <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="text-text-dim border-b border-white/[.07]"><th className="py-3 pr-4">Serial</th><th className="py-3 pr-4">Estado</th><th className="py-3 pr-4">Ubicación</th><th className="py-3">Trace</th></tr></thead><tbody>{bottles.slice(0, 60).map((bottle) => <tr key={bottle.id} className="border-b border-white/[.045]"><td className="py-3 pr-4 font-mono text-white">{bottle.serial_code}</td><td className="py-3 pr-4 text-accent">{bottle.status}</td><td className="py-3 pr-4 text-text-muted">{bottle.current_location || '—'}</td><td className="py-3"><a className="text-accent hover:underline" href={`/beer/${encodeURIComponent(bottle.serial_code)}`} target="_blank">Abrir</a></td></tr>)}</tbody></table></div>}
+      <div className="flex justify-between gap-4 mb-5"><div><p className="micro">SERIAL REGISTRY</p><h2 className="text-xl font-outfit font-semibold text-white mt-1">Registro serializado</h2><p className="text-[10px] text-text-dim mt-1">{totalCount} unidades exactas · página acotada</p></div><QrCode className="text-accent" size={19} /></div>
+      {loading ? (
+        <p className="text-sm text-text-dim">Sincronizando inventario...</p>
+      ) : bottles.length === 0 ? (
+        <p className="text-sm text-text-muted">No hay botellas serializadas para este lote.</p>
+      ) : (
+        <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="text-text-dim border-b border-white/[.07]"><th className="py-3 pr-4">Serial</th><th className="py-3 pr-4">Estado</th><th className="py-3 pr-4">Ubicación</th><th className="py-3">Trace</th></tr></thead><tbody>{bottles.map((bottle) => <tr key={bottle.id} className="border-b border-white/[.045]"><td className="py-3 pr-4 font-mono text-white">{bottle.serial_code}</td><td className="py-3 pr-4 text-accent">{bottle.status}</td><td className="py-3 pr-4 text-text-muted">{bottle.current_location || '—'}</td><td className="py-3"><a className="text-accent hover:underline" href={`/beer/${encodeURIComponent(bottle.serial_code)}`} target="_blank">Abrir</a></td></tr>)}</tbody></table></div>
+      )}
+      <ClientPagination
+        page={page}
+        pageSize={BOTTLE_PAGE_SIZE}
+        totalCount={totalCount}
+        onPageChange={onPageChange}
+        disabled={disabled || loading}
+      />
     </div>
   );
 }
