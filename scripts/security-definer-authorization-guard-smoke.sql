@@ -11,39 +11,115 @@
 -- This is intentionally conservative: introducing a new guard idiom requires
 -- updating this reviewed contract rather than silently widening acceptance.
 
+-- Strip non-code lexical regions before scanning guard shapes. PostgreSQL block
+-- comments may nest, so a regex-only sanitizer is insufficient. This small
+-- lexer handles line comments, nested block comments, single-quoted strings,
+-- and tagged/untagged dollar-quoted strings. Literals become a neutral token so
+-- role-comparison guard structure remains inspectable without trusting content.
+CREATE OR REPLACE FUNCTION pg_temp.strip_sql_noncode(p_source text)
+RETURNS text
+LANGUAGE plpgsql
+IMMUTABLE
+STRICT
+AS $lexer$
+DECLARE
+  v_out text := '';
+  v_i integer := 1;
+  v_len integer := char_length(p_source);
+  v_ch text;
+  v_pair text;
+  v_depth integer;
+  v_closed boolean;
+  v_rest text;
+  v_tag text;
+  v_close_rel integer;
+BEGIN
+  WHILE v_i <= v_len LOOP
+    v_ch := substr(p_source, v_i, 1);
+    v_pair := substr(p_source, v_i, 2);
+
+    IF v_pair = '--' THEN
+      v_i := v_i + 2;
+      WHILE v_i <= v_len AND substr(p_source, v_i, 1) NOT IN (E'\n', E'\r') LOOP
+        v_i := v_i + 1;
+      END LOOP;
+      v_out := v_out || ' ';
+
+    ELSIF v_pair = '/*' THEN
+      v_depth := 1;
+      v_i := v_i + 2;
+      WHILE v_i <= v_len AND v_depth > 0 LOOP
+        v_pair := substr(p_source, v_i, 2);
+        IF v_pair = '/*' THEN
+          v_depth := v_depth + 1;
+          v_i := v_i + 2;
+        ELSIF v_pair = '*/' THEN
+          v_depth := v_depth - 1;
+          v_i := v_i + 2;
+        ELSE
+          v_i := v_i + 1;
+        END IF;
+      END LOOP;
+      IF v_depth <> 0 THEN
+        RAISE EXCEPTION 'unterminated block comment in function source';
+      END IF;
+      v_out := v_out || ' ';
+
+    ELSIF v_ch = '''' THEN
+      v_closed := false;
+      v_i := v_i + 1;
+      WHILE v_i <= v_len LOOP
+        IF substr(p_source, v_i, 1) = '''' THEN
+          IF v_i < v_len AND substr(p_source, v_i + 1, 1) = '''' THEN
+            v_i := v_i + 2;
+          ELSE
+            v_i := v_i + 1;
+            v_closed := true;
+            EXIT;
+          END IF;
+        ELSE
+          v_i := v_i + 1;
+        END IF;
+      END LOOP;
+      IF NOT v_closed THEN
+        RAISE EXCEPTION 'unterminated single-quoted string in function source';
+      END IF;
+      v_out := v_out || ' __literal__ ';
+
+    ELSIF v_ch = '$' THEN
+      v_rest := substr(p_source, v_i);
+      v_tag := substring(v_rest FROM '^\$[A-Za-z_][A-Za-z0-9_]*\$');
+      IF v_tag IS NULL AND substr(p_source, v_i, 2) = '$$' THEN
+        v_tag := '$$';
+      END IF;
+
+      IF v_tag IS NOT NULL THEN
+        v_close_rel := strpos(substr(p_source, v_i + char_length(v_tag)), v_tag);
+        IF v_close_rel = 0 THEN
+          RAISE EXCEPTION 'unterminated dollar-quoted string in function source';
+        END IF;
+        v_i := v_i + char_length(v_tag) + v_close_rel - 1 + char_length(v_tag);
+        v_out := v_out || ' __literal__ ';
+      ELSE
+        v_out := v_out || v_ch;
+        v_i := v_i + 1;
+      END IF;
+
+    ELSE
+      v_out := v_out || v_ch;
+      v_i := v_i + 1;
+    END IF;
+  END LOOP;
+
+  RETURN v_out;
+END;
+$lexer$;
+
 CREATE TEMP VIEW security_definer_authorization_guard_evaluation AS
 WITH exposed AS (
   SELECT
     n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS signature,
-    regexp_replace(
-      regexp_replace(
-        regexp_replace(
-          regexp_replace(
-            regexp_replace(
-              -- prosrc is the executable function body without the outer
-              -- CREATE FUNCTION dollar-quote wrapper, so nested dollar-quoted
-              -- text can be sanitized without erasing the body itself.
-              p.prosrc,
-              E'--[^\\n\\r]*',
-              '',
-              'g'
-            ),
-            E'/\\*([^*]|\\*+[^*/])*\\*+/',
-            '',
-            'g'
-          ),
-          E'\\$([A-Za-z_][A-Za-z0-9_]*)\\$[\\s\\S]*?\\$\\1\\$',
-          '',
-          'g'
-        ),
-        E'\\$\\$[\\s\\S]*?\\$\\$',
-        '',
-        'g'
-      ),
-      E'''([^'']|'''')*''',
-      '''''',
-      'g'
-    ) AS definition
+    pg_temp.strip_sql_noncode(p.prosrc) AS definition
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname IN ('public', 'graphql_public')
@@ -63,9 +139,9 @@ SELECT
     -- Authentication denial: a missing caller identity raises immediately.
     OR definition ~* E'if[[:space:]]+auth\\.uid\\(\\)[[:space:]]+is[[:space:]]+null[[:space:]]+then[\\s\\S]{0,120}raise[[:space:]]+exception'
 
-    -- Explicit role mismatch denial. String literals are stripped above, so the
-    -- reviewed role literal becomes ''.
-    OR definition ~* E'if[[:space:]]+public\\.get_investment_role\\(\\)[[:space:]]*(<>|!=)[[:space:]]*''''[[:space:]]+then[\\s\\S]{0,120}raise[[:space:]]+exception'
+    -- Explicit role mismatch denial. Literal contents are replaced by the
+    -- neutral __literal__ token before guard matching.
+    OR definition ~* E'if[[:space:]]+public\\.get_investment_role\\(\\)[[:space:]]*(<>|!=)[[:space:]]*__literal__[[:space:]]+then[\\s\\S]{0,120}raise[[:space:]]+exception'
 
     -- Only these reviewed identity/RBAC helper functions may use an
     -- identity-scoped SQL WHERE clause as their authorization semantics.
@@ -101,9 +177,8 @@ SELECT
   ) AS has_authorization_guard
 FROM exposed;
 
--- Negative control #1: merely mentioning auth.uid()/RBAC in executable code,
--- comments, single-quoted text, and tagged dollar-quoted text must NOT satisfy
--- the contract. CREATE (not OR REPLACE) deliberately fails on name collision.
+-- Negative control #1: mentions/lookalikes in comments and literal forms must
+-- not satisfy the guard detector, including nested block comments.
 CREATE FUNCTION public.__security_definer_unguarded_negative_control()
 RETURNS void
 LANGUAGE plpgsql
@@ -111,7 +186,13 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  -- if not public.is_admin() then raise exception 'fake comment guard'; end if;
+  -- if not public.is_admin() then raise exception 'fake line-comment guard'; end if;
+  /* outer
+    /* nested */
+    IF NOT public.is_admin() THEN
+      RAISE EXCEPTION 'fake nested-comment guard';
+    END IF;
+  */
   PERFORM auth.uid();
   PERFORM 'if not public.is_admin() then raise exception';
   PERFORM $msg$if not public.is_admin() then raise exception$msg$;
