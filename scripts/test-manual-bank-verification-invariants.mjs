@@ -6,6 +6,7 @@ const migration = await read('supabase/migrations/0037_manual_bancolombia_bank_v
 const trustBoundary = await read('supabase/migrations/0038_payment_proof_server_trust_boundary.sql');
 const referenceNormalization = await read('supabase/migrations/0039_manual_bank_reference_normalization.sql');
 const checkout = await read('src/components/inversion/InvestmentCheckoutClient.tsx');
+const checkoutRepository = await read('src/modules/investment/checkout/browser-repository.ts');
 const uploadRoute = await read('src/app/api/investment/orders/[orderId]/payment-proof/route.ts');
 const admin = await read('src/app/inversion/admin/orders/page.tsx');
 const paymentConfig = await read('src/lib/payment-instructions.ts');
@@ -46,8 +47,10 @@ assert.ok(uploadRoute.includes('objectCreatedByThisRequest') && uploadRoute.incl
 assert.ok(checkout.includes('INVESTMENT_BANK_TRANSFER_INSTRUCTIONS') && checkout.includes('Ver QR Bancolombia'), 'Checkout must present the approved Bancolombia QR flow.');
 assert.ok(checkout.includes('pendiente de verificación bancaria humana'), 'Checkout must clearly state that proof upload does not approve the investment.');
 assert.ok(!checkout.includes("'pse'") && !checkout.includes("'bre_b_qr'") && !checkout.includes("'crypto'"), 'Investment checkout must not offer unavailable paid-provider rails.');
-assert.ok(checkout.includes("'Content-Type': proof.type") && checkout.includes("'X-File-Name': encodeURIComponent"), 'Checkout must send the proof as a raw bounded upload, not multipart FormData.');
-assert.ok(checkout.includes('/payment-proof'), 'Checkout must use the server-hashed proof upload endpoint.');
+assert.ok(checkout.includes('uploadInvestmentPaymentProof'), 'Checkout UI must delegate proof transport through the browser repository boundary.');
+assert.ok(checkoutRepository.includes("'Content-Type': input.proof.type") && checkoutRepository.includes("'X-File-Name': encodeURIComponent"), 'Checkout repository must send the proof as a raw bounded upload, not multipart FormData.');
+assert.ok(checkoutRepository.includes('/payment-proof'), 'Checkout repository must use the server-hashed proof upload endpoint.');
+assert.ok(!checkoutRepository.includes('FormData'), 'Checkout repository must not regress to multipart FormData uploads.');
 
 assert.ok(admin.includes("rpc('verify_investment_bancolombia_transfer'"), 'Finance UI must use the human bank verification RPC.');
 assert.ok(admin.includes('No confirmes por apariencia del comprobante'), 'Finance UI must explicitly warn that visual proof appearance is not authoritative.');
