@@ -6,6 +6,7 @@ const root = new URL('../', import.meta.url);
 const read = (relative) => readFile(new URL(relative, root), 'utf8');
 const sitemap = await read('src/app/sitemap.ts');
 const rootLayout = await read('src/app/layout.tsx');
+const lotDetailPage = await read('src/app/inversion/lotes/[slug]/page.tsx');
 const sitemapPaths = [...sitemap.matchAll(/path:\s*'([^']+)'/g)].map((match) => match[1]);
 
 assert.ok(sitemapPaths.includes('/'), 'Public sitemap must include the root route.');
@@ -30,4 +31,15 @@ for (const routePath of sitemapPaths.filter((route) => route !== '/')) {
   );
 }
 
-console.log(`Public canonical invariants: PASS (${sitemapPaths.length} sitemap routes).`);
+assert.match(
+  lotDetailPage,
+  /canonical:\s*`https:\/\/ctgone\.com\/inversion\/lotes\/\$\{canonicalSlug\}`/,
+  'Public dynamic lot details must self-canonicalize instead of inheriting the lots index canonical.',
+);
+assert.match(
+  lotDetailPage,
+  /robots:\s*\{\s*index:\s*false,\s*follow:\s*false\s*\}/,
+  'Unknown lot slugs must be noindex so missing resources cannot create index noise.',
+);
+
+console.log(`Public canonical invariants: PASS (${sitemapPaths.length} sitemap routes + dynamic lot details).`);
