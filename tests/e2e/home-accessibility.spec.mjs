@@ -41,7 +41,7 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     await expect(page.getByText('Construimos desde dentro de los negocios', { exact: false })).toBeVisible();
     await expect(page.getByText(/agencia/i)).toHaveCount(0);
     await expect(page.getByText(/agency/i)).toHaveCount(0);
-    await expect(page.getByText(/\d+\s+Negocios operativos/i)).toBeVisible();
+    await expect(page.getByText('Negocios operativos', { exact: true })).toBeVisible();
 
     await page.goto('/rewards');
     await expect(page.getByText('CTG Rewards · Hoja de ruta', { exact: true })).toBeVisible();
