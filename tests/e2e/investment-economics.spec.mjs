@@ -25,6 +25,6 @@ test.describe('CTG Craft Beer authoritative economics', () => {
     await expect(page.getByRole('heading', { name: 'Simulador por snapshot de lote' })).toBeVisible();
     await expect(page.getByText(/Simulador disponible desde 2 cajas/i)).toBeVisible();
     await expect(page.getByText(/no existe ningún snapshot económico de lote publicado/i)).toBeVisible();
-    await expect(page.getByText(/rentabilidad proyectada fija/i)).toBeVisible();
+    await expect(page.getByText(/no constituyen una rentabilidad garantizada ni una reserva de capacidad/i)).toBeVisible();
   });
 });
