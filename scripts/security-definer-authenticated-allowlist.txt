@@ -13,6 +13,7 @@ public.fail_investment_payout(p_payout_id uuid, p_reason text, p_external_refere
 public.finalize_settlement(p_lot_id uuid)
 public.generate_bottle_units(p_lot_id uuid, p_quantity integer)
 public.get_admin_command_snapshot()
+public.get_finance_payout_queue_snapshot(p_active_limit integer, p_active_offset integer, p_paid_limit integer, p_paid_offset integer)
 public.get_inventory_location_stock(p_lot_id uuid)
 public.get_inventory_reconciliation(p_lot_id uuid)
 public.get_investment_available_balance(p_user uuid)
