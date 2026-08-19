@@ -129,3 +129,9 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
             -v ON_ERROR_STOP=1 \
             -f scripts/document-notification-os-schema-smoke.sql
+
+      - name: Operations Intelligence PostgreSQL contract
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -f scripts/operations-intelligence-schema-smoke.sql
