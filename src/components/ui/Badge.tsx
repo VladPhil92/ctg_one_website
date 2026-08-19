@@ -9,37 +9,27 @@ interface BadgeProps {
   glow?: boolean;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ 
-  children, 
+export const Badge: React.FC<BadgeProps> = ({
+  children,
   className = '',
   variant = 'default',
   glow = false,
 }) => {
-  // Variant styles - Ultra Minimal
   const variantStyles: Record<string, React.CSSProperties> = {
-    default: {
-      color: '#5a5a5a',
-    },
+    default: { color: 'var(--text-dim)' },
     accent: {
-      color: '#c9a962',
+      color: 'var(--accent)',
+      textShadow: glow ? '0 0 24px rgba(201,169,98,.28)' : undefined,
     },
   };
 
   return (
     <div
-      className={`
-        inline-flex items-center
-        uppercase tracking-[0.2em] font-medium
-        text-[10px]
-        ${className}
-      `.trim()}
+      className={`inline-flex items-center text-[11px] sm:text-xs uppercase tracking-[0.18em] font-semibold leading-snug ${className}`.trim()}
       style={variantStyles[variant]}
     >
       {variant === 'accent' && (
-        <span
-          className="w-1.5 h-px mr-3"
-          style={{ backgroundColor: '#c9a962' }}
-        />
+        <span className="w-4 h-px mr-3 bg-accent/80" aria-hidden="true" />
       )}
       {children}
     </div>
