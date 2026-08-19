@@ -163,7 +163,7 @@ DECLARE
   v_result text;
   v_public_references text[];
   v_expected_result constant text :=
-    'TABLE(lot_id uuid, total_cases integer, allocated_cases integer, funded_percent integer, available_cases_equivalent integer)';
+    'TABLE(lot_id uuid, total_cases integer, allocated_cases integer, reserved_cases integer, funded_percent integer, available_cases_equivalent integer)';
 BEGIN
   IF to_regprocedure('public.get_public_investment_lot_funding(uuid)') IS NULL THEN
     RAISE EXCEPTION 'reviewed public investment funding function is missing';
@@ -185,6 +185,7 @@ BEGIN
   IF v_public_references IS DISTINCT FROM ARRAY[
     'get_public_investment_lot_funding',
     'investment_funding_allocations',
+    'investment_orders',
     'investment_production_lots'
   ]::text[] THEN
     RAISE EXCEPTION 'public investment funding references unreviewed public object(s): %', v_public_references;
