@@ -12,6 +12,10 @@ interface LotCardProps {
 }
 
 export const LotCard: React.FC<LotCardProps> = ({ lot, funding }) => {
+  const capacityLabel = lot.status === 'FUNDING_OPEN'
+    ? `${funding.availableCasesEquivalent} cajas equivalentes disponibles`
+    : `${funding.availableCasesEquivalent} cajas equivalentes no asignadas`;
+
   return (
     <Card variant="bordered" padding="lg" hover className="flex flex-col h-full">
       <div className="flex items-start justify-between mb-4">
@@ -29,14 +33,14 @@ export const LotCard: React.FC<LotCardProps> = ({ lot, funding }) => {
       </div>
 
       <div className="mb-6">
-        <div className="flex items-center justify-between text-[11px] text-text-dim mb-2">
+        <div className="flex items-center justify-between gap-4 text-[11px] text-text-dim mb-2">
           <span>{funding.fundedPercent}% financiado</span>
-          <span>{funding.availableCasesEquivalent} cajas equivalentes disponibles</span>
+          <span className="text-right">{capacityLabel}</span>
         </div>
         <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
           <div
             className="h-full rounded-full"
-            style={{ width: `${funding.fundedPercent}%`, backgroundColor: 'var(--accent)' }}
+            style={{ width: `${Math.min(Math.max(funding.fundedPercent, 0), 100)}%`, backgroundColor: 'var(--accent)' }}
           />
         </div>
       </div>
