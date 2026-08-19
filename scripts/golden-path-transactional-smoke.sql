@@ -392,25 +392,33 @@ select pg_temp.assert_true(
   'participant available balance must project exactly from settlement ledger facts'
 );
 
--- Negative terminal invariant: a second settlement attempt must fail closed.
+-- Negative terminal invariant: retry the actual settled lot, and accept only the
+-- explicit terminal-state rejection. A null/unknown lot or unrelated permission
+-- error is a test failure, not a valid duplicate-settlement rejection.
+select set_config('ci.golden_path_lot', :'lot_id', true);
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000301', true);
 do $$
+declare
+  v_error text;
 begin
   begin
-    perform public.finalize_settlement(current_setting('ci.golden_path_lot', true)::uuid);
-    raise exception 'second settlement unexpectedly succeeded';
+    perform public.finalize_settlement(current_setting('ci.golden_path_lot')::uuid);
   exception
     when others then
-      if sqlerrm = 'second settlement unexpectedly succeeded' then
-        raise;
-      end if;
+      v_error := sqlerrm;
   end;
+
+  if v_error is null then
+    raise exception 'second settlement unexpectedly succeeded';
+  end if;
+  if v_error not like 'lot is not in SETTLEMENT_PENDING (status: SETTLED)%' then
+    raise exception 'second settlement failed for unexpected reason: %', v_error;
+  end if;
 end;
 $$;
+reset role;
 
--- Store the lot id only for the negative assertion above without making it part of
--- any application schema. `set_config` remains transaction-local and rolls back.
--- The assertion is repeated here with a direct state check because the second call
--- is already prevented by SETTLED status / one-settlement invariants.
 select pg_temp.assert_true(
   (select count(*) = 1 from public.investment_settlements where lot_id = :'lot_id'::uuid),
   'terminal settlement uniqueness must remain intact'
