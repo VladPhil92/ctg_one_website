@@ -112,6 +112,12 @@ jobs:
             -v ON_ERROR_STOP=1 \
             -f scripts/golden-path-schema-smoke.sql
 
+      - name: Investment transactional Golden Path
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -f scripts/golden-path-transactional-smoke.sql
+
       - name: HTTP security PostgreSQL contract
         run: |
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
