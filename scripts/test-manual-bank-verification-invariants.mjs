@@ -9,6 +9,7 @@ const checkout = await read('src/components/inversion/InvestmentCheckoutClient.t
 const checkoutRepository = await read('src/modules/investment/checkout/browser-repository.ts');
 const uploadRoute = await read('src/app/api/investment/orders/[orderId]/payment-proof/route.ts');
 const admin = await read('src/app/inversion/admin/orders/page.tsx');
+const adminRepository = await read('src/modules/investment/admin-orders/browser-repository.ts');
 const paymentConfig = await read('src/lib/payment-instructions.ts');
 const schemaVersion = await read('src/lib/observability/schema-version.ts');
 
@@ -52,10 +53,11 @@ assert.ok(checkoutRepository.includes("'Content-Type': input.proof.type") && che
 assert.ok(checkoutRepository.includes('/payment-proof'), 'Checkout repository must use the server-hashed proof upload endpoint.');
 assert.ok(!checkoutRepository.includes('FormData'), 'Checkout repository must not regress to multipart FormData uploads.');
 
-assert.ok(admin.includes("rpc('verify_investment_bancolombia_transfer'"), 'Finance UI must use the human bank verification RPC.');
+assert.ok(admin.includes('createInvestmentAdminOrdersRepository'), 'Finance UI must consume the reviewed investment-admin repository boundary.');
+assert.ok(adminRepository.includes("rpc('verify_investment_bancolombia_transfer'"), 'Finance repository must use the human bank verification RPC.');
 assert.ok(admin.includes('No confirmes por apariencia del comprobante'), 'Finance UI must explicitly warn that visual proof appearance is not authoritative.');
-assert.ok(admin.includes('createSignedUrl'), 'Finance must be able to inspect the private proof before deciding.');
-assert.ok(admin.includes("rpc('reject_investment_bank_proof'"), 'Finance must have an explicit proof-rejection path with no money facts.');
+assert.ok(adminRepository.includes('createSignedUrl'), 'Finance repository must preserve private proof inspection through a short-lived signed URL.');
+assert.ok(adminRepository.includes("rpc('reject_investment_bank_proof'"), 'Finance repository must retain an explicit proof-rejection path with no money facts.');
 
 assert.ok(paymentConfig.includes('NEXT_PUBLIC_INVESTMENT_BANCOLOMBIA_QR_URL'), 'Approved QR asset location must be external configuration, not invented source data.');
 assert.ok(paymentConfig.includes("bankName: 'Bancolombia'") && paymentConfig.includes("accountType: 'Cuenta de Ahorros'"), 'Investment QR configuration must describe the agreed Bancolombia savings rail.');
