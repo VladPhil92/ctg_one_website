@@ -122,7 +122,8 @@ assert.match(operationsPage, /inventoryRequestGeneration/, 'Production OS must g
 assert.match(operationsInventoryMigration, /create or replace function public\.get_production_lot_inventory_snapshot/, 'Migration 0062 must define the Production OS inventory read model.');
 assert.match(operationsInventoryMigration, /has_investment_permission\('ops\.read'\)/, 'Production inventory snapshot must require ops.read.');
 assert.match(operationsInventoryMigration, /p_unit_limit < 1 or p_unit_limit > 100/, 'Production inventory snapshot must enforce a hard row limit.');
-assert.match(operationsInventoryMigration, /count\(\*\)::bigint as total_units/, 'Production inventory snapshot must calculate an exact lot-wide unit count.');
+assert.match(operationsInventoryMigration, /select b\.status, count\(\*\)::bigint as status_count[\s\S]*?group by b\.status/, 'Production inventory snapshot must count units per status before aggregation.');
+assert.match(operationsInventoryMigration, /coalesce\(sum\(status_count\), 0\)::bigint as total_units/, 'Production inventory snapshot total must sum unit counts, not status groups.');
 assert.match(operationsInventoryMigration, /jsonb_object_agg\(status, status_count order by status\)/, 'Production inventory snapshot must aggregate exact counts by physical state.');
 assert.match(operationsInventoryMigration, /limit p_unit_limit[\s\S]*?offset p_unit_offset/, 'Production inventory snapshot must return only the requested unit page.');
 assert.match(operationsInventoryMigration, /revoke all on function public\.get_production_lot_inventory_snapshot[\s\S]*?from public, anon/, 'Production inventory snapshot must not be callable by public or anon.');
