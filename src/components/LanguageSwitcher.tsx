@@ -27,7 +27,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
             onClick={() => setLocale(item)}
             aria-label={label}
             aria-pressed={locale === item}
-            className={`flex h-10 min-w-11 items-center justify-center rounded-full px-2.5 text-xs font-bold tracking-[0.1em] transition-colors duration-200 ${
+            className={`flex h-11 min-w-11 items-center justify-center rounded-full px-2.5 text-xs font-bold tracking-[0.1em] transition-colors duration-200 ${
               locale === item
                 ? 'bg-accent text-black'
                 : 'text-text-dim hover:bg-white/[.04] hover:text-white'
