@@ -14,30 +14,40 @@ const [proof, hero, about, token, content, flags, legal, ecosystemTechnology] = 
   read('src/data/ecosystem-technology.ts'),
 ]);
 
+function proofItemBlock(id) {
+  const marker = `id: '${id}'`;
+  const markerIndex = proof.indexOf(marker);
+  assert.notEqual(markerIndex, -1, `Canonical proof item ${id} must exist.`);
+
+  const blockStart = proof.lastIndexOf('{', markerIndex);
+  const nextBlock = proof.indexOf('\n  {', markerIndex + marker.length);
+  return proof.slice(blockStart, nextBlock === -1 ? proof.length : nextBlock);
+}
+
 assert.ok(proof.includes("publicStatus: 'BETA'"), 'Controlled pilots must be representable as BETA in the public capability registry.');
 assert.match(
-  proof,
-  /id: 'investment-platform'[\s\S]*?publicStatus: 'BETA'/,
+  proofItemBlock('investment-platform'),
+  /publicStatus: 'BETA'/,
   'CTG Craft Beer Investment must remain publicly classified as BETA while public funding is fail-closed.',
 );
 assert.match(
-  proof,
-  /id: 'web3'[\s\S]*?status: 'ROADMAP'/,
+  proofItemBlock('web3'),
+  /status: 'ROADMAP'/,
   'CTGO/Web3 must remain ROADMAP until verifiable on-chain production evidence exists.',
 );
 assert.match(
-  proof,
-  /id: 'ai-layer'[\s\S]*?status: 'IN DEVELOPMENT'/,
+  proofItemBlock('ai-layer'),
+  /status: 'IN DEVELOPMENT'/,
   'The general AI layer must not be promoted to LIVE without production evidence.',
 );
 assert.match(
-  proof,
-  /id: 'ctg-knowledge-v01'[\s\S]*?publicStatus: 'BETA'/,
+  proofItemBlock('ctg-knowledge-v01'),
+  /publicStatus: 'BETA'/,
   'CTG Knowledge must remain a BETA pilot until reproducible evaluation and operating evidence exist.',
 );
 assert.match(
-  proof,
-  /id: 'observability-baseline'[\s\S]*?status: 'PARTIAL'/,
+  proofItemBlock('observability-baseline'),
+  /status: 'PARTIAL'/,
   'Observability baseline must reflect the implemented health/logging/correlation layer.',
 );
 
