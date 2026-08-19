@@ -1,6 +1,8 @@
+import { getDeploymentMetadata } from './deployment';
+
 type LogLevel = 'info' | 'warn' | 'error';
 
-type LogContext = Record<string, unknown>;
+export type LogContext = Record<string, unknown>;
 
 const SENSITIVE_KEYS = [
   'password',
@@ -36,12 +38,18 @@ function redactContext(context: LogContext): LogContext {
 }
 
 function emit(level: LogLevel, event: string, context: LogContext = {}) {
+  const deployment = getDeploymentMetadata();
   const payload = {
     timestamp: new Date().toISOString(),
     level,
     event,
     service: 'ctg-one-web',
     environment: process.env.NODE_ENV ?? 'unknown',
+    deployment_provider: deployment.provider,
+    deployment_commit: deployment.commit,
+    deployment_branch: deployment.branch,
+    deployment_service: deployment.service,
+    expected_database_migration: deployment.expectedDatabaseMigration,
     ...redactContext(context),
   };
 
