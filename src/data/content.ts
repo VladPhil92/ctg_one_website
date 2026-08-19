@@ -119,16 +119,16 @@ export const ECOSYSTEM = {
 };
 
 export const REWARDS = {
-  badge: 'Loyalty & Referrals',
+  badge: 'CTG Rewards · Roadmap',
   title: 'CTG',
   titleHighlight: 'Rewards',
   description:
-    'CTG Rewards is the ecosystem loyalty and referral concept. Individual capabilities must be treated according to their verified implementation status rather than assumed to be universally active.',
+    'CTG Rewards is a roadmap concept for future loyalty and referral capabilities across the ecosystem. It is not represented as a currently active cross-ecosystem rewards program; individual mechanics may only be described as active where a specific business unit has a verified implementation and published rules.',
   features: [
-    { title: 'Earn by Engaging', description: 'Recognition mechanics associated with ecosystem engagement.', icon: 'award' },
-    { title: 'Earn by Referring', description: 'Referral recognition mechanics subject to the rules of the applicable business unit.', icon: 'userPlus' },
-    { title: 'Redeem Across the Ecosystem', description: 'Cross-ecosystem redemption is an architectural objective and must only be described as live where technically implemented.', icon: 'gift' },
-    { title: 'Tiered Recognition', description: 'Tiered benefits remain subject to the current implementation and published program rules.', icon: 'layers' },
+    { title: 'Engagement Recognition', description: 'Designed recognition mechanics associated with ecosystem engagement; not a universal active earning program.', icon: 'award' },
+    { title: 'Referral Recognition', description: 'Potential referral mechanics remain subject to implementation and the published rules of the applicable business unit.', icon: 'userPlus' },
+    { title: 'Cross-Ecosystem Redemption', description: 'Cross-ecosystem redemption remains an architectural objective and is not represented as active today.', icon: 'gift' },
+    { title: 'Tiered Recognition', description: 'Tiered benefits remain a roadmap capability unless a specific implementation and program rules are published.', icon: 'layers' },
   ],
 };
 

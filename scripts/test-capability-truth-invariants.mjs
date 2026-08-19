@@ -67,6 +67,14 @@ assert.match(
   'The ecosystem map must disclose that CTG Craft Beer Investment remains a controlled beta.',
 );
 
+assert.match(content, /badge: 'CTG Rewards · Roadmap'/, 'CTG Rewards must be visibly classified as roadmap.');
+assert.match(
+  content,
+  /CTG Rewards is a roadmap concept[\s\S]*?not represented as a currently active cross-ecosystem rewards program/i,
+  'CTG Rewards must not imply that a shared cross-ecosystem loyalty program is already active.',
+);
+assert.doesNotMatch(content, /title: 'Earn by (?:Engaging|Referring)'/, 'Roadmap Rewards copy must not use active earning language without a verified program.');
+
 const ecosystemUnits = [...content.matchAll(/\{ id: '[^']+', name: '[^']+'/g)].length;
 const heroBusinessUnits = content.match(/\{ value: '(\d+)', label: 'Business Units'/)?.[1];
 assert.ok(heroBusinessUnits, 'Hero Business Units metric must remain explicit.');
