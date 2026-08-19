@@ -37,7 +37,7 @@ const nextConfig = {
   // authenticated server-side Supabase sessions and Route Handlers.
   // Production currently runs as a Render Web Service.
   images: {
-    unoptimized: true,
+    formats: ['image/avif', 'image/webp'],
   },
   async headers() {
     return [
