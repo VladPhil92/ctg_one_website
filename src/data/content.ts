@@ -4,9 +4,27 @@
 
 import config from '@/config/config.json';
 
-// Legacy/shared content registry. Public capability claims in this file must
-// remain consistent with the canonical LIVE / PARTIAL / IN DEVELOPMENT /
-// ROADMAP maturity model used by Technology Status.
+// Canonical shared public-content registry. Capability claims in this file must
+// remain consistent with the LIVE / PARTIAL / IN DEVELOPMENT / ROADMAP maturity
+// model used by Technology Status.
+
+export const ECOSYSTEM_UNITS = [
+  { id: 'education', name: 'Valderrama International School', description: 'Private tutoring and educational services.', icon: 'valderrama', color: '#d4a259', url: 'valderramainternationalschool.com' },
+  { id: 'hospitality', name: 'CTG Suites', description: 'Hospitality and lodging operations.', icon: 'hotel', color: '#6b8cae' },
+  { id: 'realestate', name: 'Bechara Real Estate', description: 'Property sales, rentals and real-estate advisory.', icon: 'bechara', color: '#7da87d' },
+  { id: 'tech', name: 'CTG One Technology', description: 'Core software, data, infrastructure and product-engineering layer for the ecosystem.', icon: 'ctgone', color: '#ae8c9a' },
+  { id: 'veterinary', name: 'Nvet Care', description: 'Veterinary service and marketplace concept with technology capabilities tracked by maturity status.', icon: 'nvetcare', color: '#8c9aae' },
+  { id: 'dental', name: 'Oralgreen', description: 'Comprehensive dental care based in Sincelejo.', icon: 'oralgreen', color: '#7dae9a' },
+  { id: 'legal', name: 'Legalyst Consultores', description: 'Conciliation, legal advice and trademark services.', icon: 'scale', color: '#c4956a', url: 'legalystconsultores.com' },
+  { id: 'design', name: 'CTG One Design', description: 'Corporate identity, branding and digital communication.', icon: 'palette', color: '#ae9a8c' },
+  { id: 'credits', name: 'Vantage Libranza Plus', description: 'Payroll-credit business unit; digital capabilities are tracked separately by maturity status.', icon: 'wallet', color: '#8cae9a' },
+  { id: 'gastrobar', name: 'PISÁO Gastrobar', description: 'Caribbean casual-dining gastrobar in Cartagena.', icon: 'pisao', color: '#7a9a5c', url: 'pisaogastrobar.com' },
+  { id: 'craftbeer', name: 'CTG Craft Beer', description: 'Craft-beer production and commercialization operation in Cartagena.', icon: 'craftbeer', color: '#c9a962' },
+  { id: 'guestlogistics', name: 'Guest Logistics Concierge', description: 'Guest-logistics and concierge product context within the hospitality ecosystem.', icon: 'guestlogistics', color: '#3b5169' },
+] as const;
+
+export const OPERATING_BUSINESS_UNITS = ECOSYSTEM_UNITS.filter((unit) => unit.id !== 'tech');
+export const OPERATING_BUSINESS_UNIT_COUNT = OPERATING_BUSINESS_UNITS.length;
 
 export const HERO = {
   badge: 'Software & Digital Infrastructure',
@@ -18,7 +36,7 @@ export const HERO = {
   ctaPrimary: 'Explore Ecosystem',
   ctaSecondary: 'Start Conversation',
   metrics: [
-    { value: '12', label: 'Business Units', icon: 'building' },
+    { value: String(OPERATING_BUSINESS_UNIT_COUNT), label: 'Operating Businesses', icon: 'building' },
     { value: 'One', label: 'Technology Layer', icon: 'layers' },
     { value: '2024', label: 'Founded', icon: 'calendar' },
     { value: 'Cartagena', label: 'Headquarters', icon: 'location' },
@@ -101,21 +119,8 @@ export const ECOSYSTEM = {
   title: 'Business',
   titleHighlight: 'Ecosystem',
   description:
-    'Twelve operating business units form the application environments for CTG One technology. Their technology maturity is documented separately and must not be inferred solely from membership in the ecosystem.',
-  units: [
-    { id: 'education', name: 'Valderrama International School', description: 'Private tutoring and educational services.', icon: 'valderrama', color: '#d4a259', url: 'valderramainternationalschool.com' },
-    { id: 'hospitality', name: 'CTG Suites', description: 'Hospitality and lodging operations.', icon: 'hotel', color: '#6b8cae' },
-    { id: 'realestate', name: 'Bechara Real Estate', description: 'Property sales, rentals and real-estate advisory.', icon: 'bechara', color: '#7da87d' },
-    { id: 'tech', name: 'CTG One Technology', description: 'Core software, data, infrastructure and product-engineering layer for the ecosystem.', icon: 'ctgone', color: '#ae8c9a' },
-    { id: 'veterinary', name: 'Nvet Care', description: 'Veterinary service and marketplace concept with technology capabilities tracked by maturity status.', icon: 'nvetcare', color: '#8c9aae' },
-    { id: 'dental', name: 'Oralgreen', description: 'Comprehensive dental care based in Sincelejo.', icon: 'oralgreen', color: '#7dae9a' },
-    { id: 'legal', name: 'Legalyst Consultores', description: 'Conciliation, legal advice and trademark services.', icon: 'scale', color: '#c4956a', url: 'legalystconsultores.com' },
-    { id: 'design', name: 'CTG One Design', description: 'Corporate identity, branding and digital communication.', icon: 'palette', color: '#ae9a8c' },
-    { id: 'credits', name: 'Vantage Libranza Plus', description: 'Payroll-credit business unit; digital capabilities are tracked separately by maturity status.', icon: 'wallet', color: '#8cae9a' },
-    { id: 'gastrobar', name: 'PISÁO Gastrobar', description: 'Caribbean casual-dining gastrobar in Cartagena.', icon: 'pisao', color: '#7a9a5c', url: 'pisaogastrobar.com' },
-    { id: 'craftbeer', name: 'CTG Craft Beer', description: 'Craft-beer production and commercialization operation in Cartagena.', icon: 'craftbeer', color: '#c9a962' },
-    { id: 'guestlogistics', name: 'Guest Logistics Concierge', description: 'Guest-logistics and concierge product context within the hospitality ecosystem.', icon: 'guestlogistics', color: '#3b5169' },
-  ],
+    `${OPERATING_BUSINESS_UNIT_COUNT} operating businesses provide real application environments for CTG One Technology. The technology core is represented separately, and maturity is documented by evidence rather than inferred from ecosystem membership.`,
+  units: ECOSYSTEM_UNITS,
 };
 
 export const REWARDS = {
