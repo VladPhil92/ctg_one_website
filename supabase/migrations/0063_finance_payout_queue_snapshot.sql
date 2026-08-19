@@ -109,7 +109,9 @@ begin
       select e.event_type, e.external_reference
       from public.investment_payout_events e
       where e.payout_id = p.id
-      order by e.occurred_at desc, e.id desc
+      -- Payout events are append-only. Provider settlement timestamps may be
+      -- backdated, so lifecycle authority follows append order, not occurred_at.
+      order by e.created_at desc, e.id desc
       limit 1
     ) last_event on true
     left join lateral (
