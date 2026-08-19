@@ -12,32 +12,42 @@ import type { InvestmentFormulaVersion } from '@/types/investment-economics';
 import { hasCompleteLotEconomics } from '@/lib/investment/economics';
 import { MIN_INVESTMENT_CASES } from '@/lib/investment/constants';
 
-// Public, unauthenticated-safe reads for /inversion marketing pages — the
-// underlying tables have public SELECT RLS policies. Financial truth shown by
-// these helpers is always read from persisted lot/formula snapshots; no public
-// page supplies fallback prices, costs, tax rates or profit shares in code.
+type PublicLotFundingRow = {
+  lot_id: string;
+  total_cases: number;
+  allocated_cases: number;
+  funded_percent: number;
+  available_cases_equivalent: number;
+};
+
+// Public, unauthenticated-safe reads for /inversion surfaces. DRAFT lots are
+// blocked by RLS as of migration 0060 and filtered here again as defense in
+// depth. Funding progress is obtained only from the aggregate public RPC;
+// allocation rows themselves remain participant/admin-only.
 
 export async function getPublicLots(): Promise<InvestmentProductionLot[]> {
   if (!isSupabaseConfigured) return [];
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('investment_production_lots')
     .select('*')
-    .order('created_at', { ascending: false });
+    .neq('status', 'DRAFT')
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false });
+  if (error) throw new Error(`No se pudieron cargar los lotes publicados: ${error.message}`);
   return (data as InvestmentProductionLot[]) ?? [];
 }
 
 export async function getPublicEconomicsReferenceLot(): Promise<InvestmentProductionLot | null> {
   const lots = await getPublicLots();
-  const eligible = lots.filter((lot) => lot.status !== 'DRAFT' && hasCompleteLotEconomics(lot));
+  const eligible = lots.filter((lot) => hasCompleteLotEconomics(lot));
   return eligible[0] ?? null;
 }
 
 export async function getPublicSimulationLots(): Promise<InvestmentProductionLot[]> {
   const lots = await getPublicLots();
   const eligible = lots.filter(
-    (lot) => lot.status !== 'DRAFT'
-      && lot.total_eligible_units >= MIN_INVESTMENT_CASES
+    (lot) => lot.total_eligible_units >= MIN_INVESTMENT_CASES
       && hasCompleteLotEconomics(lot),
   );
 
@@ -62,11 +72,13 @@ export async function getActiveInvestmentFormulaVersion(): Promise<InvestmentFor
 export async function getLotByCode(code: string): Promise<InvestmentProductionLot | null> {
   if (!isSupabaseConfigured) return null;
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('investment_production_lots')
     .select('*')
+    .neq('status', 'DRAFT')
     .ilike('code', code)
     .maybeSingle();
+  if (error) throw new Error(`No se pudo cargar el lote publicado: ${error.message}`);
   return (data as InvestmentProductionLot) ?? null;
 }
 
@@ -80,20 +92,38 @@ export async function getLotTimeline(lotId: string): Promise<InvestmentProductio
   return (data as InvestmentProductionEvent[]) ?? [];
 }
 
+function fundingRowToSummary(row: PublicLotFundingRow): LotFundingSummary {
+  return {
+    totalCases: Number(row.total_cases ?? 0),
+    allocatedCases: Number(row.allocated_cases ?? 0),
+    fundedPercent: Number(row.funded_percent ?? 0),
+    availableCasesEquivalent: Number(row.available_cases_equivalent ?? 0),
+  };
+}
+
+export async function getPublicLotFundingSummaries(): Promise<Record<string, LotFundingSummary>> {
+  if (!isSupabaseConfigured) return {};
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('get_public_investment_lot_funding', { p_lot_id: null });
+  if (error) throw new Error(`No se pudo cargar el avance público de financiación: ${error.message}`);
+
+  const rows = (data as PublicLotFundingRow[] | null) ?? [];
+  return Object.fromEntries(rows.map((row) => [row.lot_id, fundingRowToSummary(row)]));
+}
+
 export async function getLotFundingSummary(lot: InvestmentProductionLot): Promise<LotFundingSummary> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from('investment_funding_allocations')
-    .select('case_equivalent_units')
-    .eq('lot_id', lot.id);
+  const { data, error } = await supabase.rpc('get_public_investment_lot_funding', { p_lot_id: lot.id });
+  if (error) throw new Error(`No se pudo cargar la financiación del lote: ${error.message}`);
 
-  const allocatedCases = (data ?? []).reduce((sum, row) => sum + row.case_equivalent_units, 0);
-  const fundableCases = lot.total_eligible_units;
+  const row = ((data as PublicLotFundingRow[] | null) ?? [])[0];
+  if (row) return fundingRowToSummary(row);
+
   return {
-    totalCases: fundableCases,
-    allocatedCases,
-    fundedPercent: fundableCases > 0 ? Math.round((allocatedCases / fundableCases) * 100) : 0,
-    availableCasesEquivalent: Math.max(fundableCases - allocatedCases, 0),
+    totalCases: lot.total_eligible_units,
+    allocatedCases: 0,
+    fundedPercent: 0,
+    availableCasesEquivalent: lot.total_eligible_units,
   };
 }
 
