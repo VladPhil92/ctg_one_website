@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [migration, queries, lotsPage, lotCard, schemaVersion] = await Promise.all([
+const [migration, queries, landingPage, lotsPage, lotCard, schemaVersion] = await Promise.all([
   read('supabase/migrations/0060_public_investment_opportunity_read_model.sql'),
   read('src/lib/investment/queries.ts'),
+  read('src/app/inversion/page.tsx'),
   read('src/app/inversion/lotes/page.tsx'),
   read('src/components/inversion/LotCard.tsx'),
   read('src/lib/observability/schema-version.ts'),
@@ -42,13 +43,25 @@ assert.doesNotMatch(
   /\.from\('investment_funding_allocations'\)/,
   'Public server helpers must never derive global funding truth from participant-scoped allocation RLS.',
 );
-assert.match(queries, /getPublicLotFundingSummaries/, 'Lot listing must support one bulk funding read instead of N+1 allocation reads.');
+assert.match(queries, /getPublicLotFundingSummaries/, 'Public surfaces must support one bulk funding read instead of N+1 allocation reads.');
 
-assert.match(lotsPage, /Promise\.all\(\[[\s\S]*getPublicLots\(\)[\s\S]*getPublicLotFundingSummaries\(\)/, 'Lot listing must load lots and aggregate funding with bounded query count.');
-assert.doesNotMatch(lotsPage, /lots\.map\(getLotFundingSummary\)/, 'Lot listing must not regress to one funding query per lot.');
+for (const [name, source] of [
+  ['investment landing', landingPage],
+  ['lot listing', lotsPage],
+]) {
+  assert.match(
+    source,
+    /Promise\.all\(\[[\s\S]*getPublicLots\(\)[\s\S]*getPublicLotFundingSummaries\(\)/,
+    `${name} must load published lots and aggregate funding with bounded query count.`,
+  );
+  assert.doesNotMatch(source, /lots\.map\(getLotFundingSummary\)/, `${name} must not regress to one funding query per lot.`);
+  assert.doesNotMatch(source, /beta cerrada/i, `${name} must not hardcode the program as a global closed beta.`);
+}
+
+assert.match(landingPage, /Ver lotes publicados/, 'Landing CTA must not imply that every published lot is currently investable.');
+assert.match(landingPage, /Cuando un lote abre financiación/, 'Participation instructions must condition order creation on an open funding state.');
 assert.match(lotsPage, /lot\.status === 'FUNDING_OPEN'/, 'Open-opportunity count must be driven by authoritative lot status.');
 assert.match(lotsPage, /No hay financiación abierta en este momento/, 'No-open-lot state must be explicit rather than presented as generic beta closure.');
-assert.doesNotMatch(lotsPage, /beta cerrada/i, 'Public lot availability must not be hardcoded as a global closed beta.');
 
 assert.match(lotCard, /lot\.status === 'FUNDING_OPEN'/, 'Lot card availability wording must depend on funding state.');
 assert.match(lotCard, /cajas equivalentes no asignadas/, 'Non-open lots must describe residual capacity as unassigned, not investable.');
