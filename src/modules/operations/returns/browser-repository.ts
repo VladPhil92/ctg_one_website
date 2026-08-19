@@ -83,6 +83,8 @@ function failOnQuery(error: { message: string } | null, context: string) {
 }
 
 export function createSalesReturnsBrowserRepository() {
+  let detailController: AbortController | null = null;
+
   return {
     async listConfirmedSales(page: number, pageSize: number): Promise<ConfirmedSalesPage> {
       const supabase = createClient();
@@ -135,61 +137,80 @@ export function createSalesReturnsBrowserRepository() {
     },
 
     async loadSaleDetails(saleId: string): Promise<SaleReturnDetails> {
+      // Only the latest sale selection may complete. This prevents a slow response
+      // for sale A from overwriting the UI after the operator has selected sale B.
+      detailController?.abort();
+      const controller = new AbortController();
+      detailController = controller;
       const supabase = createClient();
-      const [{ data: items, count: itemCount, error: itemsError }, { data: notes, count: noteCount, error: notesError }, { data: reconciliation, error: reconciliationError }] =
-        await Promise.all([
-          supabase
-            .from('investment_sale_items')
-            .select('id,sale_id,bottle_unit_id,serial_code,line_total_cents', { count: 'exact' })
-            .eq('sale_id', saleId)
-            .order('serial_code', { ascending: true })
-            .limit(MAX_ITEMS_PER_SALE_FOR_RETURN_UI),
-          supabase
-            .from('investment_sales_credit_notes')
-            .select('id,sale_id,credit_reference,reason_code,gross_credit_cents,tax_credit_cents,confirmed_at,return_location_id', {
-              count: 'exact',
-            })
-            .eq('sale_id', saleId)
-            .order('confirmed_at', { ascending: false })
-            .order('id', { ascending: false })
-            .limit(MAX_CREDIT_NOTES_PER_SALE_FOR_RETURN_UI),
-          supabase.rpc('get_sales_return_reconciliation', { p_sale_id: saleId }),
-        ]);
-      failOnQuery(itemsError, 'No se pudieron cargar los ítems de la venta');
-      failOnQuery(notesError, 'No se pudieron cargar las notas crédito de la venta');
-      failOnQuery(reconciliationError, 'No se pudo reconciliar la venta');
 
-      if ((itemCount ?? 0) > MAX_ITEMS_PER_SALE_FOR_RETURN_UI) {
-        throw new Error(
-          `La venta contiene más de ${MAX_ITEMS_PER_SALE_FOR_RETURN_UI} unidades; la interfaz se niega a truncar silenciosamente el conjunto retornable.`,
-        );
-      }
-      if ((noteCount ?? 0) > MAX_CREDIT_NOTES_PER_SALE_FOR_RETURN_UI) {
-        throw new Error(
-          `La venta contiene más de ${MAX_CREDIT_NOTES_PER_SALE_FOR_RETURN_UI} notas crédito; la interfaz se niega a truncar el historial.`,
-        );
-      }
+      try {
+        const [{ data: items, count: itemCount, error: itemsError }, { data: notes, count: noteCount, error: notesError }, { data: reconciliation, error: reconciliationError }] =
+          await Promise.all([
+            supabase
+              .from('investment_sale_items')
+              .select('id,sale_id,bottle_unit_id,serial_code,line_total_cents', { count: 'exact' })
+              .eq('sale_id', saleId)
+              .order('serial_code', { ascending: true })
+              .limit(MAX_ITEMS_PER_SALE_FOR_RETURN_UI)
+              .abortSignal(controller.signal),
+            supabase
+              .from('investment_sales_credit_notes')
+              .select('id,sale_id,credit_reference,reason_code,gross_credit_cents,tax_credit_cents,confirmed_at,return_location_id', {
+                count: 'exact',
+              })
+              .eq('sale_id', saleId)
+              .order('confirmed_at', { ascending: false })
+              .order('id', { ascending: false })
+              .limit(MAX_CREDIT_NOTES_PER_SALE_FOR_RETURN_UI)
+              .abortSignal(controller.signal),
+            supabase
+              .rpc('get_sales_return_reconciliation', { p_sale_id: saleId })
+              .abortSignal(controller.signal),
+          ]);
+        failOnQuery(itemsError, 'No se pudieron cargar los ítems de la venta');
+        failOnQuery(notesError, 'No se pudieron cargar las notas crédito de la venta');
+        failOnQuery(reconciliationError, 'No se pudo reconciliar la venta');
 
-      const noteRows = (notes ?? []) as CreditNote[];
-      const noteIds = noteRows.map((note) => note.id);
-      let creditItems: CreditItem[] = [];
-      if (noteIds.length) {
-        const { data, error } = await supabase
-          .from('investment_sales_credit_note_items')
-          .select('sale_item_id,credit_note_id,serial_code,gross_credit_cents,tax_credit_cents')
-          .in('credit_note_id', noteIds)
-          .limit(MAX_ITEMS_PER_SALE_FOR_RETURN_UI);
-        failOnQuery(error, 'No se pudieron cargar los ítems acreditados de la venta');
-        creditItems = (data ?? []) as CreditItem[];
-      }
+        if ((itemCount ?? 0) > MAX_ITEMS_PER_SALE_FOR_RETURN_UI) {
+          throw new Error(
+            `La venta contiene más de ${MAX_ITEMS_PER_SALE_FOR_RETURN_UI} unidades; la interfaz se niega a truncar silenciosamente el conjunto retornable.`,
+          );
+        }
+        if ((noteCount ?? 0) > MAX_CREDIT_NOTES_PER_SALE_FOR_RETURN_UI) {
+          throw new Error(
+            `La venta contiene más de ${MAX_CREDIT_NOTES_PER_SALE_FOR_RETURN_UI} notas crédito; la interfaz se niega a truncar el historial.`,
+          );
+        }
 
-      const reconciliationRow = Array.isArray(reconciliation) ? reconciliation[0] : reconciliation;
-      return {
-        items: (items ?? []) as SaleItem[],
-        notes: noteRows,
-        creditItems,
-        reconciliation: (reconciliationRow as SalesReturnReconciliation | undefined) ?? null,
-      };
+        const noteRows = (notes ?? []) as CreditNote[];
+        const noteIds = noteRows.map((note) => note.id);
+        let creditItems: CreditItem[] = [];
+        if (noteIds.length) {
+          const { data, error } = await supabase
+            .from('investment_sales_credit_note_items')
+            .select('sale_item_id,credit_note_id,serial_code,gross_credit_cents,tax_credit_cents')
+            .in('credit_note_id', noteIds)
+            .limit(MAX_ITEMS_PER_SALE_FOR_RETURN_UI)
+            .abortSignal(controller.signal);
+          failOnQuery(error, 'No se pudieron cargar los ítems acreditados de la venta');
+          creditItems = (data ?? []) as CreditItem[];
+        }
+
+        if (controller.signal.aborted) {
+          throw new DOMException('Superseded Sales Returns detail request', 'AbortError');
+        }
+
+        const reconciliationRow = Array.isArray(reconciliation) ? reconciliation[0] : reconciliation;
+        return {
+          items: (items ?? []) as SaleItem[],
+          notes: noteRows,
+          creditItems,
+          reconciliation: (reconciliationRow as SalesReturnReconciliation | undefined) ?? null,
+        };
+      } finally {
+        if (detailController === controller) detailController = null;
+      }
     },
 
     async recordReturn(payload: {
