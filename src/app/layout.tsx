@@ -4,14 +4,23 @@ import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { SkipLink } from '@/components/SkipLink';
 
 const outfit = Outfit({
-  subsets: ['latin'], display: 'swap', variable: '--font-outfit',
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  variable: '--font-outfit',
+  fallback: ['system-ui', 'Arial', 'sans-serif'],
   weight: ['400', '500', '600', '700', '800'],
 });
 
 const dmSans = DM_Sans({
-  subsets: ['latin'], display: 'swap', variable: '--font-dm-sans',
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  variable: '--font-dm-sans',
+  fallback: ['system-ui', 'Arial', 'sans-serif'],
   weight: ['400', '500', '600', '700'],
 });
 
@@ -39,9 +48,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'CTG One Technology' }],
   creator: 'CTG One Technology',
   publisher: 'CTG One Technology',
-  alternates: {
-    canonical: 'https://ctgone.com',
-  },
+  alternates: { canonical: 'https://ctgone.com' },
   icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
   openGraph: {
     type: 'website',
@@ -72,7 +79,13 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, maximumScale: 5, themeColor: '#0a0a0f' };
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#050505',
+  colorScheme: 'dark',
+};
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -100,13 +113,19 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${outfit.variable} ${dmSans.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${outfit.variable} ${dmSans.variable}`}
+      suppressHydrationWarning
+      style={{ backgroundColor: '#050505', colorScheme: 'dark' }}
+    >
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
-      <body className="antialiased">
+      <body className="antialiased" style={{ backgroundColor: '#050505', color: '#e5e5e5' }}>
         <ErrorBoundary>
           <LanguageProvider>
+            <SkipLink />
             <AuthProvider>{children}</AuthProvider>
           </LanguageProvider>
         </ErrorBoundary>
