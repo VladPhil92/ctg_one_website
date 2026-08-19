@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Badge } from '@/components/ui/Badge';
+import { ECOSYSTEM } from '@/data/content';
+import { getCapabilityProof, type ProofStatus } from '@/data/technology-proof';
 import {
   Activity,
   ArrowUpRight,
@@ -26,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-type Status = 'LIVE' | 'PARTIAL' | 'IN DEVELOPMENT' | 'ROADMAP';
+type Status = ProofStatus;
 
 type TechnologyLayer = {
   icon: LucideIcon;
@@ -43,6 +45,19 @@ type OSModule = {
   description: string;
   status: Status;
 };
+
+const identityStatus = getCapabilityProof('identity-auth').status;
+const dataSecurityStatus = getCapabilityProof('data-security').status;
+const deliveryStatus = getCapabilityProof('delivery-platform').status;
+const observabilityStatus = getCapabilityProof('observability-baseline').status;
+const aiStatus = getCapabilityProof('ai-layer').status;
+
+// CTG One Technology is rendered as the OS/core above this operating layer,
+// so the business-unit tiles intentionally derive every other unit from the
+// canonical ecosystem registry rather than maintaining a second name list.
+const operatingBusinessUnits = ECOSYSTEM.units
+  .filter((unit) => unit.id !== 'tech')
+  .map((unit) => unit.name);
 
 const STATUS_STYLES: Record<Status, string> = {
   LIVE: 'border-accent/30 text-accent bg-accent/[0.035]',
@@ -131,7 +146,7 @@ export const ServicesSection: React.FC = () => {
           title: 'Data Layer',
           description: 'Persistencia transaccional, perfiles, KYC, ledgers, auditoría y políticas de acceso a nivel de fila.',
           technologies: ['PostgreSQL', 'Supabase', 'RLS', 'Storage'],
-          status: 'LIVE',
+          status: dataSecurityStatus,
         },
         {
           icon: Workflow,
@@ -147,7 +162,7 @@ export const ServicesSection: React.FC = () => {
           title: 'Intelligence Layer',
           description: 'Arquitectura prevista para agentes, RAG, asistencia contextual y apoyo a decisiones. No existe todavía como runtime productivo general.',
           technologies: ['AI Agents', 'RAG', 'LLM Workflows', 'Evaluations'],
-          status: 'IN DEVELOPMENT',
+          status: aiStatus,
         },
         {
           icon: Cloud,
@@ -155,7 +170,7 @@ export const ServicesSection: React.FC = () => {
           title: 'Infrastructure Layer',
           description: 'Control de versiones, CI, build productivo, despliegue en Render y configuración segura por entorno.',
           technologies: ['GitHub', 'GitHub Actions', 'Render', 'Node Runtime'],
-          status: 'LIVE',
+          status: deliveryStatus,
         },
       ]
     : [
@@ -181,7 +196,7 @@ export const ServicesSection: React.FC = () => {
           title: 'Data Layer',
           description: 'Transactional persistence, profiles, KYC, ledgers, audit records, and row-level access policies.',
           technologies: ['PostgreSQL', 'Supabase', 'RLS', 'Storage'],
-          status: 'LIVE',
+          status: dataSecurityStatus,
         },
         {
           icon: Workflow,
@@ -197,7 +212,7 @@ export const ServicesSection: React.FC = () => {
           title: 'Intelligence Layer',
           description: 'Planned architecture for agents, RAG, contextual assistance, and decision support. It is not yet a general production runtime.',
           technologies: ['AI Agents', 'RAG', 'LLM Workflows', 'Evaluations'],
-          status: 'IN DEVELOPMENT',
+          status: aiStatus,
         },
         {
           icon: Cloud,
@@ -205,45 +220,31 @@ export const ServicesSection: React.FC = () => {
           title: 'Infrastructure Layer',
           description: 'Version control, CI, production builds, Render deployment, and secure environment configuration.',
           technologies: ['GitHub', 'GitHub Actions', 'Render', 'Node Runtime'],
-          status: 'LIVE',
+          status: deliveryStatus,
         },
       ];
 
   const modules: OSModule[] = es
     ? [
-        { icon: KeyRound, title: 'Identidad', description: 'Autenticación, sesiones, perfiles y acceso protegido.', status: 'LIVE' },
-        { icon: Database, title: 'Datos', description: 'PostgreSQL, RLS, storage y modelos transaccionales.', status: 'LIVE' },
+        { icon: KeyRound, title: 'Identidad', description: 'Autenticación, sesiones, perfiles y acceso protegido.', status: identityStatus },
+        { icon: Database, title: 'Datos', description: 'PostgreSQL, RLS, storage y modelos transaccionales.', status: dataSecurityStatus },
         { icon: WalletCards, title: 'Transacciones', description: 'Ledger, asignaciones y movimientos en contextos especializados.', status: 'LIVE' },
         { icon: Workflow, title: 'Automatización', description: 'Triggers y flujos parciales; orquestación común en evolución.', status: 'PARTIAL' },
         { icon: Network, title: 'Integraciones', description: 'Servicios compartidos aún no consolidados como gateway único.', status: 'PARTIAL' },
-        { icon: ShieldCheck, title: 'Seguridad', description: 'RLS, autorización server-side, validación y headers baseline.', status: 'LIVE' },
-        { icon: Bot, title: 'AI Runtime', description: 'Agentes, RAG y evaluaciones pendientes de implementación productiva.', status: 'IN DEVELOPMENT' },
-        { icon: Activity, title: 'Observabilidad', description: 'Monitoreo avanzado, métricas y trazas forman parte del roadmap.', status: 'ROADMAP' },
+        { icon: ShieldCheck, title: 'Seguridad', description: 'RLS, autorización server-side, validación y headers baseline.', status: dataSecurityStatus },
+        { icon: Bot, title: 'AI Runtime', description: 'Agentes, RAG y evaluaciones pendientes de implementación productiva.', status: aiStatus },
+        { icon: Activity, title: 'Observabilidad', description: 'Health checks, logging estructurado, correlation IDs y compatibilidad de schema forman un baseline operativo; métricas y trazas avanzadas siguen en evolución.', status: observabilityStatus },
       ]
     : [
-        { icon: KeyRound, title: 'Identity', description: 'Authentication, sessions, profiles, and protected access.', status: 'LIVE' },
-        { icon: Database, title: 'Data', description: 'PostgreSQL, RLS, storage, and transactional models.', status: 'LIVE' },
+        { icon: KeyRound, title: 'Identity', description: 'Authentication, sessions, profiles, and protected access.', status: identityStatus },
+        { icon: Database, title: 'Data', description: 'PostgreSQL, RLS, storage, and transactional models.', status: dataSecurityStatus },
         { icon: WalletCards, title: 'Transactions', description: 'Ledger, allocations, and movements in specialized contexts.', status: 'LIVE' },
         { icon: Workflow, title: 'Automation', description: 'Triggers and partial flows; shared orchestration is evolving.', status: 'PARTIAL' },
         { icon: Network, title: 'Integrations', description: 'Shared services are not yet consolidated behind a single gateway.', status: 'PARTIAL' },
-        { icon: ShieldCheck, title: 'Security', description: 'RLS, server-side authorization, validation, and baseline headers.', status: 'LIVE' },
-        { icon: Bot, title: 'AI Runtime', description: 'Agents, RAG, and evaluations are pending production implementation.', status: 'IN DEVELOPMENT' },
-        { icon: Activity, title: 'Observability', description: 'Advanced monitoring, metrics, and tracing remain on the roadmap.', status: 'ROADMAP' },
+        { icon: ShieldCheck, title: 'Security', description: 'RLS, server-side authorization, validation, and baseline headers.', status: dataSecurityStatus },
+        { icon: Bot, title: 'AI Runtime', description: 'Agents, RAG, and evaluations are pending production implementation.', status: aiStatus },
+        { icon: Activity, title: 'Observability', description: 'Health checks, structured logging, correlation IDs, and schema compatibility form an operating baseline; advanced metrics and tracing remain in evolution.', status: observabilityStatus },
       ];
-
-  const businessUnits = [
-    'PISÁO',
-    'CTG Craft Beer',
-    'Bechara',
-    'Valderrama School',
-    'Nvet Care',
-    'Oralgreen',
-    'Legalyst',
-    'CTG One Design',
-    'Vantage',
-    'CTG Suites',
-    'Guest Logistics',
-  ];
 
   return (
     <section id="services" className="relative overflow-hidden bg-bg-primary">
@@ -365,7 +366,7 @@ export const ServicesSection: React.FC = () => {
                   <GitBranch size={20} className="text-accent/60" strokeWidth={1.3} />
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-px bg-white/[0.04] border border-white/[0.04] rounded-xl overflow-hidden">
-                  {businessUnits.map((unit) => (
+                  {operatingBusinessUnits.map((unit) => (
                     <div key={unit} className="bg-[#080808] px-3 py-4 min-h-[68px] flex items-center justify-center text-center">
                       <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.09em] text-text-muted">{unit}</span>
                     </div>
