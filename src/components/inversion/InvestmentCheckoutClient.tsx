@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { formatCents } from '@/lib/format';
@@ -11,6 +10,15 @@ import {
   INVESTMENT_BANK_TRANSFER_CONFIGURED,
   INVESTMENT_BANK_TRANSFER_INSTRUCTIONS,
 } from '@/lib/payment-instructions';
+import {
+  createInvestmentOrder,
+  uploadInvestmentPaymentProof,
+} from '@/modules/investment/checkout/browser-repository';
+import {
+  clampInvestmentCases,
+  getCapitalPerCase,
+  getProjectedLotCapacityPercent,
+} from '@/modules/investment/checkout/domain';
 import type { InvestmentProductionLot, LotFundingSummary } from '@/types/investment';
 import { Boxes, Check, FileCheck2, Landmark, Minus, Plus, QrCode, ShieldCheck, X } from 'lucide-react';
 
@@ -32,18 +40,11 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
   const [busy, setBusy] = useState(false);
   const orderIdempotencyKey = useRef<string | null>(null);
 
-  const capitalPerCase = useMemo(() => {
-    const unit = (lot.production_cost_unit_cents ?? 0)
-      + (lot.label_cost_unit_cents ?? 0)
-      + (lot.transport_cost_unit_cents ?? 0);
-    return unit * lot.case_size_units;
-  }, [lot]);
+  const capitalPerCase = getCapitalPerCase(lot);
   const estimate = capitalPerCase * cases;
   const displayCapital = orderId ? capitalRequired ?? estimate : estimate;
   const bottles = cases * lot.case_size_units;
-  const capacityPercent = funding.totalCases > 0
-    ? Math.min(100, Math.round(((funding.allocatedCases + cases) / funding.totalCases) * 100))
-    : 0;
+  const capacityPercent = getProjectedLotCapacityPercent(cases, funding);
 
   if (!isLoading && !isAuthenticated) {
     router.replace(`/iniciar-sesion?next=/dashboard/inversion/nueva/${lot.code.toLowerCase()}`);
@@ -55,7 +56,7 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
 
   const setSafeCases = (next: number) => {
     if (!canInvest) return;
-    setCases(Math.max(MIN_INVESTMENT_CASES, Math.min(funding.availableCasesEquivalent, next || MIN_INVESTMENT_CASES)));
+    setCases(clampInvestmentCases(next, funding));
   };
 
   const createOrder = async () => {
@@ -69,18 +70,15 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
     }
     setError(null); setBusy(true);
     try {
-      const supabase = createClient();
       const idempotencyKey = orderIdempotencyKey.current ?? crypto.randomUUID();
       orderIdempotencyKey.current = idempotencyKey;
-      const { data, error: rpcError } = await supabase.rpc('create_investment_order', {
-        p_lot_id: lot.id,
-        p_case_equivalent_units: cases,
-        p_idempotency_key: idempotencyKey,
+      const order = await createInvestmentOrder({
+        lotId: lot.id,
+        cases,
+        idempotencyKey,
       });
-      if (rpcError) throw rpcError;
-      const row = Array.isArray(data) ? data[0] : data;
-      setOrderId(row.id);
-      setCapitalRequired(row.capital_required_cents);
+      setOrderId(order.id);
+      setCapitalRequired(order.capital_required_cents);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'No se pudo crear la orden';
       setError(message.includes('KYC') ? 'Necesitas completar el KYC específico de inversión antes de participar.' : message);
@@ -100,16 +98,7 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
 
     setError(null); setBusy(true);
     try {
-      const response = await fetch(`/api/investment/orders/${orderId}/payment-proof`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': proof.type,
-          'X-File-Name': encodeURIComponent(proof.name.slice(0, 180)),
-        },
-        body: proof,
-      });
-      const result = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(result.error ?? 'No se pudo registrar el comprobante');
+      await uploadInvestmentPaymentProof({ orderId, proof });
       setSubmitted(true);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'No se pudo registrar el comprobante');
