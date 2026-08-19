@@ -5,24 +5,32 @@ import { formatCents } from '@/lib/format';
 import { StatCard } from '@/components/admin/StatCard';
 import { Beer, BrainCircuit, CircleDollarSign, Database, Factory, ShieldCheck, Users, ArrowUpRight } from 'lucide-react';
 
+type AdminCommandSnapshot = {
+  generated_at: string;
+  total_users: number;
+  pending_kyc: number;
+  pending_deposits: number;
+  operational_wallet_balance_cents: number;
+  total_lots: number;
+  pending_investment_orders: number;
+  funding_open_lots: number;
+};
+
 export default async function AdminOverviewPage() {
   if (!isSupabaseConfigured) redirect('/');
   const supabase = await createClient();
+  const { data, error } = await supabase.rpc('get_admin_command_snapshot');
+  if (error) throw new Error(`No se pudo cargar el snapshot administrativo: ${error.message}`);
 
-  const [
-    { count: totalUsers }, { count: pendingKyc }, { count: pendingDeposits }, { data: wallets },
-    { count: lots }, { count: pendingOrders }, { count: openLots }
-  ] = await Promise.all([
-    supabase.from('profiles').select('*',{count:'exact',head:true}),
-    supabase.from('kyc_submissions').select('*',{count:'exact',head:true}).eq('status','pending'),
-    supabase.from('transactions').select('*',{count:'exact',head:true}).eq('status','pending').eq('type','deposit'),
-    supabase.from('wallets').select('balance_cents'),
-    supabase.from('investment_production_lots').select('*',{count:'exact',head:true}),
-    supabase.from('investment_orders').select('*',{count:'exact',head:true}).eq('status','PAYMENT_SUBMITTED'),
-    supabase.from('investment_production_lots').select('*',{count:'exact',head:true}).eq('status','FUNDING_OPEN'),
-  ]);
-  const totalFundsCents=(wallets??[]).reduce((sum,w)=>sum+(w.balance_cents??0),0);
-  const attentionCount=(pendingKyc??0)+(pendingDeposits??0)+(pendingOrders??0);
+  const snapshot = data as AdminCommandSnapshot;
+  const totalUsers = Number(snapshot?.total_users ?? 0);
+  const pendingKyc = Number(snapshot?.pending_kyc ?? 0);
+  const pendingDeposits = Number(snapshot?.pending_deposits ?? 0);
+  const totalFundsCents = Number(snapshot?.operational_wallet_balance_cents ?? 0);
+  const lots = Number(snapshot?.total_lots ?? 0);
+  const pendingOrders = Number(snapshot?.pending_investment_orders ?? 0);
+  const openLots = Number(snapshot?.funding_open_lots ?? 0);
+  const attentionCount = pendingKyc + pendingDeposits + pendingOrders;
 
   return <div className="space-y-8 lg:space-y-10">
     <section className="relative overflow-hidden rounded-[30px] border border-white/[.085] px-6 py-7 sm:px-8 sm:py-9 lg:px-10" style={{background:'linear-gradient(135deg,rgba(20,20,20,.965),rgba(8,8,8,.93))',boxShadow:'inset 0 1px 0 rgba(255,255,255,.025),0 30px 80px rgba(0,0,0,.24)'}}>
@@ -42,22 +50,22 @@ export default async function AdminOverviewPage() {
     </section>
 
     <section>
-      <div className="mb-4 flex items-end justify-between gap-4"><div><p className="text-[8px] uppercase tracking-[.22em] text-text-dim">LIVE OVERVIEW</p><h2 className="mt-2 text-xl font-outfit font-semibold text-white">Estado operativo</h2></div><p className="hidden text-[10px] text-text-dim sm:block">Datos sincronizados desde Supabase</p></div>
+      <div className="mb-4 flex items-end justify-between gap-4"><div><p className="text-[8px] uppercase tracking-[.22em] text-text-dim">LIVE OVERVIEW</p><h2 className="mt-2 text-xl font-outfit font-semibold text-white">Estado operativo</h2></div><p className="hidden text-[10px] text-text-dim sm:block">Snapshot agregado desde Supabase</p></div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <StatCard label="Usuarios" value={String(totalUsers??0)} href="/admin/usuarios" />
+        <StatCard label="Usuarios" value={String(totalUsers)} href="/admin/usuarios" />
         <StatCard label="Fondos operativos" value={formatCents(totalFundsCents)} />
-        <StatCard label="Lotes registrados" value={String(lots??0)} href="/admin/operations" />
-        <StatCard label="Pagos inversión pendientes" value={String(pendingOrders??0)} href="/inversion/admin/orders" highlight={!!pendingOrders}/>
+        <StatCard label="Lotes registrados" value={String(lots)} href="/admin/operations" />
+        <StatCard label="Pagos inversión por verificar" value={String(pendingOrders)} href="/inversion/admin/orders" highlight={pendingOrders>0}/>
       </div>
     </section>
 
     <section>
       <div className="mb-5 flex items-end justify-between gap-4"><div><p className="text-[8px] uppercase tracking-[.22em] text-text-dim">CONTROL DOMAINS</p><h2 className="mt-2 text-2xl font-outfit font-semibold tracking-tight text-white">Módulos administrativos</h2></div><p className="hidden max-w-md text-right text-[10px] leading-relaxed text-text-dim lg:block">Cada módulo representa un dominio operacional. Entra únicamente cuando necesites actuar sobre ese flujo.</p></div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <Module href="/admin/operations" icon={<Factory size={19}/>} code="OPS-01" title="Production & Traceability" text={`${lots??0} lotes · ${openLots??0} con financiación abierta. Crea lotes, avanza producción, serializa botellas, mueve inventario y registra ventas.`}/>
+        <Module href="/admin/operations" icon={<Factory size={19}/>} code="OPS-01" title="Production & Traceability" text={`${lots} lotes · ${openLots} con financiación abierta. Crea lotes, avanza producción, serializa botellas, mueve inventario y registra ventas.`}/>
         <Module href="/inversion/admin/orders" icon={<Beer size={19}/>} code="INV-02" title="Investment Administration" text="Revisa órdenes y comprobantes. La aprobación es la única vía que convierte un pago validado en allocation y ledger."/>
-        <Module href="/admin/kyc" icon={<ShieldCheck size={19}/>} code="ID-03" title="Identity & KYC" text={`${pendingKyc??0} verificaciones pendientes. La identidad de inversión permanece separada de la cuenta operativa.`}/>
-        <Module href="/admin/depositos" icon={<CircleDollarSign size={19}/>} code="FIN-04" title="Account Operations" text={`${pendingDeposits??0} recargas pendientes. Administra el saldo operacional CTG One, separado del ledger de inversión.`}/>
+        <Module href="/admin/kyc" icon={<ShieldCheck size={19}/>} code="ID-03" title="Identity & KYC" text={`${pendingKyc} verificaciones pendientes. La identidad de inversión permanece separada de la cuenta operativa.`}/>
+        <Module href="/admin/depositos" icon={<CircleDollarSign size={19}/>} code="FIN-04" title="Account Operations" text={`${pendingDeposits} recargas pendientes. Administra el saldo operacional CTG One, separado del ledger de inversión.`}/>
         <Module href="/admin/knowledge" icon={<BrainCircuit size={19}/>} code="KNW-05" title="Knowledge Curation" text="Administra el corpus autorizado de CTG Knowledge y conserva evidencia antes de respuestas."/>
         <Module href="/admin/usuarios" icon={<Users size={19}/>} code="IAM-06" title="Users & Access" text="Consulta usuarios y roles globales. Las facultades específicas de inversión continúan gobernadas por investment_role."/>
       </div>

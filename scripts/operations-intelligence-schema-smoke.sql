@@ -1,7 +1,8 @@
 \set ON_ERROR_STOP on
 
--- Exercise the P2.5 snapshot under a real authenticated SUPER_ADMIN identity.
--- The transaction is rolled back so this leaves no fixture data behind.
+-- Exercise read-only operational/admin snapshots under a real authenticated
+-- SUPER_ADMIN + global admin identity. The transaction is rolled back so this
+-- leaves no fixture data behind.
 BEGIN;
 
 INSERT INTO auth.users(id, email, aud, role, raw_user_meta_data)
@@ -13,6 +14,10 @@ VALUES (
   '{}'::jsonb
 );
 
+UPDATE public.profiles
+SET role = 'admin'
+WHERE id = '00000000-0000-0000-0000-000000000057'::uuid;
+
 INSERT INTO public.investment_participant_profiles(user_id, investment_role)
 VALUES ('00000000-0000-0000-0000-000000000057'::uuid, 'SUPER_ADMIN');
 
@@ -23,6 +28,8 @@ SET LOCAL ROLE authenticated;
 DO $$
 DECLARE
   v_snapshot jsonb;
+  v_admin jsonb;
+  v_operations jsonb;
 BEGIN
   v_snapshot := public.get_operations_intelligence_snapshot();
 
@@ -46,6 +53,34 @@ BEGIN
   -- identifiers or payout/payment destinations to the intelligence layer.
   IF v_snapshot::text ~* '(participant_user_id|provider_event_key|external_reference|merchant_reference|destination_account|bank_account|payment_reference|payment_proof_path)' THEN
     RAISE EXCEPTION 'operations intelligence snapshot exposed a prohibited identifier/reference field';
+  END IF;
+
+  v_admin := public.get_admin_command_snapshot();
+  IF NOT (
+    v_admin ? 'total_users'
+    AND v_admin ? 'pending_kyc'
+    AND v_admin ? 'pending_deposits'
+    AND v_admin ? 'operational_wallet_balance_cents'
+    AND v_admin ? 'pending_investment_orders'
+  ) THEN
+    RAISE EXCEPTION 'admin command snapshot missing required aggregate fields';
+  END IF;
+
+  IF v_admin::text ~* '(email|full_name|phone|external_reference|payment_proof_storage_path)' THEN
+    RAISE EXCEPTION 'admin command snapshot exposed row-level PII/payment evidence';
+  END IF;
+
+  v_operations := public.get_operations_dashboard_snapshot(12);
+  IF NOT (v_operations ? 'business' AND v_operations ? 'lot_performance') THEN
+    RAISE EXCEPTION 'operations dashboard snapshot missing business/lot performance sections';
+  END IF;
+
+  IF jsonb_typeof(v_operations -> 'lot_performance') IS DISTINCT FROM 'array' THEN
+    RAISE EXCEPTION 'operations dashboard lot performance must be a bounded array';
+  END IF;
+
+  IF jsonb_array_length(v_operations -> 'lot_performance') > 12 THEN
+    RAISE EXCEPTION 'operations dashboard exceeded requested lot bound';
   END IF;
 END $$;
 
