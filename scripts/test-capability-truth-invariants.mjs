@@ -3,9 +3,10 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [proof, hero, token, content, flags, legal, ecosystemTechnology] = await Promise.all([
+const [proof, hero, about, token, content, flags, legal, ecosystemTechnology] = await Promise.all([
   read('src/data/technology-proof.ts'),
   read('src/components/sections/HeroSection.tsx'),
+  read('src/components/sections/AboutSection.tsx'),
   read('src/components/sections/TokenSection.tsx'),
   read('src/data/content.ts'),
   read('src/lib/investment/flags.ts'),
@@ -13,32 +14,57 @@ const [proof, hero, token, content, flags, legal, ecosystemTechnology] = await P
   read('src/data/ecosystem-technology.ts'),
 ]);
 
+function proofItemBlock(id) {
+  const marker = `id: '${id}'`;
+  const markerIndex = proof.indexOf(marker);
+  assert.notEqual(markerIndex, -1, `Canonical proof item ${id} must exist.`);
+
+  const blockStart = proof.lastIndexOf('{', markerIndex);
+  const nextBlock = proof.indexOf('\n  {', markerIndex + marker.length);
+  return proof.slice(blockStart, nextBlock === -1 ? proof.length : nextBlock);
+}
+
 assert.ok(proof.includes("publicStatus: 'BETA'"), 'Controlled pilots must be representable as BETA in the public capability registry.');
 assert.match(
-  proof,
-  /id: 'investment-platform'[\s\S]*?publicStatus: 'BETA'/,
+  proofItemBlock('investment-platform'),
+  /publicStatus: 'BETA'/,
   'CTG Craft Beer Investment must remain publicly classified as BETA while public funding is fail-closed.',
 );
 assert.match(
-  proof,
-  /id: 'web3'[\s\S]*?status: 'ROADMAP'/,
+  proofItemBlock('web3'),
+  /status: 'ROADMAP'/,
   'CTGO/Web3 must remain ROADMAP until verifiable on-chain production evidence exists.',
 );
 assert.match(
-  proof,
-  /id: 'ai-layer'[\s\S]*?status: 'IN DEVELOPMENT'/,
+  proofItemBlock('ai-layer'),
+  /status: 'IN DEVELOPMENT'/,
   'The general AI layer must not be promoted to LIVE without production evidence.',
 );
 assert.match(
-  proof,
-  /id: 'ctg-knowledge-v01'[\s\S]*?publicStatus: 'BETA'/,
+  proofItemBlock('ctg-knowledge-v01'),
+  /publicStatus: 'BETA'/,
   'CTG Knowledge must remain a BETA pilot until reproducible evaluation and operating evidence exist.',
+);
+assert.match(
+  proofItemBlock('observability-baseline'),
+  /status: 'PARTIAL'/,
+  'Observability baseline must reflect the implemented health/logging/correlation layer.',
 );
 
 assert.ok(hero.includes('getCapabilityProof'), 'Hero capability states must come from the canonical proof registry.');
 assert.ok(hero.includes('getPublicProofStatus'), 'Hero must render public maturity from the canonical proof registry.');
 assert.ok(!hero.includes("en: 'Proprietary software · Live'"), 'Hero must not hard-code maturity labels independently of Technology Status.');
 assert.ok(!hero.includes("en: 'Applied AI · In development'"), 'Hero AI maturity must not be hard-coded independently of Technology Status.');
+
+assert.ok(about.includes("getCapabilityProof('observability-baseline').status"), 'About observability maturity must come from the canonical proof registry.');
+assert.ok(about.includes("getCapabilityProof('ai-layer').status"), 'About AI maturity must come from the canonical proof registry.');
+assert.ok(about.includes("getCapabilityProof('data-security').status"), 'About data/security maturity must come from the canonical proof registry.');
+assert.ok(about.includes("getCapabilityProof('delivery-platform').status"), 'About delivery maturity must come from the canonical proof registry.');
+assert.doesNotMatch(
+  about,
+  /label: es \? 'Observabilidad' : 'Observability', status: 'ROADMAP'/,
+  'About must not independently downgrade the implemented observability baseline to ROADMAP.',
+);
 
 for (const forbidden of [
   /\b2[,.]?450\+?\s+holders\b/i,

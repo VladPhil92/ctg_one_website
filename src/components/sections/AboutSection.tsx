@@ -5,6 +5,7 @@ import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Badge } from '@/components/ui/Badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getCapabilityProof, type ProofStatus } from '@/data/technology-proof';
 import {
   Activity,
   ArrowUpRight,
@@ -21,7 +22,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-type Maturity = 'LIVE' | 'PARTIAL' | 'IN DEVELOPMENT' | 'ROADMAP';
+type Maturity = ProofStatus;
 
 type Capability = {
   icon: LucideIcon;
@@ -30,6 +31,12 @@ type Capability = {
   technologies: string[];
   status: Maturity;
 };
+
+const identityStatus = getCapabilityProof('identity-auth').status;
+const dataSecurityStatus = getCapabilityProof('data-security').status;
+const deliveryStatus = getCapabilityProof('delivery-platform').status;
+const observabilityStatus = getCapabilityProof('observability-baseline').status;
+const aiStatus = getCapabilityProof('ai-layer').status;
 
 const statusClass: Record<Maturity, string> = {
   LIVE: 'border-accent/30 text-accent bg-accent/[0.035]',
@@ -126,7 +133,7 @@ export const AboutSection: React.FC = () => {
           title: 'IA aplicada',
           description: 'La visión incluye agentes, RAG, asistencia contextual y automatización basada en modelos. Estas capacidades todavía no constituyen una capa productiva verificable del repositorio.',
           technologies: ['AI Agents', 'RAG', 'LLM Workflows'],
-          status: 'IN DEVELOPMENT',
+          status: aiStatus,
         },
         {
           icon: Workflow,
@@ -140,7 +147,7 @@ export const AboutSection: React.FC = () => {
           title: 'Datos y plataformas transaccionales',
           description: 'PostgreSQL, Supabase Auth, Row Level Security, almacenamiento, ledgers, trazabilidad y estructuras transaccionales soportan funciones reales de la plataforma.',
           technologies: ['PostgreSQL', 'Supabase', 'RLS', 'Ledger'],
-          status: 'LIVE',
+          status: dataSecurityStatus,
         },
         {
           icon: Network,
@@ -154,7 +161,7 @@ export const AboutSection: React.FC = () => {
           title: 'Cloud, seguridad y despliegue',
           description: 'GitHub, GitHub Actions, Render, variables de entorno, autorización server-side y controles de acceso forman parte de la operación productiva actual.',
           technologies: ['GitHub', 'Render', 'CI/CD', 'Security'],
-          status: 'LIVE',
+          status: deliveryStatus,
         },
       ]
     : [
@@ -170,7 +177,7 @@ export const AboutSection: React.FC = () => {
           title: 'Applied AI',
           description: 'The vision includes agents, RAG, contextual assistance, and model-driven automation. These capabilities do not yet constitute a verifiable production layer in the repository.',
           technologies: ['AI Agents', 'RAG', 'LLM Workflows'],
-          status: 'IN DEVELOPMENT',
+          status: aiStatus,
         },
         {
           icon: Workflow,
@@ -184,7 +191,7 @@ export const AboutSection: React.FC = () => {
           title: 'Data and transactional platforms',
           description: 'PostgreSQL, Supabase Auth, Row Level Security, storage, ledgers, traceability, and transactional structures support real platform functions.',
           technologies: ['PostgreSQL', 'Supabase', 'RLS', 'Ledger'],
-          status: 'LIVE',
+          status: dataSecurityStatus,
         },
         {
           icon: Network,
@@ -198,17 +205,17 @@ export const AboutSection: React.FC = () => {
           title: 'Cloud, security, and deployment',
           description: 'GitHub, GitHub Actions, Render, environment configuration, server-side authorization, and access controls are part of the current production operation.',
           technologies: ['GitHub', 'Render', 'CI/CD', 'Security'],
-          status: 'LIVE',
+          status: deliveryStatus,
         },
       ];
 
   const architecture: Array<{ icon: LucideIcon; label: string; status: Maturity }> = [
-    { icon: ShieldCheck, label: es ? 'Identidad y acceso' : 'Identity & access', status: 'LIVE' },
-    { icon: Database, label: es ? 'Datos transaccionales' : 'Transactional data', status: 'LIVE' },
+    { icon: ShieldCheck, label: es ? 'Identidad y acceso' : 'Identity & access', status: identityStatus },
+    { icon: Database, label: es ? 'Datos transaccionales' : 'Transactional data', status: dataSecurityStatus },
     { icon: Cpu, label: es ? 'Lógica de negocio' : 'Business logic', status: 'LIVE' },
     { icon: Workflow, label: es ? 'Automatización' : 'Automation', status: 'PARTIAL' },
     { icon: GitBranch, label: es ? 'Integraciones' : 'Integrations', status: 'PARTIAL' },
-    { icon: Activity, label: es ? 'Observabilidad' : 'Observability', status: 'ROADMAP' },
+    { icon: Activity, label: es ? 'Observabilidad' : 'Observability', status: observabilityStatus },
   ];
 
   return (
