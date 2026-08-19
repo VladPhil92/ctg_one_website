@@ -1,20 +1,28 @@
-export type InvestmentLotStatus =
-  | 'DRAFT' | 'FUNDING_PENDING' | 'FUNDING_OPEN' | 'FUNDING_CLOSED'
-  | 'RAW_MATERIALS_PURCHASED' | 'PRODUCTION' | 'BOTTLING' | 'WAREHOUSE'
-  | 'DISPATCHED' | 'IN_MARKET' | 'SOLD_OUT' | 'SETTLED' | 'CLOSED'
-  | 'CANCELLED' | 'EXPIRED';
+// Domain-friendly row shapes synchronized with the production Supabase schema.
+// Source of truth remains the database migrations / generated Supabase types.
 
-export type InvestmentKycStatus = 'NOT_STARTED' | 'PENDING' | 'VERIFIED' | 'REJECTED' | 'REQUIRES_REVIEW';
-export type InvestmentRole = 'PARTICIPANT' | 'SUPER_ADMIN' | 'FINANCE_ADMIN' | 'PRODUCTION_MANAGER' | 'INVENTORY_MANAGER' | 'SALES_MANAGER' | 'AUDITOR';
+export type LotStatus =
+  | 'DRAFT' | 'FUNDING_PENDING' | 'FUNDING_OPEN' | 'FUNDED' | 'PROCUREMENT' | 'BREWING'
+  | 'FERMENTATION' | 'CONDITIONING' | 'BOTTLING' | 'QUALITY_CONTROL' | 'WAREHOUSE' | 'DISPATCHED'
+  | 'IN_MARKET' | 'SELLING' | 'SOLD_OUT' | 'SETTLEMENT_PENDING' | 'SETTLED' | 'CLOSED'
+  | 'PAUSED' | 'CANCELLED' | 'PRODUCTION_LOSS' | 'PARTIAL_LOSS' | 'RECALLED' | 'EXPIRED';
 
-export interface InvestmentParticipantProfile {
-  user_id: string;
-  investment_role: InvestmentRole;
-  kyc_status: InvestmentKycStatus;
-  kyc_verified_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export const LOT_STATUS_LABELS: Record<LotStatus, string> = {
+  DRAFT: 'Borrador', FUNDING_PENDING: 'Financiación por abrir', FUNDING_OPEN: 'Financiación abierta',
+  FUNDED: 'Financiado', PROCUREMENT: 'Compra de insumos', BREWING: 'Cocción', FERMENTATION: 'Fermentación',
+  CONDITIONING: 'Acondicionamiento', BOTTLING: 'Embotellado', QUALITY_CONTROL: 'Control de calidad',
+  WAREHOUSE: 'En bodega', DISPATCHED: 'Despachado', IN_MARKET: 'En mercado', SELLING: 'Comercialización',
+  SOLD_OUT: 'Agotado', SETTLEMENT_PENDING: 'Liquidación pendiente', SETTLED: 'Liquidado', CLOSED: 'Cerrado',
+  PAUSED: 'Pausado', CANCELLED: 'Cancelado', PRODUCTION_LOSS: 'Pérdida de producción',
+  PARTIAL_LOSS: 'Pérdida parcial', RECALLED: 'Retirado del mercado', EXPIRED: 'Vencido',
+};
+
+export const LOT_NEXT_STATUS: Partial<Record<LotStatus, LotStatus>> = {
+  DRAFT: 'FUNDING_PENDING', FUNDING_PENDING: 'FUNDING_OPEN', FUNDING_OPEN: 'FUNDED', FUNDED: 'PROCUREMENT',
+  PROCUREMENT: 'BREWING', BREWING: 'FERMENTATION', FERMENTATION: 'CONDITIONING', CONDITIONING: 'BOTTLING',
+  BOTTLING: 'QUALITY_CONTROL', QUALITY_CONTROL: 'WAREHOUSE', WAREHOUSE: 'DISPATCHED', DISPATCHED: 'IN_MARKET',
+  IN_MARKET: 'SELLING', SELLING: 'SOLD_OUT', SOLD_OUT: 'SETTLEMENT_PENDING', SETTLED: 'CLOSED',
+};
 
 export interface InvestmentProductionLot {
   id: string;
@@ -22,10 +30,12 @@ export interface InvestmentProductionLot {
   beer_style: string;
   beer_style_id: string | null;
   destination: string;
-  status: InvestmentLotStatus;
+  status: LotStatus;
   case_size_units: number;
   total_cases: number;
   total_eligible_units: number;
+  created_by: string | null;
+  created_at: string;
   production_cost_unit_cents: number;
   label_cost_unit_cents: number;
   transport_cost_unit_cents: number | null;
@@ -33,17 +43,18 @@ export interface InvestmentProductionLot {
   b2b_price_unit_cents: number;
   inc_rate: number;
   advertising_rate_on_pre_inc: number;
-  created_by: string | null;
-  created_at: string;
 }
 
-export const LOT_STATUS_LABELS: Record<InvestmentLotStatus, string> = {
-  DRAFT: 'Borrador', FUNDING_PENDING: 'Pendiente de financiación', FUNDING_OPEN: 'Financiación abierta',
-  FUNDING_CLOSED: 'Financiación cerrada', RAW_MATERIALS_PURCHASED: 'Insumos comprados',
-  PRODUCTION: 'En producción', BOTTLING: 'Embotellado', WAREHOUSE: 'En bodega', DISPATCHED: 'Despachado',
-  IN_MARKET: 'En mercado', SOLD_OUT: 'Agotado', SETTLED: 'Liquidado', CLOSED: 'Cerrado',
-  CANCELLED: 'Cancelado', EXPIRED: 'Expirado',
-};
+export interface InvestmentProductionEvent {
+  id: string;
+  lot_id: string;
+  previous_status: LotStatus | null;
+  new_status: LotStatus;
+  actor_id: string | null;
+  notes: string | null;
+  evidence_document_id: string | null;
+  occurred_at: string;
+}
 
 export interface InvestmentFundingAllocation {
   id: string;
@@ -56,10 +67,31 @@ export interface InvestmentFundingAllocation {
   created_at: string;
 }
 
+export interface InvestmentInventoryMovement { movement_type: string; quantity_units: number; }
+export interface InvestmentInventoryMovementRow extends InvestmentInventoryMovement { id: string; lot_id: string; actor_id: string | null; occurred_at: string; }
+
+export type InvestmentRole =
+  | 'SUPER_ADMIN' | 'FINANCE_ADMIN' | 'PRODUCTION_MANAGER' | 'INVENTORY_MANAGER'
+  | 'SALES_MANAGER' | 'AUDITOR' | 'PARTICIPANT';
+
+export type InvestmentKycStatus =
+  | 'NOT_STARTED' | 'PENDING' | 'VERIFIED' | 'REJECTED' | 'REQUIRES_REVIEW';
+
+export interface InvestmentParticipantProfile {
+  id: string;
+  user_id: string;
+  investment_role: InvestmentRole;
+  kyc_status: InvestmentKycStatus;
+  bank_account_masked: string | null;
+  agreement_accepted_at: string | null;
+  created_at: string;
+}
+
 export type InvestmentLedgerEntryType =
-  | 'FUNDING_RECEIVED' | 'CAPITAL_COMMITTED' | 'CAPITAL_RELEASED'
-  | 'PROFIT_CREDIT' | 'LOSS_DEBIT' | 'WITHDRAWAL_DEBIT'
-  | 'REINVESTMENT_DEBIT' | 'REINVESTMENT_CREDIT' | 'ADJUSTMENT';
+  | 'FUNDING_RECEIVED' | 'CAPITAL_COMMITTED' | 'CAPITAL_DEPLOYED' | 'CAPITAL_RECOVERED'
+  | 'LOT_REVENUE_RECOGNIZED' | 'LOT_EXPENSE_RECOGNIZED' | 'TAX_RECOGNIZED'
+  | 'PROFIT_REALIZED' | 'PROFIT_DISTRIBUTED' | 'SETTLEMENT_CREDIT' | 'WITHDRAWAL_DEBIT'
+  | 'REINVESTMENT_DEBIT' | 'ADJUSTMENT_CREDIT' | 'ADJUSTMENT_DEBIT' | 'REVERSAL';
 
 export interface InvestmentLedgerEntry {
   id: string;
@@ -68,69 +100,22 @@ export interface InvestmentLedgerEntry {
   allocation_id: string | null;
   entry_type: InvestmentLedgerEntryType;
   amount_cents: number;
-  description: string;
-  idempotency_key: string | null;
+  reference: string | null;
+  metadata: unknown | null;
   actor_id: string | null;
   created_at: string;
 }
 
-export interface InvestmentProductionEvent {
-  id: string;
-  lot_id: string;
-  previous_status: InvestmentLotStatus | null;
-  new_status: InvestmentLotStatus;
-  notes: string | null;
-  evidence_document_id: string | null;
-  actor_id: string | null;
-  occurred_at: string;
-}
-
-export interface InvestmentSettlement {
-  id: string;
-  lot_id: string;
-  formula_version_id: string;
-  total_revenue_cents: number;
-  eligible_costs_cents: number;
-  tax_liability_cents: number;
-  ndlp_cents: number;
-  participant_pool_cents: number;
-  ctg_pool_cents: number;
-  finalized_at: string;
-  finalized_by: string | null;
-  created_at: string;
-}
-
-export interface InvestmentSettlementDistribution {
-  id: string;
-  settlement_id: string;
-  allocation_id: string;
-  participant_user_id: string | null;
-  capital_committed_cents: number;
-  pool_share: number;
-  profit_amount_cents: number;
-  created_at: string;
-}
+export type InvestmentWithdrawalStatus =
+  | 'REQUESTED' | 'UNDER_REVIEW' | 'APPROVED' | 'PAYMENT_PROCESSING'
+  | 'PAID' | 'REJECTED' | 'CANCELLED';
 
 export interface InvestmentWithdrawalRequest {
   id: string;
   participant_user_id: string;
   amount_cents: number;
-  status: 'REQUESTED' | 'APPROVED' | 'PAYMENT_PROCESSING' | 'PAID' | 'REJECTED' | 'CANCELLED';
-  requested_at: string;
-  reviewed_by: string | null;
-  reviewed_at: string | null;
+  status: InvestmentWithdrawalStatus;
   admin_notes: string | null;
-  created_at: string;
-}
-
-export interface InvestmentReinvestmentRequest {
-  id: string;
-  participant_user_id: string;
-  source_settlement_id: string;
-  target_lot_id: string;
-  amount_cents: number;
-  status: 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
-  requested_at: string;
   reviewed_by: string | null;
   reviewed_at: string | null;
   created_at: string;
