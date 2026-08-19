@@ -15,7 +15,7 @@ const dmSans = DM_Sans({
   weight: ['400', '500', '600', '700'],
 });
 
-const verifiedDescription = 'CTG One Technology is the proprietary software, data and digital infrastructure layer of the CTG One business ecosystem. We build and operate applications, transactional platforms, identity, automation and shared technology for real operating companies.';
+const verifiedDescription = 'CTG One Technology is the proprietary software, data and digital infrastructure layer of the CTG One business ecosystem. We build and operate applications, transactional platforms, identity, security and selected automation workflows for real operating companies; advanced AI capabilities remain evidence-gated by maturity status.';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://ctgone.com'),
@@ -94,7 +94,7 @@ const jsonLd = {
     'Identity and authorization',
     'Transactional systems',
     'Automation',
-    'Applied artificial intelligence',
+    'Applied artificial intelligence architecture',
   ],
 };
 
