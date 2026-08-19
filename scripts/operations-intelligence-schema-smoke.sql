@@ -4,8 +4,14 @@
 -- The transaction is rolled back so this leaves no fixture data behind.
 BEGIN;
 
-INSERT INTO auth.users(id)
-VALUES ('00000000-0000-0000-0000-000000000057'::uuid);
+INSERT INTO auth.users(id, email, aud, role, raw_user_meta_data)
+VALUES (
+  '00000000-0000-0000-0000-000000000057'::uuid,
+  'operations-intelligence-smoke@ctgone.local',
+  'authenticated',
+  'authenticated',
+  '{}'::jsonb
+);
 
 INSERT INTO public.investment_participant_profiles(user_id, investment_role)
 VALUES ('00000000-0000-0000-0000-000000000057'::uuid, 'SUPER_ADMIN');
