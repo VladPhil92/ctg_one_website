@@ -51,11 +51,12 @@ assert.match(initialMigration, /insert into public\.profiles/i, 'New-user provis
 assert.match(initialMigration, /insert into public\.wallets/i, 'New-user provisioning must create the wallet.');
 assert.match(initialMigration, /after insert on auth\.users/i, 'New-user provisioning must remain attached to auth.users inserts.');
 
-// New passwords use one shared policy. Existing passwords are intentionally not
-// rejected client-side at login so historical users can still authenticate.
-assert.match(clientPolicy, /PASSWORD_MIN_LENGTH\s*=\s*12/, 'New account passwords must require at least 12 characters.');
-for (const requirement of [/[a-z]/, /[A-Z]/, /\\d/, /[^A-Za-z0-9]/]) {
-  assert.ok(clientPolicy.includes(requirement.source), `Password policy must retain requirement ${requirement}.`);
+// New passwords use one shared client policy. Existing passwords are
+// intentionally not rejected client-side at login so historical users can
+// still authenticate. Hosted Auth enforcement remains an operational gate.
+assert.match(clientPolicy, /PASSWORD_MIN_LENGTH\s*=\s*12/, 'New account passwords must require at least 12 characters in the client policy.');
+for (const requirement of ['/[a-z]/', '/[A-Z]/', '/\\d/', '/[^A-Za-z0-9]/']) {
+  assert.ok(clientPolicy.includes(requirement), `Password policy must retain requirement ${requirement}.`);
 }
 assert.ok(registerPage.includes('strongPasswordError(password, locale)'), 'Signup must use the shared strong-password policy.');
 assert.ok(resetPage.includes('strongPasswordError(password, locale)'), 'Password reset must use the shared strong-password policy.');
