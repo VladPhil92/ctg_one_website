@@ -10,13 +10,20 @@ import { AccountCtaSection } from '@/components/sections/AccountCtaSection';
 
 export default function Home() {
   return (
-    <main className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <>
       <Navbar />
-      <HeroSection />
-      <InvestmentSpotlightSection />
-      <HomeOverviewSection />
-      <AccountCtaSection />
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="min-h-screen"
+        style={{ backgroundColor: 'var(--bg-primary)' }}
+      >
+        <HeroSection />
+        <InvestmentSpotlightSection />
+        <HomeOverviewSection />
+        <AccountCtaSection />
+      </main>
       <Footer />
-    </main>
+    </>
   );
 }

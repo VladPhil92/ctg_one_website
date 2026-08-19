@@ -1,0 +1,117 @@
+import { expect, test } from '@playwright/test';
+
+async function preferSpanish(page) {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('ctg-one-language', 'es');
+    document.cookie = 'ctg_locale=es; path=/';
+  });
+}
+
+test.describe('CTG One home UI/UX accessibility contract', () => {
+  test('Spanish home renders explicit localized card copy without English fallback', async ({ page }) => {
+    await preferSpanish(page);
+    await page.goto('/');
+
+    await expect(page.getByText('Fundada en 2024 en Cartagena, Colombia', { exact: false })).toBeVisible();
+    await expect(page.getByText('CTG One construye la base tecnológica', { exact: false })).toBeVisible();
+    await expect(page.getByText('Doce unidades de negocio operativas', { exact: false })).toBeVisible();
+    await expect(page.getByText('Conoce cómo CTG One construye y despliega', { exact: false })).toBeVisible();
+
+    await expect(page.getByText('Founded in 2024 in Cartagena, Colombia', { exact: false })).toHaveCount(0);
+    await expect(page.getByText('CTG One builds the technological foundation', { exact: false })).toHaveCount(0);
+    await expect(page.getByText('See more', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Ver más', { exact: true })).toHaveCount(0);
+
+    for (const label of [
+      'Conocer CTG One',
+      'Ver qué construimos',
+      'Explorar el portafolio',
+      'Ver CTG Recompensas',
+      'Ver estrategia Web3',
+      'Hablar con el equipo',
+    ]) {
+      await expect(page.getByText(label, { exact: true })).toBeVisible();
+    }
+  });
+
+  test('skip link is first keyboard target and transfers focus to main content', async ({ page }) => {
+    await preferSpanish(page);
+    await page.goto('/');
+
+    await page.keyboard.press('Tab');
+    const skip = page.getByRole('link', { name: 'Saltar al contenido' });
+    await expect(skip).toBeFocused();
+    await expect(skip).toBeVisible();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#main-content')).toBeFocused();
+  });
+
+  test('reduced motion keeps every reveal section visible and removes diagram motion', async ({ page }) => {
+    await preferSpanish(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    const revealStates = await page.locator('[data-reveal]').evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const style = getComputedStyle(node);
+        return { opacity: Number(style.opacity), transform: style.transform };
+      }),
+    );
+    expect(revealStates.length).toBeGreaterThan(3);
+    for (const state of revealStates) {
+      expect(state.opacity).toBeGreaterThan(0.95);
+      expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(state.transform);
+    }
+
+    await expect(page.locator('[data-ecosystem-diagram] animateMotion')).toHaveCount(0);
+    await expect(page.locator('[data-ecosystem-diagram] animateTransform')).toHaveCount(0);
+  });
+
+  test('390px mobile layout puts the message before the diagram and keeps touch targets at 44px', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await preferSpanish(page);
+    await page.goto('/');
+
+    const headingBox = await page.getByRole('heading', { level: 1 }).boundingBox();
+    const diagramBox = await page.locator('[data-ecosystem-diagram]').boundingBox();
+    expect(headingBox).not.toBeNull();
+    expect(diagramBox).not.toBeNull();
+    expect(headingBox.y).toBeLessThan(diagramBox.y);
+
+    const menuButton = page.getByRole('button', { name: 'Abrir menú' });
+    const menuButtonBox = await menuButton.boundingBox();
+    expect(menuButtonBox.width).toBeGreaterThanOrEqual(44);
+    expect(menuButtonBox.height).toBeGreaterThanOrEqual(44);
+
+    for (const language of ['Español', 'Inglés']) {
+      const box = await page.getByRole('button', { name: language }).boundingBox();
+      expect(box.width).toBeGreaterThanOrEqual(44);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+    }
+
+    await menuButton.click();
+    const dialog = page.getByRole('dialog', { name: 'Navegación móvil' });
+    await expect(dialog).toBeVisible();
+    const undersizedTargets = await dialog.locator('a, button').evaluateAll((nodes) =>
+      nodes
+        .map((node) => ({
+          text: node.textContent?.trim() ?? '',
+          width: node.getBoundingClientRect().width,
+          height: node.getBoundingClientRect().height,
+        }))
+        .filter(({ width, height }) => width < 44 || height < 44),
+    );
+    expect(undersizedTargets).toEqual([]);
+  });
+
+  test('canonical privacy route redirects legacy path without disturbing product namespace', async ({ page }) => {
+    const privacyResponse = await page.goto('/privacidad');
+    expect(privacyResponse?.status()).toBeLessThan(400);
+    await expect(page).toHaveURL(/\/privacy$/);
+
+    const investmentResponse = await page.goto('/investment');
+    expect(investmentResponse?.status()).toBeLessThan(400);
+    await expect(page).toHaveURL(/\/inversion$/);
+  });
+});

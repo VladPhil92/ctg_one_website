@@ -3,7 +3,7 @@
 import React from 'react';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
-import { ABOUT, SERVICES, ECOSYSTEM, REWARDS, CONTACT } from '@/data/content';
+import { HOME_OVERVIEW_ITEMS, localizeHomeOverview } from '@/data/home-overview';
 import {
   Eye,
   Cpu,
@@ -14,20 +14,21 @@ import {
   ArrowUpRight,
   Orbit,
   Sparkles,
+  type LucideIcon,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const ITEMS = [
-  { href: '/about', badge: ABOUT.badge, title: ABOUT.title, titleHighlight: ABOUT.titleHighlight, description: ABOUT.description, icon: Eye },
-  { href: '/services', badge: SERVICES.badge, title: SERVICES.title, titleHighlight: SERVICES.titleHighlight, description: SERVICES.description, icon: Cpu },
-  { href: '/ecosystem', badge: ECOSYSTEM.badge, title: ECOSYSTEM.title, titleHighlight: ECOSYSTEM.titleHighlight, description: ECOSYSTEM.description, icon: Network },
-  { href: '/rewards', badge: REWARDS.badge, title: REWARDS.title, titleHighlight: REWARDS.titleHighlight, description: REWARDS.description, icon: Award },
-  { href: '/token', badge: 'CTGO · Web3', title: 'CTGO', titleHighlight: 'Technology Roadmap', description: '', icon: Wallet },
-  { href: '/contact', badge: CONTACT.badge, title: CONTACT.title, titleHighlight: CONTACT.titleHighlight, description: CONTACT.description, icon: Mail },
-];
+const ICONS: Record<string, LucideIcon> = {
+  '/about': Eye,
+  '/services': Cpu,
+  '/ecosystem': Network,
+  '/rewards': Award,
+  '/token': Wallet,
+  '/contact': Mail,
+};
 
 export const HomeOverviewSection: React.FC = () => {
-  const { locale, t } = useLanguage();
+  const { locale } = useLanguage();
 
   const intro = locale === 'es'
     ? {
@@ -43,22 +44,10 @@ export const HomeOverviewSection: React.FC = () => {
         description: 'Every CTG One unit acts as an operating environment where our software and infrastructure are tested, deployed, and continuously improved; emerging capabilities are shown with their real maturity.',
       };
 
-  const tokenCopy = locale === 'es'
-    ? {
-        title: 'CTGO',
-        highlight: 'Estrategia Web3',
-        description: 'Arquitectura de utilidad en desarrollo. No publicamos métricas on-chain, holders, precio ni contratos hasta contar con evidencia productiva verificable.',
-      }
-    : {
-        title: 'CTGO',
-        highlight: 'Web3 Strategy',
-        description: 'Utility architecture in development. We do not publish on-chain metrics, holder counts, price, or contracts until verifiable production evidence exists.',
-      };
-
   return (
-    <section className="relative py-24 sm:py-32 md:py-36 lg:py-44 overflow-hidden" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+    <section className="relative overflow-hidden py-20 sm:py-28 md:py-32 lg:py-36" style={{ backgroundColor: 'var(--bg-secondary)' }}>
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute left-1/2 top-[7%] -translate-x-1/2 w-[760px] h-[760px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(212,162,89,0.045) 0%, rgba(212,162,89,0.012) 38%, transparent 70%)' }} />
+        <div className="absolute left-1/2 top-[7%] h-[760px] w-[760px] -translate-x-1/2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(212,162,89,0.045) 0%, rgba(212,162,89,0.012) 38%, transparent 70%)' }} />
         <div
           className="absolute inset-0 opacity-[0.17]"
           style={{
@@ -72,11 +61,11 @@ export const HomeOverviewSection: React.FC = () => {
 
       <Container className="relative z-10">
         <FadeInSection>
-          <div className="grid lg:grid-cols-[0.78fr_1.22fr] gap-8 lg:gap-16 items-end mb-14 sm:mb-18 md:mb-20">
+          <div className="mb-12 grid items-end gap-8 lg:mb-16 lg:grid-cols-[0.78fr_1.22fr] lg:gap-16">
             <div>
-              <div className="inline-flex items-center gap-2.5 mb-5">
-                <span className="w-8 h-px shrink-0 bg-accent/60" />
-                <span className="min-w-0 text-[9px] sm:text-[10px] uppercase tracking-[0.25em] text-accent leading-tight">{intro.eyebrow}</span>
+              <div className="mb-5 inline-flex items-center gap-2.5">
+                <span className="h-px w-8 shrink-0 bg-accent/60" aria-hidden="true" />
+                <span className="min-w-0 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-accent leading-tight">{intro.eyebrow}</span>
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-semibold tracking-[-0.03em] leading-[1.05]">
                 <span className="text-white">{intro.title}</span>
@@ -85,52 +74,55 @@ export const HomeOverviewSection: React.FC = () => {
               </h2>
             </div>
 
-            <div className="lg:pb-1 min-w-0">
-              <p className="text-sm sm:text-base text-text-muted leading-relaxed max-w-2xl">{intro.description}</p>
-              <div className="mt-6 flex min-w-0 items-center gap-4 text-text-dim">
-                <Orbit className="w-[17px] h-[17px] shrink-0 text-accent" strokeWidth={1.4} />
-                <span className="h-px flex-1 max-w-[180px] bg-gradient-to-r from-accent/35 to-transparent" />
-                <Sparkles className="w-3.5 h-3.5 shrink-0" strokeWidth={1.4} />
+            <div className="min-w-0 lg:pb-1">
+              <p className="max-w-2xl text-sm sm:text-base text-text-muted leading-relaxed">{intro.description}</p>
+              <div className="mt-6 flex min-w-0 items-center gap-4 text-text-dim" aria-hidden="true">
+                <Orbit className="h-[17px] w-[17px] shrink-0 text-accent" strokeWidth={1.4} />
+                <span className="h-px max-w-[180px] flex-1 bg-gradient-to-r from-accent/35 to-transparent" />
+                <Sparkles className="h-3.5 w-3.5 shrink-0" strokeWidth={1.4} />
               </div>
             </div>
           </div>
         </FadeInSection>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
-          {ITEMS.map((item, index) => {
-            const Icon = item.icon;
+        <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {HOME_OVERVIEW_ITEMS.map((item, index) => {
+            const Icon = ICONS[item.href];
             const number = String(index + 1).padStart(2, '0');
-            const isToken = item.href === '/token';
-            const title = isToken ? tokenCopy.title : t(item.title);
-            const highlight = isToken ? tokenCopy.highlight : t(item.titleHighlight);
-            const description = isToken ? tokenCopy.description : t(item.description);
+            const copy = localizeHomeOverview(item, locale);
+            const accessibleLabel = `${copy.cta}: ${copy.title} ${copy.highlight}`;
 
             return (
-              <FadeInSection key={item.href} delay={0.05 + index * 0.055}>
-                <a href={item.href} className="group isolate relative block min-h-[320px] sm:min-h-[345px] p-7 sm:p-8 overflow-hidden border border-white/[0.055] bg-[#080808]/90 transition-all duration-500 hover:border-accent/35 hover:-translate-y-1" style={{ boxShadow: '0 18px 70px rgba(0,0,0,0.18)' }}>
-                  <div className="absolute -right-24 -top-24 w-64 h-64 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" style={{ background: 'radial-gradient(circle, rgba(212,162,89,0.13), transparent 67%)' }} />
-                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/0 to-transparent group-hover:via-accent/50 transition-all duration-700" />
+              <FadeInSection key={item.href} delay={0.04 + index * 0.045}>
+                <a
+                  href={item.href}
+                  aria-label={accessibleLabel}
+                  className="group isolate relative block min-h-[320px] overflow-hidden border border-white/[0.075] bg-[#080808]/95 p-7 transition-[border-color,transform,background-color] duration-300 hover:-translate-y-1 hover:border-accent/40 hover:bg-[#0a0a0a] sm:min-h-[345px] sm:p-8"
+                  style={{ boxShadow: '0 18px 70px rgba(0,0,0,0.18)' }}
+                >
+                  <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: 'radial-gradient(circle, rgba(212,162,89,0.13), transparent 67%)' }} aria-hidden="true" />
+                  <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/0 to-transparent transition-all duration-500 group-hover:via-accent/50" aria-hidden="true" />
 
-                  <div className="relative z-10 h-full min-w-0 flex flex-col">
-                    <div className="flex min-w-0 items-start justify-between gap-5 mb-10">
-                      <div className="relative w-14 h-14 shrink-0 overflow-hidden flex items-center justify-center rounded-full border border-accent/25 bg-accent/[0.035]">
-                        <span className="absolute inset-[6px] rounded-full border border-accent/[0.09]" />
-                        <Icon className="relative z-10 w-[21px] h-[21px] shrink-0 text-accent" strokeWidth={1.35} />
+                  <div className="relative z-10 flex h-full min-w-0 flex-col">
+                    <div className="mb-9 flex min-w-0 items-start justify-between gap-5">
+                      <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-accent/25 bg-accent/[0.035]">
+                        <span className="absolute inset-[6px] rounded-full border border-accent/[0.09]" aria-hidden="true" />
+                        <Icon className="relative z-10 h-[21px] w-[21px] shrink-0 text-accent" strokeWidth={1.35} aria-hidden="true" />
                       </div>
-                      <span className="shrink-0 font-outfit text-[10px] tracking-[0.22em] text-text-dim group-hover:text-accent/70 transition-colors duration-500">{number}</span>
+                      <span className="shrink-0 font-outfit text-xs font-semibold tracking-[0.16em] text-text-dim transition-colors duration-300 group-hover:text-accent">{number}</span>
                     </div>
 
-                    <span className="block text-[9px] uppercase tracking-[0.2em] text-accent/80 mb-3 leading-tight">{isToken ? item.badge : t(item.badge)}</span>
-                    <h3 className="text-xl sm:text-2xl font-outfit font-medium tracking-[-0.02em] leading-tight mb-4">
-                      <span className="text-white">{title}</span>{' '}
-                      <span className="text-text-muted group-hover:text-accent transition-colors duration-500">{highlight}</span>
+                    <span className="mb-3 block text-[11px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-accent leading-tight">{copy.badge}</span>
+                    <h3 className="mb-4 text-xl sm:text-2xl font-outfit font-medium tracking-[-0.02em] leading-tight">
+                      <span className="text-white">{copy.title}</span>{' '}
+                      <span className="text-text-muted transition-colors duration-300 group-hover:text-accent">{copy.highlight}</span>
                     </h3>
-                    <p className="text-[13px] sm:text-sm text-text-muted leading-relaxed mb-8 line-clamp-4">{description}</p>
+                    <p className="mb-8 line-clamp-5 text-sm text-text-muted leading-relaxed">{copy.description}</p>
 
-                    <div className="mt-auto flex min-w-0 items-center justify-between gap-4 border-t border-white/[0.045] pt-5">
-                      <span className="min-w-0 text-[10px] uppercase tracking-[0.18em] text-text-dim group-hover:text-accent transition-colors duration-500">{t('See more')}</span>
-                      <span className="w-8 h-8 shrink-0 overflow-hidden rounded-full border border-white/[0.07] flex items-center justify-center group-hover:border-accent/30 group-hover:bg-accent/[0.04] transition-all duration-500">
-                        <ArrowUpRight className="w-3.5 h-3.5 shrink-0 text-text-dim group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+                    <div className="mt-auto flex min-w-0 items-center justify-between gap-4 border-t border-white/[0.07] pt-5">
+                      <span className="min-w-0 text-xs font-semibold uppercase tracking-[0.12em] text-text-dim transition-colors duration-300 group-hover:text-accent">{copy.cta}</span>
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/[0.1] transition-all duration-300 group-hover:border-accent/35 group-hover:bg-accent/[0.04]" aria-hidden="true">
+                        <ArrowUpRight className="h-4 w-4 shrink-0 text-text-dim transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent" />
                       </span>
                     </div>
                   </div>

@@ -16,7 +16,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/rewards', changeFrequency: 'monthly' as const, priority: 0.5 },
     { path: '/token', changeFrequency: 'monthly' as const, priority: 0.4 },
     { path: '/contact', changeFrequency: 'yearly' as const, priority: 0.7 },
-    { path: '/privacidad', changeFrequency: 'yearly' as const, priority: 0.4 },
+    { path: '/privacy', changeFrequency: 'yearly' as const, priority: 0.4 },
+    // `/inversion` is an established product namespace and remains canonical.
     { path: '/inversion', changeFrequency: 'weekly' as const, priority: 0.9 },
     { path: '/inversion/lotes', changeFrequency: 'daily' as const, priority: 0.9 },
     { path: '/inversion/como-funciona', changeFrequency: 'monthly' as const, priority: 0.8 },
