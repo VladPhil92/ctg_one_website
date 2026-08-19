@@ -1,0 +1,50 @@
+name: Post-Deploy Health Canary
+
+on:
+  schedule:
+    - cron: '7,17,27,37,47,57 * * * *'
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: 'Full 40-character Git SHA expected in Render'
+        required: false
+        type: string
+      health_url:
+        description: 'Health endpoint to verify'
+        required: false
+        default: 'https://ctgone.com/api/health'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: post-deploy-health-main
+  cancel-in-progress: true
+
+jobs:
+  production-canary:
+    name: Verify Render commit and Supabase schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      HEALTH_URL: ${{ github.event.inputs.health_url || 'https://ctgone.com/api/health' }}
+      EXPECTED_DEPLOYMENT_SHA: ${{ github.event.inputs.expected_sha || github.sha }}
+      EXPECTED_DEPLOYMENT_BRANCH: main
+      CANARY_ATTEMPTS: '24'
+      CANARY_INTERVAL_MS: '25000'
+      CANARY_REQUEST_TIMEOUT_MS: '10000'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.expected_sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+
+      - name: Verify production deployment identity
+        run: node scripts/verify-deployment-health.mjs
