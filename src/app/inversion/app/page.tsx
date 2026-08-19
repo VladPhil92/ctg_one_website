@@ -167,7 +167,7 @@ export default function InvestmentAppPage() {
                         <p className="micro-label mb-2">Estado de la orden</p>
                         <p className="text-xs text-text-muted leading-relaxed">{orderStatusDescription(order.status)}</p>
                         {order.status === 'AWAITING_PAYMENT' && order.lot && (
-                          <Button href={`/inversion/app/nueva/${order.lot.code.toLowerCase()}`} variant="secondary" size="sm" className="mt-4">Continuar pago</Button>
+                          <Button href={`/inversion/app/nueva/${order.lot.code.toLowerCase()}?order=${encodeURIComponent(order.id)}`} variant="secondary" size="sm" className="mt-4">Continuar pago</Button>
                         )}
                       </div>
                     )}
