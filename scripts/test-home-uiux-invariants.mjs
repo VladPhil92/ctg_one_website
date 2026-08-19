@@ -19,6 +19,7 @@ const [
   overviewData,
   spotlight,
   footer,
+  adminKnowledge,
   nextConfig,
   sitemap,
   privacyLayout,
@@ -39,6 +40,7 @@ const [
   read('src/data/home-overview.ts'),
   read('src/components/sections/InvestmentSpotlightSection.tsx'),
   read('src/components/Footer.tsx'),
+  read('src/app/admin/knowledge/page.tsx'),
   read('next.config.js'),
   read('src/app/sitemap.ts'),
   read('src/app/privacy/layout.tsx'),
@@ -74,9 +76,16 @@ assert.doesNotMatch(layout, /<SkipLink\s*\/>/, 'Root layout must not expose a br
 assert.match(navbar, /<SkipLink\s*\/>/, 'Every public Navbar instance must begin with the localized skip link.');
 assert.match(skipLink, /AFTER_PRIMARY_NAVIGATION_ID\s*=\s*'after-primary-navigation'/, 'Skip link must target the stable post-navigation sentinel.');
 assert.match(navbar, /id=\{AFTER_PRIMARY_NAVIGATION_ID\}[\s\S]*?tabIndex=\{-1\}/, 'Navbar must render a programmatically focusable sentinel immediately after primary navigation.');
+assert.doesNotMatch(navbar, /id=\{AFTER_PRIMARY_NAVIGATION_ID\}[^>]*aria-hidden/, 'Skip destination must remain exposed to assistive technology.');
+assert.match(navbar, /contentStartLabel[\s\S]*?Inicio del contenido[\s\S]*?Start of content/, 'Skip destination must announce localized content-start context.');
 assert.match(home, /id="main-content"[\s\S]*?tabIndex=\{-1\}/, 'Home main landmark must remain programmatically focusable for direct fragment/accessibility use.');
 assert.match(globals, /outline:\s*2px solid var\(--accent\)/, 'Interactive focus ring must remain 2px.');
 assert.match(globals, /outline-offset:\s*2px/, 'Focus ring must retain separation from the focused control.');
+
+// Nested Admin OS pages must not reintroduce public navigation inside AdminLayout.
+assert.doesNotMatch(adminKnowledge, /<Navbar\s*\/>|<Footer\s*\/>/, 'Admin Knowledge must rely on AdminLayout navigation instead of nesting the public shell.');
+assert.doesNotMatch(adminKnowledge, /<main\b/, 'Admin Knowledge must not nest a second main landmark inside AdminLayout.');
+assert.match(adminKnowledge, /<section aria-labelledby="knowledge-admin-title"/, 'Admin Knowledge content must expose a labeled native section inside the admin main landmark.');
 
 // CONT-01 / CONT-03 / UX-06 — explicit bilingual high-traffic copy and descriptive links.
 for (const text of [
