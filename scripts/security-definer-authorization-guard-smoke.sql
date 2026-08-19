@@ -14,6 +14,9 @@
 -- valid syntax. Instead, any privileged-body change or new privileged RPC makes
 -- CI fail until the migration/function change is explicitly reviewed and the
 -- fingerprint manifest is deliberately updated in the same PR.
+--
+-- CRLF/LF is normalized before hashing because line-ending representation is
+-- not executable logic and older production functions may retain CRLF bodies.
 
 CREATE TEMP TABLE reviewed_authenticated_security_definer_bodies(
   signature text PRIMARY KEY,
@@ -25,7 +28,7 @@ CREATE TEMP TABLE reviewed_authenticated_security_definer_bodies(
 CREATE TEMP VIEW actual_authenticated_security_definer_bodies AS
 SELECT
   n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS signature,
-  encode(digest(p.prosrc, 'sha256'), 'hex') AS body_sha256
+  encode(digest(replace(p.prosrc, E'\r\n', E'\n'), 'sha256'), 'hex') AS body_sha256
 FROM pg_proc p
 JOIN pg_namespace n ON n.oid = p.pronamespace
 WHERE n.nspname IN ('public', 'graphql_public')
