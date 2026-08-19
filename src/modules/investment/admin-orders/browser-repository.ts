@@ -10,10 +10,9 @@ export type PendingInvestmentOrdersPage = {
 };
 
 export function createInvestmentAdminOrdersRepository() {
-  const supabase = createClient();
-
   return {
     async listPending(page: number, pageSize: number): Promise<PendingInvestmentOrdersPage> {
+      const supabase = createClient();
       const { from, to } = pageRange(page, pageSize);
       const { data, count, error } = await supabase
         .from('investment_orders')
@@ -28,6 +27,7 @@ export function createInvestmentAdminOrdersRepository() {
     },
 
     async createPaymentProofSignedUrl(storagePath: string): Promise<string> {
+      const supabase = createClient();
       const { data, error } = await supabase.storage.from('payment-proofs').createSignedUrl(storagePath, 300);
       if (error || !data?.signedUrl) throw new Error(error?.message ?? 'No se pudo abrir el comprobante');
       return data.signedUrl;
@@ -40,10 +40,12 @@ export function createInvestmentAdminOrdersRepository() {
       p_bank_received_at: string;
       p_notes: string | null;
     }): Promise<{ error: RpcError }> {
+      const supabase = createClient();
       return await supabase.rpc('verify_investment_bancolombia_transfer', payload);
     },
 
     async rejectBankProof(orderId: string, reason: string): Promise<{ error: RpcError }> {
+      const supabase = createClient();
       return await supabase.rpc('reject_investment_bank_proof', {
         p_order_id: orderId,
         p_reason: reason,
@@ -51,6 +53,7 @@ export function createInvestmentAdminOrdersRepository() {
     },
 
     async rejectUnpaidOrder(orderId: string, reason: string): Promise<{ error: RpcError }> {
+      const supabase = createClient();
       return await supabase.rpc('reject_investment_order', {
         p_order_id: orderId,
         p_admin_notes: reason,
