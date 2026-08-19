@@ -3,11 +3,12 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [proof, hero, about, services, token, content, flags, legal, ecosystemTechnology] = await Promise.all([
+const [proof, hero, about, services, aiPlatform, token, content, flags, legal, ecosystemTechnology] = await Promise.all([
   read('src/data/technology-proof.ts'),
   read('src/components/sections/HeroSection.tsx'),
   read('src/components/sections/AboutSection.tsx'),
   read('src/components/sections/ServicesSection.tsx'),
+  read('src/components/sections/AIPlatformSection.tsx'),
   read('src/components/sections/TokenSection.tsx'),
   read('src/data/content.ts'),
   read('src/lib/investment/flags.ts'),
@@ -85,6 +86,16 @@ assert.doesNotMatch(
   /title: 'Observability'[\s\S]*?status: 'ROADMAP'/,
   'Services must not independently downgrade the implemented observability baseline to ROADMAP in English.',
 );
+
+assert.ok(aiPlatform.includes("getCapabilityProof('ai-layer')"), 'AI platform overall maturity must come from the canonical proof registry.');
+assert.ok(aiPlatform.includes("getCapabilityProof('ctg-knowledge-v01')"), 'CTG Knowledge maturity must come from the canonical proof registry.');
+assert.ok(aiPlatform.includes('getPublicProofStatus(knowledgeProof)'), 'AI platform must render CTG Knowledge public release stage from the canonical registry.');
+assert.match(aiPlatform, /CTG Knowledge ya cuenta con un piloto autenticado/i, 'Spanish AI copy must acknowledge the implemented authenticated CTG Knowledge pilot.');
+assert.match(aiPlatform, /CTG Knowledge already has an authenticated pilot/i, 'English AI copy must acknowledge the implemented authenticated CTG Knowledge pilot.');
+assert.doesNotMatch(aiPlatform, /hasta que exista pipeline real/i, 'AI platform must not claim CTG Knowledge lacks a real pipeline after the authenticated pilot exists.');
+assert.doesNotMatch(aiPlatform, /until a real pipeline/i, 'AI platform must not claim CTG Knowledge lacks a real pipeline after the authenticated pilot exists.');
+assert.match(aiPlatform, /no se promoverá a LIVE hasta contar con evaluación reproducible/i, 'Spanish AI copy must keep LIVE promotion evidence-gated.');
+assert.match(aiPlatform, /will not be promoted to LIVE until reproducible evaluation/i, 'English AI copy must keep LIVE promotion evidence-gated.');
 
 for (const forbidden of [
   /\b2[,.]?450\+?\s+holders\b/i,
