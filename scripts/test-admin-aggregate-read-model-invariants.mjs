@@ -32,7 +32,9 @@ assert.doesNotMatch(operationsPage, /from\('investment_bottle_units'\)/, 'Produc
 assert.doesNotMatch(operationsPage, /from\('investment_lot_financial_entries'\)/, 'Production Command View must not download the global financial fact collection.');
 assert.doesNotMatch(operationsPage, /from\('investment_production_lots'\)/, 'Production Command View must not download every lot for aggregation.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION\s*=\s*'0059'/);
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*59/);
+const schemaMatch = schemaVersion.match(/EXPECTED_DATABASE_MIGRATION\s*=\s*'(\d{4})'/);
+const countMatch = schemaVersion.match(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/);
+assert.ok(schemaMatch && Number(schemaMatch[1]) >= 59, 'Runtime schema must remain at or beyond aggregate read models 0059.');
+assert.ok(countMatch && Number(countMatch[1]) >= 59, 'Runtime migration count must remain at or beyond aggregate read models 0059.');
 
 console.log('Admin aggregate read-model invariants: PASS');
