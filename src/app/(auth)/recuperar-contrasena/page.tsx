@@ -5,25 +5,57 @@ import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { AuthInput } from '@/components/auth/AuthInput';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { authErrorMessage, normalizeEmail } from '@/lib/auth/client-policy';
 
-const schema = z.object({ email: z.string().trim().email('Correo inválido') });
+const schema = z.object({ email: z.string().trim().email() });
 
 export default function RecuperarContrasenaPage() {
+  const { locale } = useLanguage();
+  const es = locale === 'es';
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const copy = es
+    ? {
+        title: 'Recuperar contraseña',
+        subtitle: 'Te enviaremos un enlace seguro para definir una contraseña nueva.',
+        email: 'Correo electrónico',
+        invalidEmail: 'Ingresa un correo electrónico válido.',
+        unavailable: 'La recuperación de contraseña no está disponible en este momento.',
+        submit: 'Enviar enlace',
+        back: 'Volver a iniciar sesión',
+        sentTitle: 'Revisa tu correo',
+        sentPrefix: 'Si existe una cuenta asociada a',
+        sentSuffix: 'recibirás un enlace para restablecer la contraseña.',
+      }
+    : {
+        title: 'Recover password',
+        subtitle: 'We will send you a secure link to choose a new password.',
+        email: 'Email',
+        invalidEmail: 'Enter a valid email address.',
+        unavailable: 'Password recovery is not available right now.',
+        submit: 'Send recovery link',
+        back: 'Back to sign in',
+        sentTitle: 'Check your email',
+        sentPrefix: 'If an account is associated with',
+        sentSuffix: 'you will receive a password-reset link.',
+      };
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
     setError(null);
-    const parsed = schema.safeParse({ email });
+
+    const normalizedEmail = normalizeEmail(email);
+    const parsed = schema.safeParse({ email: normalizedEmail });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Correo inválido');
+      setError(copy.invalidEmail);
       return;
     }
     if (!isSupabaseConfigured) {
-      setError('La recuperación de contraseña no está disponible todavía.');
+      setError(copy.unavailable);
       return;
     }
 
@@ -35,36 +67,38 @@ export default function RecuperarContrasenaPage() {
         redirectTo: `${siteUrl}/auth/callback?next=/restablecer-contrasena`,
       });
       if (resetError) throw resetError;
-      setSent(true);
+      setEmail(parsed.data.email);
+      setSentEmail(parsed.data.email);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo enviar el enlace de recuperación');
+      setError(authErrorMessage(err, locale, 'recovery'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (sent) {
+  if (sentEmail) {
     return (
-      <div className="text-center p-8 rounded-lg" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-        <h1 className="text-lg font-outfit font-semibold text-white mb-3">Revisa tu correo</h1>
-        <p className="text-sm text-text-muted leading-relaxed">
-          Si existe una cuenta asociada a <strong className="text-white">{email}</strong>, recibirás un enlace para restablecer la contraseña.
+      <div className="text-center">
+        <h1 className="mb-3 font-outfit text-xl font-semibold text-white">{copy.sentTitle}</h1>
+        <p className="text-sm leading-relaxed text-text-muted">
+          {copy.sentPrefix} <strong className="break-all text-white">{sentEmail}</strong>, {copy.sentSuffix}
         </p>
+        <a href="/iniciar-sesion" className="mt-6 inline-flex min-h-11 items-center text-sm text-accent hover:underline">{copy.back}</a>
       </div>
     );
   }
 
   return (
-    <form noValidate onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }}>
-      <h1 className="text-xl font-outfit font-semibold text-white mb-1">Recuperar contraseña</h1>
-      <p className="text-sm text-text-dim mb-8">Te enviaremos un enlace seguro de recuperación.</p>
-      <AuthInput label="Correo electrónico" type="email" value={email} onChange={setEmail} autoComplete="email" />
-      {error && <p role="alert" className="text-sm mb-4" style={{ color: 'var(--error)' }}>{error}</p>}
+    <form noValidate onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }}>
+      <h1 className="mb-1 font-outfit text-2xl font-semibold tracking-tight text-white">{copy.title}</h1>
+      <p className="mb-8 text-sm leading-relaxed text-text-muted">{copy.subtitle}</p>
+      <AuthInput label={copy.email} type="email" value={email} onChange={setEmail} autoComplete="email" inputMode="email" required />
+      {error && <p role="alert" className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--error)' }}>{error}</p>}
       <Button type="submit" loading={isSubmitting} variant="primary" size="md" fullWidth>
-        Enviar enlace
+        {copy.submit}
       </Button>
-      <p className="text-xs text-text-dim text-center mt-6">
-        <a href="/iniciar-sesion" className="text-accent hover:underline">Volver a iniciar sesión</a>
+      <p className="mt-6 text-center text-xs text-text-dim">
+        <a href="/iniciar-sesion" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.back}</a>
       </p>
     </form>
   );
