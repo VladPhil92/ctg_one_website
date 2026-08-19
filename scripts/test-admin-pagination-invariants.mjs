@@ -76,5 +76,19 @@ assert.match(
   /async listConfirmedSales[\s\S]*?const supabase = createClient\(\)/,
   'Sales Returns repository must lazily create its browser client when data is requested.',
 );
+assert.match(
+  returnsRepository,
+  /let detailController:\s*AbortController \| null = null[\s\S]*?detailController\?\.abort\(\)/,
+  'Selecting a new sale must abort any older detail request before it can overwrite the current selection.',
+);
+assert.ok(
+  (returnsRepository.match(/\.abortSignal\(controller\.signal\)/g) ?? []).length >= 4,
+  'All selected-sale detail queries, including credited items, must share the supersession AbortSignal.',
+);
+assert.match(
+  returnsRepository,
+  /if \(controller\.signal\.aborted\)[\s\S]*?AbortError/,
+  'A superseded detail request must never return a stale payload to the UI.',
+);
 
 console.log('Admin and Sales OS pagination invariants: PASS');
