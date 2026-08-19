@@ -12,6 +12,8 @@ The production Supabase organization hosting `CTG One Web` is currently on the *
 
 The repository does verify that a fresh local PostgreSQL/Supabase database can apply the complete migration chain from zero and satisfy the Golden Path schema contract. That proves schema reconstruction, not production-data recovery.
 
+The repository now also contains a manual `Production Recovery Drill` GitHub Actions workflow. Its existence does **not** change the recovery status to VERIFIED: the gate changes only after a successful production-derived run produces retained redacted evidence and the result is reviewed.
+
 ## Recovery objectives
 
 RPO and RTO are not declared as achieved targets until measured in a restore rehearsal.
@@ -36,6 +38,32 @@ A complete recovery set must include all of the following:
 6. A secure external record of required secrets/credentials. Secrets must never be committed to Git.
 
 A database dump alone is not a complete platform backup because Storage files are external objects.
+
+## Manual Production Recovery Drill workflow
+
+`.github/workflows/recovery-drill.yml` is deliberately **manual-only**. It must never run from `push`, `pull_request`, a schedule, or `workflow_run`, because a recovery rehearsal reads production-derived data and must require an explicit operator decision.
+
+The workflow requires the operator to type `RUN_READ_ONLY_RECOVERY_DRILL` and uses these GitHub Actions secrets:
+
+- `RECOVERY_PRODUCTION_DATABASE_URL` — a production PostgreSQL direct/session connection suitable for PostgreSQL 17 `pg_dump`;
+- `RECOVERY_PRODUCTION_SUPABASE_URL` — the production project URL;
+- `RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY` — a server-only key authorized to read private Storage objects.
+
+The workflow performs the following bounded sequence:
+
+1. capture only redacted source counts and migration identity;
+2. create a PostgreSQL 17 custom-format logical dump in the ephemeral runner;
+3. restore that dump into a dedicated local `recovery_drill` database;
+4. compare critical source/restored counts and migration identity;
+5. run the Golden Path, HTTP-security, `SECURITY DEFINER`, outbox, Document/Notification OS and Operations Intelligence PostgreSQL contracts against the restored database;
+6. download the **actual bytes** of every source Storage object within configured object/byte limits;
+7. restore those bytes only into a loopback Supabase target, then re-download and compare SHA-256 hashes;
+8. retain only a redacted evidence JSON/Markdown artifact containing counts, checksums, schema identity and measured drill timing;
+9. destroy the raw database dump and Storage object bytes even when a prior step fails.
+
+The Storage script refuses hosted restore targets by design. A recovery rehearsal must never write test/restored objects into production or another hosted project accidentally.
+
+Raw production dumps, object paths and Storage bytes must not be uploaded as GitHub Actions artifacts. Only the redacted recovery evidence may be retained.
 
 ## Free-plan production strategy
 
