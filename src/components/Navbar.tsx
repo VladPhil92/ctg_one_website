@@ -10,6 +10,8 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+const MOBILE_NAVIGATION_ID = 'mobile-navigation';
+
 export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -23,9 +25,25 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
   return (
     <>
       <nav
+        aria-label="Primary navigation"
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${isScrolled ? 'py-4' : 'py-8'}`}
         style={{
           backgroundColor: isScrolled ? 'rgba(5, 5, 5, 0.9)' : 'transparent',
@@ -36,9 +54,9 @@ export const Navbar: React.FC = () => {
       >
         <div className="max-w-6xl mx-auto px-8 lg:px-12">
           <div className="flex items-center justify-between">
-            <a href="/" className="flex items-center gap-4 z-10">
+            <a href="/" className="flex items-center gap-4 z-10" aria-label="CTG One Technology home">
               <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                <Image src="/images/logo/CTGLOGO.jpeg" alt="CTG One Logo" fill className="object-cover" priority />
+                <Image src="/images/logo/CTGLOGO.jpeg" alt="" fill className="object-cover" priority />
               </div>
               <div className="hidden sm:flex flex-col">
                 <span className="text-sm font-outfit font-medium text-white tracking-wide">CTG One</span>
@@ -53,6 +71,7 @@ export const Navbar: React.FC = () => {
                   <a
                     key={item.href}
                     href={item.href}
+                    aria-current={isActive ? 'page' : undefined}
                     className={`text-[11px] uppercase tracking-[0.15em] font-medium transition-colors duration-500 ${isActive ? 'text-white' : 'text-text-dim hover:text-text-muted'}`}
                   >
                     {t(item.label)}
@@ -77,7 +96,14 @@ export const Navbar: React.FC = () => {
 
             <div className="lg:hidden flex items-center gap-2 z-50">
               <LanguageSwitcher compact />
-              <button onClick={() => setIsOpen(!isOpen)} className="p-2" aria-label={isOpen ? 'Close menu' : 'Open menu'}>
+              <button
+                type="button"
+                onClick={() => setIsOpen((open) => !open)}
+                className="p-2"
+                aria-label={isOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={isOpen}
+                aria-controls={MOBILE_NAVIGATION_ID}
+              >
                 {isOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-text-muted" />}
               </button>
             </div>
@@ -87,14 +113,31 @@ export const Navbar: React.FC = () => {
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden" onClick={() => setIsOpen(false)} />
-          <div className="fixed top-0 right-0 bottom-0 w-[80%] max-w-sm z-40 lg:hidden" style={{ backgroundColor: 'rgba(8, 8, 8, 0.98)', backdropFilter: 'blur(20px)', borderLeft: '1px solid rgba(255, 255, 255, 0.03)' }}>
+          <div
+            className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            id={MOBILE_NAVIGATION_ID}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile navigation"
+            className="fixed top-0 right-0 bottom-0 w-[80%] max-w-sm z-40 lg:hidden"
+            style={{ backgroundColor: 'rgba(8, 8, 8, 0.98)', backdropFilter: 'blur(20px)', borderLeft: '1px solid rgba(255, 255, 255, 0.03)' }}
+          >
             <div className="flex flex-col h-full pt-28 pb-10 px-8">
-              <nav className="flex-1 space-y-2">
+              <nav aria-label="Mobile primary navigation" className="flex-1 space-y-2">
                 {NAV_ITEMS.map((item) => {
                   const isActive = pathname === item.href;
                   return (
-                    <a key={item.href} href={item.href} onClick={() => setIsOpen(false)} className={`block py-4 text-[11px] uppercase tracking-[0.2em] font-medium transition-colors duration-500 ${isActive ? 'text-white' : 'text-text-dim hover:text-text-muted'}`}>
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      aria-current={isActive ? 'page' : undefined}
+                      onClick={() => setIsOpen(false)}
+                      className={`block py-4 text-[11px] uppercase tracking-[0.2em] font-medium transition-colors duration-500 ${isActive ? 'text-white' : 'text-text-dim hover:text-text-muted'}`}
+                    >
                       {t(item.label)}
                     </a>
                   );
