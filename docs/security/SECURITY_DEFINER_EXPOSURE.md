@@ -4,6 +4,8 @@
 
 `SECURITY DEFINER` functions execute with the privileges of their owner and therefore cross the caller's normal PostgreSQL privilege boundary. In CTG One they are allowed only when the exposure is deliberate and continuously testable.
 
+The policy covers **every schema exposed through the Supabase Data API**, currently `public` and `graphql_public`.
+
 ## Browser roles
 
 ### `anon`
@@ -12,19 +14,35 @@ Default: **no executable `SECURITY DEFINER` RPCs**.
 
 Reviewed exception:
 
-- `public.get_public_bottle_trace(text)` — public physical provenance lookup. It is intentionally callable without authentication so a bottle serial can be traced. The function is constrained to bottle/lot provenance and must not expose participant identity, ledger/payment/payout data, bank information, provider references, credentials or document paths.
+- `public.get_public_bottle_trace(text)` — public physical provenance lookup. It is intentionally callable without authentication so a bottle serial can be traced.
 
-Adding another anonymous `SECURITY DEFINER` function requires an explicit security review and a deliberate update to `scripts/security-definer-exposure-smoke.sql`.
+The exception is constrained by an exact CI contract:
+
+- exact result-column/type signature;
+- exact set of referenced `public` objects;
+- pinned `search_path`;
+- no second anonymous SECURITY DEFINER function in any Data API schema.
+
+Adding or changing anonymous privileged exposure requires explicit security review and an intentional contract update.
 
 ### `authenticated`
 
-Authenticated callers may execute selected domain RPCs only when the function performs an authorization check inside PostgreSQL. Current accepted guard families include:
+Authenticated SECURITY DEFINER exposure is governed by an **exact source-controlled signature allowlist**:
 
-- `auth.uid()` identity validation;
-- `has_investment_permission(...)` RBAC validation;
-- `is_admin()` / investment role helpers that derive authorization from persisted roles.
+`./scripts/security-definer-authenticated-allowlist.txt`
 
-The CI contract fails when an authenticated-executable `SECURITY DEFINER` function does not contain a reviewed guard pattern. A new architectural pattern must be reviewed before extending the contract.
+CI compares the complete set of authenticated-executable SECURITY DEFINER functions in every Data API schema against this allowlist in both directions. Therefore:
+
+- a new privileged RPC or overload fails until reviewed and added;
+- an unexpected grant fails;
+- a revoked/removed RPC leaves a stale allowlist entry and also fails;
+- moving privileged code into another exposed schema does not bypass the contract.
+
+Authorization behavior inside each approved RPC remains part of its domain/security tests and code review. The allowlist intentionally does **not** infer safety from source-code substring matching.
+
+## Search-path requirement
+
+Every browser-exposed SECURITY DEFINER function must have an explicitly pinned `search_path`. CI rejects an exposed definer function without this setting.
 
 ## Internal tables with RLS and no policies
 
@@ -34,8 +52,9 @@ Examples include domain-event outbox, notification/document work queues, retry s
 
 ## CI authority
 
-The executable contract is:
+The executable contracts are:
 
-`./scripts/security-definer-exposure-smoke.sql`
+- `./scripts/security-definer-exposure-smoke.sql`
+- `./scripts/security-definer-authenticated-allowlist.txt`
 
-It is run against a clean database after the full migration chain. Documentation is explanatory; the PostgreSQL contract is the enforcement mechanism.
+They run against a clean database after the full migration chain. Documentation is explanatory; the PostgreSQL contract and reviewed allowlist are the enforcement mechanism.
