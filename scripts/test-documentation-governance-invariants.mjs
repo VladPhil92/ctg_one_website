@@ -30,12 +30,17 @@ assert.ok(
 );
 assert.ok(
   readme.includes('No se mantiene una lista manual de migraciones en este README.'),
-  'README must not maintain a second hand-written migration registry.',
+  'README must explicitly reject a second hand-written migration registry.',
 );
-assert.ok(
-  !readme.includes('0027_inventory_location_fk_index.sql'),
-  'README must not retain the obsolete migration list that stopped at 0027.',
+
+const migrationFilenamePattern = /\b\d{4}_[a-z0-9_]+\.sql\b/g;
+const handWrittenMigrationFiles = readme.match(migrationFilenamePattern) ?? [];
+assert.deepEqual(
+  handWrittenMigrationFiles,
+  [],
+  `README must not enumerate migration filenames; found: ${handWrittenMigrationFiles.join(', ')}`,
 );
+
 assert.ok(
   readme.includes('EXPECTED_DATABASE_MIGRATION')
     && readme.includes('EXPECTED_DATABASE_MIGRATION_NAME')
