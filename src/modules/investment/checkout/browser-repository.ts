@@ -17,10 +17,12 @@ export async function createInvestmentOrder(input: {
     p_idempotency_key: input.idempotencyKey,
   });
   if (error) throw error;
+
   const row = Array.isArray(data) ? data[0] : data;
   if (!row?.id || typeof row.capital_required_cents !== 'number') {
     throw new Error('La orden creada no devolvió un contrato válido.');
   }
+
   return {
     id: row.id,
     capital_required_cents: row.capital_required_cents,
@@ -39,6 +41,15 @@ export async function uploadInvestmentPaymentProof(input: {
     },
     body: input.proof,
   });
-  const result = await response.json() as { error?: string };
-  if (!response.ok) throw new Error(result.error ?? 'No se pudo registrar el comprobante');
+
+  let result: { error?: string } = {};
+  try {
+    result = await response.json() as { error?: string };
+  } catch {
+    // Infrastructure/proxy errors are not guaranteed to return JSON.
+  }
+
+  if (!response.ok) {
+    throw new Error(result.error ?? `No se pudo registrar el comprobante (HTTP ${response.status})`);
+  }
 }
