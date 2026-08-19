@@ -6,6 +6,8 @@ CTG One Technology es la capa propietaria de software, datos e infraestructura d
 
 CTG One no se define como agencia comercial, agencia de ventas ni consultora tecnológica genérica para terceros. Su diferenciador es la integración vertical: la tecnología se desarrolla dentro del mismo ecosistema donde se utiliza, mide y mejora.
 
+> **Gobernanza:** este README explica el proyecto, pero no es una base de datos de estado runtime. Para saber dónde vive cada fuente autoritativa consulte `docs/architecture/SYSTEM_STATE.md`.
+
 ## Modelo operativo
 
 ```text
@@ -26,21 +28,16 @@ Iteración
 
 ## Stack actual
 
-- **Framework:** Next.js 16.3.1 — App Router, Server Components, Client Components y Route Handlers
-- **React:** 19.2.8
-- **TypeScript:** 5.x
-- **Styling:** Tailwind CSS 3.x
+- **Framework/runtime:** versiones autoritativas en `package.json`
 - **Backend / Database:** Supabase — PostgreSQL, Auth y Storage
 - **Session / SSR:** `@supabase/ssr`
 - **Validation:** Zod
 - **Data:** TanStack React Query donde aplica
-- **AI pilot:** OpenAI integration code + CTG Knowledge controlled retrieval
-- **Web3 libraries:** ethers, viem y wagmi; CTGO permanece ROADMAP hasta existir evidencia productiva verificable
-- **Animations:** Framer Motion
-- **Icons:** Lucide React
+- **AI:** CTG Knowledge como beta controlada; la capa general de IA permanece gobernada por su estado de madurez
+- **Web3:** librerías presentes; CTGO permanece ROADMAP hasta existir evidencia productiva verificable
 - **Production hosting:** Render Web Service
 - **Source control / CI:** GitHub + GitHub Actions
-- **Browser E2E:** Playwright / Chromium, baseline no destructivo en CI
+- **Browser E2E:** Playwright / Chromium
 
 El proyecto requiere runtime Node. No es un static export.
 
@@ -52,9 +49,9 @@ branch
 Pull Request
   ↓
 GitHub Actions
-(invariants + dependency audit + typecheck + build + browser E2E)
+(invariants + dependency audit + typecheck + build + browser E2E + clean database contract)
   ↓
-main protegida
+main
   ↓
 Render Web Service
   ↓
@@ -85,17 +82,15 @@ Estas unidades constituyen entornos reales de aplicación y validación tecnoló
 
 ## Modelo de madurez
 
-Toda capacidad pública debe clasificarse como una de:
+La fuente autoritativa de madurez pública es `src/data/technology-proof.ts`. Los estados públicos contemplan:
 
 - `LIVE`
+- `BETA` — release controlado cuando aplica
 - `PARTIAL`
 - `IN DEVELOPMENT`
-- `PILOT` cuando corresponda al producto
 - `ROADMAP`
 
-Nada debe presentarse como `LIVE` únicamente por existir una descripción, diseño o dependencia instalada.
-
-La superficie pública de evidencia vive en `/technology/status`.
+Una capacidad no pasa a `LIVE` por existir una descripción, dependencia, pantalla o prototipo. La superficie pública de evidencia vive en `/technology/status`.
 
 ## Dominios actuales
 
@@ -113,36 +108,39 @@ La superficie pública de evidencia vive en `/technology/status`.
 
 Bounded context para:
 
-- órdenes de inversión
-- asignaciones económicas
-- lotes de producción
-- economía unitaria por snapshot de lote
-- master data de estilos cerveceros
-- eventos de producción
-- serialización por botella
-- ubicaciones canónicas de inventario
-- movimientos físicos vinculados a seriales, origen y destino
-- stock derivado por ubicación
-- reconciliación botella ↔ movimiento ↔ Sales OS
-- Sales OS con documentos e idempotencia
-- hechos financieros por lote vinculados a ventas
-- participant ledger
-- settlement reconciliado
-- withdrawals / reinvestment con reservas de saldo
-- RBAC
-- trazabilidad pública por serial
+- órdenes de inversión e idempotencia;
+- asignaciones económicas;
+- lotes de producción;
+- economía unitaria por snapshot de lote;
+- master data de estilos cerveceros;
+- eventos de producción;
+- serialización por botella;
+- ubicaciones canónicas de inventario;
+- movimientos físicos vinculados a seriales, origen y destino;
+- stock derivado por ubicación;
+- reconciliación botella ↔ movimiento ↔ Sales OS;
+- Sales OS con documentos e idempotencia;
+- hechos financieros por lote vinculados a ventas;
+- participant ledger;
+- settlement reconciliado;
+- withdrawals / reinvestment con reservas de saldo;
+- RBAC;
+- trazabilidad pública por serial.
+
+La plataforma pública se mantiene bajo el release stage definido por `src/data/technology-proof.ts`; no debe inferirse `LIVE` de la existencia del bounded context.
 
 ### CTG Knowledge
 
-Pilot de conocimiento institucional con ingestión, chunking, retrieval, control de acceso y provider integration. Debe mantenerse bajo política de evidencia, evaluación y seguridad.
+Beta controlada de conocimiento institucional con ingestión, chunking, retrieval, control de acceso y provider integration. Debe mantenerse bajo política de evidencia, evaluación y seguridad antes de promoción a `LIVE`.
 
 ### Observability
 
-- `/api/health`
-- Admin System Health
-- structured logger base
-- verificación de runtime/configuración/migraciones críticas
-- identidad de deployment por SHA de Render
+- `/api/health`;
+- Admin System Health;
+- structured logger con redacción de campos sensibles;
+- verificación de runtime/configuración/migraciones críticas;
+- identidad de deployment por SHA de Render;
+- request/correlation ID validado y propagado en superficies instrumentadas.
 
 ## Rutas principales
 
@@ -155,8 +153,8 @@ Pilot de conocimiento institucional con ingestión, chunking, retrieval, control
 | `/products` | Productos / case studies |
 | `/technology/status` | Registro público de madurez y evidencia |
 | `/ai` | Arquitectura y desarrollo de IA |
-| `/knowledge` | CTG Knowledge pilot |
-| `/rewards` | CTG Rewards |
+| `/knowledge` | CTG Knowledge beta |
+| `/rewards` | CTG Rewards roadmap |
 | `/token` | CTGO Web3 roadmap |
 | `/dashboard` | Personal OS protegido |
 | `/dashboard/kyc` | Identidad/KYC |
@@ -174,41 +172,15 @@ Pilot de conocimiento institucional con ingestión, chunking, retrieval, control
 
 ## Supabase migrations
 
-Migraciones versionadas actualmente en el repositorio:
+**No se mantiene una lista manual de migraciones en este README.** La secuencia autoritativa vive en `supabase/migrations/` y el release esperado se define en `src/lib/observability/schema-version.ts` mediante:
 
-```text
-0001_init.sql
-0002_kyc_submission_pending_trigger.sql
-0003_crypto_tx_hash_unique.sql
-0004_investment_schema.sql
-0005_investment_security_hardening.sql
-0006_investment_unit_economics.sql
-0007_ctg_knowledge_v01.sql
-0008_investment_orders_checkout.sql
-0009_production_traceability_os.sql
-0010_investment_rbac.sql
-0011_role_admin_and_permission_enforcement.sql
-0012_core_permission_guards.sql
-0013_beer_style_master_and_lot_codes.sql
-0014_sales_os_foundation.sql
-0015_security_definer_execution_hardening.sql
-0016_performance_hardening.sql
-0017_system_health_observability.sql
-0018_system_health_trigger_name_fix.sql
-0019_client_table_privilege_hardening.sql
-0020_authoritative_lot_economics.sql
-0021_economics_function_privilege_hardening.sql
-0022_closed_loop_integrity.sql
-0023_closed_loop_review_hardening.sql
-0024_inventory_reconciliation_preflight.sql
-0025_inventory_reconciliation.sql
-0026_inventory_reconciliation_hardening.sql
-0027_inventory_location_fk_index.sql
-```
+- `EXPECTED_DATABASE_MIGRATION`
+- `EXPECTED_DATABASE_MIGRATION_NAME`
+- `EXPECTED_DATABASE_MIGRATION_COUNT`
 
-La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno. Producción debe verificarse mediante migration history/System Health y procedimientos operacionales documentados. `EXPECTED_DATABASE_MIGRATION` debe coincidir con la última migración del repositorio; CI valida continuidad y ausencia de huecos.
+CI valida continuidad de la cadena, aplica todas las migraciones sobre una base PostgreSQL limpia y ejecuta contratos de Golden Path/seguridad. La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno; la compatibilidad de producción debe verificarse mediante `/api/health` y Admin System Health.
 
-La secuencia de Inventory Reconciliation es deliberadamente fail-closed: `0024` aborta antes de instalar el modelo canónico si detecta historia física o comercial previa que requiera backfill explícito. `0027` cubre el foreign key `investment_inventory_locations.created_by` detectado por el Performance Advisor.
+Las migraciones aplicadas son inmutables. Una corrección de schema se realiza mediante una nueva migración contigua, nunca reescribiendo historia ya desplegada.
 
 ## Principios financieros
 
@@ -222,7 +194,7 @@ La secuencia de Inventory Reconciliation es deliberadamente fail-closed: `0024` 
 - ledger de participante append-only;
 - spendable balance descontando requests pendientes;
 - settlement único por lote;
-- revenue/tax vinculados a Sales OS; Sales OS puede reconocer ambos bajo `sales.manage` cuando existe `source_sale_id`;
+- revenue/tax vinculados a Sales OS;
 - correcciones mediante reversals/adjustments, no hard delete de historia financiera;
 - liquidación basada en hechos reales reconciliados, no en proyecciones de UI;
 - operaciones sensibles mediante funciones server-side/database-side con autorización revalidada.
@@ -252,15 +224,16 @@ Arquitectura base:
 - feature flags y canales financieros fail-closed;
 - inventario operacional no expuesto a `anon`;
 - mutaciones físicas únicamente mediante RPCs autorizados, no DML directo del cliente;
-- headers de seguridad baseline;
+- CSP y headers de seguridad;
+- rate limiting en superficies sensibles instrumentadas;
 - dependency audit en CI;
-- PR obligatorio + required checks + conversación resuelta + rama actualizada antes de merge.
+- PR + required checks antes de merge.
 
 No se realizan afirmaciones de SOC 2, ISO 27001, PCI DSS u otras certificaciones sin evidencia formal.
 
 ## CI
 
-El check protegido `Test, typecheck and build` ejecuta, entre otros:
+La definición autoritativa vive en `.github/workflows/ci.yml` y `package.json`. Incluye, entre otros:
 
 ```bash
 npm test
@@ -270,9 +243,7 @@ npm run build
 npx playwright test --project=chromium
 ```
 
-`npm test` incluye invariantes críticos, master data, migraciones, gobernanza, economía, Closed Loop e Inventory Reconciliation.
-
-CI se ejecuta en pull requests y pushes a `main`. Render espera checks aprobados antes del auto-deploy.
+Además existe un job de **Golden Path clean database contract** que reconstruye el schema desde cero y valida contratos PostgreSQL críticos. Render despliega desde `main` según la política configurada y la identidad del deployment se expone mediante la capa de observabilidad.
 
 ## Desarrollo local
 
@@ -281,7 +252,7 @@ npm ci
 npm run dev
 ```
 
-Las pruebas E2E de navegador tienen documentación específica en `docs/infrastructure/E2E_TESTING.md`.
+Las pruebas E2E tienen documentación específica en `docs/infrastructure/E2E_TESTING.md`.
 
 ## Variables de entorno principales
 
@@ -314,6 +285,16 @@ Identity
 → Withdrawal / Reinvestment
 ```
 
-El circuito base ya tiene invariantes transaccionales en PostgreSQL, incluido inventario físico por ubicación y reconciliación unitaria. Las siguientes etapas se concentran en devoluciones comerciales/credit notes, payout rails, conciliación de pagos y read models de portafolio.
+El circuito base cuenta con invariantes transaccionales en PostgreSQL y contratos de reconstrucción limpia en CI. Las capacidades futuras se añaden por incrementos versionados y no deben anticiparse en documentación como si ya fueran productivas.
 
 El primer caso vertical de referencia es CTG Craft Beer. El objetivo es que una operación completa pueda reconstruirse a partir de evidencia persistida y auditable.
+
+## Documentación autoritativa
+
+- `docs/architecture/SYSTEM_STATE.md` — mapa de fuentes de verdad;
+- `docs/architecture/CTG_ONE_OS.md` — arquitectura compartida;
+- `docs/infrastructure/PRODUCTION_READINESS.md` — preparación/deploy;
+- `docs/infrastructure/BACKUP_RESTORE.md` — recuperación;
+- `docs/infrastructure/OBSERVABILITY.md` — observabilidad;
+- `src/data/technology-proof.ts` — madurez pública;
+- `src/lib/observability/schema-version.ts` — release de base de datos esperado.
