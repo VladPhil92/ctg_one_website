@@ -1,9 +1,38 @@
 import { createClient } from '@/lib/supabase/client';
+import type { InvestmentOrderStatus } from '@/types/investment';
 
 export type CreatedInvestmentOrder = {
   id: string;
   capital_required_cents: number;
 };
+
+export type ResumableInvestmentOrder = {
+  id: string;
+  lot_id: string;
+  case_equivalent_units: number;
+  capital_required_cents: number;
+  status: InvestmentOrderStatus;
+};
+
+export async function getInvestmentOrderForResume(input: {
+  orderId: string;
+  lotId: string;
+}): Promise<ResumableInvestmentOrder> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('investment_orders')
+    .select('id,lot_id,case_equivalent_units,capital_required_cents,status')
+    .eq('id', input.orderId)
+    .eq('lot_id', input.lotId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data?.id) {
+    throw new Error('No se encontró una orden reanudable para este usuario y lote.');
+  }
+
+  return data as ResumableInvestmentOrder;
+}
 
 export async function createInvestmentOrder(input: {
   lotId: string;
