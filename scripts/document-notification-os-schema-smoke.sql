@@ -167,4 +167,84 @@ BEGIN
   END IF;
 END $$;
 
+-- A crashed notification worker must not strand PROCESSING work forever.
+DO $$
+DECLARE
+  v_delivery_id uuid;
+  v_old_token uuid;
+  v_reclaimed record;
+BEGIN
+  SELECT id INTO v_delivery_id
+  FROM public.system_notification_deliveries
+  WHERE status = 'SENT'
+  LIMIT 1;
+
+  INSERT INTO public.system_notification_deliveries(
+    domain_event_id, recipient_user_id, channel, template_key, template_version, variables
+  )
+  SELECT domain_event_id, gen_random_uuid(), 'IN_APP', 'investment.payment.reconciled', 1, '{}'::jsonb
+  FROM public.system_notification_deliveries
+  WHERE id = v_delivery_id
+  RETURNING id INTO v_delivery_id;
+
+  SELECT lease_token INTO v_old_token
+  FROM public.claim_notification_deliveries(100, 120)
+  WHERE id = v_delivery_id;
+
+  IF v_old_token IS NULL THEN
+    RAISE EXCEPTION 'notification recovery fixture was not initially claimed';
+  END IF;
+
+  UPDATE public.system_notification_deliveries
+  SET lease_expires_at = now() - interval '1 second'
+  WHERE id = v_delivery_id;
+
+  SELECT * INTO v_reclaimed
+  FROM public.claim_notification_deliveries(100, 120)
+  WHERE id = v_delivery_id;
+
+  IF v_reclaimed.id IS NULL THEN
+    RAISE EXCEPTION 'expired PROCESSING notification lease was not reclaimed';
+  END IF;
+  IF v_reclaimed.lease_token = v_old_token THEN
+    RAISE EXCEPTION 'notification reclaim did not issue a fresh lease token';
+  END IF;
+END $$;
+
+-- A crashed renderer must likewise yield its expired PROCESSING document job.
+DO $$
+DECLARE
+  v_job_id uuid;
+  v_old_token uuid;
+  v_reclaimed record;
+BEGIN
+  SELECT id INTO v_job_id
+  FROM public.system_document_jobs
+  WHERE status = 'QUEUED'
+  LIMIT 1;
+
+  SELECT lease_token INTO v_old_token
+  FROM public.claim_document_jobs(50, 120)
+  WHERE id = v_job_id;
+
+  IF v_old_token IS NULL THEN
+    RAISE EXCEPTION 'document recovery fixture was not initially claimed';
+  END IF;
+
+  UPDATE public.system_document_jobs
+  SET lease_expires_at = now() - interval '1 second'
+  WHERE id = v_job_id;
+
+  SELECT * INTO v_reclaimed
+  FROM public.claim_document_jobs(50, 120)
+  WHERE id = v_job_id;
+
+  IF v_reclaimed.id IS NULL THEN
+    RAISE EXCEPTION 'expired PROCESSING document lease was not reclaimed';
+  END IF;
+  IF v_reclaimed.lease_token = v_old_token THEN
+    RAISE EXCEPTION 'document reclaim did not issue a fresh lease token';
+  END IF;
+END $$;
+
 SELECT 'Document/Notification OS PostgreSQL contract: PASS' AS result;
