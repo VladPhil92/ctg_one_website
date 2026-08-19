@@ -13,7 +13,7 @@
 
 -- Strip non-code lexical regions before scanning guard shapes. PostgreSQL block
 -- comments may nest, so a regex-only sanitizer is insufficient. This small
--- lexer handles line comments, nested block comments, single-quoted strings,
+-- lexer handles line comments, nested block comments, standard/escape strings,
 -- and tagged/untagged dollar-quoted strings. Literals become a neutral token so
 -- role-comparison guard structure remains inspectable without trusting content.
 CREATE OR REPLACE FUNCTION pg_temp.strip_sql_noncode(p_source text)
@@ -30,6 +30,7 @@ DECLARE
   v_pair text;
   v_depth integer;
   v_closed boolean;
+  v_escape_string boolean;
   v_rest text;
   v_tag text;
   v_close_rel integer;
@@ -66,10 +67,21 @@ BEGIN
       v_out := v_out || ' ';
 
     ELSIF v_ch = '''' THEN
+      -- E'...' / e'...' escape strings treat backslash as an escape. Require
+      -- the E prefix to start a token so an identifier ending in e does not
+      -- change ordinary string semantics.
+      v_escape_string := v_i > 1
+        AND substr(p_source, v_i - 1, 1) IN ('E', 'e')
+        AND (v_i = 2 OR substr(p_source, v_i - 2, 1) !~ '[A-Za-z0-9_$]');
       v_closed := false;
       v_i := v_i + 1;
       WHILE v_i <= v_len LOOP
-        IF substr(p_source, v_i, 1) = '''' THEN
+        IF v_escape_string AND substr(p_source, v_i, 1) = E'\\' THEN
+          IF v_i = v_len THEN
+            RAISE EXCEPTION 'unterminated escape sequence in function source';
+          END IF;
+          v_i := v_i + 2;
+        ELSIF substr(p_source, v_i, 1) = '''' THEN
           IF v_i < v_len AND substr(p_source, v_i + 1, 1) = '''' THEN
             v_i := v_i + 2;
           ELSE
@@ -178,7 +190,7 @@ SELECT
 FROM exposed;
 
 -- Negative control #1: mentions/lookalikes in comments and literal forms must
--- not satisfy the guard detector, including nested block comments.
+-- not satisfy the guard detector, including nested block comments and E-strings.
 CREATE FUNCTION public.__security_definer_unguarded_negative_control()
 RETURNS void
 LANGUAGE plpgsql
@@ -195,6 +207,7 @@ BEGIN
   */
   PERFORM auth.uid();
   PERFORM 'if not public.is_admin() then raise exception';
+  PERFORM E'before\' IF NOT public.is_admin() THEN RAISE EXCEPTION \'after';
   PERFORM $msg$if not public.is_admin() then raise exception$msg$;
 END;
 $$;
