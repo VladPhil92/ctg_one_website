@@ -6,6 +6,7 @@ const migration = await read('supabase/migrations/0031_payment_reconciliation_pa
 const hardening = await read('supabase/migrations/0032_payment_rails_hardening.sql');
 const rlsPerformance = await read('supabase/migrations/0033_payment_rails_rls_performance.sql');
 const orderAdmin = await read('src/app/inversion/admin/orders/page.tsx');
+const orderAdminRepository = await read('src/modules/investment/admin-orders/browser-repository.ts');
 const manualBankVerification = await read('supabase/migrations/0037_manual_bancolombia_bank_verification.sql');
 const payoutAdmin = await read('src/app/admin/finance/rails/page.tsx');
 const liquidity = await read('src/components/inversion/InvestmentLiquidityPanel.tsx');
@@ -40,10 +41,11 @@ assert.ok(rlsPerformance.includes('alter policy investment_payouts_read_authoriz
 assert.ok(rlsPerformance.includes('alter policy investment_payout_events_read_authorized') && rlsPerformance.includes('p.participant_user_id = (select auth.uid())'), 'Payout-event RLS must avoid per-row auth context evaluation.');
 
 assert.ok(
-  orderAdmin.includes("rpc('verify_investment_bancolombia_transfer'")
+  orderAdmin.includes('createInvestmentAdminOrdersRepository')
+    && orderAdminRepository.includes("rpc('verify_investment_bancolombia_transfer'")
     && manualBankVerification.includes('reconcile_investment_order_payment(')
-    && !orderAdmin.includes("rpc('approve_investment_order'"),
-  'Investment order admin must use the human-verification wrapper that delegates to authoritative receipt reconciliation, never legacy evidence approval.',
+    && !orderAdminRepository.includes("rpc('approve_investment_order'"),
+  'Investment order admin must preserve the human-verification wrapper through its repository boundary and never call legacy evidence approval.',
 );
 assert.ok(payoutAdmin.includes("rpc('initiate_investment_payout'") && payoutAdmin.includes("rpc('confirm_investment_payout'") && payoutAdmin.includes("rpc('fail_investment_payout'"), 'Finance Admin OS must operate the payout lifecycle through authoritative RPCs.');
 assert.ok(payoutAdmin.includes('ACTIVE_STATUSES') && payoutAdmin.includes(".eq('status', 'PAID')") && payoutAdmin.includes('.limit(60)'), 'Finance console must load all active withdrawals independently from capped paid history.');
