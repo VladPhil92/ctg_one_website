@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/observability/logger';
 import { getDeploymentMetadata } from '@/lib/observability/deployment';
+import { getRequestObservabilityContext } from '@/lib/observability/request-context';
 import {
   EXPECTED_DATABASE_MIGRATION_COUNT,
   EXPECTED_DATABASE_MIGRATION_NAME,
@@ -9,7 +10,8 @@ import { probeRuntimeSchemaCompatibility } from '@/lib/observability/runtime-sch
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const requestContext = getRequestObservabilityContext(request);
   const deployment = getDeploymentMetadata();
   const supabasePublicConfig = Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -37,9 +39,9 @@ export async function GET() {
       : 'degraded';
 
   logger.info('health_check', {
+    ...requestContext,
     status,
     checks,
-    deployment,
     schema: {
       probeAvailable: schema.probeAvailable,
       errorCode: schema.errorCode,
@@ -67,6 +69,7 @@ export async function GET() {
       status: status === 'unhealthy' ? 503 : 200,
       headers: {
         'Cache-Control': 'no-store, max-age=0',
+        'X-Request-ID': requestContext.request_id,
       },
     }
   );
