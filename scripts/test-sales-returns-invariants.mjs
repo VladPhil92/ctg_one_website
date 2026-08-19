@@ -6,6 +6,7 @@ const migration = await read('supabase/migrations/0028_sales_returns_credit_note
 const hardening = await read('supabase/migrations/0029_sales_returns_hardening.sql');
 const settlementClosure = await read('supabase/migrations/0030_sales_returns_settlement_guard.sql');
 const returnsPage = await read('src/app/admin/operations/returns/page.tsx');
+const returnsRepository = await read('src/modules/operations/returns/browser-repository.ts');
 const settlementPage = await read('src/app/admin/operations/settlement/page.tsx');
 const overviewPage = await read('src/app/admin/operations/overview/page.tsx');
 const nav = await read('src/components/admin/AdminNav.tsx');
@@ -119,9 +120,10 @@ assert.ok(
 );
 
 assert.ok(
-  returnsPage.includes("rpc('record_sale_return_credit_note'")
-    && returnsPage.includes("rpc('get_sales_return_reconciliation'"),
-  'Admin returns console must use authoritative mutation and reconciliation RPCs.',
+  returnsPage.includes('createSalesReturnsBrowserRepository')
+    && returnsRepository.includes("rpc('record_sale_return_credit_note'")
+    && returnsRepository.includes("rpc('get_sales_return_reconciliation'"),
+  'Admin returns console must preserve authoritative mutation and reconciliation RPCs through its repository boundary.',
 );
 assert.ok(
   settlementPage.includes("sum('REVENUE_REVERSAL')")
