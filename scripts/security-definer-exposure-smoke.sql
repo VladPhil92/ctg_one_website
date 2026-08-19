@@ -29,7 +29,10 @@ BEGIN
     AND p.prosecdef
     AND has_function_privilege('anon', p.oid, 'EXECUTE');
 
-  IF v_anon_exposures IS DISTINCT FROM ARRAY['public.get_public_bottle_trace(p_serial_code text)']::text[] THEN
+  IF v_anon_exposures IS DISTINCT FROM ARRAY[
+    'public.get_public_bottle_trace(p_serial_code text)',
+    'public.get_public_investment_lot_funding(p_lot_id uuid)'
+  ]::text[] THEN
     RAISE EXCEPTION 'unexpected anonymous SECURITY DEFINER exposure(s): %', v_anon_exposures;
   END IF;
 END $$;
@@ -118,8 +121,8 @@ BEGIN
   END IF;
 END $$;
 
--- The sole anonymous exception has an exact reviewed data contract. Both its
--- result shape and every public-schema object reference are allowlisted.
+-- Anonymous exceptions have exact reviewed data contracts. Their result shapes
+-- and every public-schema object reference are allowlisted.
 DO $$
 DECLARE
   v_definition text;
@@ -151,6 +154,44 @@ BEGIN
     'investment_production_lots'
   ]::text[] THEN
     RAISE EXCEPTION 'public bottle trace references unreviewed public object(s): %', v_public_references;
+  END IF;
+END $$;
+
+DO $$
+DECLARE
+  v_definition text;
+  v_result text;
+  v_public_references text[];
+  v_expected_result constant text :=
+    'TABLE(lot_id uuid, total_cases integer, allocated_cases integer, funded_percent integer, available_cases_equivalent integer)';
+BEGIN
+  IF to_regprocedure('public.get_public_investment_lot_funding(uuid)') IS NULL THEN
+    RAISE EXCEPTION 'reviewed public investment funding function is missing';
+  END IF;
+
+  SELECT
+    pg_get_functiondef('public.get_public_investment_lot_funding(uuid)'::regprocedure),
+    pg_get_function_result('public.get_public_investment_lot_funding(uuid)'::regprocedure)
+  INTO v_definition, v_result;
+
+  IF v_result IS DISTINCT FROM v_expected_result THEN
+    RAISE EXCEPTION 'public investment funding result contract changed: %', v_result;
+  END IF;
+
+  SELECT coalesce(array_agg(DISTINCT m[1] ORDER BY m[1]), ARRAY[]::text[])
+  INTO v_public_references
+  FROM regexp_matches(v_definition, E'public\\.([A-Za-z0-9_]+)', 'g') AS m;
+
+  IF v_public_references IS DISTINCT FROM ARRAY[
+    'get_public_investment_lot_funding',
+    'investment_funding_allocations',
+    'investment_production_lots'
+  ]::text[] THEN
+    RAISE EXCEPTION 'public investment funding references unreviewed public object(s): %', v_public_references;
+  END IF;
+
+  IF v_definition ~* '(participant_user_id|capital_committed_cents|external_reference|payment_proof|bank_)' THEN
+    RAISE EXCEPTION 'public investment funding function definition references prohibited participant/payment fields';
   END IF;
 END $$;
 
