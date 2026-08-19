@@ -34,16 +34,18 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     }
   });
 
-  test('skip link is first keyboard target and transfers focus to main content', async ({ page }) => {
+  test('skip link is first keyboard target and bypasses public navigation on multiple routes', async ({ page }) => {
     await preferSpanish(page);
-    await page.goto('/');
 
-    await page.keyboard.press('Tab');
-    const skip = page.getByRole('link', { name: 'Saltar al contenido' });
-    await expect(skip).toBeFocused();
-    await expect(skip).toBeVisible();
-    await page.keyboard.press('Enter');
-    await expect(page.locator('#main-content')).toBeFocused();
+    for (const path of ['/', '/about']) {
+      await page.goto(path);
+      await page.keyboard.press('Tab');
+      const skip = page.getByRole('link', { name: 'Saltar al contenido' });
+      await expect(skip).toBeFocused();
+      await expect(skip).toBeVisible();
+      await page.keyboard.press('Enter');
+      await expect(page.locator('#after-primary-navigation')).toBeFocused();
+    }
   });
 
   test('reduced motion keeps every reveal section visible and removes diagram motion', async ({ page }) => {

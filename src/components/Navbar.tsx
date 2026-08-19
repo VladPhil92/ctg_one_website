@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { PLATFORM_NAV_ITEMS, PRIMARY_NAV_ITEMS } from '@/lib/constants';
 import { Button } from './ui/Button';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { AFTER_PRIMARY_NAVIGATION_ID, SkipLink } from './SkipLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -30,6 +31,7 @@ export const Navbar: React.FC = () => {
   const openMenuLabel = locale === 'es' ? 'Abrir menú' : 'Open menu';
   const closeMenuLabel = locale === 'es' ? 'Cerrar menú' : 'Close menu';
   const platformsLabel = locale === 'es' ? 'Plataformas' : 'Platforms';
+  const contentStartLabel = locale === 'es' ? 'Inicio del contenido' : 'Start of content';
   const isPlatformActive = PLATFORM_NAV_ITEMS.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
 
   useEffect(() => {
@@ -88,6 +90,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
+      <SkipLink />
       <nav
         aria-label={primaryLabel}
         className={`fixed left-0 right-0 top-0 z-50 transition-[padding,background-color,border-color,backdrop-filter] duration-300 ${isScrolled ? 'py-3' : 'py-5 sm:py-6'}`}
@@ -201,6 +204,10 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
       </nav>
+
+      <div id={AFTER_PRIMARY_NAVIGATION_ID} tabIndex={-1} className="h-0 w-full overflow-hidden">
+        <span className="sr-only">{contentStartLabel}</span>
+      </div>
 
       {isOpen && (
         <>
