@@ -23,14 +23,15 @@ export default function IniciarSesionPage() {
 function IniciarSesionForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Only ever redirect to a same-site relative path (never a bare "//host"
-  // which browsers treat as protocol-relative) — anything else falls back
-  // to the original /dashboard destination.
   const next = searchParams.get('next');
   const redirectTo = next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+  const authError = searchParams.get('error');
+  const resetComplete = searchParams.get('password_reset') === 'success';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    authError ? 'No se pudo validar el enlace de autenticación. Solicita uno nuevo e inténtalo otra vez.' : null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -70,6 +71,12 @@ function IniciarSesionForm() {
       <h1 className="text-xl font-outfit font-semibold text-white mb-1">Iniciar sesión</h1>
       <p className="text-sm text-text-dim mb-8">Accede a tu cuenta de CTG One.</p>
 
+      {resetComplete && (
+        <p className="text-sm mb-4" style={{ color: 'var(--success)' }}>
+          Tu contraseña fue actualizada. Ya puedes iniciar sesión.
+        </p>
+      )}
+
       <AuthInput label="Correo electrónico" type="email" value={email} onChange={setEmail} autoComplete="email" />
       <AuthInput
         label="Contraseña"
@@ -78,6 +85,10 @@ function IniciarSesionForm() {
         onChange={setPassword}
         autoComplete="current-password"
       />
+
+      <div className="text-right -mt-2 mb-5">
+        <a href="/recuperar-contrasena" className="text-xs text-accent hover:underline">¿Olvidaste tu contraseña?</a>
+      </div>
 
       {error && (
         <p role="alert" className="text-sm mb-4" style={{ color: 'var(--error)' }}>{error}</p>
