@@ -47,7 +47,7 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
   const capacityPercent = getProjectedLotCapacityPercent(cases, funding);
 
   if (!isLoading && !isAuthenticated) {
-    router.replace(`/iniciar-sesion?next=/dashboard/inversion/nueva/${lot.code.toLowerCase()}`);
+    router.replace(`/iniciar-sesion?next=/inversion/app/nueva/${lot.code.toLowerCase()}`);
     return null;
   }
   if (isLoading || !userId) {
@@ -166,7 +166,7 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
         <section className="rounded-[24px] border border-white/10 p-5 sm:p-6" style={{background:'rgba(255,255,255,.022)'}}>
           <div className="flex items-center gap-3 mb-5"><div className="w-9 h-9 rounded-full border border-accent/20 flex items-center justify-center text-accent"><Landmark size={17}/></div><div><p className="text-[9px] uppercase tracking-[.22em] text-accent">02 · Transferencia</p><h2 className="text-lg font-outfit font-semibold mt-1">Bancolombia</h2></div></div>
 
-          {!orderId ? <p className="text-xs text-text-dim">Primero crea la orden para fijar el valor exacto a transferir.</p> : submitted ? <div className="rounded-xl border border-accent/20 bg-accent/[.05] p-4"><p className="text-sm text-white font-medium">Comprobante recibido</p><p className="text-xs text-text-muted mt-2 leading-relaxed">Estado: <strong className="text-accent">pendiente de verificación bancaria humana</strong>. Ninguna IA ni lectura automática puede activar esta inversión.</p><Button href="/dashboard/inversion" variant="secondary" size="sm" fullWidth className="mt-4">Volver a mis inversiones</Button></div> : <>
+          {!orderId ? <p className="text-xs text-text-dim">Primero crea la orden para fijar el valor exacto a transferir.</p> : submitted ? <div className="rounded-xl border border-accent/20 bg-accent/[.05] p-4"><p className="text-sm text-white font-medium">Comprobante recibido</p><p className="text-xs text-text-muted mt-2 leading-relaxed">Estado: <strong className="text-accent">pendiente de verificación bancaria humana</strong>. Ninguna IA ni lectura automática puede activar esta inversión.</p><Button href="/inversion/app" variant="secondary" size="sm" fullWidth className="mt-4">Volver a mis inversiones</Button></div> : <>
             <div className="rounded-xl border border-white/[.07] p-4 mb-4 text-xs text-text-muted leading-relaxed">
               Transfiere exactamente <strong className="text-white">{formatCents(displayCapital)}</strong> a la cuenta de ahorros de {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName}. Usa exclusivamente el QR oficial mostrado aquí.
             </div>
