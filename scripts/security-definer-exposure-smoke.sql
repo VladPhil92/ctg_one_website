@@ -195,4 +195,52 @@ BEGIN
   END IF;
 END $$;
 
+-- Public lot publication itself is fail-closed for internal DRAFT rows. The
+-- operational policy is separate so internal visibility cannot accidentally
+-- widen the anonymous policy.
+DO $$
+DECLARE
+  v_public_qual text;
+  v_ops_qual text;
+  v_old_policy_count integer;
+BEGIN
+  SELECT count(*)
+  INTO v_old_policy_count
+  FROM pg_policies
+  WHERE schemaname = 'public'
+    AND tablename = 'investment_production_lots'
+    AND policyname = 'investment_production_lots_select';
+
+  IF v_old_policy_count <> 0 THEN
+    RAISE EXCEPTION 'historical unconditional production-lot SELECT policy still exists';
+  END IF;
+
+  SELECT qual
+  INTO v_public_qual
+  FROM pg_policies
+  WHERE schemaname = 'public'
+    AND tablename = 'investment_production_lots'
+    AND policyname = 'investment_production_lots_public_select'
+    AND cmd = 'SELECT'
+    AND 'anon' = ANY(roles)
+    AND 'authenticated' = ANY(roles);
+
+  IF v_public_qual IS NULL OR v_public_qual NOT LIKE '%status <> ''DRAFT''%' THEN
+    RAISE EXCEPTION 'public production-lot RLS does not exclude DRAFT: %', v_public_qual;
+  END IF;
+
+  SELECT qual
+  INTO v_ops_qual
+  FROM pg_policies
+  WHERE schemaname = 'public'
+    AND tablename = 'investment_production_lots'
+    AND policyname = 'investment_production_lots_ops_select'
+    AND cmd = 'SELECT'
+    AND 'authenticated' = ANY(roles);
+
+  IF v_ops_qual IS NULL OR v_ops_qual NOT LIKE '%has_investment_permission%ops.read%' THEN
+    RAISE EXCEPTION 'ops production-lot RLS no longer preserves ops.read draft access: %', v_ops_qual;
+  END IF;
+END $$;
+
 SELECT 'SECURITY DEFINER exposure contract: PASS' AS result;
