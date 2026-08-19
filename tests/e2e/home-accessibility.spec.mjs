@@ -14,7 +14,7 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
 
     await expect(page.getByText('Fundada en 2024 en Cartagena, Colombia', { exact: false })).toBeVisible();
     await expect(page.getByText('CTG One construye la base tecnológica', { exact: false })).toBeVisible();
-    await expect(page.getByText('Doce unidades de negocio operativas', { exact: false })).toBeVisible();
+    await expect(page.getByText(/\d+ negocios operativos ofrecen entornos reales de aplicación para CTG One Technology/i)).toBeVisible();
     await expect(page.getByText('Conoce cómo CTG One construye y despliega', { exact: false })).toBeVisible();
 
     await expect(page.getByText('Founded in 2024 in Cartagena, Colombia', { exact: false })).toHaveCount(0);
@@ -32,6 +32,23 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     ]) {
       await expect(page.getByText(label, { exact: true })).toBeVisible();
     }
+  });
+
+  test('public positioning remains technology-first and Rewards honors Spanish locale', async ({ page }) => {
+    await preferSpanish(page);
+
+    await page.goto('/about');
+    await expect(page.getByText('Construimos desde dentro de los negocios', { exact: false })).toBeVisible();
+    await expect(page.getByText(/agencia/i)).toHaveCount(0);
+    await expect(page.getByText(/agency/i)).toHaveCount(0);
+    await expect(page.getByText(/\d+\s+Negocios operativos/i)).toBeVisible();
+
+    await page.goto('/rewards');
+    await expect(page.getByText('CTG Rewards · Hoja de ruta', { exact: true })).toBeVisible();
+    await expect(page.getByText('Reconocimiento por participación', { exact: true })).toBeVisible();
+    await expect(page.getByText('Redención entre unidades', { exact: true })).toBeVisible();
+    await expect(page.getByText('Engagement Recognition', { exact: true })).toHaveCount(0);
+    await expect(page.getByText(/Gana al participar|Gana al referir/i)).toHaveCount(0);
   });
 
   test('skip link is first keyboard target and bypasses public navigation on multiple routes', async ({ page }) => {
