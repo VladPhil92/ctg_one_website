@@ -65,8 +65,9 @@ SELECT
 FROM exposed;
 
 -- Negative control: merely mentioning auth.uid()/RBAC in executable code,
--- comments, and text must NOT satisfy the contract.
-CREATE OR REPLACE FUNCTION public.__security_definer_unguarded_negative_control()
+-- comments, and text must NOT satisfy the contract. CREATE (not OR REPLACE)
+-- deliberately fails if a future real routine ever collides with this test name.
+CREATE FUNCTION public.__security_definer_unguarded_negative_control()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
