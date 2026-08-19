@@ -1,77 +1,156 @@
 \set ON_ERROR_STOP on
 
--- SECURITY DEFINER functions cross the normal privilege boundary. Keep the
--- browser-exposed surface deliberate: anonymous execution is deny-by-default,
--- and authenticated execution requires an explicit authorization guard in the
--- function body. The public bottle trace is the single reviewed anonymous
--- exception because it exposes only non-sensitive physical provenance.
+-- SECURITY DEFINER functions cross the normal privilege boundary. Data API
+-- exposure is therefore deny-by-default and reviewed by exact signature, not
+-- inferred from comments or unstructured source-code substrings.
 
+CREATE TEMP TABLE approved_authenticated_security_definers(
+  signature text PRIMARY KEY
+);
+
+\copy approved_authenticated_security_definers(signature) FROM 'scripts/security-definer-authenticated-allowlist.txt' WITH (FORMAT text)
+
+-- All schemas configured in supabase/config.toml [api].schemas are in scope.
 DO $$
 DECLARE
   v_anon_exposures text[];
 BEGIN
-  SELECT coalesce(array_agg(p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' ORDER BY p.proname, pg_get_function_identity_arguments(p.oid)), ARRAY[]::text[])
+  SELECT coalesce(
+    array_agg(
+      n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')'
+      ORDER BY n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)
+    ),
+    ARRAY[]::text[]
+  )
   INTO v_anon_exposures
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
-  WHERE n.nspname = 'public'
+  WHERE n.nspname IN ('public', 'graphql_public')
     AND p.prosecdef
     AND has_function_privilege('anon', p.oid, 'EXECUTE');
 
-  IF v_anon_exposures IS DISTINCT FROM ARRAY['get_public_bottle_trace(p_serial_code text)']::text[] THEN
+  IF v_anon_exposures IS DISTINCT FROM ARRAY['public.get_public_bottle_trace(p_serial_code text)']::text[] THEN
     RAISE EXCEPTION 'unexpected anonymous SECURITY DEFINER exposure(s): %', v_anon_exposures;
   END IF;
 END $$;
 
+-- Authenticated SECURITY DEFINER exposure is an explicit reviewed allowlist.
+-- Any new overload, new function, removed grant or new function in graphql_public
+-- changes the actual signature set and therefore requires a deliberate review.
 DO $$
 DECLARE
-  v_unguarded text[];
+  v_unapproved text[];
+  v_stale_approvals text[];
 BEGIN
-  WITH exposed AS (
+  WITH actual AS (
     SELECT
-      p.oid,
-      p.proname,
-      pg_get_function_identity_arguments(p.oid) AS args,
-      pg_get_functiondef(p.oid) AS definition
+      n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS signature
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = 'public'
+    WHERE n.nspname IN ('public', 'graphql_public')
       AND p.prosecdef
       AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
-      AND NOT (
-        p.proname = 'get_public_bottle_trace'
-        AND pg_get_function_identity_arguments(p.oid) = 'p_serial_code text'
-      )
   )
-  SELECT coalesce(array_agg(proname || '(' || args || ')' ORDER BY proname, args), ARRAY[]::text[])
-  INTO v_unguarded
-  FROM exposed
-  WHERE definition !~* '(auth\.uid\(\)|has_investment_permission\(|is_admin\(\)|get_investment_role\(\)|is_investment_admin\(\)|is_investment_operator\(\)|is_investment_sales_operator\()';
+  SELECT coalesce(array_agg(signature ORDER BY signature), ARRAY[]::text[])
+  INTO v_unapproved
+  FROM (
+    SELECT signature FROM actual
+    EXCEPT
+    SELECT signature FROM approved_authenticated_security_definers
+  ) unexpected;
 
-  IF cardinality(v_unguarded) > 0 THEN
-    RAISE EXCEPTION 'authenticated SECURITY DEFINER function(s) lack a reviewed authorization guard: %', v_unguarded;
+  WITH actual AS (
+    SELECT
+      n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS signature
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname IN ('public', 'graphql_public')
+      AND p.prosecdef
+      AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
+  )
+  SELECT coalesce(array_agg(signature ORDER BY signature), ARRAY[]::text[])
+  INTO v_stale_approvals
+  FROM (
+    SELECT signature FROM approved_authenticated_security_definers
+    EXCEPT
+    SELECT signature FROM actual
+  ) stale;
+
+  IF cardinality(v_unapproved) > 0 THEN
+    RAISE EXCEPTION 'unreviewed authenticated SECURITY DEFINER exposure(s): %', v_unapproved;
+  END IF;
+
+  IF cardinality(v_stale_approvals) > 0 THEN
+    RAISE EXCEPTION 'SECURITY DEFINER allowlist contains stale signature(s): %', v_stale_approvals;
   END IF;
 END $$;
 
+-- Every exposed SECURITY DEFINER function must pin a search_path. This prevents
+-- privilege escalation through caller-controlled object resolution.
+DO $$
+DECLARE
+  v_unpinned text[];
+BEGIN
+  SELECT coalesce(
+    array_agg(
+      n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')'
+      ORDER BY n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)
+    ),
+    ARRAY[]::text[]
+  )
+  INTO v_unpinned
+  FROM pg_proc p
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname IN ('public', 'graphql_public')
+    AND p.prosecdef
+    AND (
+      has_function_privilege('anon', p.oid, 'EXECUTE')
+      OR has_function_privilege('authenticated', p.oid, 'EXECUTE')
+    )
+    AND NOT EXISTS (
+      SELECT 1
+      FROM unnest(coalesce(p.proconfig, ARRAY[]::text[])) cfg
+      WHERE cfg LIKE 'search_path=%'
+    );
+
+  IF cardinality(v_unpinned) > 0 THEN
+    RAISE EXCEPTION 'browser-exposed SECURITY DEFINER function(s) lack pinned search_path: %', v_unpinned;
+  END IF;
+END $$;
+
+-- The sole anonymous exception has an exact reviewed data contract. Both its
+-- result shape and every public-schema object reference are allowlisted.
 DO $$
 DECLARE
   v_definition text;
   v_result text;
+  v_public_references text[];
+  v_expected_result constant text :=
+    'TABLE(serial_code text, unit_number integer, bottle_status text, current_location text, packaged_at timestamp with time zone, sold_at timestamp with time zone, lot_code text, beer_style text, destination text, lot_status text, case_size_units integer)';
 BEGIN
   IF to_regprocedure('public.get_public_bottle_trace(text)') IS NULL THEN
     RAISE EXCEPTION 'reviewed public bottle trace function is missing';
   END IF;
 
-  SELECT pg_get_functiondef('public.get_public_bottle_trace(text)'::regprocedure),
-         pg_get_function_result('public.get_public_bottle_trace(text)'::regprocedure)
+  SELECT
+    pg_get_functiondef('public.get_public_bottle_trace(text)'::regprocedure),
+    pg_get_function_result('public.get_public_bottle_trace(text)'::regprocedure)
   INTO v_definition, v_result;
 
-  IF v_definition !~ 'investment_bottle_units' OR v_definition !~ 'investment_production_lots' THEN
-    RAISE EXCEPTION 'public bottle trace no longer derives only from reviewed physical provenance sources';
+  IF v_result IS DISTINCT FROM v_expected_result THEN
+    RAISE EXCEPTION 'public bottle trace result contract changed: %', v_result;
   END IF;
 
-  IF (v_definition || ' ' || v_result) ~* '(participant_user_id|investment_ledger_entries|investment_payment_receipts|investment_payouts|bank_account|payment_reference|payment_proof|destination_fingerprint|provider_event_key|merchant_reference|external_reference)' THEN
-    RAISE EXCEPTION 'public bottle trace exposes or references a prohibited financial/identity field';
+  SELECT coalesce(array_agg(DISTINCT m[1] ORDER BY m[1]), ARRAY[]::text[])
+  INTO v_public_references
+  FROM regexp_matches(v_definition, E'public\\.([A-Za-z0-9_]+)', 'g') AS m;
+
+  IF v_public_references IS DISTINCT FROM ARRAY[
+    'get_public_bottle_trace',
+    'investment_bottle_units',
+    'investment_production_lots'
+  ]::text[] THEN
+    RAISE EXCEPTION 'public bottle trace references unreviewed public object(s): %', v_public_references;
   END IF;
 END $$;
 
