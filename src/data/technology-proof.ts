@@ -93,6 +93,18 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
     publicPath: '/ai',
   },
   {
+    id: 'ctg-rewards',
+    area: 'Loyalty',
+    capability: 'Cross-ecosystem CTG Rewards loyalty and referral rail',
+    status: 'ROADMAP',
+    evidence: [
+      'Public section is explicitly labeled as a product concept',
+      'No universal earn, tier or cross-business redemption rail is claimed as production',
+      'Program rules, accounting model and production implementation are required before promotion',
+    ],
+    publicPath: '/#rewards',
+  },
+  {
     id: 'web3',
     area: 'Web3',
     capability: 'CTGO on-chain production utility',
@@ -123,4 +135,5 @@ export const TECHNICAL_CHANGELOG = [
   { phase: '08', title: 'Production readiness', detail: 'Defined the Render deployment contract, health checks and production verification runbook.' },
   { phase: '09', title: 'AI platform architecture', detail: 'Expanded CTG One AI with Citation-First RAG, agent runtime, risk tiers, evaluation, security and CTG Knowledge product architecture while retaining IN DEVELOPMENT status.' },
   { phase: '10', title: 'CTG Knowledge v0.1', detail: 'Implemented the first authenticated RAG pilot with curated ingestion, pgvector retrieval, server-side model access, grounded answers and structured source metadata; LIVE promotion remains evidence-gated.' },
+  { phase: '11', title: 'Capability truth governance', detail: 'Added a public BETA release stage, centralized capability maturity and hardened public claims against unverified production language.' },
 ] as const;
