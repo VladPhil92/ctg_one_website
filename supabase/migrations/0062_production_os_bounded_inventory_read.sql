@@ -42,19 +42,20 @@ begin
     raise exception 'production lot not found';
   end if;
 
-  with summary as (
+  with status_summary as (
+    select b.status, count(*)::bigint as status_count
+    from public.investment_bottle_units b
+    where b.lot_id = p_lot_id
+    group by b.status
+  ),
+  summary as (
     select
-      count(*)::bigint as total_units,
+      coalesce(sum(status_count), 0)::bigint as total_units,
       coalesce(
         jsonb_object_agg(status, status_count order by status),
         '{}'::jsonb
       ) as status_counts
-    from (
-      select b.status, count(*)::bigint as status_count
-      from public.investment_bottle_units b
-      where b.lot_id = p_lot_id
-      group by b.status
-    ) counts
+    from status_summary
   ),
   unit_page as (
     select coalesce(
