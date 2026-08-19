@@ -82,8 +82,8 @@ jobs:
         with:
           version: 2.111.0
 
-      - name: Start isolated local Supabase recovery target
-        run: supabase db start
+      - name: Start isolated full local Supabase recovery target
+        run: supabase start
 
       - name: Resolve and mask local recovery credentials
         shell: bash
