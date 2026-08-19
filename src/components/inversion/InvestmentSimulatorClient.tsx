@@ -5,7 +5,7 @@ import { Card } from '@/components/ui';
 import { formatCents } from '@/lib/format';
 import { MIN_INVESTMENT_CASES } from '@/lib/investment/constants';
 import { deriveLotScenario } from '@/lib/investment/economics';
-import type { InvestmentProductionLot } from '@/types/investment';
+import type { InvestmentProductionLot, LotFundingSummary } from '@/types/investment';
 import type { InvestmentFormulaVersion } from '@/types/investment-economics';
 
 function percent(value: number | null) {
@@ -41,9 +41,11 @@ function ScenarioCard({
 export function InvestmentSimulatorClient({
   lots,
   formula,
+  fundingByLot,
 }: {
   lots: InvestmentProductionLot[];
   formula: InvestmentFormulaVersion | null;
+  fundingByLot: Record<string, LotFundingSummary>;
 }) {
   const [selectedId, setSelectedId] = useState(lots[0]?.id ?? '');
   const selected = lots.find((lot) => lot.id === selectedId) ?? lots[0] ?? null;
@@ -68,13 +70,23 @@ export function InvestmentSimulatorClient({
   if (!result) return null;
 
   const participantShare = formula ? Number(formula.participant_profit_share) : null;
+  const funding = fundingByLot[selected.id] ?? {
+    totalCases: selected.total_eligible_units,
+    allocatedCases: 0,
+    reservedCases: 0,
+    fundedPercent: 0,
+    availableCasesEquivalent: selected.total_eligible_units,
+  };
+  const reservedCases = funding.reservedCases ?? 0;
   const isFundingOpen = selected.status === 'FUNDING_OPEN';
+  const isCurrentlyReservable = isFundingOpen && funding.availableCasesEquivalent >= MIN_INVESTMENT_CASES;
+  const simulationExceedsLiveCapacity = isFundingOpen && cases > funding.availableCasesEquivalent;
 
   return (
     <>
       {!isFundingOpen && (
         <div className="mb-6 rounded-xl border border-amber-400/20 bg-amber-400/[0.04] p-4 text-xs text-text-muted leading-relaxed">
-          Este cálculo usa el snapshot persistido más reciente como referencia histórica. El lote seleccionado no está abierto actualmente para recibir nuevas inversiones.
+          Este cálculo usa un snapshot persistido como referencia. El lote seleccionado no está abierto actualmente para recibir nuevas órdenes; la simulación no representa disponibilidad de inversión.
         </div>
       )}
 
@@ -95,20 +107,37 @@ export function InvestmentSimulatorClient({
           </div>
           <div>
             <label className="text-[11px] uppercase tracking-[0.15em] text-text-dim block mb-3" htmlFor="simulator-cases">
-              Cajas a simular · mínimo {MIN_INVESTMENT_CASES}
+              Cajas a simular · mínimo {MIN_INVESTMENT_CASES} · máx. snapshot {selected.total_eligible_units}
             </label>
             <input
               id="simulator-cases"
               type="number"
               min={MIN_INVESTMENT_CASES}
-              max={selected.total_cases}
+              max={selected.total_eligible_units}
               step={1}
               value={cases}
-              onChange={(event) => setCases(Math.max(MIN_INVESTMENT_CASES, Math.min(selected.total_cases, Number(event.target.value) || MIN_INVESTMENT_CASES)))}
+              onChange={(event) => setCases(Math.max(MIN_INVESTMENT_CASES, Math.min(selected.total_eligible_units, Number(event.target.value) || MIN_INVESTMENT_CASES)))}
               className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none"
             />
           </div>
         </div>
+
+        <div className="mt-5 rounded-xl border border-white/[.07] bg-white/[.015] p-4">
+          <p className="text-[9px] uppercase tracking-[.14em] text-text-dim mb-3">Disponibilidad real del lote</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div><span className="text-text-dim block">Asignadas</span><span className="text-white mt-1 block">{funding.allocatedCases} cajas eq.</span></div>
+            <div><span className="text-text-dim block">Reservadas</span><span className="text-white mt-1 block">{reservedCases} cajas eq.</span></div>
+            <div><span className="text-text-dim block">Disponibles</span><span className="text-white mt-1 block">{funding.availableCasesEquivalent} cajas eq.</span></div>
+            <div><span className="text-text-dim block">Nueva orden</span><span className={`mt-1 block ${isCurrentlyReservable ? 'text-accent' : 'text-text-muted'}`}>{isCurrentlyReservable ? 'Habilitada' : 'No disponible'}</span></div>
+          </div>
+        </div>
+
+        {simulationExceedsLiveCapacity && (
+          <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/[0.04] p-3 text-[11px] text-text-muted leading-relaxed">
+            Estás simulando {cases} cajas, pero actualmente solo quedan {funding.availableCasesEquivalent} cajas equivalentes disponibles para nuevas órdenes. El cálculo sigue siendo válido como escenario económico del snapshot, no como reserva de cupo.
+          </div>
+        )}
+
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
           <div><p className="text-[9px] uppercase tracking-[0.14em] text-text-dim">Botellas eq.</p><p className="text-lg text-white mt-1">{result.units}</p></div>
           <div><p className="text-[9px] uppercase tracking-[0.14em] text-text-dim">Capital requerido</p><p className="text-lg text-white mt-1">{formatCents(result.capitalRequiredCents)}</p></div>
@@ -141,7 +170,7 @@ export function InvestmentSimulatorClient({
       </div>
 
       <p className="text-[11px] text-text-dim leading-relaxed">
-        Estos dos escenarios son límites ilustrativos derivados exclusivamente del snapshot económico del lote y, cuando existe, de la fórmula financiera activa. No presuponen una mezcla de canales ni reemplazan la liquidación. El resultado real se calcula con ingresos, impuestos, costos de producción, costos comerciales y ajustes efectivamente registrados para el lote; cada allocation conserva la versión de fórmula que le corresponda al momento de su creación.
+        Estos dos escenarios son límites ilustrativos derivados exclusivamente del snapshot económico del lote y, cuando existe, de la fórmula financiera activa. La cantidad simulada se limita a la capacidad financiable persistida del snapshot, pero puede ser mayor que el cupo actualmente disponible porque el simulador no reserva cajas. No presuponen una mezcla de canales ni reemplazan la liquidación.
       </p>
     </>
   );
