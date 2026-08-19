@@ -191,7 +191,7 @@ BEGIN
     RAISE EXCEPTION 'public investment funding references unreviewed public object(s): %', v_public_references;
   END IF;
 
-  IF v_definition ~* '(participant_user_id|capital_committed_cents|external_reference|payment_proof|bank_)' THEN
+  IF v_definition ~* '(participant_user_id|capital_committed_cents|external_reference|payment_proof_storage_path|payment_proof_sha256|payment_proof_original_name|payment_proof_mime|bank_verified_reference|bank_verified_amount_cents|bank_received_at|bank_verified_by)' THEN
     RAISE EXCEPTION 'public investment funding function definition references prohibited participant/payment fields';
   END IF;
 END $$;
