@@ -22,59 +22,50 @@ CREATE TEMP TABLE reviewed_authenticated_security_definer_bodies(
 
 \copy reviewed_authenticated_security_definer_bodies(signature, body_sha256) FROM 'scripts/security-definer-authenticated-body-sha256.txt' WITH (FORMAT csv, DELIMITER E'\t')
 
+CREATE TEMP VIEW actual_authenticated_security_definer_bodies AS
+SELECT
+  n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS signature,
+  encode(digest(p.prosrc, 'sha256'), 'hex') AS body_sha256
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname IN ('public', 'graphql_public')
+  AND p.prosecdef
+  AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
+  AND NOT has_function_privilege('anon', p.oid, 'EXECUTE');
+
+-- Keep failures actionable. A successful run prints zero rows; a failed run
+-- records the clean-schema hash beside the reviewed hash so drift can be
+-- investigated without weakening the gate or blindly refreshing the manifest.
+SELECT
+  a.signature,
+  a.body_sha256 AS clean_body_sha256,
+  r.body_sha256 AS reviewed_body_sha256
+FROM actual_authenticated_security_definer_bodies a
+JOIN reviewed_authenticated_security_definer_bodies r USING (signature)
+WHERE a.body_sha256 IS DISTINCT FROM r.body_sha256
+ORDER BY a.signature;
+
 DO $$
 DECLARE
   v_unreviewed text[];
   v_stale text[];
   v_changed text[];
 BEGIN
-  WITH actual AS (
-    SELECT
-      n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS signature,
-      encode(digest(p.prosrc, 'sha256'), 'hex') AS body_sha256
-    FROM pg_proc p
-    JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname IN ('public', 'graphql_public')
-      AND p.prosecdef
-      AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
-      AND NOT has_function_privilege('anon', p.oid, 'EXECUTE')
-  )
   SELECT coalesce(array_agg(a.signature ORDER BY a.signature), ARRAY[]::text[])
   INTO v_unreviewed
-  FROM actual a
+  FROM actual_authenticated_security_definer_bodies a
   LEFT JOIN reviewed_authenticated_security_definer_bodies r USING (signature)
   WHERE r.signature IS NULL;
 
-  WITH actual AS (
-    SELECT
-      n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS signature
-    FROM pg_proc p
-    JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname IN ('public', 'graphql_public')
-      AND p.prosecdef
-      AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
-      AND NOT has_function_privilege('anon', p.oid, 'EXECUTE')
-  )
   SELECT coalesce(array_agg(r.signature ORDER BY r.signature), ARRAY[]::text[])
   INTO v_stale
   FROM reviewed_authenticated_security_definer_bodies r
-  LEFT JOIN actual a USING (signature)
+  LEFT JOIN actual_authenticated_security_definer_bodies a USING (signature)
   WHERE a.signature IS NULL;
 
-  WITH actual AS (
-    SELECT
-      n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS signature,
-      encode(digest(p.prosrc, 'sha256'), 'hex') AS body_sha256
-    FROM pg_proc p
-    JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname IN ('public', 'graphql_public')
-      AND p.prosecdef
-      AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
-      AND NOT has_function_privilege('anon', p.oid, 'EXECUTE')
-  )
   SELECT coalesce(array_agg(a.signature ORDER BY a.signature), ARRAY[]::text[])
   INTO v_changed
-  FROM actual a
+  FROM actual_authenticated_security_definer_bodies a
   JOIN reviewed_authenticated_security_definer_bodies r USING (signature)
   WHERE a.body_sha256 IS DISTINCT FROM r.body_sha256;
 
