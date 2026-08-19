@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   },
   description:
     'Participa en la producción real de CTG Craft Beer: financia un equivalente productivo dentro de un lote identificado, sigue la producción y las ventas, y consulta la liquidación.',
+  alternates: { canonical: 'https://ctgone.com/inversion' },
 };
 
 export default function InversionLayout({ children }: { children: React.ReactNode }) {

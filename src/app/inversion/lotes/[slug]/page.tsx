@@ -17,7 +17,18 @@ type LotRouteParams = Promise<{ slug: string }>;
 export async function generateMetadata({ params }: { params: LotRouteParams }) {
   const { slug } = await params;
   const lot = await getLotByCode(slug);
-  return { title: lot ? `${lot.beer_style} — ${lot.code}` : 'Lote no encontrado' };
+  if (!lot) {
+    return {
+      title: 'Lote no encontrado',
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const canonicalSlug = encodeURIComponent(lot.code.toLowerCase());
+  return {
+    title: `${lot.beer_style} — ${lot.code}`,
+    alternates: { canonical: `https://ctgone.com/inversion/lotes/${canonicalSlug}` },
+  };
 }
 
 export default async function LotDetailPage({ params }: { params: LotRouteParams }) {
