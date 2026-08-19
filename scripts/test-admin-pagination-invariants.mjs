@@ -46,6 +46,16 @@ assert.match(ordersPage, /ClientPagination/, 'Investment verification queue must
 assert.match(ordersRepository, /count:\s*'exact'/, 'Investment order repository must return an exact queue count.');
 assert.match(ordersRepository, /\.range\(from, to\)/, 'Investment order repository must issue a bounded range query.');
 assert.match(ordersRepository, /\.order\('created_at',[\s\S]*?\.order\('id'/, 'Investment order pagination must have deterministic ordering.');
+assert.doesNotMatch(
+  ordersRepository,
+  /createInvestmentAdminOrdersRepository\(\)\s*\{\s*const supabase = createClient\(\)/,
+  'Investment admin repository construction must remain build-safe and defer Supabase client creation until a browser operation executes.',
+);
+assert.match(
+  ordersRepository,
+  /async listPending[\s\S]*?const supabase = createClient\(\)/,
+  'Investment admin repository must create its browser client lazily inside operations.',
+);
 
 assert.doesNotMatch(returnsPage, /createClient\(/, 'Sales Returns UI must not execute direct Supabase queries.');
 assert.match(returnsPage, /createSalesReturnsBrowserRepository/, 'Sales Returns UI must use the bounded repository boundary.');
@@ -56,5 +66,15 @@ assert.match(returnsRepository, /\.eq\('sale_id', saleId\)/, 'Sale child records
 assert.doesNotMatch(returnsRepository, /p_sale_id:\s*null/, 'Returns reconciliation must never scan every sale from the control panel.');
 assert.match(returnsRepository, /MAX_ITEMS_PER_SALE_FOR_RETURN_UI/, 'Per-sale item hydration must have an explicit safety perimeter.');
 assert.match(returnsRepository, /se niega a truncar silenciosamente/, 'Oversized sale detail must fail closed rather than silently lose returnable items.');
+assert.doesNotMatch(
+  returnsRepository,
+  /createSalesReturnsBrowserRepository\(\)\s*\{\s*const supabase = createClient\(\)/,
+  'Sales Returns repository construction must not require Supabase credentials during prerender/build.',
+);
+assert.match(
+  returnsRepository,
+  /async listConfirmedSales[\s\S]*?const supabase = createClient\(\)/,
+  'Sales Returns repository must lazily create its browser client when data is requested.',
+);
 
 console.log('Admin and Sales OS pagination invariants: PASS');
