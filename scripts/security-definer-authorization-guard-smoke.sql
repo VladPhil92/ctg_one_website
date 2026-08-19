@@ -6,7 +6,7 @@
 -- reviewed. This contract separately proves that each authenticated-only
 -- routine contains a recognizable *denial-form authorization guard*, rather
 -- than merely mentioning auth.uid() or an RBAC helper in an audit assignment,
--- comment, string literal, or inverted conditional.
+-- comment, string literal, inverted conditional, or unrelated identity query.
 --
 -- This is intentionally conservative: introducing a new guard idiom requires
 -- updating this reviewed contract rather than silently widening acceptance.
@@ -54,11 +54,25 @@ SELECT
     -- reviewed role literal becomes ''.
     OR definition ~* E'if[[:space:]]+public\\.get_investment_role\\(\\)[[:space:]]*(<>|!=)[[:space:]]*''''[[:space:]]+then[\\s\\S]{0,120}raise[[:space:]]+exception'
 
-    -- SQL role helpers whose boolean/role result is identity-scoped.
-    OR definition ~* E'where[\\s\\S]{0,250}(id|user_id)[[:space:]]*=[[:space:]]*auth\\.uid\\(\\)'
+    -- Only these reviewed identity/RBAC helper functions may use an
+    -- identity-scoped SQL WHERE clause as their authorization semantics.
+    OR (
+      signature = ANY(ARRAY[
+        'public.is_admin()',
+        'public.is_investment_admin()',
+        'public.is_investment_operator()',
+        'public.is_investment_sales_operator()',
+        'public.get_investment_role()'
+      ]::text[])
+      AND definition ~* E'where[\\s\\S]{0,250}(id|user_id)[[:space:]]*=[[:space:]]*auth\\.uid\\(\\)'
+    )
 
-    -- Permission matrix delegates identity resolution to get_investment_role().
-    OR definition ~* E'select[[:space:]]+case[[:space:]]+public\\.get_investment_role\\(\\)'
+    -- Only the reviewed permission-matrix helper may delegate through a CASE
+    -- over get_investment_role().
+    OR (
+      signature = 'public.has_investment_permission(p_permission text)'
+      AND definition ~* E'select[[:space:]]+case[[:space:]]+public\\.get_investment_role\\(\\)'
+    )
 
     -- Rate limiter snapshots auth.uid() once, then denies a null caller.
     OR (
@@ -93,8 +107,6 @@ REVOKE ALL ON FUNCTION public.__security_definer_unguarded_negative_control() FR
 GRANT EXECUTE ON FUNCTION public.__security_definer_unguarded_negative_control() TO authenticated;
 
 -- Negative control #2: inverted polarity must NOT count as authorization.
--- This routine denies admins and otherwise permits execution, which is exactly
--- the class of false positive this contract must reject.
 CREATE FUNCTION public.__security_definer_inverted_guard_negative_control()
 RETURNS void
 LANGUAGE plpgsql
@@ -110,6 +122,23 @@ $$;
 REVOKE ALL ON FUNCTION public.__security_definer_inverted_guard_negative_control() FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.__security_definer_inverted_guard_negative_control() TO authenticated;
 
+-- Negative control #3: an unrelated identity-scoped query is not an
+-- authorization check for an arbitrary privileged RPC.
+CREATE FUNCTION public.__security_definer_identity_query_negative_control()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  PERFORM 1 FROM public.profiles WHERE id = auth.uid();
+  -- A real privileged mutation could follow here without any denial guard.
+  RETURN;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.__security_definer_identity_query_negative_control() FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.__security_definer_identity_query_negative_control() TO authenticated;
+
 DO $$
 DECLARE
   v_unguarded text[];
@@ -120,6 +149,7 @@ BEGIN
   WHERE NOT has_authorization_guard;
 
   IF v_unguarded IS DISTINCT FROM ARRAY[
+    'public.__security_definer_identity_query_negative_control()',
     'public.__security_definer_inverted_guard_negative_control()',
     'public.__security_definer_unguarded_negative_control()'
   ]::text[] THEN
@@ -129,6 +159,7 @@ BEGIN
   END IF;
 END $$;
 
+DROP FUNCTION public.__security_definer_identity_query_negative_control();
 DROP FUNCTION public.__security_definer_inverted_guard_negative_control();
 DROP FUNCTION public.__security_definer_unguarded_negative_control();
 
