@@ -6,10 +6,12 @@ import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { AuthInput } from '@/components/auth/AuthInput';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { authErrorMessage, normalizeEmail } from '@/lib/auth/client-policy';
 
 const loginSchema = z.object({
-  email: z.string().trim().email('Correo inválido'),
-  password: z.string().min(1, 'Ingresa tu contraseña'),
+  email: z.string().trim().email(),
+  password: z.string().min(1),
 });
 
 export default function IniciarSesionPage() {
@@ -23,6 +25,8 @@ export default function IniciarSesionPage() {
 function IniciarSesionForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { locale } = useLanguage();
+  const es = locale === 'es';
   const next = searchParams.get('next');
   const redirectTo = next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
   const authError = searchParams.get('error');
@@ -30,22 +34,57 @@ function IniciarSesionForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(
-    authError ? 'No se pudo validar el enlace de autenticación. Solicita uno nuevo e inténtalo otra vez.' : null
+    authError
+      ? (es
+          ? 'No se pudo validar el enlace de autenticación. Solicita uno nuevo e inténtalo otra vez.'
+          : 'We could not validate the authentication link. Request a new one and try again.')
+      : null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const copy = es
+    ? {
+        title: 'Iniciar sesión',
+        subtitle: 'Accede a tu cuenta de CTG One.',
+        email: 'Correo electrónico',
+        password: 'Contraseña',
+        invalidEmail: 'Correo inválido',
+        passwordRequired: 'Ingresa tu contraseña',
+        unavailable: 'El inicio de sesión no está disponible en este momento. Inténtalo más tarde.',
+        forgot: '¿Olvidaste tu contraseña?',
+        submit: 'Iniciar sesión',
+        noAccount: '¿No tienes cuenta?',
+        create: 'Crea una',
+        resetComplete: 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.',
+      }
+    : {
+        title: 'Sign in',
+        subtitle: 'Access your CTG One account.',
+        email: 'Email',
+        password: 'Password',
+        invalidEmail: 'Invalid email',
+        passwordRequired: 'Enter your password',
+        unavailable: 'Sign-in is not available right now. Try again later.',
+        forgot: 'Forgot your password?',
+        submit: 'Sign in',
+        noAccount: 'No account yet?',
+        create: 'Create one',
+        resetComplete: 'Your password was updated. You can now sign in.',
+      };
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
     setError(null);
 
-    const parsed = loginSchema.safeParse({ email, password });
+    const parsed = loginSchema.safeParse({ email: normalizeEmail(email), password });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Datos inválidos');
+      const field = parsed.error.issues[0]?.path[0];
+      setError(field === 'password' ? copy.passwordRequired : copy.invalidEmail);
       return;
     }
 
     if (!isSupabaseConfigured) {
-      setError('El inicio de sesión no está disponible todavía. Vuelve a intentarlo más tarde.');
+      setError(copy.unavailable);
       return;
     }
 
@@ -60,47 +99,48 @@ function IniciarSesionForm() {
       router.push(redirectTo);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
+      setError(authErrorMessage(err, locale, 'login'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form noValidate onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }}>
-      <h1 className="text-xl font-outfit font-semibold text-white mb-1">Iniciar sesión</h1>
-      <p className="text-sm text-text-dim mb-8">Accede a tu cuenta de CTG One.</p>
+    <form noValidate onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }}>
+      <h1 className="mb-1 font-outfit text-2xl font-semibold tracking-tight text-white">{copy.title}</h1>
+      <p className="mb-8 text-sm text-text-muted">{copy.subtitle}</p>
 
       {resetComplete && (
-        <p className="text-sm mb-4" style={{ color: 'var(--success)' }}>
-          Tu contraseña fue actualizada. Ya puedes iniciar sesión.
+        <p role="status" className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--success)' }}>
+          {copy.resetComplete}
         </p>
       )}
 
-      <AuthInput label="Correo electrónico" type="email" value={email} onChange={setEmail} autoComplete="email" />
+      <AuthInput label={copy.email} type="email" value={email} onChange={setEmail} autoComplete="email" inputMode="email" required />
       <AuthInput
-        label="Contraseña"
+        label={copy.password}
         type="password"
         value={password}
         onChange={setPassword}
         autoComplete="current-password"
+        required
       />
 
-      <div className="text-right -mt-2 mb-5">
-        <a href="/recuperar-contrasena" className="text-xs text-accent hover:underline">¿Olvidaste tu contraseña?</a>
+      <div className="-mt-2 mb-5 text-right">
+        <a href="/recuperar-contrasena" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline">{copy.forgot}</a>
       </div>
 
       {error && (
-        <p role="alert" className="text-sm mb-4" style={{ color: 'var(--error)' }}>{error}</p>
+        <p role="alert" className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--error)' }}>{error}</p>
       )}
 
       <Button type="submit" loading={isSubmitting} variant="primary" size="md" fullWidth>
-        Iniciar sesión
+        {copy.submit}
       </Button>
 
-      <p className="text-xs text-text-dim text-center mt-6">
-        ¿No tienes cuenta?{' '}
-        <a href="/registro" className="text-accent hover:underline">Crea una</a>
+      <p className="mt-6 text-center text-xs text-text-dim">
+        {copy.noAccount}{' '}
+        <a href="/registro" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.create}</a>
       </p>
     </form>
   );
