@@ -1,0 +1,42 @@
+name: SEO Origin Canary
+
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      origin:
+        description: 'Public HTTPS origin to verify'
+        required: false
+        default: 'https://ctgone.com'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-origin-canary-main
+  cancel-in-progress: true
+
+jobs:
+  verify-origin:
+    name: Verify public sitemap and self-canonical surfaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      SEO_ORIGIN: ${{ github.event.inputs.origin || 'https://ctgone.com' }}
+      SEO_REQUEST_TIMEOUT_MS: '10000'
+
+    steps:
+      - name: Checkout canonical main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+
+      - name: Verify public SEO origin
+        run: node scripts/verify-seo-origin.mjs
