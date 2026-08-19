@@ -3,13 +3,14 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [proof, hero, token, content, flags, legal] = await Promise.all([
+const [proof, hero, token, content, flags, legal, ecosystemTechnology] = await Promise.all([
   read('src/data/technology-proof.ts'),
   read('src/components/sections/HeroSection.tsx'),
   read('src/components/sections/TokenSection.tsx'),
   read('src/data/content.ts'),
   read('src/lib/investment/flags.ts'),
   read('src/app/inversion/legal/page.tsx'),
+  read('src/data/ecosystem-technology.ts'),
 ]);
 
 assert.ok(proof.includes("publicStatus: 'BETA'"), 'Controlled pilots must be representable as BETA in the public capability registry.');
@@ -54,6 +55,17 @@ assert.ok(content.includes("status: 'ROADMAP'"), 'Shared CTGO content must remai
 assert.ok(flags.includes('CTG_INVESTMENT_PUBLIC_FUNDING_ENABLED'), 'Investment public-funding feature flag must remain explicit.');
 assert.ok(flags.includes('defaultValue = false') || flags.includes("=== 'true'"), 'Investment flags must remain fail-closed.');
 assert.match(legal, /beta cerrada|closed beta/i, 'Investment legal surface must disclose the controlled beta stage.');
+
+assert.doesNotMatch(
+  ecosystemTechnology,
+  /id: 'craftbeer'[\s\S]*?status: 'LIVE'/,
+  'The ecosystem map must not present CTG Craft Beer Investment as fully LIVE while the public release stage is BETA.',
+);
+assert.match(
+  ecosystemTechnology,
+  /id: 'craftbeer'[\s\S]*?beta controlada/i,
+  'The ecosystem map must disclose that CTG Craft Beer Investment remains a controlled beta.',
+);
 
 const ecosystemUnits = [...content.matchAll(/\{ id: '[^']+', name: '[^']+'/g)].length;
 const heroBusinessUnits = content.match(/\{ value: '(\d+)', label: 'Business Units'/)?.[1];
