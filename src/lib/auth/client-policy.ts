@@ -13,11 +13,11 @@ export const PASSWORD_REQUIREMENTS = [
 
 export const strongPasswordSchema = z
   .string()
-  .min(PASSWORD_MIN_LENGTH, `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres`)
-  .regex(/[a-z]/, 'Incluye al menos una letra minúscula')
-  .regex(/[A-Z]/, 'Incluye al menos una letra mayúscula')
-  .regex(/\d/, 'Incluye al menos un número')
-  .regex(/[^A-Za-z0-9]/, 'Incluye al menos un símbolo');
+  .min(PASSWORD_MIN_LENGTH)
+  .regex(/[a-z]/)
+  .regex(/[A-Z]/)
+  .regex(/\d/)
+  .regex(/[^A-Za-z0-9]/);
 
 export function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
@@ -43,6 +43,17 @@ export function passwordRequirementCopy(locale: Locale) {
     number: 'one number',
     symbol: 'one symbol',
   } as const;
+}
+
+export function strongPasswordError(value: string, locale: Locale) {
+  const copy = passwordRequirementCopy(locale);
+  const failing = PASSWORD_REQUIREMENTS.find((requirement) => !requirement.test(value));
+  if (!failing) return null;
+
+  const message = copy[failing.id];
+  return locale === 'es'
+    ? `La contraseña debe incluir ${message}.`
+    : `The password must include ${message}.`;
 }
 
 type AuthOperation = 'login' | 'signup' | 'recovery' | 'password-update';
