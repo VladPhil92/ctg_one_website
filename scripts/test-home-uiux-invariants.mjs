@@ -8,6 +8,7 @@ const [
   layout,
   home,
   navbar,
+  skipLink,
   switcher,
   fade,
   network,
@@ -27,6 +28,7 @@ const [
   read('src/app/layout.tsx'),
   read('src/app/page.tsx'),
   read('src/components/Navbar.tsx'),
+  read('src/components/SkipLink.tsx'),
   read('src/components/LanguageSwitcher.tsx'),
   read('src/components/ui/FadeInSection.tsx'),
   read('src/components/BlockchainNetwork.tsx'),
@@ -67,9 +69,12 @@ assert.match(network, /useReducedMotion/, 'Ecosystem SVG animation must respect 
 assert.match(network, /!reduceMotion\s*&&\s*<animateTransform/, 'SMIL rotation must not run when reduced motion is requested.');
 assert.match(network, /!reduceMotion\s*&&\s*<animateMotion/, 'Moving SVG particles must not run when reduced motion is requested.');
 
-// A11Y-05 / A11Y-07 — keyboard bypass and strong universal focus treatment.
-assert.match(layout, /<SkipLink\s*\/>/, 'Root layout must expose the keyboard skip link before application content.');
-assert.match(home, /id="main-content"[\s\S]*?tabIndex=\{-1\}/, 'Home main landmark must be programmatically focusable.');
+// A11Y-05 / A11Y-07 — keyboard bypass belongs to the public navigation it skips.
+assert.doesNotMatch(layout, /<SkipLink\s*\/>/, 'Root layout must not expose a broken skip link on routes without public navigation.');
+assert.match(navbar, /<SkipLink\s*\/>/, 'Every public Navbar instance must begin with the localized skip link.');
+assert.match(skipLink, /AFTER_PRIMARY_NAVIGATION_ID\s*=\s*'after-primary-navigation'/, 'Skip link must target the stable post-navigation sentinel.');
+assert.match(navbar, /id=\{AFTER_PRIMARY_NAVIGATION_ID\}[\s\S]*?tabIndex=\{-1\}/, 'Navbar must render a programmatically focusable sentinel immediately after primary navigation.');
+assert.match(home, /id="main-content"[\s\S]*?tabIndex=\{-1\}/, 'Home main landmark must remain programmatically focusable for direct fragment/accessibility use.');
 assert.match(globals, /outline:\s*2px solid var\(--accent\)/, 'Interactive focus ring must remain 2px.');
 assert.match(globals, /outline-offset:\s*2px/, 'Focus ring must retain separation from the focused control.');
 
