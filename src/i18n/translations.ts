@@ -22,6 +22,7 @@ export const PHRASES: Pair[] = [
   { en: 'Loading...', es: 'Cargando...' },
 
   { en: 'Software, AI & Infrastructure', es: 'Software, IA e Infraestructura' },
+  { en: 'Software & Digital Infrastructure', es: 'Software e infraestructura digital' },
   { en: 'Technology is infrastructure.', es: 'La tecnología es infraestructura.' },
   { en: 'Strategy is architecture.', es: 'La estrategia es arquitectura.' },
   { en: 'We build both for our own ecosystem.', es: 'Construimos ambas para nuestro propio ecosistema.' },
@@ -29,6 +30,7 @@ export const PHRASES: Pair[] = [
   { en: 'Explore Ecosystem', es: 'Explorar ecosistema' },
   { en: 'Start Conversation', es: 'Iniciar conversación' },
   { en: 'Business Units', es: 'Unidades de negocio' },
+  { en: 'Operating Businesses', es: 'Negocios operativos' },
   { en: 'One', es: 'Una' },
   { en: 'Technology Layer', es: 'Capa tecnológica' },
   { en: 'One Technology Layer', es: 'Una capa tecnológica' },

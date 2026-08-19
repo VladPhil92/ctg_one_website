@@ -1,5 +1,5 @@
 import type { Locale } from '@/i18n/translations';
-import { ABOUT, SERVICES, ECOSYSTEM, REWARDS, CONTACT } from '@/data/content';
+import { ABOUT, SERVICES, ECOSYSTEM, REWARDS, CONTACT, OPERATING_BUSINESS_UNIT_COUNT } from '@/data/content';
 
 type LocalizedText = Record<Locale, string>;
 
@@ -47,7 +47,7 @@ export const HOME_OVERVIEW_ITEMS: HomeOverviewItem[] = [
     highlight: pair(ECOSYSTEM.titleHighlight, 'Empresarial'),
     description: pair(
       ECOSYSTEM.description,
-      'Doce unidades de negocio operativas funcionan como entornos de aplicación para la tecnología de CTG One. La madurez tecnológica de cada una se documenta por separado y no se infiere únicamente por pertenecer al ecosistema.',
+      `${OPERATING_BUSINESS_UNIT_COUNT} negocios operativos ofrecen entornos reales de aplicación para CTG One Technology. La capa tecnológica se representa por separado y la madurez se documenta con evidencia, no se infiere por pertenecer al ecosistema.`,
     ),
     cta: pair('Explore the portfolio', 'Explorar el portafolio'),
   },

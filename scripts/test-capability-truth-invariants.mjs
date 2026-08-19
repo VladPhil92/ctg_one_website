@@ -3,14 +3,33 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [proof, hero, about, services, aiPlatform, token, content, flags, legal, ecosystemTechnology] = await Promise.all([
+const [
+  proof,
+  hero,
+  about,
+  services,
+  aiPlatform,
+  token,
+  rewards,
+  content,
+  homeOverview,
+  ecosystemSection,
+  translations,
+  flags,
+  legal,
+  ecosystemTechnology,
+] = await Promise.all([
   read('src/data/technology-proof.ts'),
   read('src/components/sections/HeroSection.tsx'),
   read('src/components/sections/AboutSection.tsx'),
   read('src/components/sections/ServicesSection.tsx'),
   read('src/components/sections/AIPlatformSection.tsx'),
   read('src/components/sections/TokenSection.tsx'),
+  read('src/components/sections/RewardsSection.tsx'),
   read('src/data/content.ts'),
+  read('src/data/home-overview.ts'),
+  read('src/components/sections/EcosystemSection.tsx'),
+  read('src/i18n/translations.ts'),
   read('src/lib/investment/flags.ts'),
   read('src/app/inversion/legal/page.tsx'),
   read('src/data/ecosystem-technology.ts'),
@@ -24,6 +43,20 @@ function proofItemBlock(id) {
   const blockStart = proof.lastIndexOf('{', markerIndex);
   const nextBlock = proof.indexOf('\n  {', markerIndex + marker.length);
   return proof.slice(blockStart, nextBlock === -1 ? proof.length : nextBlock);
+}
+
+function between(source, startMarker, endMarker) {
+  const start = source.indexOf(startMarker);
+  assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
+  const end = source.indexOf(endMarker, start + startMarker.length);
+  assert.notEqual(end, -1, `Missing end marker after ${startMarker}: ${endMarker}`);
+  return source.slice(start, end);
+}
+
+function idsFromRegistryBlock(source, startMarker, endMarker) {
+  return [...between(source, startMarker, endMarker).matchAll(/\bid:\s*'([^']+)'/g)]
+    .map((match) => match[1])
+    .sort();
 }
 
 assert.ok(proof.includes("publicStatus: 'BETA'"), 'Controlled pilots must be representable as BETA in the public capability registry.');
@@ -131,10 +164,82 @@ assert.match(
   'CTG Rewards must not imply that a shared cross-ecosystem loyalty program is already active.',
 );
 assert.doesNotMatch(content, /title: 'Earn by (?:Engaging|Referring)'/, 'Roadmap Rewards copy must not use active earning language without a verified program.');
+assert.ok(rewards.includes('useLanguage'), 'Rewards must respect the selected public locale.');
+assert.match(rewards, /CTG Rewards · Hoja de ruta/, 'Spanish Rewards must visibly disclose roadmap status.');
+assert.doesNotMatch(rewards, /Gana al participar|Gana al referir/, 'Roadmap Rewards must not use active earning language in Spanish.');
 
-const ecosystemUnits = [...content.matchAll(/\{ id: '[^']+', name: '[^']+'/g)].length;
-const heroBusinessUnits = content.match(/\{ value: '(\d+)', label: 'Business Units'/)?.[1];
-assert.ok(heroBusinessUnits, 'Hero Business Units metric must remain explicit.');
-assert.equal(Number(heroBusinessUnits), ecosystemUnits, 'Hero Business Units metric must equal the canonical ecosystem unit list.');
+// Public positioning must remain affirmative and technology-first. Historical
+// positioning language is forbidden even when used as a negation or disclaimer.
+const publicPositioningSources = [
+  ['hero', hero],
+  ['about', about],
+  ['services', services],
+  ['shared content', content],
+  ['home overview', homeOverview],
+  ['ecosystem', ecosystemSection],
+  ['rewards', rewards],
+  ['token', token],
+  ['translations', translations],
+];
+for (const [name, source] of publicPositioningSources) {
+  assert.doesNotMatch(source, /\bagencia\b/i, `${name} must not mention historical agency positioning.`);
+  assert.doesNotMatch(source, /\bagency\b/i, `${name} must not mention historical agency positioning.`);
+  assert.doesNotMatch(source, /\barquitectura\s+dual\b/i, `${name} must not reintroduce the historical dual-positioning narrative.`);
+  assert.doesNotMatch(source, /\bdual\s+architecture\b/i, `${name} must not reintroduce the historical dual-positioning narrative.`);
+}
+
+// Ecosystem identity: CTG One Technology is the technology core; operating
+// businesses are derived from the same canonical registry everywhere.
+assert.match(content, /export const ECOSYSTEM_UNITS\s*=\s*\[/, 'A canonical ecosystem unit registry must exist.');
+assert.match(
+  content,
+  /export const OPERATING_BUSINESS_UNITS\s*=\s*ECOSYSTEM_UNITS\.filter\(\(unit\) => unit\.id !== 'tech'\)/,
+  'Operating businesses must be derived by excluding the CTG One Technology core.',
+);
+assert.match(
+  content,
+  /export const OPERATING_BUSINESS_UNIT_COUNT\s*=\s*OPERATING_BUSINESS_UNITS\.length/,
+  'Operating-business count must be derived from the canonical operating-business registry.',
+);
+assert.match(
+  content,
+  /value:\s*String\(OPERATING_BUSINESS_UNIT_COUNT\),\s*label:\s*'Operating Businesses'/,
+  'Hero operating-business metric must use the derived canonical count.',
+);
+assert.ok(about.includes('OPERATING_BUSINESS_UNIT_COUNT'), 'About operating-business metric must use the canonical derived count.');
+assert.ok(homeOverview.includes('OPERATING_BUSINESS_UNIT_COUNT'), 'Home overview ecosystem copy must use the canonical derived count.');
+assert.match(
+  ecosystemSection,
+  /operatingTechnologyUnits\s*=\s*ECOSYSTEM_TECHNOLOGY_UNITS\.filter\(\(unit\) => unit\.id !== 'tech'\)/,
+  'Ecosystem aggregate operating metrics must exclude the technology core.',
+);
+assert.match(
+  ecosystemSection,
+  /CTG One Technology (?:se representa como la capa central|is represented as the core layer)/i,
+  'Ecosystem public copy must explicitly model CTG One Technology as the central technology layer.',
+);
+
+const contentRegistryIds = idsFromRegistryBlock(
+  content,
+  'export const ECOSYSTEM_UNITS = [',
+  '] as const;',
+);
+const technologyRegistryIds = idsFromRegistryBlock(
+  ecosystemTechnology,
+  'export const ECOSYSTEM_TECHNOLOGY_UNITS: EcosystemTechnologyUnit[] = [',
+  '];\n\nexport const CTG_ONE_OS_MODULES',
+);
+assert.deepEqual(
+  contentRegistryIds,
+  technologyRegistryIds,
+  'Canonical ecosystem identity and technology-map registries must contain the same unit IDs.',
+);
+assert.equal(
+  contentRegistryIds.filter((id) => id !== 'tech').length,
+  technologyRegistryIds.filter((id) => id !== 'tech').length,
+  'Operating-business counts must remain aligned across public registries.',
+);
+assert.match(translations, /en: 'Operating Businesses', es: 'Negocios operativos'/, 'Operating-business metric must have explicit bilingual terminology.');
+assert.match(translations, /en: 'Software & Digital Infrastructure', es: 'Software e infraestructura digital'/, 'Hero technology badge must have explicit bilingual terminology.');
 
 console.log('Capability truth invariants: PASS');

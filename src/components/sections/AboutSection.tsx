@@ -5,6 +5,7 @@ import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Badge } from '@/components/ui/Badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { OPERATING_BUSINESS_UNIT_COUNT } from '@/data/content';
 import { getCapabilityProof, type ProofStatus } from '@/data/technology-proof';
 import {
   Activity,
@@ -58,9 +59,9 @@ export const AboutSection: React.FC = () => {
         intro:
           'CTG One Technology es una empresa tecnológica con sede en Cartagena que desarrolla software propietario e infraestructura digital para sus propias unidades de negocio. Nuestro modelo conecta ingeniería, datos, seguridad y producto con operaciones reales. Las capacidades avanzadas de inteligencia artificial se encuentran en desarrollo y se presentan con su estado de madurez explícito.',
         secondary:
-          'No funcionamos como agencia comercial ni como fábrica de software tercerizada. Construimos desde dentro de los negocios, desplegamos en entornos reales y buscamos convertir componentes tecnológicos repetibles en una capa común para el ecosistema.',
+          'Construimos desde dentro de los negocios: identificamos necesidades operativas, desplegamos software en entornos reales y convertimos componentes tecnológicos repetibles en una capa común para todo el ecosistema.',
         stats: [
-          ['12', 'Unidades de negocio'],
+          [String(OPERATING_BUSINESS_UNIT_COUNT), 'Negocios operativos'],
           ['2024', 'Fundación'],
           ['1', 'Capa tecnológica común'],
           ['Cartagena', 'Base operativa'],
@@ -92,9 +93,9 @@ export const AboutSection: React.FC = () => {
         intro:
           'CTG One Technology is a Cartagena-based technology company building proprietary software and digital infrastructure for its own business units. Our model connects engineering, data, security, and product with real operations. Advanced artificial-intelligence capabilities remain in development and are presented with an explicit maturity status.',
         secondary:
-          'We are not a commercial agency or an outsourced software factory. We build from inside the businesses, deploy into real environments, and aim to turn repeatable technology components into a shared ecosystem layer.',
+          'We build from inside the businesses: we identify operating needs, deploy software into real environments, and turn repeatable technology components into a shared layer for the entire ecosystem.',
         stats: [
-          ['12', 'Business units'],
+          [String(OPERATING_BUSINESS_UNIT_COUNT), 'Operating businesses'],
           ['2024', 'Founded'],
           ['1', 'Shared technology layer'],
           ['Cartagena', 'Operating base'],
@@ -235,7 +236,7 @@ export const AboutSection: React.FC = () => {
                 <Badge variant="accent" className="mb-7">{copy.badge}</Badge>
                 <div className="flex items-center gap-3 mb-5">
                   <span className="w-8 h-px bg-accent/60" />
-                  <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.24em] text-text-dim">{copy.eyebrow}</span>
+                  <span className="text-[11px] sm:text-xs uppercase tracking-[0.18em] text-text-dim">{copy.eyebrow}</span>
                 </div>
                 <h1 className="font-outfit font-semibold text-4xl sm:text-5xl md:text-6xl xl:text-[4.7rem] leading-[1.02] tracking-[-0.04em] max-w-4xl">
                   <span className="text-white">{copy.title}</span>{' '}
@@ -256,9 +257,9 @@ export const AboutSection: React.FC = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 border-y border-white/[0.055] mt-12">
               {copy.stats.map(([value, label], index) => (
                 <div key={label} className={`relative py-7 sm:py-9 px-4 sm:px-7 ${index > 0 ? 'border-l border-white/[0.045]' : ''}`}>
-                  <span className="absolute top-3 right-3 text-[8px] tracking-[0.2em] text-accent/35">0{index + 1}</span>
+                  <span className="absolute top-3 right-3 text-[8px] tracking-[0.2em] text-accent/35" aria-hidden="true">0{index + 1}</span>
                   <div className="text-2xl sm:text-3xl font-outfit font-medium text-white tracking-tight mb-1.5">{value}</div>
-                  <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.16em] text-text-dim">{label}</div>
+                  <div className="text-[11px] sm:text-xs uppercase tracking-[0.12em] text-text-dim">{label}</div>
                 </div>
               ))}
             </div>
@@ -290,13 +291,13 @@ export const AboutSection: React.FC = () => {
                       <span className="w-12 h-12 rounded-full border border-accent/25 bg-accent/[0.035] flex items-center justify-center text-accent">
                         <Icon size={20} strokeWidth={1.35} />
                       </span>
-                      <span className={`text-[8px] uppercase tracking-[0.16em] px-2.5 py-1.5 rounded-full border ${statusClass[capability.status]}`}>{capability.status}</span>
+                      <span className={`text-[11px] uppercase tracking-[0.12em] px-2.5 py-1.5 rounded-full border ${statusClass[capability.status]}`}>{capability.status}</span>
                     </div>
                     <h3 className="text-lg sm:text-xl font-outfit font-medium text-white mb-3 tracking-tight">{capability.title}</h3>
                     <p className="text-xs sm:text-sm text-text-muted leading-relaxed mb-7">{capability.description}</p>
                     <div className="flex flex-wrap gap-2">
                       {capability.technologies.map((technology) => (
-                        <span key={technology} className="text-[8px] sm:text-[9px] uppercase tracking-[0.12em] px-2.5 py-1.5 rounded-full border border-white/[0.06] text-text-dim bg-black/20">{technology}</span>
+                        <span key={technology} className="text-[11px] uppercase tracking-[0.08em] px-2.5 py-1.5 rounded-full border border-white/[0.06] text-text-dim bg-black/20">{technology}</span>
                       ))}
                     </div>
                   </div>
@@ -327,7 +328,7 @@ export const AboutSection: React.FC = () => {
                 <div className="absolute inset-[24%] rounded-full border border-accent/10" />
                 <div className="w-28 h-28 rounded-full border border-accent/30 bg-black/60 flex flex-col items-center justify-center shadow-[0_0_90px_rgba(212,162,89,0.08)]">
                   <Layers3 className="text-accent mb-2" size={24} strokeWidth={1.3} />
-                  <span className="text-[8px] uppercase tracking-[0.18em] text-text-dim text-center px-3">CTG One Core</span>
+                  <span className="text-[11px] uppercase tracking-[0.12em] text-text-dim text-center px-3">CTG One Core</span>
                 </div>
                 {copy.modelSteps.map((step, index) => {
                   const angle = (index / copy.modelSteps.length) * Math.PI * 2 - Math.PI / 2;
@@ -336,7 +337,7 @@ export const AboutSection: React.FC = () => {
                   return (
                     <div key={step} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${x}%`, top: `${y}%` }}>
                       <div className="min-w-[78px] sm:min-w-[92px] text-center px-3 py-2 rounded-full border border-white/[0.065] bg-bg-primary/95 backdrop-blur-sm">
-                        <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.13em] text-text-muted">{step}</span>
+                        <span className="text-[11px] uppercase tracking-[0.1em] text-text-muted">{step}</span>
                       </div>
                     </div>
                   );
@@ -355,7 +356,7 @@ export const AboutSection: React.FC = () => {
                 <Badge variant="accent" className="mb-6">{copy.stackBadge}</Badge>
                 <h2 className="font-outfit font-semibold text-3xl sm:text-4xl md:text-[2.8rem] tracking-[-0.035em] leading-[1.07] text-white mb-6">{copy.stackTitle}</h2>
                 <p className="text-sm sm:text-base text-text-muted leading-relaxed mb-8">{copy.stackText}</p>
-                <a href="/services" className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-accent hover:text-white transition-colors">
+                <a href="/services" className="inline-flex min-h-11 items-center gap-2 text-xs uppercase tracking-[0.12em] text-accent hover:text-white transition-colors">
                   {copy.explore}
                   <ArrowUpRight size={14} />
                 </a>
@@ -368,7 +369,7 @@ export const AboutSection: React.FC = () => {
                   <div className="group bg-bg-secondary p-6 sm:p-7 min-h-[150px] hover:bg-accent/[0.025] transition-colors duration-500">
                     <div className="flex items-start justify-between gap-3 mb-5">
                       <Icon size={18} className="text-accent" strokeWidth={1.35} />
-                      <span className={`text-[8px] uppercase tracking-[0.14em] px-2 py-1 rounded-full border ${statusClass[status]}`}>{status}</span>
+                      <span className={`text-[11px] uppercase tracking-[0.1em] px-2 py-1 rounded-full border ${statusClass[status]}`}>{status}</span>
                     </div>
                     <span className="text-xs sm:text-sm text-white font-outfit">{label}</span>
                   </div>
