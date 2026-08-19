@@ -4,7 +4,6 @@ import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { SkipLink } from '@/components/SkipLink';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -125,7 +124,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased" style={{ backgroundColor: '#050505', color: '#e5e5e5' }}>
         <ErrorBoundary>
           <LanguageProvider>
-            <SkipLink />
             <AuthProvider>{children}</AuthProvider>
           </LanguageProvider>
         </ErrorBoundary>
