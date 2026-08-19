@@ -31,6 +31,11 @@ assert.match(verifier, /deployment\?\.expectedDatabaseMigration !== expectedMigr
 assert.match(verifier, /schema\?\.expectedMigrationCount !== expectedMigrationCount/, 'Verifier must compare deployed migration count to repository metadata.');
 assert.match(verifier, /attempts > 60/, 'Verifier must cap retry attempts.');
 assert.match(verifier, /requestTimeoutMs > 30000/, 'Each network request must have a hard timeout.');
+assert.ok(
+  verifier.indexOf('body = await response.text();') > -1
+    && verifier.indexOf('body = await response.text();') < verifier.indexOf('clearTimeout(timer);'),
+  'Request timeout must remain active until the health response body is fully consumed.'
+);
 assert.match(verifier, /process\.exit\(1\)/, 'Non-convergence must fail the canary.');
 
 assert.match(renderConfig, /healthCheckPath:\s*\/api\/health/, 'Render must use the same authoritative health endpoint.');
