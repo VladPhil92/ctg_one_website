@@ -46,7 +46,7 @@ assert.match(authContext, /event === 'SIGNED_OUT'/, 'Auth state listener must ex
 
 // Signup must remain atomic at the database boundary: auth.users creates the
 // domain profile and wallet through the immutable initial migration trigger.
-assert.match(initialMigration, /create or replace function public\.handle_new_user\(\)/i, 'Initial migration must retain the new-user provisioning function.');
+assert.match(initialMigration, /create(?: or replace)? function public\.handle_new_user\(\)/i, 'Initial migration must retain the new-user provisioning function.');
 assert.match(initialMigration, /insert into public\.profiles/i, 'New-user provisioning must create the public profile.');
 assert.match(initialMigration, /insert into public\.wallets/i, 'New-user provisioning must create the wallet.');
 assert.match(initialMigration, /after insert on auth\.users/i, 'New-user provisioning must remain attached to auth.users inserts.');
