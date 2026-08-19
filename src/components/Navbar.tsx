@@ -31,6 +31,7 @@ export const Navbar: React.FC = () => {
   const openMenuLabel = locale === 'es' ? 'Abrir menú' : 'Open menu';
   const closeMenuLabel = locale === 'es' ? 'Cerrar menú' : 'Close menu';
   const platformsLabel = locale === 'es' ? 'Plataformas' : 'Platforms';
+  const contentStartLabel = locale === 'es' ? 'Inicio del contenido' : 'Start of content';
   const isPlatformActive = PLATFORM_NAV_ITEMS.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
 
   useEffect(() => {
@@ -204,7 +205,9 @@ export const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      <span id={AFTER_PRIMARY_NAVIGATION_ID} tabIndex={-1} className="sr-only" aria-hidden="true" />
+      <div id={AFTER_PRIMARY_NAVIGATION_ID} tabIndex={-1} className="h-0 w-full overflow-hidden">
+        <span className="sr-only">{contentStartLabel}</span>
+      </div>
 
       {isOpen && (
         <>
