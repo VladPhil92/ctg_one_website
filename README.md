@@ -133,6 +133,8 @@ Beta controlada de conocimiento institucional con ingestión, chunking, retrieva
 
 ## Supabase migrations
 
+No se mantiene una lista manual de migraciones en este README.
+
 La secuencia autoritativa vive en `supabase/migrations/` y el release esperado se define en `src/lib/observability/schema-version.ts` mediante:
 
 - `EXPECTED_DATABASE_MIGRATION`
