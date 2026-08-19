@@ -88,11 +88,11 @@ export default async function LotDetailPage({ params }: { params: LotRouteParams
               </div>
 
               {canParticipate ? (
-                <Button href={`/dashboard/inversion/nueva/${lot.code.toLowerCase()}`} variant="primary" size="md" fullWidth arrow>
+                <Button href={`/inversion/app/nueva/${lot.code.toLowerCase()}`} variant="primary" size="md" fullWidth arrow>
                   Elegir cajas y participar
                 </Button>
               ) : (
-                <Button href="/dashboard/inversion" variant="secondary" size="md" fullWidth>
+                <Button href="/inversion/app" variant="secondary" size="md" fullWidth>
                   Ver mis inversiones
                 </Button>
               )}
