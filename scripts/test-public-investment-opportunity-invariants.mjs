@@ -29,7 +29,22 @@ assert.match(
 assert.match(migration, /security definer[\s\S]*?set search_path = public/i, 'Public aggregate bypass must pin search_path.');
 assert.match(migration, /l\.status <> 'DRAFT'/, 'Public funding aggregate must exclude draft lots independently of RLS bypass.');
 assert.match(migration, /sum\(a\.case_equivalent_units\)/, 'Funding progress must derive from authoritative allocation case equivalents.');
+assert.match(
+  migration,
+  /o\.status in \('AWAITING_PAYMENT','PENDING_BANK_VERIFICATION','PAYMENT_SUBMITTED','PAYMENT_VERIFIED'\)/,
+  'Public availability must reserve the same active order states enforced by create_investment_order.',
+);
+assert.match(
+  migration,
+  /p\.total_cases - p\.allocated_cases - p\.reserved_cases/,
+  'Available capacity must subtract completed allocations and active reservations.',
+);
 assert.match(migration, /grant execute on function public\.get_public_investment_lot_funding\(uuid\) to anon, authenticated/i);
+assert.match(
+  migration,
+  /p\.proname not in \('get_public_bottle_trace','get_public_investment_lot_funding'\)/,
+  'System Health must recognize both deliberately reviewed anonymous SECURITY DEFINER read models.',
+);
 assert.doesNotMatch(
   migration,
   /(participant_user_id|capital_committed_cents|external_reference|payment_proof_storage_path|bank_verified_reference)/,
@@ -38,6 +53,7 @@ assert.doesNotMatch(
 
 assert.match(queries, /\.neq\('status', 'DRAFT'\)/, 'Public lot queries need defense-in-depth DRAFT filtering.');
 assert.match(queries, /rpc\('get_public_investment_lot_funding'/, 'Public funding must use the aggregate RPC.');
+assert.match(queries, /reservedCases:\s*Number\(row\.reserved_cases/, 'Public funding summary must preserve aggregate active reservations.');
 assert.doesNotMatch(
   queries,
   /\.from\('investment_funding_allocations'\)/,
@@ -65,6 +81,8 @@ assert.match(lotsPage, /No hay financiación abierta en este momento/, 'No-open-
 
 assert.match(lotCard, /lot\.status === 'FUNDING_OPEN'/, 'Lot card availability wording must depend on funding state.');
 assert.match(lotCard, /cajas equivalentes no asignadas/, 'Non-open lots must describe residual capacity as unassigned, not investable.');
+assert.match(lotCard, /reservedCases > 0/, 'Public lot card must explain aggregate reserved capacity when present.');
+assert.match(lotCard, /ya están descontadas de la disponibilidad/, 'Reservation copy must state that pending orders reduce available capacity.');
 assert.match(lotCard, /Math\.min\(Math\.max\(funding\.fundedPercent, 0\), 100\)/, 'Public progress rendering must remain visually bounded to 0..100%.');
 
 assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION\s*=\s*'0060'/);
