@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, ReactNode } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, useReducedMotion } from 'framer-motion';
 
 const CTG_EASE = [0.33, 1, 0.68, 1] as const;
 
@@ -18,38 +18,34 @@ interface FadeInSectionProps {
 export const FadeInSection: React.FC<FadeInSectionProps> = ({
   children,
   delay = 0,
-  duration = 0.7,
+  duration = 0.65,
   direction = 'up',
-  distance = 16,
+  distance = 12,
   className = '',
   once = true,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once, margin: '-50px', amount: 0.1 });
+  const isInView = useInView(ref, { once, margin: '-40px', amount: 0.08 });
+  const reduceMotion = useReducedMotion();
 
-  const getInitialPosition = () => {
-    switch (direction) {
-      case 'up': return { y: distance };
-      case 'down': return { y: -distance };
-      case 'left': return { x: distance };
-      case 'right': return { x: -distance };
-      case 'none':
-      default: return {};
-    }
-  };
+  const entry = (() => {
+    if (direction === 'up') return { opacity: [0.88, 1], y: [distance, 0], x: 0 };
+    if (direction === 'down') return { opacity: [0.88, 1], y: [-distance, 0], x: 0 };
+    if (direction === 'left') return { opacity: [0.88, 1], x: [distance, 0], y: 0 };
+    if (direction === 'right') return { opacity: [0.88, 1], x: [-distance, 0], y: 0 };
+    return { opacity: [0.9, 1], x: 0, y: 0 };
+  })();
 
-  const variants = {
-    hidden: { opacity: 0, ...getInitialPosition() },
-    visible: { opacity: 1, x: 0, y: 0 },
-  };
-
+  // Progressive enhancement: SSR/no-JS output is fully visible. JavaScript may
+  // add a subtle entrance only after IntersectionObserver confirms visibility.
+  // No content is ever parked at opacity:0 waiting for a client-side callback.
   return (
     <motion.div
       ref={ref}
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
-      variants={variants}
-      transition={{ duration, delay, ease: CTG_EASE }}
+      data-reveal
+      initial={false}
+      animate={!reduceMotion && isInView ? entry : { opacity: 1, x: 0, y: 0 }}
+      transition={reduceMotion ? { duration: 0 } : { duration, delay, ease: CTG_EASE }}
       className={className}
     >
       {children}
@@ -67,19 +63,27 @@ interface StaggeredContainerProps {
 export const StaggeredContainer: React.FC<StaggeredContainerProps> = ({
   children,
   delay = 0,
-  staggerDelay = 0.1,
+  staggerDelay = 0.08,
   className = '',
 }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-50px' });
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { delay, staggerChildren: staggerDelay } },
-  };
+  const isInView = useInView(ref, { once: true, margin: '-40px' });
+  const reduceMotion = useReducedMotion();
 
   return (
-    <motion.div ref={ref} initial="hidden" animate={isInView ? 'visible' : 'hidden'} variants={containerVariants} className={className}>
+    <motion.div
+      ref={ref}
+      data-reveal
+      initial={false}
+      animate="visible"
+      variants={{
+        visible: {
+          opacity: 1,
+          transition: reduceMotion || !isInView ? { duration: 0 } : { delay, staggerChildren: staggerDelay },
+        },
+      }}
+      className={className}
+    >
       {children}
     </motion.div>
   );
@@ -91,14 +95,19 @@ interface StaggeredItemProps {
 }
 
 export const StaggeredItem: React.FC<StaggeredItemProps> = ({ children, className = '' }) => {
-  const itemVariants = {
-    hidden: { opacity: 0, y: 12 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: CTG_EASE },
-    },
-  };
-
-  return <motion.div variants={itemVariants} className={className}>{children}</motion.div>;
+  const reduceMotion = useReducedMotion();
+  return (
+    <motion.div
+      data-reveal
+      initial={false}
+      variants={{
+        visible: reduceMotion
+          ? { opacity: 1, y: 0 }
+          : { opacity: [0.9, 1], y: [8, 0], transition: { duration: 0.55, ease: CTG_EASE } },
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
 };

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { memo, useCallback, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   BrainCircuit,
   TrendingUp,
@@ -51,28 +51,40 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
 }) {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const { locale } = useLanguage();
+  const reduceMotion = useReducedMotion();
+  const svgSize = size === 'sm' ? 320 : size === 'lg' ? 520 : 400;
+  const sizeClass = size === 'sm' ? 'max-w-[320px]' : size === 'lg' ? 'max-w-[520px]' : 'max-w-[400px]';
 
   const handleMouseEnter = useCallback((unitId: string) => {
     if (interactive) setHoveredNode(unitId);
   }, [interactive]);
 
   const handleMouseLeave = useCallback(() => setHoveredNode(null), []);
-  const svgSize = size === 'sm' ? 320 : size === 'lg' ? 520 : 400;
+  const accessibleLabel = locale === 'es' ? 'Ecosistema tecnológico de CTG One' : 'CTG One technology ecosystem';
 
   return (
     <div
-      className="relative flex items-center justify-center"
-      aria-label={locale === 'es' ? 'Ecosistema tecnológico de CTG One' : 'CTG One technology ecosystem'}
+      className={`relative flex aspect-square w-full items-center justify-center ${sizeClass}`}
+      role="img"
+      aria-label={accessibleLabel}
+      data-ecosystem-diagram
     >
       <div
         className="absolute inset-[13%] rounded-full pointer-events-none"
+        aria-hidden="true"
         style={{
           background: 'radial-gradient(circle, rgba(212,162,89,0.09) 0%, rgba(212,162,89,0.025) 38%, transparent 70%)',
           filter: 'blur(14px)',
         }}
       />
 
-      <svg width={svgSize} height={svgSize} viewBox="0 0 400 400" className="relative drop-shadow-2xl overflow-visible">
+      <svg
+        width={svgSize}
+        height={svgSize}
+        viewBox="0 0 400 400"
+        aria-hidden="true"
+        className="relative h-full w-full overflow-visible drop-shadow-2xl"
+      >
         <defs>
           <radialGradient id="networkCenterGlow">
             <stop offset="0%" stopColor={GOLD} stopOpacity="0.24" />
@@ -96,11 +108,11 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
 
         <g opacity="0.7">
           <circle cx="200" cy="200" r="178" fill="none" stroke="rgba(212,162,89,0.08)" strokeWidth="0.7" strokeDasharray="2 7">
-            <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="70s" repeatCount="indefinite" />
+            {!reduceMotion && <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="70s" repeatCount="indefinite" />}
           </circle>
           <circle cx="200" cy="200" r="151" fill="none" stroke="rgba(212,162,89,0.18)" strokeWidth="0.7" />
           <circle cx="200" cy="200" r="112" fill="none" stroke="rgba(255,255,255,0.045)" strokeWidth="0.7" strokeDasharray="8 9">
-            <animateTransform attributeName="transform" type="rotate" from="360 200 200" to="0 200 200" dur="52s" repeatCount="indefinite" />
+            {!reduceMotion && <animateTransform attributeName="transform" type="rotate" from="360 200 200" to="0 200 200" dur="52s" repeatCount="indefinite" />}
           </circle>
           <circle cx="200" cy="200" r="77" fill="none" stroke="rgba(212,162,89,0.12)" strokeWidth="0.7" strokeDasharray="1 8" />
         </g>
@@ -127,10 +139,10 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
                 stroke={active ? GOLD : 'url(#networkLine)'}
                 strokeOpacity={active ? 0.92 : 0.5}
                 strokeWidth={active ? 1.35 : 0.7}
-                style={{ transition: 'all 320ms ease' }}
+                style={{ transition: reduceMotion ? 'none' : 'all 260ms ease' }}
               />
               <circle r="1.7" fill={GOLD} opacity={active ? 0.95 : 0.22}>
-                <animateMotion dur={`${5.5 + index * 0.35}s`} repeatCount="indefinite" path={`M200,200 L${pos.x},${pos.y}`} />
+                {!reduceMotion && <animateMotion dur={`${5.5 + index * 0.35}s`} repeatCount="indefinite" path={`M200,200 L${pos.x},${pos.y}`} />}
               </circle>
             </g>
           );
@@ -155,8 +167,8 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
                 stroke={GOLD}
                 strokeOpacity={active ? 0.95 : 0.25}
                 strokeWidth={active ? 1.2 : 0.7}
-                animate={{ scale: active ? 1.08 : 1 }}
-                transition={{ duration: 0.28 }}
+                animate={{ scale: reduceMotion ? 1 : active ? 1.06 : 1 }}
+                transition={{ duration: reduceMotion ? 0 : 0.24 }}
                 style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
               />
               <circle cx={pos.x} cy={pos.y} r="22" fill="none" stroke={GOLD} strokeOpacity={active ? 0.28 : 0.08} strokeWidth="0.7" />
@@ -170,11 +182,11 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
                 x={pos.x}
                 y={pos.y + 45}
                 textAnchor="middle"
-                fill={active ? '#e0bd78' : '#898178'}
-                fontSize="9.5"
+                fill={active ? '#e0bd78' : '#aaa39b'}
+                fontSize="11.5"
                 fontWeight="500"
                 fontFamily="DM Sans, sans-serif"
-                letterSpacing="0.04em"
+                letterSpacing="0.03em"
               >
                 {locale === 'es' ? unit.es : unit.en}
               </text>
@@ -185,7 +197,7 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
         <g>
           <circle cx="200" cy="200" r="67" fill="url(#networkCenterGlow)" />
           <circle cx="200" cy="200" r="53" fill="none" stroke={GOLD} strokeOpacity="0.2" strokeWidth="0.8" strokeDasharray="4 7">
-            <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="28s" repeatCount="indefinite" />
+            {!reduceMotion && <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="28s" repeatCount="indefinite" />}
           </circle>
           <circle cx="200" cy="200" r="43" fill="#080808" stroke={GOLD} strokeOpacity="0.9" strokeWidth="1.2" filter="url(#softGoldGlow)" />
           <circle cx="200" cy="200" r="35" fill="rgba(212,162,89,0.035)" stroke={GOLD} strokeOpacity="0.14" strokeWidth="0.7" />

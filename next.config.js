@@ -39,6 +39,21 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
   },
+
+  // Canonical route policy: public corporate pages use stable English slugs.
+  // `/inversion` is intentionally retained as the established CTG Craft Beer
+  // product namespace because checkout, legal, traceability and indexed URLs
+  // already depend on it. English aliases improve discoverability without
+  // breaking that product contract. Auth routes remain stable utility paths.
+  async redirects() {
+    return [
+      { source: '/privacidad', destination: '/privacy', permanent: true },
+      { source: '/investment', destination: '/inversion', permanent: true },
+      { source: '/sign-in', destination: '/iniciar-sesion', permanent: true },
+      { source: '/register', destination: '/registro', permanent: true },
+    ];
+  },
+
   async headers() {
     return [
       {
