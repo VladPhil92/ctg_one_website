@@ -45,6 +45,7 @@ as $$
       a.lot_id,
       coalesce(sum(a.case_equivalent_units), 0)::integer as allocated_cases_raw
     from public.investment_funding_allocations a
+    where p_lot_id is null or a.lot_id = p_lot_id
     group by a.lot_id
   ),
   published as (
