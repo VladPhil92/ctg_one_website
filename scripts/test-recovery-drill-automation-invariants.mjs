@@ -26,6 +26,17 @@ for (const secret of [
 ]) {
   assert.match(workflow, new RegExp(`secrets\\.${secret}`), `Recovery workflow must obtain ${secret} only from GitHub Secrets.`);
 }
+assert.match(
+  workflow,
+  /run:\s*supabase start(?:\s|$)/m,
+  'Recovery drill must start the full local Supabase stack so the isolated target includes Auth, Storage and APIs.',
+);
+assert.doesNotMatch(
+  workflow,
+  /run:\s*supabase db start(?:\s|$)/m,
+  'Recovery drill must not use a database-only local target because Storage byte restoration requires the local Storage API.',
+);
+assert.match(workflow, /supabase status -o env/, 'Recovery drill must resolve credentials from the running local stack.');
 assert.match(workflow, /pg_dump --format=custom/, 'Recovery drill must create a real PostgreSQL backup artifact.');
 assert.match(workflow, /pg_restore --exit-on-error/, 'Recovery drill must restore the database backup into the isolated target.');
 assert.match(workflow, /recovery_drill/, 'Database restore target must be a dedicated recovery database.');
