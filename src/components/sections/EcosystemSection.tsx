@@ -57,13 +57,15 @@ const statusDot: Record<TechnologyStatus, string> = {
   ROADMAP: 'bg-white/20',
 };
 
+const operatingTechnologyUnits = ECOSYSTEM_TECHNOLOGY_UNITS.filter((unit) => unit.id !== 'tech');
+
 export const EcosystemSection: React.FC = () => {
   const { locale } = useLanguage();
   const es = locale === 'es';
 
-  const liveCount = ECOSYSTEM_TECHNOLOGY_UNITS.filter((unit) => unit.status === 'LIVE').length;
-  const activeCount = ECOSYSTEM_TECHNOLOGY_UNITS.filter((unit) => unit.status === 'IN DEVELOPMENT').length;
-  const partialCount = ECOSYSTEM_TECHNOLOGY_UNITS.filter((unit) => unit.status === 'PARTIAL').length;
+  const liveCount = operatingTechnologyUnits.filter((unit) => unit.status === 'LIVE').length;
+  const activeCount = operatingTechnologyUnits.filter((unit) => unit.status === 'IN DEVELOPMENT').length;
+  const partialCount = operatingTechnologyUnits.filter((unit) => unit.status === 'PARTIAL').length;
 
   return (
     <section id="ecosystem" className="relative overflow-hidden bg-bg-primary">
@@ -79,16 +81,16 @@ export const EcosystemSection: React.FC = () => {
               <Badge variant="accent" className="mb-7">{es ? 'Ecosistema · Technology Mapping' : 'Ecosystem · Technology Mapping'}</Badge>
               <div className="flex items-center gap-3 mb-5">
                 <span className="w-8 h-px bg-accent/60" />
-                <span className="text-[9px] uppercase tracking-[0.24em] text-text-dim">{es ? 'Tecnología aplicada a operaciones reales' : 'Technology applied to real operations'}</span>
+                <span className="text-[11px] sm:text-xs uppercase tracking-[0.18em] text-text-dim">{es ? 'Tecnología aplicada a operaciones reales' : 'Technology applied to real operations'}</span>
               </div>
               <h1 className="font-outfit font-semibold text-4xl sm:text-5xl md:text-6xl xl:text-[4.6rem] leading-[1.02] tracking-[-0.045em] mb-7">
-                <span className="text-white">{es ? 'Doce negocios.' : 'Twelve businesses.'}</span>{' '}
+                <span className="text-white">{operatingTechnologyUnits.length} {es ? 'negocios operativos.' : 'operating businesses.'}</span>{' '}
                 <span className="text-accent">{es ? 'Una capa tecnológica compartida.' : 'One shared technology layer.'}</span>
               </h1>
               <p className="text-sm sm:text-base text-text-muted leading-relaxed max-w-3xl">
                 {es
-                  ? 'CTG One no presenta todas sus unidades como productos tecnológicos terminados. Este mapa muestra dónde existe software real, dónde hay componentes parciales, qué productos están en construcción y qué capacidades permanecen en roadmap.'
-                  : 'CTG One does not present every business unit as a finished technology product. This map shows where real software exists, where capabilities are partial, what is actively being built, and what remains on the roadmap.'}
+                  ? 'CTG One Technology se representa como la capa central. Los negocios del ecosistema muestran dónde existe software real, dónde hay componentes parciales, qué productos están en construcción y qué capacidades permanecen en roadmap.'
+                  : 'CTG One Technology is represented as the core layer. Ecosystem businesses show where real software exists, where capabilities are partial, what is actively being built, and what remains on the roadmap.'}
               </p>
             </div>
           </FadeInSection>
@@ -96,14 +98,14 @@ export const EcosystemSection: React.FC = () => {
           <FadeInSection delay={0.08}>
             <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl">
               {[
-                [String(ECOSYSTEM_TECHNOLOGY_UNITS.length), es ? 'Unidades operativas' : 'Operating units'],
+                [String(operatingTechnologyUnits.length), es ? 'Negocios operativos' : 'Operating businesses'],
                 [String(liveCount), 'LIVE'],
                 [String(activeCount), es ? 'En desarrollo' : 'In development'],
                 [String(partialCount), es ? 'Implementación parcial' : 'Partial implementation'],
               ].map(([value, label]) => (
                 <div key={label} className="rounded-xl border border-white/[0.055] bg-black/20 p-4 sm:p-5">
                   <div className="text-xl sm:text-2xl font-outfit text-white mb-1">{value}</div>
-                  <div className="text-[8px] sm:text-[9px] uppercase tracking-[0.14em] text-text-dim">{label}</div>
+                  <div className="text-[11px] sm:text-xs uppercase tracking-[0.1em] text-text-dim">{label}</div>
                 </div>
               ))}
             </div>
@@ -125,7 +127,7 @@ export const EcosystemSection: React.FC = () => {
                     ? 'El mapa no significa que todos los módulos estén implementados en todas las empresas. Expresa qué capacidades de CTG One OS son relevantes para cada contexto y permite distinguir arquitectura objetivo de implementación real.'
                     : 'The map does not mean every module is implemented in every company. It shows which CTG One OS capabilities are relevant to each context and separates target architecture from actual implementation.'}
                 </p>
-                <Link href="/services" className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-accent hover:text-white transition-colors">
+                <Link href="/services" className="inline-flex min-h-11 items-center gap-2 text-xs uppercase tracking-[0.12em] text-accent hover:text-white transition-colors">
                   {es ? 'Explorar CTG One OS' : 'Explore CTG One OS'} <ArrowUpRight size={13} />
                 </Link>
               </div>
@@ -133,7 +135,7 @@ export const EcosystemSection: React.FC = () => {
               <div className="rounded-2xl border border-white/[0.055] bg-black/20 p-5 sm:p-7 overflow-hidden">
                 <div className="flex items-center gap-3 mb-6">
                   <Layers3 size={17} className="text-accent" />
-                  <span className="text-[9px] uppercase tracking-[0.18em] text-text-dim">{es ? 'Capability map' : 'Capability map'}</span>
+                  <span className="text-[11px] uppercase tracking-[0.12em] text-text-dim">Capability map</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {CTG_ONE_OS_MODULES.map((module) => {
@@ -141,8 +143,8 @@ export const EcosystemSection: React.FC = () => {
                     return (
                       <div key={module} className="min-w-[135px] flex-1 rounded-lg border border-white/[0.05] bg-white/[0.01] p-3.5">
                         <div className="flex items-center justify-between gap-3 mb-2">
-                          <span className="text-[10px] text-white">{module}</span>
-                          <span className="font-mono text-[9px] text-accent/65">{String(count).padStart(2, '0')}</span>
+                          <span className="text-[11px] text-white">{module}</span>
+                          <span className="font-mono text-[11px] text-accent/65">{String(count).padStart(2, '0')}</span>
                         </div>
                         <div className="h-px bg-white/[0.04] overflow-hidden">
                           <div className="h-full bg-accent/45" style={{ width: `${Math.max(8, (count / ECOSYSTEM_TECHNOLOGY_UNITS.length) * 100)}%` }} />
@@ -161,7 +163,7 @@ export const EcosystemSection: React.FC = () => {
         <Container>
           <FadeInSection>
             <div className="max-w-3xl mb-12 sm:mb-16">
-              <Badge variant="accent" className="mb-6">{es ? 'Technology Application Map' : 'Technology Application Map'}</Badge>
+              <Badge variant="accent" className="mb-6">Technology Application Map</Badge>
               <h2 className="font-outfit font-semibold text-3xl sm:text-4xl md:text-5xl text-white tracking-[-0.035em] mb-5">
                 {es ? 'Cada negocio plantea un problema tecnológico diferente.' : 'Each business creates a different technology problem.'}
               </h2>
@@ -183,48 +185,48 @@ export const EcosystemSection: React.FC = () => {
                         {iconMap[unit.icon]}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-[8px] uppercase tracking-[0.14em] text-text-dim mb-1">{es ? unit.businessEs : unit.businessEn}</div>
+                        <div className="text-[11px] uppercase tracking-[0.1em] text-text-dim mb-1">{es ? unit.businessEs : unit.businessEn}</div>
                         <h3 className="font-outfit text-base sm:text-lg text-white truncate">{unit.name}</h3>
                       </div>
                     </div>
-                    <span className={`shrink-0 text-[7px] uppercase tracking-[0.14em] px-2 py-1 rounded-full border ${statusStyle[unit.status]}`}>{unit.status}</span>
+                    <span className={`shrink-0 text-[11px] uppercase tracking-[0.1em] px-2 py-1 rounded-full border ${statusStyle[unit.status]}`}>{unit.status}</span>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-4 mb-6">
                     <div className="rounded-lg border border-white/[0.045] bg-white/[0.01] p-4">
-                      <div className="flex items-center gap-2 mb-2"><Network size={13} className="text-accent/70" /><span className="text-[8px] uppercase tracking-[0.14em] text-text-dim">{es ? 'Problema operativo' : 'Operating problem'}</span></div>
-                      <p className="text-[11px] text-text-muted leading-relaxed">{es ? unit.operatingProblemEs : unit.operatingProblemEn}</p>
+                      <div className="flex items-center gap-2 mb-2"><Network size={13} className="text-accent/70" /><span className="text-[11px] uppercase tracking-[0.1em] text-text-dim">{es ? 'Problema operativo' : 'Operating problem'}</span></div>
+                      <p className="text-xs sm:text-[13px] text-text-muted leading-relaxed">{es ? unit.operatingProblemEs : unit.operatingProblemEn}</p>
                     </div>
                     <div className="rounded-lg border border-white/[0.045] bg-white/[0.01] p-4">
-                      <div className="flex items-center gap-2 mb-2"><ShieldCheck size={13} className="text-accent/70" /><span className="text-[8px] uppercase tracking-[0.14em] text-text-dim">{es ? 'Estado verificable' : 'Verified state'}</span></div>
-                      <p className="text-[11px] text-text-muted leading-relaxed">{es ? unit.currentStateEs : unit.currentStateEn}</p>
+                      <div className="flex items-center gap-2 mb-2"><ShieldCheck size={13} className="text-accent/70" /><span className="text-[11px] uppercase tracking-[0.1em] text-text-dim">{es ? 'Estado verificable' : 'Verified state'}</span></div>
+                      <p className="text-xs sm:text-[13px] text-text-muted leading-relaxed">{es ? unit.currentStateEs : unit.currentStateEn}</p>
                     </div>
                   </div>
 
                   <div className="mb-6">
-                    <div className="text-[8px] uppercase tracking-[0.14em] text-text-dim mb-3">{es ? 'Capacidades' : 'Capabilities'}</div>
+                    <div className="text-[11px] uppercase tracking-[0.1em] text-text-dim mb-3">{es ? 'Capacidades' : 'Capabilities'}</div>
                     <div className="space-y-2">
                       {unit.capabilities.map((capability) => (
-                        <div key={`${unit.id}-${capability.nameEn}`} className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.04] px-3 py-2.5">
+                        <div key={`${unit.id}-${capability.nameEn}`} className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-white/[0.04] px-3 py-2.5">
                           <div className="flex items-center gap-2.5 min-w-0">
                             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDot[capability.status]}`} />
-                            <span className="text-[10px] text-text-secondary truncate">{es ? capability.nameEs : capability.nameEn}</span>
+                            <span className="text-xs text-text-secondary truncate">{es ? capability.nameEs : capability.nameEn}</span>
                           </div>
-                          <span className="text-[7px] uppercase tracking-[0.12em] text-text-dim shrink-0">{capability.status}</span>
+                          <span className="text-[11px] uppercase tracking-[0.08em] text-text-dim shrink-0">{capability.status}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1.5 pr-10">
+                  <div className="flex flex-wrap gap-1.5 pr-12">
                     {unit.osModules.map((module) => (
-                      <span key={`${unit.id}-${module}`} className="rounded-full border border-white/[0.055] px-2.5 py-1 text-[7px] uppercase tracking-[0.1em] text-text-dim">{module}</span>
+                      <span key={`${unit.id}-${module}`} className="rounded-full border border-white/[0.055] px-2.5 py-1 text-[11px] uppercase tracking-[0.06em] text-text-dim">{module}</span>
                     ))}
                   </div>
 
                   {unit.href && (
-                    <Link href={unit.href} aria-label={`${es ? 'Abrir' : 'Open'} ${unit.name}`} className="absolute bottom-6 right-6 w-8 h-8 rounded-full border border-white/[0.07] flex items-center justify-center group-hover:border-accent/30 transition-colors">
-                      <ArrowUpRight size={13} className="text-text-dim group-hover:text-accent" />
+                    <Link href={unit.href} aria-label={`${es ? 'Abrir' : 'Open'} ${unit.name}`} className="absolute bottom-5 right-5 flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.07] group-hover:border-accent/30 transition-colors">
+                      <ArrowUpRight size={15} className="text-text-dim group-hover:text-accent" />
                     </Link>
                   )}
                 </article>
@@ -239,7 +241,7 @@ export const EcosystemSection: React.FC = () => {
           <FadeInSection>
             <div className="rounded-2xl border border-accent/15 bg-accent/[0.025] p-6 sm:p-8 md:p-10 grid md:grid-cols-[1fr_auto] gap-8 items-center">
               <div>
-                <div className="flex items-center gap-3 mb-4"><Database size={16} className="text-accent" /><span className="text-[9px] uppercase tracking-[0.18em] text-accent/80">{es ? 'Regla de evidencia' : 'Evidence rule'}</span></div>
+                <div className="flex items-center gap-3 mb-4"><Database size={16} className="text-accent" /><span className="text-[11px] uppercase tracking-[0.12em] text-accent/80">{es ? 'Regla de evidencia' : 'Evidence rule'}</span></div>
                 <h2 className="font-outfit text-2xl sm:text-3xl text-white mb-3">{es ? 'La madurez se gana con sistemas funcionando.' : 'Maturity is earned through working systems.'}</h2>
                 <p className="text-sm text-text-muted leading-relaxed max-w-3xl">
                   {es
@@ -247,7 +249,7 @@ export const EcosystemSection: React.FC = () => {
                     : 'A unit only moves to LIVE when verifiable implementation, access control, real data, tests, and sufficient operating evidence exist. The map must evolve with the code, not ahead of it.'}
                 </p>
               </div>
-              <Link href="/products" className="inline-flex items-center justify-center gap-2 rounded-full border border-accent/25 px-5 py-3 text-[9px] uppercase tracking-[0.16em] text-accent hover:bg-accent/5 transition-colors whitespace-nowrap">
+              <Link href="/products" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-accent/25 px-5 py-3 text-xs uppercase tracking-[0.12em] text-accent hover:bg-accent/5 transition-colors whitespace-nowrap">
                 {es ? 'Ver casos tecnológicos' : 'View technology cases'} <ArrowUpRight size={13} />
               </Link>
             </div>
