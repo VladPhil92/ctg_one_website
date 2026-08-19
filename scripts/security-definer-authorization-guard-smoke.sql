@@ -18,12 +18,25 @@ WITH exposed AS (
     regexp_replace(
       regexp_replace(
         regexp_replace(
-          pg_get_functiondef(p.oid),
-          E'--[^\\n\\r]*',
+          regexp_replace(
+            regexp_replace(
+              -- prosrc is the executable function body without the outer
+              -- CREATE FUNCTION dollar-quote wrapper, so nested dollar-quoted
+              -- text can be sanitized without erasing the body itself.
+              p.prosrc,
+              E'--[^\\n\\r]*',
+              '',
+              'g'
+            ),
+            E'/\\*([^*]|\\*+[^*/])*\\*+/',
+            '',
+            'g'
+          ),
+          E'\\$([A-Za-z_][A-Za-z0-9_]*)\\$[\\s\\S]*?\\$\\1\\$',
           '',
           'g'
         ),
-        E'/\\*([^*]|\\*+[^*/])*\\*+/',
+        E'\\$\\$[\\s\\S]*?\\$\\$',
         '',
         'g'
       ),
@@ -89,8 +102,8 @@ SELECT
 FROM exposed;
 
 -- Negative control #1: merely mentioning auth.uid()/RBAC in executable code,
--- comments, and text must NOT satisfy the contract. CREATE (not OR REPLACE)
--- deliberately fails if a future real routine ever collides with this test name.
+-- comments, single-quoted text, and tagged dollar-quoted text must NOT satisfy
+-- the contract. CREATE (not OR REPLACE) deliberately fails on name collision.
 CREATE FUNCTION public.__security_definer_unguarded_negative_control()
 RETURNS void
 LANGUAGE plpgsql
@@ -101,6 +114,7 @@ BEGIN
   -- if not public.is_admin() then raise exception 'fake comment guard'; end if;
   PERFORM auth.uid();
   PERFORM 'if not public.is_admin() then raise exception';
+  PERFORM $msg$if not public.is_admin() then raise exception$msg$;
 END;
 $$;
 REVOKE ALL ON FUNCTION public.__security_definer_unguarded_negative_control() FROM public, anon;
