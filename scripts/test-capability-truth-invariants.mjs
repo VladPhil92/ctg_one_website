@@ -3,9 +3,10 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [proof, hero, token, content, flags, legal, ecosystemTechnology] = await Promise.all([
+const [proof, hero, about, token, content, flags, legal, ecosystemTechnology] = await Promise.all([
   read('src/data/technology-proof.ts'),
   read('src/components/sections/HeroSection.tsx'),
+  read('src/components/sections/AboutSection.tsx'),
   read('src/components/sections/TokenSection.tsx'),
   read('src/data/content.ts'),
   read('src/lib/investment/flags.ts'),
@@ -34,11 +35,26 @@ assert.match(
   /id: 'ctg-knowledge-v01'[\s\S]*?publicStatus: 'BETA'/,
   'CTG Knowledge must remain a BETA pilot until reproducible evaluation and operating evidence exist.',
 );
+assert.match(
+  proof,
+  /id: 'observability-baseline'[\s\S]*?status: 'PARTIAL'/,
+  'Observability baseline must reflect the implemented health/logging/correlation layer.',
+);
 
 assert.ok(hero.includes('getCapabilityProof'), 'Hero capability states must come from the canonical proof registry.');
 assert.ok(hero.includes('getPublicProofStatus'), 'Hero must render public maturity from the canonical proof registry.');
 assert.ok(!hero.includes("en: 'Proprietary software · Live'"), 'Hero must not hard-code maturity labels independently of Technology Status.');
 assert.ok(!hero.includes("en: 'Applied AI · In development'"), 'Hero AI maturity must not be hard-coded independently of Technology Status.');
+
+assert.ok(about.includes("getCapabilityProof('observability-baseline').status"), 'About observability maturity must come from the canonical proof registry.');
+assert.ok(about.includes("getCapabilityProof('ai-layer').status"), 'About AI maturity must come from the canonical proof registry.');
+assert.ok(about.includes("getCapabilityProof('data-security').status"), 'About data/security maturity must come from the canonical proof registry.');
+assert.ok(about.includes("getCapabilityProof('delivery-platform').status"), 'About delivery maturity must come from the canonical proof registry.');
+assert.doesNotMatch(
+  about,
+  /label: es \? 'Observabilidad' : 'Observability', status: 'ROADMAP'/,
+  'About must not independently downgrade the implemented observability baseline to ROADMAP.',
+);
 
 for (const forbidden of [
   /\b2[,.]?450\+?\s+holders\b/i,
