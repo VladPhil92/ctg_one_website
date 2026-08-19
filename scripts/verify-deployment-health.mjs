@@ -88,6 +88,7 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
     let response;
+    let body;
     try {
       response = await fetch(healthUrl, {
         method: 'GET',
@@ -99,11 +100,11 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
         cache: 'no-store',
         signal: controller.signal,
       });
+      body = await response.text();
     } finally {
       clearTimeout(timer);
     }
 
-    const body = await response.text();
     let payload = null;
     try {
       payload = JSON.parse(body);
