@@ -3,10 +3,11 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [proof, hero, about, token, content, flags, legal, ecosystemTechnology] = await Promise.all([
+const [proof, hero, about, services, token, content, flags, legal, ecosystemTechnology] = await Promise.all([
   read('src/data/technology-proof.ts'),
   read('src/components/sections/HeroSection.tsx'),
   read('src/components/sections/AboutSection.tsx'),
+  read('src/components/sections/ServicesSection.tsx'),
   read('src/components/sections/TokenSection.tsx'),
   read('src/data/content.ts'),
   read('src/lib/investment/flags.ts'),
@@ -64,6 +65,25 @@ assert.doesNotMatch(
   about,
   /label: es \? 'Observabilidad' : 'Observability', status: 'ROADMAP'/,
   'About must not independently downgrade the implemented observability baseline to ROADMAP.',
+);
+
+for (const capabilityId of ['identity-auth', 'data-security', 'delivery-platform', 'observability-baseline', 'ai-layer']) {
+  assert.ok(
+    services.includes(`getCapabilityProof('${capabilityId}').status`),
+    `Services maturity for ${capabilityId} must come from the canonical proof registry.`,
+  );
+}
+assert.ok(services.includes('ECOSYSTEM.units'), 'Services operating-business tiles must derive from the canonical ecosystem registry.');
+assert.ok(services.includes(".filter((unit) => unit.id !== 'tech')"), 'Services must explicitly exclude the CTG One Technology core from the operating-business tile layer.');
+assert.doesNotMatch(
+  services,
+  /title: 'Observabilidad'[\s\S]*?status: 'ROADMAP'/,
+  'Services must not independently downgrade the implemented observability baseline to ROADMAP.',
+);
+assert.doesNotMatch(
+  services,
+  /title: 'Observability'[\s\S]*?status: 'ROADMAP'/,
+  'Services must not independently downgrade the implemented observability baseline to ROADMAP in English.',
 );
 
 for (const forbidden of [
