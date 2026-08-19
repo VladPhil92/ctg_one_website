@@ -4,7 +4,7 @@
 
 CTG One Technology es la capa propietaria de software, datos e infraestructura digital que soporta el ecosistema empresarial CTG One. Diseña, construye y opera aplicaciones, plataformas transaccionales, identidad, automatización, seguridad e infraestructura compartida aplicadas directamente a unidades de negocio reales.
 
-CTG One no se define como agencia comercial, agencia de ventas ni consultora tecnológica genérica para terceros. Su diferenciador es la integración vertical: la tecnología se desarrolla dentro del mismo ecosistema donde se utiliza, mide y mejora.
+Su diferenciador es la integración vertical: la tecnología se desarrolla dentro del mismo ecosistema donde se utiliza, mide y mejora.
 
 > **Gobernanza:** este README explica el proyecto, pero no es una base de datos de estado runtime. Para saber dónde vive cada fuente autoritativa consulte `docs/architecture/SYSTEM_STATE.md`.
 
@@ -63,29 +63,14 @@ PostgreSQL · Auth · Storage · RLS
 
 ## Ecosistema empresarial
 
-CTG One Technology es la capa tecnológica común de doce unidades de negocio:
-
-1. Valderrama International School
-2. CTG Suites
-3. Bechara Real Estate
-4. CTG One Technology
-5. Nvet Care
-6. Oralgreen
-7. Legalyst Consultores
-8. CTG One Design
-9. Vantage Libranza Plus
-10. PISÁO Gastrobar
-11. CTG Craft Beer
-12. Guest Logistics Concierge
-
-Estas unidades constituyen entornos reales de aplicación y validación tecnológica. La pertenencia al ecosistema no implica que todas posean el mismo nivel de madurez digital; cada capacidad debe clasificarse por evidencia.
+CTG One Technology opera como capa tecnológica común para las unidades del ecosistema definidas de forma canónica en `src/data/content.ts`. Estas unidades constituyen entornos reales de aplicación y validación tecnológica. Su pertenencia al ecosistema no implica el mismo nivel de madurez digital; cada capacidad se clasifica por evidencia.
 
 ## Modelo de madurez
 
 La fuente autoritativa de madurez pública es `src/data/technology-proof.ts`. Los estados públicos contemplan:
 
 - `LIVE`
-- `BETA` — release controlado cuando aplica
+- `BETA`
 - `PARTIAL`
 - `IN DEVELOPMENT`
 - `ROADMAP`
@@ -106,26 +91,7 @@ Una capacidad no pasa a `LIVE` por existir una descripción, dependencia, pantal
 
 ### CTG Craft Beer Investment
 
-Bounded context para:
-
-- órdenes de inversión e idempotencia;
-- asignaciones económicas;
-- lotes de producción;
-- economía unitaria por snapshot de lote;
-- master data de estilos cerveceros;
-- eventos de producción;
-- serialización por botella;
-- ubicaciones canónicas de inventario;
-- movimientos físicos vinculados a seriales, origen y destino;
-- stock derivado por ubicación;
-- reconciliación botella ↔ movimiento ↔ Sales OS;
-- Sales OS con documentos e idempotencia;
-- hechos financieros por lote vinculados a ventas;
-- participant ledger;
-- settlement reconciliado;
-- withdrawals / reinvestment con reservas de saldo;
-- RBAC;
-- trazabilidad pública por serial.
+Bounded context para órdenes de inversión, asignaciones económicas, lotes de producción, economía unitaria, master data cervecera, trazabilidad por botella, inventario canónico, Sales OS, hechos financieros, participant ledger, settlement, withdrawals/reinvestment, RBAC y trazabilidad pública por serial.
 
 La plataforma pública se mantiene bajo el release stage definido por `src/data/technology-proof.ts`; no debe inferirse `LIVE` de la existencia del bounded context.
 
@@ -135,12 +101,12 @@ Beta controlada de conocimiento institucional con ingestión, chunking, retrieva
 
 ### Observability
 
-- `/api/health`;
-- Admin System Health;
-- structured logger con redacción de campos sensibles;
-- verificación de runtime/configuración/migraciones críticas;
-- identidad de deployment por SHA de Render;
-- request/correlation ID validado y propagado en superficies instrumentadas.
+- `/api/health`
+- Admin System Health
+- structured logger con redacción de campos sensibles
+- verificación de runtime/configuración/migraciones críticas
+- identidad de deployment por SHA de Render
+- request/correlation ID validado y propagado en superficies instrumentadas
 
 ## Rutas principales
 
@@ -157,14 +123,9 @@ Beta controlada de conocimiento institucional con ingestión, chunking, retrieva
 | `/rewards` | CTG Rewards roadmap |
 | `/token` | CTGO Web3 roadmap |
 | `/dashboard` | Personal OS protegido |
-| `/dashboard/kyc` | Identidad/KYC |
-| `/dashboard/depositos` | Cuenta y recargas; fail-closed si no hay canales reales configurados |
 | `/dashboard/inversion` | Investment experience integrada |
 | `/admin` | Admin OS protegido |
 | `/admin/operations` | Production / Traceability / Sales OS |
-| `/admin/operations/inventory` | Inventory Reconciliation, ubicaciones y stock |
-| `/admin/operations/scanner` | Operación física por QR/serial |
-| `/admin/operations/settlement` | Reconciliación y cierre financiero de lote |
 | `/admin/system-health` | Diagnóstico técnico administrativo |
 | `/inversion` | CTG Craft Beer Investment público |
 | `/inversion/simulador` | Escenarios derivados de snapshots de lotes publicados |
@@ -172,64 +133,47 @@ Beta controlada de conocimiento institucional con ingestión, chunking, retrieva
 
 ## Supabase migrations
 
-**No se mantiene una lista manual de migraciones en este README.** La secuencia autoritativa vive en `supabase/migrations/` y el release esperado se define en `src/lib/observability/schema-version.ts` mediante:
+La secuencia autoritativa vive en `supabase/migrations/` y el release esperado se define en `src/lib/observability/schema-version.ts` mediante:
 
 - `EXPECTED_DATABASE_MIGRATION`
 - `EXPECTED_DATABASE_MIGRATION_NAME`
 - `EXPECTED_DATABASE_MIGRATION_COUNT`
 
-CI valida continuidad de la cadena, aplica todas las migraciones sobre una base PostgreSQL limpia y ejecuta contratos de Golden Path/seguridad. La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno; la compatibilidad de producción debe verificarse mediante `/api/health` y Admin System Health.
+CI valida continuidad de la cadena, aplica todas las migraciones sobre una base PostgreSQL limpia y ejecuta contratos de Golden Path y seguridad. La presencia de una migración en Git no prueba por sí sola que esté aplicada en un entorno; la compatibilidad de producción debe verificarse mediante `/api/health` y Admin System Health.
 
 Las migraciones aplicadas son inmutables. Una corrección de schema se realiza mediante una nueva migración contigua, nunca reescribiendo historia ya desplegada.
 
-## Principios financieros
+## Principios financieros y operacionales
 
-- dinero representado en centavos enteros (`bigint`) cuando aplica;
-- presets económicos editables en master data, sin convertirlos en historia retroactiva;
-- snapshot económico completo e histórico por lote;
-- órdenes que derivan capital desde el snapshot de lote en PostgreSQL;
-- allocation únicamente por flujo autorizado y respetando reservas de órdenes;
-- una sola FormulaVersion por lote;
-- soporte explícito para allocations internas CTG y externas sin romper el contrato XOR participante/interno;
-- ledger de participante append-only;
-- spendable balance descontando requests pendientes;
-- settlement único por lote;
-- revenue/tax vinculados a Sales OS;
-- correcciones mediante reversals/adjustments, no hard delete de historia financiera;
-- liquidación basada en hechos reales reconciliados, no en proyecciones de UI;
-- operaciones sensibles mediante funciones server-side/database-side con autorización revalidada.
-
-## Principios de inventario
-
-- la botella serializada es la unidad física mínima trazable;
-- `current_location_id` es la ubicación canónica; el texto de ubicación es solo proyección de presentación;
-- todo movimiento autoritativo registra origen, destino y seriales afectados;
-- la cantidad del movimiento debe coincidir exactamente con el número de unidades vinculadas antes de `COMMIT`;
-- la historia de movimientos es append-only;
-- una transición física inválida o un lote parcial de seriales falla de forma atómica;
-- `SOLD` solo nace de Sales OS y conserva vínculo con un documento de venta confirmado del mismo lote;
-- una venta no puede abarcar inventario localizado físicamente en múltiples ubicaciones;
-- `get_inventory_reconciliation()` detecta divergencias entre proyección física, historia y Sales OS.
+- dinero representado en centavos enteros (`bigint`) cuando aplica
+- snapshots económicos históricos por lote
+- participant ledger append-only
+- settlement único y reconciliado por lote
+- revenue/tax vinculados a Sales OS
+- correcciones mediante reversals/adjustments, no hard delete
+- liquidación basada en hechos reconciliados, no proyecciones de UI
+- botella serializada como unidad física mínima trazable
+- ubicación canónica e historia de movimientos append-only
+- `SOLD` originado desde Sales OS con vínculo verificable
+- operaciones sensibles mediante funciones server-side/database-side con autorización revalidada
 
 ## Seguridad
 
 Arquitectura base:
 
-- Supabase Auth;
-- RLS;
-- server-side authorization;
-- RBAC del dominio inversión;
-- funciones `SECURITY DEFINER` con comprobaciones explícitas;
-- Storage privado + signed URLs para documentos sensibles;
-- feature flags y canales financieros fail-closed;
-- inventario operacional no expuesto a `anon`;
-- mutaciones físicas únicamente mediante RPCs autorizados, no DML directo del cliente;
-- CSP y headers de seguridad;
-- rate limiting en superficies sensibles instrumentadas;
-- dependency audit en CI;
-- PR + required checks antes de merge.
+- Supabase Auth
+- RLS
+- server-side authorization
+- RBAC del dominio inversión
+- funciones `SECURITY DEFINER` con comprobaciones explícitas
+- Storage privado + signed URLs para documentos sensibles
+- feature flags y canales financieros fail-closed
+- CSP y headers de seguridad
+- rate limiting en superficies sensibles instrumentadas
+- dependency audit en CI
+- PR + required checks antes de merge
 
-No se realizan afirmaciones de SOC 2, ISO 27001, PCI DSS u otras certificaciones sin evidencia formal.
+No se realizan afirmaciones de certificaciones sin evidencia formal.
 
 ## CI
 
@@ -243,7 +187,7 @@ npm run build
 npx playwright test --project=chromium
 ```
 
-Además existe un job de **Golden Path clean database contract** que reconstruye el schema desde cero y valida contratos PostgreSQL críticos. Render despliega desde `main` según la política configurada y la identidad del deployment se expone mediante la capa de observabilidad.
+Además existe un job de **Golden Path clean database contract** que reconstruye el schema desde cero y valida contratos PostgreSQL críticos.
 
 ## Desarrollo local
 
@@ -287,14 +231,12 @@ Identity
 
 El circuito base cuenta con invariantes transaccionales en PostgreSQL y contratos de reconstrucción limpia en CI. Las capacidades futuras se añaden por incrementos versionados y no deben anticiparse en documentación como si ya fueran productivas.
 
-El primer caso vertical de referencia es CTG Craft Beer. El objetivo es que una operación completa pueda reconstruirse a partir de evidencia persistida y auditable.
-
 ## Documentación autoritativa
 
-- `docs/architecture/SYSTEM_STATE.md` — mapa de fuentes de verdad;
-- `docs/architecture/CTG_ONE_OS.md` — arquitectura compartida;
-- `docs/infrastructure/PRODUCTION_READINESS.md` — preparación/deploy;
-- `docs/infrastructure/BACKUP_RESTORE.md` — recuperación;
-- `docs/infrastructure/OBSERVABILITY.md` — observabilidad;
-- `src/data/technology-proof.ts` — madurez pública;
-- `src/lib/observability/schema-version.ts` — release de base de datos esperado.
+- `docs/architecture/SYSTEM_STATE.md` — mapa de fuentes de verdad
+- `docs/architecture/CTG_ONE_OS.md` — arquitectura compartida
+- `docs/infrastructure/PRODUCTION_READINESS.md` — preparación/deploy
+- `docs/infrastructure/BACKUP_RESTORE.md` — recuperación
+- `docs/infrastructure/OBSERVABILITY.md` — observabilidad
+- `src/data/technology-proof.ts` — madurez pública
+- `src/lib/observability/schema-version.ts` — release de base de datos esperado
