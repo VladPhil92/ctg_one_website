@@ -4,13 +4,14 @@
 
 import config from '@/config/config.json';
 
-// Contact Information (from config.json)
 export const CONTACT_EMAIL = config.contact.email;
 export const CONTACT_PHONE = config.contact.phone;
 export const LOCATION = config.contact.location;
 export const WEBSITE = config.contact.website;
 
-// Navigation
+// Full public navigation registry. Footer/search surfaces may expose the complete
+// information architecture; the header intentionally uses the smaller groups
+// below to preserve hierarchy and reduce first-level cognitive load.
 export const NAV_ITEMS = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
@@ -18,13 +19,28 @@ export const NAV_ITEMS = [
   { label: 'AI', href: '/ai' },
   { label: 'Products', href: '/products' },
   { label: 'Ecosystem', href: '/ecosystem' },
-  { label: 'Inversión', href: '/inversion' },
+  { label: 'Investment', href: '/inversion' },
   { label: 'Rewards', href: '/rewards' },
   { label: 'Token', href: '/token' },
   { label: 'Contact', href: '/contact' },
-];
+] as const;
 
-// Animation Configuration
+export const PRIMARY_NAV_ITEMS = [
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
+  { label: 'Technology', href: '/services' },
+  { label: 'Products', href: '/products' },
+  { label: 'Contact', href: '/contact' },
+] as const;
+
+export const PLATFORM_NAV_ITEMS = [
+  { label: 'Ecosystem', href: '/ecosystem' },
+  { label: 'AI', href: '/ai' },
+  { label: 'Investment', href: '/inversion' },
+  { label: 'Rewards', href: '/rewards' },
+  { label: 'Token', href: '/token' },
+] as const;
+
 export const ANIMATION = {
   duration: 0.6,
   delay: 0.1,
@@ -32,7 +48,6 @@ export const ANIMATION = {
   stagger: 0.1,
 };
 
-// Breakpoints (matching Tailwind)
 export const BREAKPOINTS = {
   sm: 640,
   md: 768,
@@ -41,26 +56,26 @@ export const BREAKPOINTS = {
   '2xl': 1536,
 };
 
-// Theme Colors
+// Legacy JS color exports retained for non-Tailwind consumers. Keep aligned
+// with globals.css/tailwind.config.ts accessibility tokens.
 export const COLORS = {
-  accent: '#f59e0b',
-  accentLight: '#fbbf24',
-  accentDark: '#d97706',
+  accent: '#c9a962',
+  accentLight: '#d4b676',
+  accentDark: '#a68b4b',
   accentSecondary: '#3b82f6',
-  bgPrimary: '#0a0a0f',
-  bgSecondary: '#12121a',
-  bgTertiary: '#1a1a25',
+  bgPrimary: '#050505',
+  bgSecondary: '#0a0a0a',
+  bgTertiary: '#111111',
   textPrimary: '#ffffff',
-  textSecondary: '#e4e4e7',
-  textMuted: '#a1a1aa',
-  textDim: '#71717a',
-  success: '#10b981',
-  error: '#ef4444',
-  warning: '#f59e0b',
-  info: '#3b82f6',
+  textSecondary: '#e5e5e5',
+  textMuted: '#b0b0b0',
+  textDim: '#9a9a9a',
+  success: '#34d399',
+  error: '#f87171',
+  warning: '#d4b676',
+  info: '#9a9a9a',
 };
 
-// Social Links (from config.json)
 export const SOCIAL_LINKS = {
   twitter: config.social.twitter,
   linkedin: config.social.linkedin,
@@ -68,7 +83,6 @@ export const SOCIAL_LINKS = {
   github: 'https://github.com/ctgone',
 };
 
-// Business Units - 12 Integrated Units
 export const BUSINESS_UNITS = [
   { id: 'education', name: 'Valderrama International School', color: '#d4a259' },
   { id: 'hospitality', name: 'CTG Suites', color: '#6b8cae' },
