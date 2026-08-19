@@ -10,6 +10,9 @@ const [
   ordersRepository,
   returnsPage,
   returnsRepository,
+  operationsPage,
+  operationsRepository,
+  operationsInventoryMigration,
 ] = await Promise.all([
   read('src/lib/pagination.ts'),
   read('src/app/admin/usuarios/page.tsx'),
@@ -18,6 +21,9 @@ const [
   read('src/modules/investment/admin-orders/browser-repository.ts'),
   read('src/app/admin/operations/returns/page.tsx'),
   read('src/modules/operations/returns/browser-repository.ts'),
+  read('src/app/admin/operations/page.tsx'),
+  read('src/modules/operations/infrastructure/browser-repository.ts'),
+  read('supabase/migrations/0062_production_os_bounded_inventory_read.sql'),
 ]);
 
 assert.match(pagination, /ADMIN_PAGE_SIZE\s*=\s*25/, 'Admin queues must use a bounded default page size.');
@@ -91,4 +97,34 @@ assert.match(
   'A superseded detail request must never return a stale payload to the UI.',
 );
 
-console.log('Admin and Sales OS pagination invariants: PASS');
+assert.doesNotMatch(operationsPage, /createClient\(/, 'Production OS UI must remain behind its browser repository.');
+assert.match(operationsPage, /ClientPagination/, 'Production OS must expose bounded navigation for lot and serial registries.');
+assert.ok(
+  (operationsPage.match(/<ClientPagination/g) ?? []).length >= 2,
+  'Production OS must paginate both the lot registry and the selected-lot serial registry.',
+);
+assert.match(operationsRepository, /async listLots\(page: number, pageSize: number\)[\s\S]*?count:\s*'exact'[\s\S]*?\.range\(from, to\)/, 'Production lot registry must use exact count plus bounded range.');
+assert.match(operationsRepository, /\.order\('created_at',[\s\S]*?\.order\('id'/, 'Production lot pagination must use a deterministic tie-breaker.');
+assert.doesNotMatch(operationsRepository, /\.limit\(250\)/, 'Production OS must never approximate lot-wide metrics from a 250-unit sample.');
+assert.match(operationsRepository, /rpc\('get_production_lot_inventory_snapshot'/, 'Selected-lot inventory must use the exact bounded PostgreSQL read model.');
+assert.match(operationsRepository, /p_unit_limit:\s*pageSize[\s\S]*?p_unit_offset:\s*from/, 'Unit registry must send a bounded page limit and offset to PostgreSQL.');
+assert.doesNotMatch(
+  operationsRepository,
+  /createOperationsBrowserRepository\(\)\s*\{\s*const supabase = createClient\(\)/,
+  'Production repository construction must remain build-safe and defer browser Supabase client creation.',
+);
+assert.match(operationsPage, /label="Serializadas" value=\{String\(bottleTotalCount\)\}/, 'Serialized metric must use the exact aggregate count, not visible rows.');
+assert.match(operationsPage, /bottleCounts\.IN_MARKET/, 'In-market metric must use exact status aggregates.');
+assert.match(operationsPage, /bottleCounts\.SOLD/, 'Sold metric must use exact status aggregates.');
+assert.doesNotMatch(operationsPage, /label="Serializadas" value=\{String\(bottles\.length\)\}/, 'Visible unit rows must never define the serialized metric.');
+assert.match(operationsPage, /inventoryRequestGeneration/, 'Production OS must guard selected-lot inventory from stale async responses.');
+
+assert.match(operationsInventoryMigration, /create or replace function public\.get_production_lot_inventory_snapshot/, 'Migration 0062 must define the Production OS inventory read model.');
+assert.match(operationsInventoryMigration, /has_investment_permission\('ops\.read'\)/, 'Production inventory snapshot must require ops.read.');
+assert.match(operationsInventoryMigration, /p_unit_limit < 1 or p_unit_limit > 100/, 'Production inventory snapshot must enforce a hard row limit.');
+assert.match(operationsInventoryMigration, /count\(\*\)::bigint as total_units/, 'Production inventory snapshot must calculate an exact lot-wide unit count.');
+assert.match(operationsInventoryMigration, /jsonb_object_agg\(status, status_count order by status\)/, 'Production inventory snapshot must aggregate exact counts by physical state.');
+assert.match(operationsInventoryMigration, /limit p_unit_limit[\s\S]*?offset p_unit_offset/, 'Production inventory snapshot must return only the requested unit page.');
+assert.match(operationsInventoryMigration, /revoke all on function public\.get_production_lot_inventory_snapshot[\s\S]*?from public, anon/, 'Production inventory snapshot must not be callable by public or anon.');
+
+console.log('Admin, Sales OS and Production OS pagination invariants: PASS');
