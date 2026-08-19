@@ -1,14 +1,19 @@
 import React from 'react';
 import { Container, Badge } from '@/components/ui';
 import { InvestmentSimulatorClient } from '@/components/inversion/InvestmentSimulatorClient';
-import { getActiveInvestmentFormulaVersion, getPublicSimulationLots } from '@/lib/investment/queries';
+import {
+  getActiveInvestmentFormulaVersion,
+  getPublicLotFundingSummaries,
+  getPublicSimulationLots,
+} from '@/lib/investment/queries';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SimuladorPage() {
-  const [lots, formula] = await Promise.all([
+  const [lots, formula, fundingByLot] = await Promise.all([
     getPublicSimulationLots(),
     getActiveInvestmentFormulaVersion(),
+    getPublicLotFundingSummaries(),
   ]);
 
   return (
@@ -19,13 +24,13 @@ export default async function SimuladorPage() {
           Simulador por snapshot de lote
         </h1>
         <p className="text-base text-text-muted leading-relaxed mb-10">
-          Explora escenarios construidos con costos, precios y tasas almacenados en un lote real con financiación abierta. La plataforma ya no utiliza una rentabilidad proyectada fija ni un capital por caja escrito en el frontend.
+          Explora escenarios construidos con costos, precios y tasas persistidos en lotes publicados. El simulador puede usar un snapshot histórico aunque el lote no esté abierto actualmente para nuevas órdenes; por eso la disponibilidad real se muestra por separado y nunca se deduce de la cifra simulada.
         </p>
 
-        <InvestmentSimulatorClient lots={lots} formula={formula} />
+        <InvestmentSimulatorClient lots={lots} formula={formula} fundingByLot={fundingByLot} />
 
         <p className="text-[11px] text-text-dim leading-relaxed mt-10">
-          Los escenarios son estimados y no constituyen una rentabilidad garantizada. La liquidación real depende de las ventas, costos, impuestos, ajustes y reglas contractuales efectivamente aplicables al lote y a la versión de fórmula financiera que quede fijada en cada allocation. Consulta <a href="/inversion/riesgos" className="text-accent hover:underline">riesgos</a>{' '}
+          Los escenarios son estimados y no constituyen una rentabilidad garantizada ni una reserva de capacidad. La liquidación real depende de las ventas, costos, impuestos, ajustes y reglas contractuales efectivamente aplicables al lote y a la versión de fórmula financiera que quede fijada en cada allocation. Consulta <a href="/inversion/riesgos" className="text-accent hover:underline">riesgos</a>{' '}
           y <a href="/inversion/legal" className="text-accent hover:underline">condiciones legales</a>.
         </p>
       </Container>

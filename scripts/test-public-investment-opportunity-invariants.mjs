@@ -43,7 +43,7 @@ assert.match(migration, /grant execute on function public\.get_public_investment
 assert.match(
   migration,
   /p\.proname not in \('get_public_bottle_trace','get_public_investment_lot_funding'\)/,
-  'System Health must recognize both deliberately reviewed anonymous SECURITY DEFINER read models.',
+  'Migration 0060 must register both anonymous read models that existed at that schema version.',
 );
 assert.doesNotMatch(
   migration,
@@ -85,7 +85,9 @@ assert.match(lotCard, /reservedCases > 0/, 'Public lot card must explain aggrega
 assert.match(lotCard, /ya están descontadas de la disponibilidad/, 'Reservation copy must state that pending orders reduce available capacity.');
 assert.match(lotCard, /Math\.min\(Math\.max\(funding\.fundedPercent, 0\), 100\)/, 'Public progress rendering must remain visually bounded to 0..100%.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION\s*=\s*'0060'/);
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*60/);
+const schemaMatch = schemaVersion.match(/EXPECTED_DATABASE_MIGRATION\s*=\s*'(\d{4})'/);
+const countMatch = schemaVersion.match(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/);
+assert.ok(schemaMatch && Number(schemaMatch[1]) >= 60, 'Runtime schema must remain at or beyond public opportunity boundary 0060.');
+assert.ok(countMatch && Number(countMatch[1]) >= 60, 'Runtime migration count must remain at or beyond public opportunity boundary 0060.');
 
 console.log('Public investment opportunity truth invariants: PASS');

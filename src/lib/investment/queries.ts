@@ -4,9 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import type {
   InvestmentProductionLot,
-  InvestmentProductionEvent,
   LotFundingSummary,
-  LotInventorySummary,
+  LotStatus,
 } from '@/types/investment';
 import type { InvestmentFormulaVersion } from '@/types/investment-economics';
 import { hasCompleteLotEconomics } from '@/lib/investment/economics';
@@ -21,10 +20,38 @@ type PublicLotFundingRow = {
   available_cases_equivalent: number;
 };
 
+type PublicLotOperationsRow = {
+  lot_id: string;
+  serialized_units: number;
+  warehouse_units: number;
+  dispatched_units: number;
+  in_market_units: number;
+  sold_units: number;
+  returned_units: number;
+  incident_units: number;
+  timeline: unknown;
+};
+
+export type PublicLotTimelineEvent = {
+  status: LotStatus;
+  occurredAt: string;
+};
+
+export type PublicLotOperationalSnapshot = {
+  serializedUnits: number;
+  warehouseUnits: number;
+  dispatchedUnits: number;
+  inMarketUnits: number;
+  soldUnits: number;
+  returnedUnits: number;
+  incidentUnits: number;
+  timeline: PublicLotTimelineEvent[];
+};
+
 // Public, unauthenticated-safe reads for /inversion surfaces. DRAFT lots are
 // blocked by RLS as of migration 0060 and filtered here again as defense in
-// depth. Funding progress is obtained only from the aggregate public RPC;
-// allocation/order rows themselves remain participant/admin-only.
+// depth. Funding and operational truth come only from reviewed aggregate RPCs;
+// allocation, order, bottle-unit and production-event rows remain private.
 
 export async function getPublicLots(): Promise<InvestmentProductionLot[]> {
   if (!isSupabaseConfigured) return [];
@@ -83,16 +110,6 @@ export async function getLotByCode(code: string): Promise<InvestmentProductionLo
   return (data as InvestmentProductionLot) ?? null;
 }
 
-export async function getLotTimeline(lotId: string): Promise<InvestmentProductionEvent[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('investment_production_events')
-    .select('*')
-    .eq('lot_id', lotId)
-    .order('occurred_at', { ascending: true });
-  return (data as InvestmentProductionEvent[]) ?? [];
-}
-
 function fundingRowToSummary(row: PublicLotFundingRow): LotFundingSummary {
   return {
     totalCases: Number(row.total_cases ?? 0),
@@ -130,29 +147,43 @@ export async function getLotFundingSummary(lot: InvestmentProductionLot): Promis
   };
 }
 
-// Coarse, approximate derivation from raw movements — see the comment on
-// investment_inventory_movements in the migration for why this isn't a
-// full per-state stock engine yet.
-export async function getLotInventorySummary(lotId: string): Promise<LotInventorySummary> {
+function isPublicTimelineEntry(value: unknown): value is { status: LotStatus; occurred_at: string } {
+  if (!value || typeof value !== 'object') return false;
+  const row = value as Record<string, unknown>;
+  return typeof row.status === 'string' && typeof row.occurred_at === 'string';
+}
+
+export async function getPublicLotOperationalSnapshot(lotId: string): Promise<PublicLotOperationalSnapshot> {
+  const empty: PublicLotOperationalSnapshot = {
+    serializedUnits: 0,
+    warehouseUnits: 0,
+    dispatchedUnits: 0,
+    inMarketUnits: 0,
+    soldUnits: 0,
+    returnedUnits: 0,
+    incidentUnits: 0,
+    timeline: [],
+  };
+  if (!isSupabaseConfigured) return empty;
+
   const supabase = await createClient();
-  const { data } = await supabase
-    .from('investment_inventory_movements')
-    .select('movement_type, quantity_units')
-    .eq('lot_id', lotId);
+  const { data, error } = await supabase.rpc('get_public_investment_lot_operations', { p_lot_id: lotId });
+  if (error) throw new Error(`No se pudo cargar el estado operacional público del lote: ${error.message}`);
 
-  const sumBy = (types: string[]) =>
-    (data ?? []).filter((m) => types.includes(m.movement_type)).reduce((sum, m) => sum + m.quantity_units, 0);
-
-  const produced = sumBy(['PRODUCED']);
-  const dispatched = sumBy(['DISPATCHED']);
-  const sold = sumBy(['SOLD']);
-  const damaged = sumBy(['DAMAGED', 'EXPIRED', 'LOST']);
+  const row = ((data as PublicLotOperationsRow[] | null) ?? [])[0];
+  if (!row) return empty;
+  const rawTimeline = Array.isArray(row.timeline) ? row.timeline : [];
 
   return {
-    produced,
-    dispatched,
-    sold,
-    damaged,
-    warehouse: Math.max(produced - dispatched - damaged, 0),
+    serializedUnits: Number(row.serialized_units ?? 0),
+    warehouseUnits: Number(row.warehouse_units ?? 0),
+    dispatchedUnits: Number(row.dispatched_units ?? 0),
+    inMarketUnits: Number(row.in_market_units ?? 0),
+    soldUnits: Number(row.sold_units ?? 0),
+    returnedUnits: Number(row.returned_units ?? 0),
+    incidentUnits: Number(row.incident_units ?? 0),
+    timeline: rawTimeline
+      .filter(isPublicTimelineEntry)
+      .map((event) => ({ status: event.status, occurredAt: event.occurred_at })),
   };
 }
