@@ -83,10 +83,9 @@ function failOnQuery(error: { message: string } | null, context: string) {
 }
 
 export function createSalesReturnsBrowserRepository() {
-  const supabase = createClient();
-
   return {
     async listConfirmedSales(page: number, pageSize: number): Promise<ConfirmedSalesPage> {
+      const supabase = createClient();
       const { from, to } = pageRange(page, pageSize);
       const { data, count, error } = await supabase
         .from('investment_sales')
@@ -114,6 +113,7 @@ export function createSalesReturnsBrowserRepository() {
     },
 
     async loadReturnContext(): Promise<{ locations: ReturnLocation[]; canManage: boolean }> {
+      const supabase = createClient();
       const [{ data: locations, count, error: locationsError }, { data: permission, error: permissionError }] =
         await Promise.all([
           supabase
@@ -135,6 +135,7 @@ export function createSalesReturnsBrowserRepository() {
     },
 
     async loadSaleDetails(saleId: string): Promise<SaleReturnDetails> {
+      const supabase = createClient();
       const [{ data: items, count: itemCount, error: itemsError }, { data: notes, count: noteCount, error: notesError }, { data: reconciliation, error: reconciliationError }] =
         await Promise.all([
           supabase
@@ -200,6 +201,7 @@ export function createSalesReturnsBrowserRepository() {
       p_credit_reference: string | null;
       p_notes: string | null;
     }) {
+      const supabase = createClient();
       return await supabase.rpc('record_sale_return_credit_note', payload);
     },
   };
