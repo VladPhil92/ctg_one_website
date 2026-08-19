@@ -3,7 +3,6 @@ import type { MetadataRoute } from 'next';
 const siteUrl = 'https://ctgone.com';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
   const routes = [
     { path: '/', changeFrequency: 'weekly' as const, priority: 1 },
     { path: '/about', changeFrequency: 'monthly' as const, priority: 0.9 },
@@ -26,9 +25,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/inversion/legal', changeFrequency: 'monthly' as const, priority: 0.7 },
   ];
 
+  // Do not synthesize `lastModified` from request/build time. Search engines
+  // should receive that signal only when a route has an authoritative content
+  // modification timestamp; otherwise omission is more truthful than "now".
   return routes.map(({ path, changeFrequency, priority }) => ({
     url: `${siteUrl}${path}`,
-    lastModified: now,
     changeFrequency,
     priority,
   }));
