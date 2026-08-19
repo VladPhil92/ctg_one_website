@@ -123,3 +123,9 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
             -v ON_ERROR_STOP=1 \
             -f scripts/domain-event-outbox-schema-smoke.sql
+
+      - name: Document and Notification OS PostgreSQL contract
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -f scripts/document-notification-os-schema-smoke.sql
