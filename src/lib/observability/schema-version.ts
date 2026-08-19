@@ -1,3 +1,3 @@
-export const EXPECTED_DATABASE_MIGRATION = '0053' as const;
-export const EXPECTED_DATABASE_MIGRATION_NAME = 'lease_recovery_hardening' as const;
-export const EXPECTED_DATABASE_MIGRATION_COUNT = 53 as const;
+export const EXPECTED_DATABASE_MIGRATION = '0054' as const;
+export const EXPECTED_DATABASE_MIGRATION_NAME = 'notification_template_fk_index' as const;
+export const EXPECTED_DATABASE_MIGRATION_COUNT = 54 as const;
