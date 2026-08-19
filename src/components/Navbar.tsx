@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { PLATFORM_NAV_ITEMS, PRIMARY_NAV_ITEMS } from '@/lib/constants';
 import { Button } from './ui/Button';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { AFTER_PRIMARY_NAVIGATION_ID, SkipLink } from './SkipLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -88,6 +89,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
+      <SkipLink />
       <nav
         aria-label={primaryLabel}
         className={`fixed left-0 right-0 top-0 z-50 transition-[padding,background-color,border-color,backdrop-filter] duration-300 ${isScrolled ? 'py-3' : 'py-5 sm:py-6'}`}
@@ -201,6 +203,8 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
       </nav>
+
+      <span id={AFTER_PRIMARY_NAVIGATION_ID} tabIndex={-1} className="sr-only" aria-hidden="true" />
 
       {isOpen && (
         <>
