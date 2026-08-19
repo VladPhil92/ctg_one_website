@@ -5,6 +5,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const migration = await read('supabase/migrations/0028_sales_returns_credit_notes.sql');
 const hardening = await read('supabase/migrations/0029_sales_returns_hardening.sql');
 const settlementClosure = await read('supabase/migrations/0030_sales_returns_settlement_guard.sql');
+const dashboardReadModel = await read('supabase/migrations/0059_admin_aggregate_read_models.sql');
 const returnsPage = await read('src/app/admin/operations/returns/page.tsx');
 const returnsRepository = await read('src/modules/operations/returns/browser-repository.ts');
 const settlementPage = await read('src/app/admin/operations/settlement/page.tsx');
@@ -131,10 +132,11 @@ assert.ok(
   'Settlement UI must display net facts after credit-note reversals.',
 );
 assert.ok(
-  overviewPage.includes("amountByType(rows,'REVENUE_REVERSAL')")
-    && overviewPage.includes("amountByType(rows,'TAX_REVERSAL')")
-    && overviewPage.includes('netRevenue:revenue-revenueReversal'),
-  'Operations Overview must report revenue/result net of credit-note reversals.',
+  overviewPage.includes("rpc('get_operations_dashboard_snapshot'")
+    && dashboardReadModel.includes("entry_type = 'REVENUE_REVERSAL'")
+    && dashboardReadModel.includes("entry_type = 'TAX_REVERSAL'")
+    && dashboardReadModel.includes('f.revenue - f.revenue_reversal'),
+  'Operations Overview must preserve revenue/result net of credit-note reversals through its aggregate SQL read model.',
 );
 assert.ok(
   nav.includes("href: '/admin/operations/returns'"),
