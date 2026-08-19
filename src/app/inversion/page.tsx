@@ -5,7 +5,7 @@ import { Container, Badge, SectionHeader, FadeInSection } from '@/components/ui'
 import { Button } from '@/components/ui/Button';
 import { LotCard } from '@/components/inversion/LotCard';
 import { UnitEconomics } from '@/components/inversion/UnitEconomics';
-import { getPublicLots, getLotFundingSummary } from '@/lib/investment/queries';
+import { getPublicLots, getPublicLotFundingSummaries } from '@/lib/investment/queries';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,13 +13,13 @@ const STEPS = [
   {
     n: '01',
     title: 'Explora oportunidades',
-    description: 'Revisa los lotes disponibles, sus estilos, cantidades y condiciones.',
+    description: 'Revisa los lotes publicados, sus estilos, cantidades, estado y condiciones.',
     icon: Search,
   },
   {
     n: '02',
     title: 'Participa en un lote',
-    description: 'Elige cuánto participar y confirma tu aporte de forma segura.',
+    description: 'Cuando un lote abre financiación, elige cuánto participar y confirma tu aporte de forma segura.',
     icon: Coins,
   },
   {
@@ -80,8 +80,11 @@ const BEER_STYLES = [
 ];
 
 export default async function InversionLandingPage() {
-  const lots = (await getPublicLots()).slice(0, 2);
-  const fundings = await Promise.all(lots.map(getLotFundingSummary));
+  const [allLots, fundingByLot] = await Promise.all([
+    getPublicLots(),
+    getPublicLotFundingSummaries(),
+  ]);
+  const lots = allLots.slice(0, 2);
 
   return (
     <>
@@ -100,7 +103,7 @@ export default async function InversionLandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button href="/inversion/lotes" variant="primary" size="lg" arrow>
-                  Ver lotes disponibles
+                  Ver lotes publicados
                 </Button>
                 <Button href="/inversion/como-funciona" variant="secondary" size="lg">
                   Cómo funciona
@@ -256,13 +259,21 @@ export default async function InversionLandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {lots.map((lot, i) => (
                 <FadeInSection key={lot.id} delay={i * 0.1}>
-                  <LotCard lot={lot} funding={fundings[i]} />
+                  <LotCard
+                    lot={lot}
+                    funding={fundingByLot[lot.id] ?? {
+                      totalCases: lot.total_eligible_units,
+                      allocatedCases: 0,
+                      fundedPercent: 0,
+                      availableCasesEquivalent: lot.total_eligible_units,
+                    }}
+                  />
                 </FadeInSection>
               ))}
             </div>
           ) : (
             <p className="text-sm text-text-dim">
-              Aún no hay lotes publicados. Este programa se encuentra en fase de beta cerrada.
+              Aún no hay lotes publicados. Los borradores internos no se muestran en esta superficie.
             </p>
           )}
         </Container>

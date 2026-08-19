@@ -198,5 +198,11 @@ export interface InvestmentSaleItem {
   unit_price_cents: number; line_total_cents: number; created_at: string;
 }
 
-export interface LotFundingSummary { totalCases: number; allocatedCases: number; fundedPercent: number; availableCasesEquivalent: number; }
+export interface LotFundingSummary {
+  totalCases: number;
+  allocatedCases: number;
+  reservedCases?: number;
+  fundedPercent: number;
+  availableCasesEquivalent: number;
+}
 export interface LotInventorySummary { produced: number; warehouse: number; dispatched: number; sold: number; damaged: number; }

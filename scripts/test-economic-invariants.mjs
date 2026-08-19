@@ -16,6 +16,7 @@ const partialInventoryMigration = await read('supabase/migrations/0042_partial_i
 const eligibleSerializationMigration = await read('supabase/migrations/0043_investment_serialization_eligible_capacity.sql');
 const transportMigration = await read('supabase/migrations/0044_transport_cost_and_channel_tax_economics.sql');
 const transportCompatibilityMigration = await read('supabase/migrations/0045_transport_economics_compatibility.sql');
+const publicOpportunityMigration = await read('supabase/migrations/0060_public_investment_opportunity_read_model.sql');
 const privilegeHardening = await read('supabase/migrations/0021_economics_function_privilege_hardening.sql');
 const languageContext = await read('src/contexts/LanguageContext.tsx');
 const economicsTranslations = await read('src/i18n/investmentEconomicsTranslations.ts');
@@ -44,7 +45,19 @@ assert.ok(economics.includes('formula.participant_profit_share'), 'Participant s
 assert.ok(economics.includes('lot.total_eligible_units'), 'Simulator must cap scenarios at the fundable case capacity, not total physical production.');
 assert.ok(queries.includes("lot.status === 'FUNDING_OPEN'"), 'Public simulator must prefer funding-open lots.');
 assert.ok(queries.includes('lot.total_eligible_units >= MIN_INVESTMENT_CASES'), 'Public simulator eligibility must use fundable case capacity.');
-assert.ok(queries.includes('const fundableCases = lot.total_eligible_units'), 'Funding summaries must derive availability from fundable capacity.');
+assert.ok(
+  publicOpportunityMigration.includes('l.total_eligible_units')
+    && publicOpportunityMigration.includes('p.total_cases - p.allocated_cases - p.reserved_cases'),
+  'Funding summaries must derive availability from fundable capacity after completed allocations and active reservations.',
+);
+assert.ok(
+  publicOpportunityMigration.includes("o.status in ('AWAITING_PAYMENT','PENDING_BANK_VERIFICATION','PAYMENT_SUBMITTED','PAYMENT_VERIFIED')"),
+  'Public availability must reserve the same active order states enforced by authoritative order creation.',
+);
+assert.ok(
+  queries.includes("rpc('get_public_investment_lot_funding'"),
+  'Public funding summaries must consume the authoritative aggregate funding read model.',
+);
 
 assert.ok(languageContext.includes('translateInvestmentEconomicsPhrase'), 'LanguageContext must route investment economics through parameter-aware translations.');
 assert.ok(economicsTranslations.includes('Economía unitaria · (.+)'), 'Dynamic lot-code economics badges must have translation coverage.');
