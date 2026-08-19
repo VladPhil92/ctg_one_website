@@ -22,17 +22,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadProfile = useCallback(async (uid: string) => {
-    if (!isSupabaseConfigured) return;
+  const fetchProfile = useCallback(async (uid: string) => {
+    if (!isSupabaseConfigured) return null;
     const supabase = createClient();
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
-    setProfile((data as Profile) ?? null);
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+    if (error) return null;
+    return (data as Profile | null) ?? null;
+  }, []);
+
+  const clearIdentity = useCallback(() => {
+    setUserId(null);
+    setEmail(null);
+    setProfile(null);
   }, []);
 
   useEffect(() => {
-    // Supabase isn't configured yet in every environment (e.g. before the
-    // project's env vars are set up) — behave as "signed out" instead of
-    // throwing, so every other page keeps rendering normally.
+    // Marketing routes must remain renderable before Supabase environment
+    // variables are provisioned. In that case Auth behaves as signed out.
     if (!isSupabaseConfigured) {
       setIsLoading(false);
       return;
@@ -41,47 +47,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = createClient();
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const bootstrapValidatedIdentity = async () => {
+      // getUser() validates the access token with Supabase Auth. Do not use the
+      // locally cached session as the initial source of authenticated identity.
+      const { data, error } = await supabase.auth.getUser();
       if (!mounted) return;
-      setUserId(session?.user?.id ?? null);
-      setEmail(session?.user?.email ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id).finally(() => mounted && setIsLoading(false));
-      } else {
+
+      if (error || !data.user) {
+        clearIdentity();
         setIsLoading(false);
+        return;
       }
-    });
+
+      setUserId(data.user.id);
+      setEmail(data.user.email ?? null);
+      const nextProfile = await fetchProfile(data.user.id);
+      if (!mounted) return;
+      setProfile(nextProfile);
+      setIsLoading(false);
+    };
+
+    void bootstrapValidatedIdentity();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id ?? null);
-      setEmail(session?.user?.email ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setProfile(null);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+
+      if (event === 'SIGNED_OUT' || !session?.user) {
+        clearIdentity();
+        setIsLoading(false);
+        return;
       }
+
+      // Auth events are emitted by the Supabase client after a session change.
+      // Use them for responsive client UI, while protected server routes and the
+      // initial bootstrap continue to validate identity independently.
+      setUserId(session.user.id);
+      setEmail(session.user.email ?? null);
+      setIsLoading(false);
+      void fetchProfile(session.user.id).then((nextProfile) => {
+        if (mounted) setProfile(nextProfile);
+      });
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [loadProfile]);
+  }, [clearIdentity, fetchProfile]);
 
   const signOut = async () => {
     if (isSupabaseConfigured) {
       const supabase = createClient();
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
     }
-    setUserId(null);
-    setEmail(null);
-    setProfile(null);
+    clearIdentity();
   };
 
   const refreshProfile = async () => {
-    if (userId) await loadProfile(userId);
+    if (!userId) return;
+    setProfile(await fetchProfile(userId));
   };
 
   return (
