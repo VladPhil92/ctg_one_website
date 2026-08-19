@@ -26,7 +26,7 @@ DECLARE
 BEGIN
   v_snapshot := public.get_operations_intelligence_snapshot();
 
-  IF v_snapshot ->> 'mode' <> 'READ_ONLY' THEN
+  IF (v_snapshot ->> 'mode') IS DISTINCT FROM 'READ_ONLY' THEN
     RAISE EXCEPTION 'operations intelligence snapshot must declare READ_ONLY mode';
   END IF;
 
