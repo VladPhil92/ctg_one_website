@@ -1,10 +1,14 @@
 export type ProofStatus = 'LIVE' | 'PARTIAL' | 'IN DEVELOPMENT' | 'ROADMAP';
+export type PublicProofStatus = ProofStatus | 'BETA';
+
+export const PUBLIC_PROOF_STATUSES: PublicProofStatus[] = ['LIVE', 'BETA', 'PARTIAL', 'IN DEVELOPMENT', 'ROADMAP'];
 
 export type ProofItem = {
   id: string;
   area: string;
   capability: string;
   status: ProofStatus;
+  publicStatus?: PublicProofStatus;
   evidence: string[];
   publicPath?: string;
 };
@@ -30,9 +34,16 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
     id: 'investment-platform',
     area: 'Products',
     capability: 'CTG Craft Beer Investment operating model',
-    status: 'LIVE',
-    evidence: ['Production batches', 'Allocations', 'Inventory', 'Ledger', 'Settlements', 'Participant/admin surfaces'],
-    publicPath: '/products',
+    status: 'PARTIAL',
+    publicStatus: 'BETA',
+    evidence: [
+      'Closed-beta participant and admin surfaces implemented',
+      'Order, allocation, inventory, ledger and settlement schema/RPCs implemented',
+      'Production batch state machine and serialization implemented',
+      'Public registration and funding remain fail-closed behind feature flags',
+      'Clean-database migration and Golden Path contracts run in CI',
+    ],
+    publicPath: '/inversion',
   },
   {
     id: 'delivery-platform',
@@ -47,7 +58,7 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
     area: 'Reliability',
     capability: 'Health and structured logging baseline',
     status: 'PARTIAL',
-    evidence: ['/api/health', 'Structured JSON logger', 'Sensitive-field redaction'],
+    evidence: ['/api/health', 'Structured JSON logger', 'Sensitive-field redaction', 'Schema compatibility probe'],
     publicPath: '/technology/status',
   },
   {
@@ -70,13 +81,14 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
     area: 'Artificial Intelligence',
     capability: 'CTG Knowledge v0.1 authenticated source-grounded RAG pilot',
     status: 'PARTIAL',
+    publicStatus: 'BETA',
     evidence: [
       'pgvector migration and RLS policies implemented',
       'Admin-only curated text ingestion endpoint',
       'Authenticated semantic retrieval endpoint',
       'Server-side OpenAI embeddings and Responses integration',
       'Citation metadata returned independently of generated text',
-      'Production migration/configuration/evaluation still required before LIVE',
+      'LIVE promotion still requires reproducible evaluation and operating evidence',
     ],
     publicPath: '/ai',
   },
@@ -90,6 +102,16 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
   },
 ];
 
+export function getCapabilityProof(id: string): ProofItem {
+  const item = TECHNOLOGY_PROOF.find((candidate) => candidate.id === id);
+  if (!item) throw new Error(`Unknown technology capability: ${id}`);
+  return item;
+}
+
+export function getPublicProofStatus(item: ProofItem): PublicProofStatus {
+  return item.publicStatus ?? item.status;
+}
+
 export const TECHNICAL_CHANGELOG = [
   { phase: '01', title: 'Credibility hardening', detail: 'Separated verified capabilities from roadmap claims and corrected outdated deployment/security narratives.' },
   { phase: '02', title: 'CTG One OS', detail: 'Formalized the shared technology layer and maturity model across identity, data, transactions, automation, security and intelligence.' },
@@ -100,5 +122,5 @@ export const TECHNICAL_CHANGELOG = [
   { phase: '07', title: 'Public technical proof', detail: 'Introduced public status, Labs framework and technical changelog as verifiable evidence surfaces.' },
   { phase: '08', title: 'Production readiness', detail: 'Defined the Render deployment contract, health checks and production verification runbook.' },
   { phase: '09', title: 'AI platform architecture', detail: 'Expanded CTG One AI with Citation-First RAG, agent runtime, risk tiers, evaluation, security and CTG Knowledge product architecture while retaining IN DEVELOPMENT status.' },
-  { phase: '10', title: 'CTG Knowledge v0.1', detail: 'Implemented the first authenticated RAG pilot with curated ingestion, pgvector retrieval, server-side model access, grounded answers and structured source metadata; production verification remains required before LIVE.' },
+  { phase: '10', title: 'CTG Knowledge v0.1', detail: 'Implemented the first authenticated RAG pilot with curated ingestion, pgvector retrieval, server-side model access, grounded answers and structured source metadata; LIVE promotion remains evidence-gated.' },
 ] as const;

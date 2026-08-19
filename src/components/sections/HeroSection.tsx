@@ -6,16 +6,17 @@ import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { HERO } from '@/data/content';
+import { getCapabilityProof, getPublicProofStatus } from '@/data/technology-proof';
 import { BlockchainNetwork } from '@/components/BlockchainNetwork';
-import { Cpu, Sparkles, Network, Layers3 } from 'lucide-react';
+import { Cpu, Sparkles, Network, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const capabilityRail = [
-  { icon: Cpu, en: 'Proprietary software · Live', es: 'Software propio · Activo' },
-  { icon: Sparkles, en: 'Applied AI · In development', es: 'IA aplicada · En desarrollo' },
-  { icon: Network, en: 'Infrastructure · Live', es: 'Infraestructura · Activa' },
-  { icon: Layers3, en: 'Real ecosystem · Live', es: 'Ecosistema real · Activo' },
-];
+  { id: 'identity-auth', icon: Cpu, en: 'Identity platform', es: 'Plataforma de identidad' },
+  { id: 'data-security', icon: ShieldCheck, en: 'Data & security', es: 'Datos y seguridad' },
+  { id: 'delivery-platform', icon: Network, en: 'Delivery infrastructure', es: 'Infraestructura de entrega' },
+  { id: 'ai-layer', icon: Sparkles, en: 'Applied AI', es: 'IA aplicada' },
+].map((item) => ({ ...item, status: getPublicProofStatus(getCapabilityProof(item.id)) }));
 
 const WHATSAPP_CONVERSATION_URL =
   'https://wa.me/573186428218?text=Hola%20CTG%20One%2C%20quiero%20conocer%20m%C3%A1s%20sobre%20su%20ecosistema%20y%20servicios.';
@@ -82,13 +83,13 @@ export const HeroSection: React.FC = () => {
 
             <FadeInSection delay={0.44}>
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-x-5 gap-y-5 py-5 border-y border-white/[0.045]">
-                {capabilityRail.map(({ icon: Icon, en, es }) => (
-                  <div key={en} className="flex items-center gap-2.5 min-w-0">
+                {capabilityRail.map(({ id, icon: Icon, en, es, status }) => (
+                  <div key={id} className="flex items-center gap-2.5 min-w-0">
                     <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-accent/20 bg-accent/[0.035]">
                       <Icon className="w-3.5 h-3.5 shrink-0 text-accent" strokeWidth={1.5} />
                     </span>
                     <span className="min-w-0 text-[9px] sm:text-[10px] uppercase tracking-[0.13em] text-text-dim leading-tight">
-                      {locale === 'es' ? es : en}
+                      {locale === 'es' ? es : en} · {status}
                     </span>
                   </div>
                 ))}
