@@ -48,7 +48,9 @@ for (const [path, source] of [
   );
 }
 
+assert.ok(navbar.includes('aria-label="Primary navigation"'), 'Primary navigation landmark must have an accessible name.');
 assert.ok(navbar.includes("aria-current={isActive ? 'page' : undefined}"), 'Active navigation links must expose aria-current=page.');
+assert.ok(navbar.includes('type="button"'), 'Mobile navigation toggle must be an explicit non-submit button.');
 assert.ok(navbar.includes('aria-expanded={isOpen}'), 'Mobile navigation toggle must expose its expanded state.');
 assert.ok(navbar.includes('aria-controls={MOBILE_NAVIGATION_ID}'), 'Mobile navigation toggle must identify the controlled panel.');
 assert.ok(navbar.includes('event.key === \'Escape\''), 'Mobile navigation must close on Escape.');
