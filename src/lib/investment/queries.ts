@@ -16,6 +16,7 @@ type PublicLotFundingRow = {
   lot_id: string;
   total_cases: number;
   allocated_cases: number;
+  reserved_cases: number;
   funded_percent: number;
   available_cases_equivalent: number;
 };
@@ -23,7 +24,7 @@ type PublicLotFundingRow = {
 // Public, unauthenticated-safe reads for /inversion surfaces. DRAFT lots are
 // blocked by RLS as of migration 0060 and filtered here again as defense in
 // depth. Funding progress is obtained only from the aggregate public RPC;
-// allocation rows themselves remain participant/admin-only.
+// allocation/order rows themselves remain participant/admin-only.
 
 export async function getPublicLots(): Promise<InvestmentProductionLot[]> {
   if (!isSupabaseConfigured) return [];
@@ -96,6 +97,7 @@ function fundingRowToSummary(row: PublicLotFundingRow): LotFundingSummary {
   return {
     totalCases: Number(row.total_cases ?? 0),
     allocatedCases: Number(row.allocated_cases ?? 0),
+    reservedCases: Number(row.reserved_cases ?? 0),
     fundedPercent: Number(row.funded_percent ?? 0),
     availableCasesEquivalent: Number(row.available_cases_equivalent ?? 0),
   };
@@ -122,6 +124,7 @@ export async function getLotFundingSummary(lot: InvestmentProductionLot): Promis
   return {
     totalCases: lot.total_eligible_units,
     allocatedCases: 0,
+    reservedCases: 0,
     fundedPercent: 0,
     availableCasesEquivalent: lot.total_eligible_units,
   };
