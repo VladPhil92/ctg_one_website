@@ -1,0 +1,59 @@
+name: IndexNow Recrawl Notification
+
+on:
+  schedule:
+    - cron: '41 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Submit even if this main commit was previously notified'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow-main
+  cancel-in-progress: true
+
+jobs:
+  submit:
+    name: Notify compatible search engines of current public URLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      INDEXNOW_ORIGIN: https://ctgone.com
+      INDEXNOW_ENDPOINT: https://api.indexnow.org/indexnow
+      INDEXNOW_REQUEST_TIMEOUT_MS: '15000'
+
+    steps:
+      - name: Checkout canonical main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+
+      - name: Restore per-commit notification marker
+        id: indexnow-cache
+        uses: actions/cache@v4
+        with:
+          path: .indexnow-state
+          key: indexnow-${{ github.sha }}
+
+      - name: Submit current sitemap URLs
+        if: steps.indexnow-cache.outputs.cache-hit != 'true' || github.event.inputs.force == 'true'
+        run: |
+          set -euo pipefail
+          node scripts/submit-indexnow.mjs
+          mkdir -p .indexnow-state
+          printf '%s\n' "${GITHUB_SHA}" > .indexnow-state/submitted-sha
+
+      - name: Report existing notification
+        if: steps.indexnow-cache.outputs.cache-hit == 'true' && github.event.inputs.force != 'true'
+        run: echo "Current main commit was already submitted to IndexNow; no duplicate notification sent."
