@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { pageRange } from '@/lib/pagination';
 import type { InvestmentBeerStyle } from '@/types/beer-style';
 import type { InvestmentProductionLot } from '@/types/investment';
 
@@ -20,28 +21,53 @@ export type SalesChannel = {
   active: boolean;
 };
 
+export type ProductionLotsPage = {
+  rows: InvestmentProductionLot[];
+  totalCount: number;
+};
+
+export type ProductionLotInventorySnapshot = {
+  lotId: string;
+  totalUnits: number;
+  statusCounts: Record<string, number>;
+  units: BottleUnit[];
+};
+
 export type OperationsCommandResult = Promise<{ error?: { message: string } | null }>;
 
 type RpcPayload = Record<string, unknown>;
+
+type RawInventorySnapshot = {
+  lot_id?: string;
+  total_units?: number;
+  status_counts?: Record<string, number>;
+  units?: BottleUnit[];
+};
 
 function throwQueryError(error: { message: string } | null, context: string) {
   if (error) throw new Error(`${context}: ${error.message}`);
 }
 
 export function createOperationsBrowserRepository() {
-  const supabase = createClient();
-
   return {
-    async listLots(): Promise<InvestmentProductionLot[]> {
-      const { data, error } = await supabase
+    async listLots(page: number, pageSize: number): Promise<ProductionLotsPage> {
+      const supabase = createClient();
+      const { from, to } = pageRange(page, pageSize);
+      const { data, count, error } = await supabase
         .from('investment_production_lots')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, to);
       throwQueryError(error, 'No se pudieron cargar los lotes');
-      return (data ?? []) as InvestmentProductionLot[];
+      return {
+        rows: (data ?? []) as InvestmentProductionLot[],
+        totalCount: count ?? 0,
+      };
     },
 
     async listBeerStyles(): Promise<InvestmentBeerStyle[]> {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('investment_beer_styles')
         .select(
@@ -54,6 +80,7 @@ export function createOperationsBrowserRepository() {
     },
 
     async listSalesChannels(): Promise<SalesChannel[]> {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('investment_sales_channels')
         .select('id,code,name,active')
@@ -63,42 +90,65 @@ export function createOperationsBrowserRepository() {
       return (data ?? []) as SalesChannel[];
     },
 
-    async listBottleUnits(lotId: string): Promise<BottleUnit[]> {
-      const { data, error } = await supabase
-        .from('investment_bottle_units')
-        .select('id,lot_id,serial_code,unit_number,status,current_location,sold_at,sale_price_cents')
-        .eq('lot_id', lotId)
-        .order('unit_number', { ascending: false })
-        .limit(250);
-      throwQueryError(error, 'No se pudieron cargar las unidades serializadas');
-      return (data ?? []) as BottleUnit[];
+    async getLotInventorySnapshot(
+      lotId: string,
+      page: number,
+      pageSize: number,
+    ): Promise<ProductionLotInventorySnapshot> {
+      const supabase = createClient();
+      const { from } = pageRange(page, pageSize);
+      const { data, error } = await supabase.rpc('get_production_lot_inventory_snapshot', {
+        p_lot_id: lotId,
+        p_unit_limit: pageSize,
+        p_unit_offset: from,
+      });
+      throwQueryError(error, 'No se pudo cargar el inventario exacto del lote');
+
+      const snapshot = (data ?? {}) as RawInventorySnapshot;
+      const statusCounts = Object.fromEntries(
+        Object.entries(snapshot.status_counts ?? {}).map(([status, value]) => [status, Number(value) || 0]),
+      );
+
+      return {
+        lotId: snapshot.lot_id ?? lotId,
+        totalUnits: Number(snapshot.total_units) || 0,
+        statusCounts,
+        units: Array.isArray(snapshot.units) ? snapshot.units : [],
+      };
     },
 
     async createLot(payload: RpcPayload): OperationsCommandResult {
+      const supabase = createClient();
       return await supabase.rpc('create_production_lot_from_style', payload);
     },
 
     async saveBeerStyleEconomics(payload: RpcPayload): OperationsCommandResult {
+      const supabase = createClient();
       return await supabase.rpc('update_investment_beer_style_economics', payload);
     },
 
     async transitionLot(payload: RpcPayload): OperationsCommandResult {
+      const supabase = createClient();
       return await supabase.rpc('transition_lot_status', payload);
     },
 
     async generateBottleUnits(payload: RpcPayload): OperationsCommandResult {
+      const supabase = createClient();
       return await supabase.rpc('generate_bottle_units', payload);
     },
 
     async updateBottleUnits(payload: RpcPayload): OperationsCommandResult {
+      const supabase = createClient();
       return await supabase.rpc('update_bottle_units_status', payload);
     },
 
     async recordBottleSale(payload: RpcPayload): OperationsCommandResult {
+      const supabase = createClient();
       return await supabase.rpc('record_bottle_sale_document', payload);
     },
 
     async recordLotFinancialEntry(payload: RpcPayload): OperationsCommandResult {
+      const supabase = createClient();
       return await supabase.rpc('record_lot_financial_entry', payload);
     },
   };
