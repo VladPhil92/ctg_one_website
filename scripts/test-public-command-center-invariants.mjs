@@ -21,7 +21,18 @@ for (const route of publicRoutes) {
   assert.doesNotMatch(source, /<main className="min-h-screen bg-bg-primary">/, `${route} must not regress to the legacy isolated public shell.`);
 }
 
-const [shell, publicStyles, investmentLayout, investmentPage, nextConfig, hero, network] = await Promise.all([
+const [
+  shell,
+  publicStyles,
+  investmentLayout,
+  investmentPage,
+  nextConfig,
+  hero,
+  network,
+  homeOverview,
+  investmentSpotlight,
+  accountCta,
+] = await Promise.all([
   read('src/components/PublicPageShell.tsx'),
   read('src/styles/PublicCommandCenter.module.css'),
   read('src/app/inversion/layout.tsx'),
@@ -29,6 +40,9 @@ const [shell, publicStyles, investmentLayout, investmentPage, nextConfig, hero, 
   read('next.config.js'),
   read('src/components/sections/HeroSection.tsx'),
   read('src/components/BlockchainNetwork.tsx'),
+  read('src/components/sections/HomeOverviewSection.tsx'),
+  read('src/components/sections/InvestmentSpotlightSection.tsx'),
+  read('src/components/sections/AccountCtaSection.tsx'),
 ]);
 
 assert.match(shell, /commandStyles\.theme/, 'Public shell must inherit the Home command-center design tokens.');
@@ -48,6 +62,12 @@ const ornamentalSystemCopy = /CTG-CORE|NETWORK CORE|CORE ONLINE|SYNC\s*100|NODE\
 assert.doesNotMatch(hero, ornamentalSystemCopy, 'Hero must not render ornamental pseudo-system nomenclature.');
 assert.doesNotMatch(network, ornamentalSystemCopy, 'Ecosystem graphic must not render ornamental pseudo-system nomenclature.');
 assert.doesNotMatch(network, />CARTAGENA</i, 'Ecosystem graphic must not use an unexplained location label.');
+
+assert.doesNotMatch(homeOverview, /MODULE-\d+/i, 'Home overview cards must not use ornamental module codes.');
+assert.doesNotMatch(investmentSpotlight, /SIG-\d+|LIVE PRODUCT\s*\/\s*CASE-\d+|PHYSICAL PRODUCTION LAYER/i, 'Investment spotlight must not use ornamental telemetry or case codes.');
+assert.doesNotMatch(accountCta, /AUTH-\d+/i, 'Account CTA must not use ornamental authentication codes.');
+assert.match(investmentSpotlight, /quality=\{90\}/, 'Prominent Home photography must request the high-fidelity quality tier.');
+assert.match(investmentSpotlight, /data-ctg-photo="high-fidelity-source"/, 'Prominent Home photography must use the shared high-fidelity image treatment.');
 
 assert.match(investmentLayout, /commandStyles\.theme/, 'Investment must inherit command-center tokens without changing its route-scoped domain shell.');
 assert.match(investmentLayout, /publicStyles\.investmentShell/, 'Investment must use the command-center investment surface.');
