@@ -24,7 +24,8 @@ export default async function AdminKycPage({ searchParams }: { searchParams: Sea
     .from('kyc_submissions')
     .select('id,user_id,status,created_at', { count: 'exact' })
     .eq('status', 'pending')
-    .order('created_at', { ascending: true })
+    .eq('intake_state', 'submitted')
+    .order('submitted_at', { ascending: true })
     .order('id', { ascending: true })
     .range(from, to);
 
@@ -106,7 +107,7 @@ export default async function AdminKycPage({ searchParams }: { searchParams: Sea
       <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-outfit font-bold text-white">Revisión de KYC</h1>
-          <p className="mt-2 text-xs text-text-dim">Cola pendiente paginada · {totalCount} solicitudes</p>
+          <p className="mt-2 text-xs text-text-dim">Cola pendiente paginada · {totalCount} solicitudes finalizadas</p>
         </div>
       </div>
       <KycReviewQueue submissions={withSignedUrls as React.ComponentProps<typeof KycReviewQueue>['submissions']} />
