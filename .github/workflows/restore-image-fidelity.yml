@@ -1,0 +1,69 @@
+name: Restore image fidelity
+
+on:
+  push:
+    branches:
+      - design/public-command-center-image-quality
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore CTG Craft Beer photography
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/images/inversion
+
+          curl -fsSL 'https://paste.rs/97JR7.webp' -o public/images/inversion/ctg-craft-beer-golden-pale-ale.webp
+          curl -fsSL 'https://paste.rs/IyP2S.webp' -o public/images/inversion/ctg-craft-beer-hefeweizen.webp
+          curl -fsSL 'https://paste.rs/EMulU.webp' -o public/images/inversion/ctg-craft-beer-irish-red-ale.webp
+          curl -fsSL 'https://paste.rs/Oh1T1.webp' -o public/images/inversion/ctg-craft-beer-miyagi.webp
+          curl -fsSL 'https://paste.rs/IWpXs.webp' -o public/images/inversion/ctg-craft-beer-porter.webp
+
+          echo '6b19865ac530a8c38a8d943a8ee80291923508993481a5fc65fb7cd0a22cc5a7  public/images/inversion/ctg-craft-beer-golden-pale-ale.webp' | sha256sum -c -
+          echo 'e362901c1bed1e45b313a3f57a8c0556e3baf42a6f058c779a7e5a097de67cf3  public/images/inversion/ctg-craft-beer-hefeweizen.webp' | sha256sum -c -
+          echo '29ef72fba095c19ab1d5b1ed41cc86a8178d38cb7f163ff062ebdc196d49b554  public/images/inversion/ctg-craft-beer-irish-red-ale.webp' | sha256sum -c -
+          echo '76a81bc5531d878819cf60483f66b8a64f09ba6f934860236ce4691d6be1c0a4  public/images/inversion/ctg-craft-beer-miyagi.webp' | sha256sum -c -
+          echo '9a72d3b9a1739627286443328e3726624c4f7d7df54055db5e1eb9c2ae3b446a  public/images/inversion/ctg-craft-beer-porter.webp' | sha256sum -c -
+
+          node - <<'NODE'
+          const fs = require('fs');
+          const files = [
+            'public/images/inversion/ctg-craft-beer-golden-pale-ale.webp',
+            'public/images/inversion/ctg-craft-beer-hefeweizen.webp',
+            'public/images/inversion/ctg-craft-beer-irish-red-ale.webp',
+            'public/images/inversion/ctg-craft-beer-miyagi.webp',
+            'public/images/inversion/ctg-craft-beer-porter.webp',
+          ];
+          for (const file of files) {
+            const bytes = fs.readFileSync(file);
+            if (bytes.subarray(0, 4).toString('ascii') !== 'RIFF' || bytes.subarray(8, 12).toString('ascii') !== 'WEBP') {
+              throw new Error(`Invalid WebP: ${file}`);
+            }
+            if (bytes.length < 25_000 || bytes.length > 120_000) {
+              throw new Error(`Unexpected restored asset size ${bytes.length}: ${file}`);
+            }
+          }
+          NODE
+
+          rm -rf .image-restore
+          rm -f .github/workflows/restore-image-fidelity.yml
+
+      - name: Commit restored assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'assets(images): restore high-fidelity CTG Craft Beer photography'
+          git push
