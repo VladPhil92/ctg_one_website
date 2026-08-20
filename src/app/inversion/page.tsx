@@ -55,7 +55,7 @@ const BEER_STYLES = [
     origin: 'CTG Craft Beer',
     detail: '330 ml · 4.5% vol.',
     image: '/images/inversion/ctg-craft-beer-golden-pale-ale.webp',
-    alt: 'Botella Golden Pale Ale de CTG Craft Beer en fotografía de producto',
+    alt: 'Botellas Golden Pale Ale de CTG Craft Beer en fotografía de producto',
   },
   {
     name: 'Hefeweizen',
@@ -119,10 +119,10 @@ export default async function InversionLandingPage() {
                   alt="CTG Craft Beer en un punto real de comercialización"
                   fill
                   priority
-                  quality={78}
+                  quality={90}
                   sizes="(max-width: 1024px) 90vw, 42vw"
                   className="object-cover"
-                  data-ctg-photo="source-restored"
+                  data-ctg-photo="high-fidelity-source"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-6 pb-6 pt-20">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-accent mb-2">Producto en circulación</p>
@@ -156,12 +156,12 @@ export default async function InversionLandingPage() {
                       src={beer.image}
                       alt={beer.alt}
                       fill
-                      quality={78}
+                      quality={90}
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-                      className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"
-                      data-ctg-photo="source-restored"
+                      className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                      data-ctg-photo="high-fidelity-source"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                   </div>
                   <div className="p-4 sm:p-5">
                     <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-accent mb-2">{beer.origin}</p>
