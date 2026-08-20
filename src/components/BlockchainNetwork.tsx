@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import styles from '@/styles/CommandCenter.module.css';
 
 interface BusinessUnit {
   id: string;
@@ -94,14 +95,14 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
       >
         <defs>
           <radialGradient id="networkCenterGlow">
-            <stop offset="0%" stopColor={GOLD_LIGHT} stopOpacity="0.2" />
-            <stop offset="48%" stopColor={GOLD} stopOpacity="0.06" />
+            <stop offset="0%" stopColor={GOLD_LIGHT} stopOpacity="0.22" />
+            <stop offset="48%" stopColor={GOLD} stopOpacity="0.07" />
             <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
           </radialGradient>
           <linearGradient id="networkLine" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={BLUE} stopOpacity="0.08" />
-            <stop offset="50%" stopColor={GOLD} stopOpacity="0.26" />
-            <stop offset="100%" stopColor={GOLD_LIGHT} stopOpacity="0.08" />
+            <stop offset="0%" stopColor={BLUE} stopOpacity="0.1" />
+            <stop offset="50%" stopColor={GOLD} stopOpacity="0.34" />
+            <stop offset="100%" stopColor={GOLD_LIGHT} stopOpacity="0.1" />
           </linearGradient>
           <filter id="softGoldGlow" x="-100%" y="-100%" width="300%" height="300%">
             <feGaussianBlur stdDeviation="4" result="blur" />
@@ -115,8 +116,24 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
           </clipPath>
         </defs>
 
-        <circle cx={CENTER} cy={CENTER} r="218" fill="none" stroke="rgba(214,174,86,0.14)" strokeWidth="0.75" />
-        <circle cx={CENTER} cy={CENTER} r="145" fill="none" stroke="rgba(36,140,255,0.08)" strokeWidth="0.65" strokeDasharray="3 14" />
+        <circle
+          cx={CENTER}
+          cy={CENTER}
+          r="218"
+          fill="none"
+          stroke="rgba(214,174,86,0.14)"
+          strokeWidth="0.75"
+          className={styles.ecosystemOrbitOuter}
+        />
+        <circle
+          cx={CENTER}
+          cy={CENTER}
+          r="145"
+          fill="none"
+          stroke="rgba(36,140,255,0.11)"
+          strokeWidth="0.7"
+          className={styles.ecosystemOrbitInner}
+        />
 
         {units.map((unit, index) => {
           const pos = getNodePosition(index, units.length);
@@ -129,9 +146,11 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
               x2={pos.x}
               y2={pos.y}
               stroke={active ? GOLD_LIGHT : 'url(#networkLine)'}
-              strokeOpacity={active ? 0.8 : 0.45}
-              strokeWidth={active ? 1.2 : 0.65}
+              strokeOpacity={active ? 0.88 : 0.52}
+              strokeWidth={active ? 1.25 : 0.75}
               filter={active ? 'url(#softGoldGlow)' : undefined}
+              className={styles.ecosystemConnection}
+              style={{ animationDelay: `${index * -0.38}s` }}
             />
           );
         })}
@@ -145,17 +164,21 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
               key={unit.id}
               onMouseEnter={() => handleMouseEnter(unit.id)}
               onMouseLeave={handleMouseLeave}
-              style={{ cursor: interactive ? 'pointer' : 'default' }}
+              className={styles.ecosystemNode}
+              style={{
+                cursor: interactive ? 'pointer' : 'default',
+                animationDelay: `${index * -0.55}s`,
+              }}
             >
               {active && (
                 <circle
                   cx={pos.x}
                   cy={pos.y}
-                  r="40"
-                  fill="rgba(214,174,86,.02)"
+                  r="41"
+                  fill="rgba(214,174,86,.025)"
                   stroke={GOLD_LIGHT}
-                  strokeOpacity="0.2"
-                  strokeWidth="0.8"
+                  strokeOpacity="0.24"
+                  strokeWidth="0.9"
                   filter="url(#softGoldGlow)"
                 />
               )}
@@ -165,8 +188,8 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
                 r="34"
                 fill="rgba(4,8,13,0.97)"
                 stroke={active ? GOLD_LIGHT : GOLD}
-                strokeOpacity={active ? 0.95 : 0.5}
-                strokeWidth={active ? 1.2 : 0.8}
+                strokeOpacity={active ? 0.98 : 0.58}
+                strokeWidth={active ? 1.25 : 0.85}
               />
               <foreignObject x={pos.x - 14} y={pos.y - 14} width="28" height="28">
                 <div className="flex h-7 w-7 items-center justify-center">
@@ -189,19 +212,33 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
           );
         })}
 
-        <g>
-          <circle cx={CENTER} cy={CENTER} r="82" fill="url(#networkCenterGlow)" />
+        <g className={styles.ecosystemCenter}>
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            r="84"
+            fill="url(#networkCenterGlow)"
+            className={styles.ecosystemHalo}
+          />
           <circle
             cx={CENTER}
             cy={CENTER}
             r="54"
             fill="#04080d"
             stroke={GOLD_LIGHT}
-            strokeOpacity="0.9"
-            strokeWidth="1.2"
+            strokeOpacity="0.94"
+            strokeWidth="1.25"
             filter="url(#softGoldGlow)"
           />
-          <circle cx={CENTER} cy={CENTER} r="45" fill="rgba(214,174,86,0.02)" stroke={BLUE} strokeOpacity="0.08" strokeWidth="0.65" />
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            r="45"
+            fill="rgba(214,174,86,0.025)"
+            stroke={BLUE}
+            strokeOpacity="0.12"
+            strokeWidth="0.7"
+          />
           <image
             href="/images/logo/ctg-one-coin-icon.png"
             x="219"
