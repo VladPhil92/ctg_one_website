@@ -45,6 +45,17 @@ begin
   if not exists (
     select 1 from pg_indexes
     where schemaname = 'public'
+      and tablename = 'kyc_submissions'
+      and indexname = 'kyc_submissions_one_uploading_per_user'
+      and indexdef ilike '%unique index%'
+      and indexdef ilike '%where (intake_state = ''uploading''::text)%'
+  ) then
+    raise exception 'one-uploading-intake-per-user concurrency index missing';
+  end if;
+
+  if not exists (
+    select 1 from pg_indexes
+    where schemaname = 'public'
       and tablename = 'kyc_documents'
       and indexname = 'kyc_documents_submission_type_key'
   ) then
