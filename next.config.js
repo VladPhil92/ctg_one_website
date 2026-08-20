@@ -41,7 +41,12 @@ const nextConfig = {
   // authenticated server-side Supabase sessions and Route Handlers.
   // Production currently runs as a Render Web Service.
   images: {
+    // Keep source photography detailed, but let Next emit right-sized modern
+    // derivatives per viewport rather than shipping one oversized raster.
     formats: ['image/avif', 'image/webp'],
+    deviceSizes: [360, 430, 640, 768, 1024, 1280, 1536, 1920],
+    imageSizes: [32, 48, 64, 96, 128, 256],
+    minimumCacheTTL: 2592000,
   },
 
   // Canonical route policy: public corporate pages use stable English slugs.
