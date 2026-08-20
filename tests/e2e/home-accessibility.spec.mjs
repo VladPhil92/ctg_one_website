@@ -31,11 +31,19 @@ const RESPONSIVE_VIEWPORTS = [
   { width: 360, height: 800 },
 ];
 
+async function expectImmutableBrandName(page) {
+  const lockup = page.locator('[data-brand-lockup="ctg-one-technology"]').first();
+  await expect(lockup).toBeVisible();
+  const text = await lockup.innerText();
+  expect(text.replace(/\s+/g, ' ').trim()).toBe('CTG One Technology');
+}
+
 test.describe('CTG One home UI/UX accessibility contract', () => {
   test('Spanish home renders explicit localized card copy without English fallback', async ({ page }) => {
     await preferSpanish(page);
     await page.goto('/');
 
+    await expectImmutableBrandName(page);
     await expect(page.getByText('Fundada en 2024 en Cartagena, Colombia', { exact: false })).toBeVisible();
     await expect(page.getByText('CTG One construye la base tecnológica', { exact: false })).toBeVisible();
     await expect(page.getByText(/\d+ negocios operativos ofrecen entornos reales de aplicación para CTG One Technology/i)).toBeVisible();
@@ -63,6 +71,17 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     await expect(page.getByText('Core online', { exact: true })).toHaveCount(0);
     await expect(page.getByText('LIVE PRODUCT / CASE-001', { exact: true })).toHaveCount(0);
     await expect(page.getByText('Cartagena · Physical production layer', { exact: true })).toHaveCount(0);
+  });
+
+  test('CTG One Technology brand name never changes with the site locale', async ({ page }) => {
+    await preferSpanish(page);
+    await page.goto('/');
+
+    await expectImmutableBrandName(page);
+    await page.getByRole('button', { name: 'Inglés' }).click();
+    await expectImmutableBrandName(page);
+    await page.getByRole('button', { name: 'Spanish' }).click();
+    await expectImmutableBrandName(page);
   });
 
   test('public positioning remains technology-first and Rewards honors Spanish locale', async ({ page }) => {
