@@ -44,6 +44,12 @@ assert.match(publicStyles, /prefers-reduced-motion/, 'Public design must preserv
 assert.match(investmentLayout, /commandStyles\.theme/, 'Investment must inherit command-center tokens without changing its route-scoped domain shell.');
 assert.match(investmentLayout, /publicStyles\.investmentShell/, 'Investment must use the command-center investment surface.');
 assert.match(investmentLayout, /data-public-command-center="investment"/, 'Investment must expose the browser-testable command-center marker.');
+assert.doesNotMatch(publicStyles, /\.investmentShell\s*>\s*\*\s*\{/, 'Investment shell must never override the positioning of every direct child.');
+assert.match(
+  publicStyles,
+  /\.investmentShell\s*>\s*nav\s*\{[\s\S]*?position:\s*sticky;[\s\S]*?z-index:\s*50;/,
+  'Investment navigation must explicitly preserve sticky positioning above the shell atmosphere.',
+);
 assert.match(investmentPage, /publicStyles\.mediaFrame/, 'Investment photography must use the high-fidelity media frame.');
 assert.match(investmentPage, /quality=\{78\}/, 'Next Image must request a deliberate high-detail web derivative.');
 assert.match(investmentPage, /data-ctg-photo="source-restored"/, 'Restored source photography must be explicitly identified.');
