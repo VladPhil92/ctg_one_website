@@ -72,7 +72,8 @@ test.describe('CTG One authenticated critical journey', () => {
     });
 
     await page.getByRole('button', { name: 'Enviar para revisión' }).click();
-    await expect(page.getByRole('alert')).toContainText('Puedes volver a intentar');
+    const retryError = page.locator('p.accountError[role="alert"]');
+    await expect(retryError).toContainText('Puedes volver a intentar');
     expect(failBackUploadOnce).toBe(false);
     await expect(page.getByRole('heading', { name: 'Registrar documento' })).toBeVisible();
 
