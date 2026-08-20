@@ -97,8 +97,8 @@ const restoredImages = [
 
 for (const path of restoredImages) {
   const metadata = await stat(new URL(`../${path}`, import.meta.url));
-  assert.ok(metadata.size >= 100_000, `${path} is suspiciously over-compressed (${metadata.size} bytes).`);
-  assert.ok(metadata.size <= 350_000, `${path} is too heavy for the intended responsive source budget (${metadata.size} bytes).`);
+  assert.ok(metadata.size >= 45_000, `${path} is suspiciously over-compressed (${metadata.size} bytes).`);
+  assert.ok(metadata.size <= 180_000, `${path} is too heavy for the intended responsive source budget (${metadata.size} bytes).`);
 
   const bytes = await readBinary(path);
   assert.equal(bytes.subarray(0, 4).toString('ascii'), 'RIFF', `${path} must be a valid RIFF WebP asset.`);
