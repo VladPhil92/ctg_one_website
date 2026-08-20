@@ -3,7 +3,7 @@ name: Restore image fidelity
 on:
   push:
     branches:
-      - design/public-command-center-image-quality
+      - main
 
 permissions:
   contents: write
