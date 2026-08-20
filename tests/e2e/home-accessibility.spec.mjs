@@ -69,12 +69,16 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
       await expect(page.getByText(label, { exact: true })).toBeVisible();
     }
 
-    await expect(page.getByText('Núcleo en línea', { exact: true })).toBeVisible();
-    await expect(page.getByText('PRODUCTO OPERATIVO / CASO-001', { exact: true })).toBeVisible();
-    await expect(page.getByText('Cartagena · Capa de producción física', { exact: true })).toBeVisible();
-    await expect(page.getByText('Core online', { exact: true })).toHaveCount(0);
-    await expect(page.getByText('LIVE PRODUCT / CASE-001', { exact: true })).toHaveCount(0);
-    await expect(page.getByText('Cartagena · Physical production layer', { exact: true })).toHaveCount(0);
+    for (const removedOrnamentalLabel of [
+      'Núcleo en línea',
+      'PRODUCTO OPERATIVO / CASO-001',
+      'Cartagena · Capa de producción física',
+      'Core online',
+      'LIVE PRODUCT / CASE-001',
+      'Cartagena · Physical production layer',
+    ]) {
+      await expect(page.getByText(removedOrnamentalLabel, { exact: true })).toHaveCount(0);
+    }
   });
 
   test('CTG One Technology brand name never changes with the site locale', async ({ page }) => {
