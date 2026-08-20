@@ -20,6 +20,13 @@ update public.kyc_submissions
 set submitted_at = coalesce(submitted_at, created_at)
 where intake_state = 'submitted' and submitted_at is null;
 
+-- Exactly one resumable intake may exist per participant. The partial unique
+-- index is the database-level concurrency guard: two simultaneous browser
+-- attempts cannot manufacture duplicate unfinished submissions.
+create unique index if not exists kyc_submissions_one_uploading_per_user
+  on public.kyc_submissions (user_id)
+  where intake_state = 'uploading';
+
 create unique index if not exists kyc_documents_submission_type_key
   on public.kyc_documents (submission_id, document_type);
 
@@ -64,9 +71,25 @@ begin
     raise exception 'kyc submission already pending';
   end if;
 
-  insert into public.kyc_submissions (user_id, status, intake_state, submitted_at)
-  values (v_user_id, 'pending', 'uploading', null)
-  returning id into v_submission_id;
+  begin
+    insert into public.kyc_submissions (user_id, status, intake_state, submitted_at)
+    values (v_user_id, 'pending', 'uploading', null)
+    returning id into v_submission_id;
+  exception
+    when unique_violation then
+      select id
+        into v_submission_id
+        from public.kyc_submissions
+       where user_id = v_user_id
+         and intake_state = 'uploading'
+       order by created_at desc
+       limit 1
+       for update;
+  end;
+
+  if v_submission_id is null then
+    raise exception 'unable to initialize kyc intake';
+  end if;
 
   return v_submission_id;
 end;
