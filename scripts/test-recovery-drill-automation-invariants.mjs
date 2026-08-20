@@ -42,6 +42,7 @@ assert.match(workflow, /pg_restore --exit-on-error/, 'Recovery drill must restor
 assert.match(workflow, /recovery_drill/, 'Database restore target must be a dedicated recovery database.');
 assert.match(workflow, /recovery-storage-drill\.mjs/, 'Recovery drill must restore actual Storage bytes, not metadata only.');
 assert.match(workflow, /golden-path-transactional-smoke\.sql/, 'Recovered database must execute the transactional Golden Path.');
+assert.match(workflow, /kyc-transactional-resilience-schema-smoke\.sql/, 'Recovered database must prove the P3.1 KYC transaction boundary.');
 assert.match(workflow, /Upload redacted recovery evidence only/, 'Only redacted evidence may leave the ephemeral runner.');
 assert.doesNotMatch(
   workflow,
