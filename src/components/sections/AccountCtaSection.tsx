@@ -6,7 +6,7 @@ import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Fingerprint, ShieldCheck, Activity, ArrowUpRight } from 'lucide-react';
+import { Fingerprint, ShieldCheck, Activity } from 'lucide-react';
 import styles from '@/styles/CommandCenter.module.css';
 
 export const AccountCtaSection: React.FC = () => {
@@ -64,10 +64,7 @@ export const AccountCtaSection: React.FC = () => {
             <div className="relative z-10 grid items-center gap-10 lg:grid-cols-[1fr_0.72fr] lg:gap-16">
               <div>
                 <div className="mb-5 flex items-center gap-3">
-                  <span className="relative flex h-3 w-3 shrink-0" aria-hidden="true">
-                    <span className="absolute inset-0 rounded-full bg-[#d6ae56]/20 animate-ping" />
-                    <span className="relative m-auto h-1.5 w-1.5 rounded-full bg-[#f1c75b] shadow-[0_0_10px_rgba(241,199,91,.7)]" />
-                  </span>
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#f1c75b] shadow-[0_0_8px_rgba(241,199,91,.45)]" aria-hidden="true" />
                   <span className="min-w-0 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-[#f1c75b] leading-tight">{copy.eyebrow}</span>
                 </div>
 
@@ -96,19 +93,14 @@ export const AccountCtaSection: React.FC = () => {
                 </div>
               </div>
 
-              <div className="relative min-w-0">
-                <div className="absolute bottom-6 left-[27px] top-6 w-px bg-gradient-to-b from-transparent via-[#248cff]/25 to-transparent" aria-hidden="true" />
+              <div className="min-w-0">
                 <div className="space-y-3">
-                  {signals.map(({ icon: Icon, label }, index) => (
-                    <div key={label} className={`${styles.techCard} group flex min-w-0 items-center gap-4 p-4 sm:p-5`}>
-                      <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#d6ae56]/25 bg-[#050a10]">
+                  {signals.map(({ icon: Icon, label }) => (
+                    <div key={label} className={`${styles.techCard} flex min-w-0 items-center gap-4 p-4 sm:p-5`}>
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#d6ae56]/25 bg-[#050a10]">
                         <Icon className="h-[18px] w-[18px] shrink-0 text-[#f1c75b]" strokeWidth={1.4} aria-hidden="true" />
                       </span>
-                      <div className="min-w-0 flex-1">
-                        <span className="mb-1 block font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#248cff]/55 leading-tight">AUTH-0{index + 1}</span>
-                        <span className="block truncate text-sm text-text-secondary">{label}</span>
-                      </div>
-                      <ArrowUpRight className="h-4 w-4 shrink-0 text-text-dim transition-colors duration-300 group-hover:text-[#f1c75b]" aria-hidden="true" />
+                      <span className="min-w-0 text-sm text-text-secondary">{label}</span>
                     </div>
                   ))}
                 </div>

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Boxes, ChartNoAxesCombined, ScanLine, RadioTower } from 'lucide-react';
+import { Boxes, ChartNoAxesCombined, ScanLine } from 'lucide-react';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Button } from '@/components/ui/Button';
@@ -22,6 +22,7 @@ export const InvestmentSpotlightSection: React.FC = () => {
         cta: 'Explorar CTG Craft Beer Inversión',
         secondaryCta: 'Cómo funciona',
         imageAlt: 'Botella Hefeweizen de CTG Craft Beer',
+        imageCaption: 'Producción y comercialización real',
         signals: [
           { label: 'Inversión por lotes', detail: 'Capital asociado a producción identificable', icon: Boxes },
           { label: 'Trazabilidad operativa', detail: 'Seguimiento desde producción hasta venta', icon: ScanLine },
@@ -37,6 +38,7 @@ export const InvestmentSpotlightSection: React.FC = () => {
         cta: 'Explore CTG Craft Beer Investment',
         secondaryCta: 'How it works',
         imageAlt: 'CTG Craft Beer Hefeweizen bottle',
+        imageCaption: 'Real production and sales',
         signals: [
           { label: 'Batch-based investment', detail: 'Capital linked to identifiable production', icon: Boxes },
           { label: 'Operational traceability', detail: 'Track production through final sale', icon: ScanLine },
@@ -67,26 +69,21 @@ export const InvestmentSpotlightSection: React.FC = () => {
         <div className="grid items-stretch gap-7 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10 xl:gap-16">
           <FadeInSection direction="left">
             <div className={`${styles.commandPanel} relative min-h-[410px] overflow-hidden p-2 sm:min-h-[520px] lg:min-h-[620px]`}>
-              <div className="absolute left-5 top-5 z-20 flex items-center gap-2 rounded-full border border-[#d6ae56]/20 bg-[#050a10]/80 px-3 py-2 backdrop-blur-md">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#27d17f] shadow-[0_0_10px_rgba(39,209,127,.7)]" aria-hidden="true" />
-                <span className="font-mono text-[11px] uppercase tracking-[.13em] text-text-secondary">LIVE PRODUCT / CASE-001</span>
-              </div>
               <div className="relative h-full min-h-[394px] overflow-hidden rounded-[18px] sm:min-h-[504px] lg:min-h-[604px]">
                 <Image
                   src="/images/inversion/ctg-craft-beer-hefeweizen.webp"
                   alt={copy.imageAlt}
                   fill
+                  quality={90}
                   sizes="(max-width: 1024px) 100vw, 44vw"
-                  className="object-cover object-center transition-transform duration-700 hover:scale-[1.01]"
+                  className="object-cover object-center"
+                  data-ctg-photo="high-fidelity-source"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#030507] via-black/10 to-transparent" aria-hidden="true" />
                 <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
-                  <div className="flex items-center justify-between gap-4 border-t border-white/[.09] pt-5">
-                    <div>
-                      <span className="block text-[11px] font-semibold uppercase tracking-[.16em] text-[#f1c75b]">CTG Craft Beer</span>
-                      <span className="mt-1 block text-xs text-text-muted">Cartagena · Physical production layer</span>
-                    </div>
-                    <RadioTower className="h-5 w-5 text-[#248cff]/70" strokeWidth={1.35} aria-hidden="true" />
+                  <div className="border-t border-white/[.09] pt-5">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[.16em] text-[#f1c75b]">CTG Craft Beer</span>
+                    <span className="mt-1 block text-xs text-text-muted">{copy.imageCaption}</span>
                   </div>
                 </div>
               </div>
@@ -111,14 +108,11 @@ export const InvestmentSpotlightSection: React.FC = () => {
               </p>
 
               <div className="mb-8 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                {copy.signals.map(({ icon: Icon, label, detail }, index) => (
+                {copy.signals.map(({ icon: Icon, label, detail }) => (
                   <div key={label} className={`${styles.techCard} min-w-0 p-4 sm:p-5`}>
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#d6ae56]/25 bg-[#d6ae56]/[0.035]">
-                        <Icon className="h-4 w-4 shrink-0 text-[#f1c75b]" strokeWidth={1.45} aria-hidden="true" />
-                      </span>
-                      <span className="font-mono text-[11px] tracking-[.12em] text-[#248cff]/55">SIG-0{index + 1}</span>
-                    </div>
+                    <span className="mb-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#d6ae56]/25 bg-[#d6ae56]/[0.035]">
+                      <Icon className="h-4 w-4 shrink-0 text-[#f1c75b]" strokeWidth={1.45} aria-hidden="true" />
+                    </span>
                     <span className="block text-xs font-semibold uppercase leading-tight tracking-[0.09em] text-white">{label}</span>
                     <span className="mt-2 block text-xs leading-relaxed text-text-dim">{detail}</span>
                   </div>

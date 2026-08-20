@@ -41,7 +41,14 @@ const nextConfig = {
   // authenticated server-side Supabase sessions and Route Handlers.
   // Production currently runs as a Render Web Service.
   images: {
+    // Preserve detailed source photography while still emitting responsive,
+    // modern derivatives for each viewport. 90 is reserved for prominent
+    // user-supplied photography; 75 remains available for ordinary UI assets.
     formats: ['image/avif', 'image/webp'],
+    qualities: [75, 90],
+    deviceSizes: [360, 430, 640, 768, 1024, 1280, 1536, 1920],
+    imageSizes: [32, 48, 64, 96, 128, 256],
+    minimumCacheTTL: 2592000,
   },
 
   // Canonical route policy: public corporate pages use stable English slugs.

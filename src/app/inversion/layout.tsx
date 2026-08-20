@@ -2,6 +2,8 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { InvestmentNav } from '@/components/inversion/InvestmentNav';
 import { InvestmentFooter } from '@/components/inversion/InvestmentFooter';
+import commandStyles from '@/styles/CommandCenter.module.css';
+import publicStyles from '@/styles/PublicCommandCenter.module.css';
 
 // Route-scoped layout (ADR-012): owns its own nav/footer chrome instead of
 // reusing the main site's <Navbar/>/<Footer/>, so this initiative never
@@ -18,7 +20,10 @@ export const metadata: Metadata = {
 
 export default function InversionLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div
+      className={`${commandStyles.theme} ${publicStyles.investmentShell} min-h-screen flex flex-col`}
+      data-public-command-center="investment"
+    >
       <InvestmentNav />
       <div className="flex-1">{children}</div>
       <InvestmentFooter />

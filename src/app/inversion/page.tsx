@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { LotCard } from '@/components/inversion/LotCard';
 import { UnitEconomics } from '@/components/inversion/UnitEconomics';
 import { getPublicLots, getPublicLotFundingSummaries } from '@/lib/investment/queries';
+import publicStyles from '@/styles/PublicCommandCenter.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,7 @@ const BEER_STYLES = [
     origin: 'CTG Craft Beer',
     detail: '330 ml · 4.5% vol.',
     image: '/images/inversion/ctg-craft-beer-golden-pale-ale.webp',
-    alt: 'Botella Golden Pale Ale de CTG Craft Beer en fotografía de producto',
+    alt: 'Botellas Golden Pale Ale de CTG Craft Beer en fotografía de producto',
   },
   {
     name: 'Hefeweizen',
@@ -112,14 +113,16 @@ export default async function InversionLandingPage() {
             </FadeInSection>
 
             <FadeInSection delay={0.12}>
-              <div className="relative aspect-[4/5] max-w-xl mx-auto lg:ml-auto w-full overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
+              <div className={`${publicStyles.mediaFrame} relative aspect-[4/5] max-w-xl mx-auto lg:ml-auto w-full`}>
                 <Image
                   src="/images/inversion/ctg-craft-beer-miyagi.webp"
                   alt="CTG Craft Beer en un punto real de comercialización"
                   fill
                   priority
+                  quality={90}
                   sizes="(max-width: 1024px) 90vw, 42vw"
                   className="object-cover"
+                  data-ctg-photo="high-fidelity-source"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-6 pb-6 pt-20">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-accent mb-2">Producto en circulación</p>
@@ -148,15 +151,17 @@ export default async function InversionLandingPage() {
             {BEER_STYLES.map((beer, index) => (
               <FadeInSection key={beer.name} delay={0.04 + index * 0.06}>
                 <article className="group overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.025] h-full">
-                  <div className="relative aspect-[2/3] overflow-hidden bg-black">
+                  <div className={`${publicStyles.mediaFrame} relative aspect-[2/3] bg-black`}>
                     <Image
                       src={beer.image}
                       alt={beer.alt}
                       fill
+                      quality={90}
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-                      className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"
+                      className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                      data-ctg-photo="high-fidelity-source"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                   </div>
                   <div className="p-4 sm:p-5">
                     <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-accent mb-2">{beer.origin}</p>

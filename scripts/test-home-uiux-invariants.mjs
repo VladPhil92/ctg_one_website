@@ -67,9 +67,8 @@ assert.match(fade, /useReducedMotion/, 'JS reveal primitive must respect the OS 
 assert.match(fade, /initial=\{false\}/, 'Reveal primitive must render visible SSR/no-JS content.');
 assert.match(fade, /data-reveal/, 'Reveal primitives must remain addressable by the reduced-motion CSS safety net.');
 assert.doesNotMatch(fade, /hidden:\s*\{\s*opacity:\s*0/, 'Reveal primitives must never park content at opacity zero.');
-assert.match(network, /useReducedMotion/, 'Ecosystem SVG animation must respect reduced motion.');
-assert.match(network, /!reduceMotion\s*&&\s*<animateTransform/, 'SMIL rotation must not run when reduced motion is requested.');
-assert.match(network, /!reduceMotion\s*&&\s*<animateMotion/, 'Moving SVG particles must not run when reduced motion is requested.');
+assert.doesNotMatch(network, /<animateTransform\b/, 'Ecosystem diagram must not reintroduce ornamental SMIL rotation.');
+assert.doesNotMatch(network, /<animateMotion\b/, 'Ecosystem diagram must not reintroduce decorative moving particles.');
 
 // A11Y-05 / A11Y-07 — keyboard bypass belongs to the public navigation it skips.
 assert.doesNotMatch(layout, /<SkipLink\s*\/>/, 'Root layout must not expose a broken skip link on routes without public navigation.');
