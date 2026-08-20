@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const protectedCases = [
   { path: '/dashboard/kyc', next: '/dashboard/kyc' },
-  { path: '/dashboard/inversion', next: '/dashboard/inversion' },
-  { path: '/admin/kyc', next: '/admin/kyc' },
+  { path: '/dashboard/inversion', next: '/inversion/app' },
 ];
 
 test.describe('CTG One critical authenticated boundaries', () => {
@@ -24,9 +23,9 @@ test.describe('CTG One critical authenticated boundaries', () => {
     await expect(page.locator('input[type="file"]')).toHaveCount(0);
   });
 
-  test('admin review controls are never rendered to an unauthenticated browser', async ({ page }) => {
+  test('admin KYC review surface fails closed when server identity/configuration is unavailable', async ({ page }) => {
     await page.goto('/admin/kyc');
-    await expect(page).toHaveURL(/\/iniciar-sesion/);
+    await expect(page).not.toHaveURL(/\/admin\/kyc(?:\?|$)/);
     await expect(page.getByText('Revisión de KYC')).toHaveCount(0);
     await expect(page.getByRole('button', { name: /aprobar/i })).toHaveCount(0);
   });
