@@ -88,7 +88,8 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
       'Authenticated semantic retrieval endpoint',
       'Server-side OpenAI embeddings and Responses integration',
       'Citation metadata returned independently of generated text',
-      'LIVE promotion still requires reproducible evaluation and operating evidence',
+      'Deterministic post-generation citation integrity gate fails closed on missing or fabricated source references',
+      'LIVE promotion still requires reproducible semantic evaluation and operating evidence',
     ],
     publicPath: '/ai',
   },
@@ -123,4 +124,5 @@ export const TECHNICAL_CHANGELOG = [
   { phase: '08', title: 'Production readiness', detail: 'Defined the Render deployment contract, health checks and production verification runbook.' },
   { phase: '09', title: 'AI platform architecture', detail: 'Expanded CTG One AI with Citation-First RAG, agent runtime, risk tiers, evaluation, security and CTG Knowledge product architecture while retaining IN DEVELOPMENT status.' },
   { phase: '10', title: 'CTG Knowledge v0.1', detail: 'Implemented the first authenticated RAG pilot with curated ingestion, pgvector retrieval, server-side model access, grounded answers and structured source metadata; LIVE promotion remains evidence-gated.' },
+  { phase: '11', title: 'Grounding integrity hardening', detail: 'Added deterministic post-generation citation validation so CTG Knowledge fails closed when model output lacks citations or references sources that were not supplied for the request.' },
 ] as const;
