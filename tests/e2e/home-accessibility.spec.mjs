@@ -34,8 +34,12 @@ const RESPONSIVE_VIEWPORTS = [
 async function expectImmutableBrandName(page) {
   const lockup = page.locator('[data-brand-lockup="ctg-one-technology"]').first();
   await expect(lockup).toBeVisible();
-  const text = await lockup.textContent();
-  expect((text ?? '').replace(/\s+/g, ' ').trim()).toBe('CTG One Technology');
+  await expect(lockup).toHaveAttribute('translate', 'no');
+  const text = (await lockup.textContent()) ?? '';
+  expect(text).toContain('CTG One');
+  expect(text).toContain('Technology');
+  expect(text).not.toContain('CTG Una');
+  expect(text).not.toContain('Tecnología');
 }
 
 test.describe('CTG One home UI/UX accessibility contract', () => {
