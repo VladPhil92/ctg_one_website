@@ -17,6 +17,12 @@ assert.deepEqual(
   'citation parser must support grouped numeric citations without treating arbitrary brackets as sources',
 );
 
+assert.deepEqual(
+  extractCitationNumbers('Observe malformed numeric references [0], [-1], [+2].'),
+  [0, -1, 2],
+  'citation parser must retain non-positive numeric identifiers so validation can reject them',
+);
+
 assert.equal(
   validateGroundedAnswer('Supported fact [1].', [1, 2]).grounded,
   true,
@@ -34,6 +40,19 @@ assert.deepEqual(fabricatedCitation.invalidCitations, [3], 'invalid citations mu
 const mixedCitation = validateGroundedAnswer('Supported [1], unsupported [9].', [1, 2]);
 assert.equal(mixedCitation.grounded, false, 'one valid citation must not mask an invalid citation');
 assert.deepEqual(mixedCitation.invalidCitations, [9]);
+
+const zeroCitation = validateGroundedAnswer('Supported [1], fabricated [0].', [1]);
+assert.equal(zeroCitation.grounded, false, 'zero must be treated as a fabricated citation identifier');
+assert.deepEqual(zeroCitation.invalidCitations, [0]);
+
+const negativeCitation = validateGroundedAnswer('Supported [1], fabricated [-4].', [1]);
+assert.equal(negativeCitation.grounded, false, 'negative numeric source identifiers must fail closed');
+assert.deepEqual(negativeCitation.invalidCitations, [-4]);
+
+const unsafeCitationNumber = Number.MAX_SAFE_INTEGER + 1;
+const unsafeCitation = validateGroundedAnswer(`Supported [1], fabricated [${unsafeCitationNumber}].`, [1]);
+assert.equal(unsafeCitation.grounded, false, 'unsafe integer source identifiers must fail closed');
+assert.deepEqual(unsafeCitation.invalidCitations, [unsafeCitationNumber]);
 
 assert.doesNotMatch(
   groundingModule,
