@@ -1,13 +1,17 @@
 /** @type {import('next').NextConfig} */
 const isProduction = process.env.NODE_ENV === 'production';
+const allowLocalSupabaseCsp = process.env.ALLOW_LOCAL_SUPABASE_CSP === '1';
 
 function getConfiguredSupabaseConnectSources() {
-  if (isProduction) return '';
+  if (isProduction && !allowLocalSupabaseCsp) return '';
   const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!configuredUrl) return '';
 
   try {
     const url = new URL(configuredUrl);
+    if (isProduction && allowLocalSupabaseCsp && !['127.0.0.1', 'localhost'].includes(url.hostname)) {
+      return '';
+    }
     const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     return ` ${url.origin} ${wsProtocol}//${url.host}`;
   } catch {

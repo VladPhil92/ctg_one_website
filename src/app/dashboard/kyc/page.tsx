@@ -18,6 +18,13 @@ import { useLatestKycSubmission } from '@/hooks/useLatestKycSubmission';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
+const REQUIRED_DOCUMENTS = ['cedula_front', 'cedula_back'] as const;
+type RequiredDocument = (typeof REQUIRED_DOCUMENTS)[number];
+
+function isAlreadyUploadedError(error: { message?: string; statusCode?: string } | null) {
+  if (!error) return false;
+  return error.statusCode === '409' || /already exists|duplicate/i.test(error.message ?? '');
+}
 
 export default function KycUploadPage() {
   const { userId, profile, isAuthenticated, isLoading: isAuthLoading, refreshProfile } = useAuth();
@@ -54,34 +61,53 @@ export default function KycUploadPage() {
     setIsSubmitting(true);
     try {
       const supabase = createClient();
+      const { data: submissionId, error: beginError } = await supabase.rpc('begin_kyc_submission');
+      if (beginError) throw beginError;
+      if (typeof submissionId !== 'string' || !submissionId) {
+        throw new Error('No se pudo iniciar la presentación KYC.');
+      }
 
-      const { data: newSubmission, error: submissionError } = await supabase
-        .from('kyc_submissions')
-        .insert({ user_id: userId })
-        .select()
-        .single();
-      if (submissionError) throw submissionError;
-
-      const uploads: Array<{ documentType: string; file: File }> = [
+      const uploads: Array<{ documentType: RequiredDocument; file: File }> = [
         { documentType: 'cedula_front', file: frontFile },
         { documentType: 'cedula_back', file: backFile },
       ];
 
       for (const { documentType, file } of uploads) {
-        const path = `${userId}/${newSubmission.id}-${documentType}-${file.name}`;
-        const { error: uploadError } = await supabase.storage.from('kyc-documents').upload(path, file);
-        if (uploadError) throw uploadError;
+        const path = `${userId}/${submissionId}/${documentType}`;
+        const { error: uploadError } = await supabase.storage
+          .from('kyc-documents')
+          .upload(path, file, {
+            cacheControl: '3600',
+            contentType: file.type || undefined,
+            upsert: false,
+          });
 
-        const { error: docError } = await supabase
-          .from('kyc_documents')
-          .insert({ submission_id: newSubmission.id, document_type: documentType, storage_path: path });
-        if (docError) throw docError;
+        // A retry after a browser/network interruption may encounter an object
+        // that was durably uploaded during the previous attempt. The path is
+        // deterministic, so that object is the intended retry target.
+        if (uploadError && !isAlreadyUploadedError(uploadError)) throw uploadError;
+
+        const { error: registerError } = await supabase.rpc('register_kyc_document', {
+          p_submission_id: submissionId,
+          p_document_type: documentType,
+          p_storage_path: path,
+        });
+        if (registerError) throw registerError;
       }
+
+      const { error: finalizeError } = await supabase.rpc('finalize_kyc_submission', {
+        p_submission_id: submissionId,
+      });
+      if (finalizeError) throw finalizeError;
 
       await Promise.all([refreshProfile(), refreshSubmission()]);
       setJustSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo enviar tu verificación');
+      setError(
+        err instanceof Error
+          ? `${err.message}. Puedes volver a intentar: la presentación incompleta se reanudará sin duplicarse.`
+          : 'No se pudo enviar tu verificación. Puedes volver a intentar sin crear una solicitud duplicada.',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -146,8 +172,8 @@ export default function KycUploadPage() {
             <div className="accountNotice mb-5">
               <FileCheck2 size={17} />
               <div>
-                <strong>Documentos protegidos</strong>
-                <p>Los archivos se almacenan en el bucket privado de KYC y quedan asociados a esta presentación para revisión.</p>
+                <strong>Documentos protegidos y reanudables</strong>
+                <p>Los archivos usan rutas privadas determinísticas. Si la conexión se interrumpe, el siguiente intento reanuda la misma presentación y no crea duplicados.</p>
               </div>
             </div>
 

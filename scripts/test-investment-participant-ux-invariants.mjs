@@ -64,8 +64,6 @@ assert.match(legacyDashboard, /redirect\('\/inversion\/app'\)/, 'Legacy particip
 assert.match(legacyCheckout, /redirect\(`\/inversion\/app\/nueva\//, 'Legacy checkout URLs must redirect to the canonical checkout.');
 assert.match(appLayout, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false/, 'Authenticated participant surfaces must be noindex/nofollow.');
 
-// Personal OS account surface: keep account workflows visually coherent without
-// weakening their existing financial or identity boundaries.
 assert.match(accountDashboard, /PERSONAL OS/, 'Account dashboard must retain the Personal OS identity.');
 assert.match(accountSurface, /Volver al Personal OS/, 'Secondary account workflows must expose a consistent return path.');
 assert.match(accountSurface, /prefers-reduced-motion:reduce/, 'Shared account motion must honor reduced-motion preferences.');
@@ -85,9 +83,12 @@ assert.match(deposits, /\.from\('transactions'\)\.insert/, 'Deposit UI must reta
 assert.match(deposits, /aria-pressed=\{method === item\.value\}/, 'Deposit rail selection must expose pressed state semantics.');
 
 assert.match(kyc, /next=\/dashboard\/kyc/, 'KYC auth continuation must return the user to the identity workflow.');
-assert.match(kyc, /\.from\('kyc_submissions'\)/, 'KYC UI must retain the canonical submission path.');
-assert.match(kyc, /\.from\('kyc-documents'\)\.upload/, 'KYC UI must retain the private document upload boundary.');
-assert.match(kyc, /\.from\('kyc_documents'\)/, 'KYC UI must retain the document metadata write path.');
+assert.match(kyc, /rpc\('begin_kyc_submission'/, 'KYC UI must initialize intake through the retry-safe RPC boundary.');
+assert.match(kyc, /\.from\('kyc-documents'\)[\s\S]*?\.upload\(/, 'KYC UI must retain the private document upload boundary.');
+assert.match(kyc, /rpc\('register_kyc_document'/, 'KYC document metadata must be registered through the resilient RPC boundary.');
+assert.match(kyc, /rpc\('finalize_kyc_submission'/, 'KYC UI must finalize only through the transactional resilience boundary.');
+assert.doesNotMatch(kyc, /\.from\('kyc_submissions'\)[\s\S]*?\.insert\(/, 'KYC UI must not regress to direct submission inserts.');
+assert.doesNotMatch(kyc, /\.from\('kyc_documents'\)[\s\S]*?\.insert\(/, 'KYC UI must not regress to direct document metadata inserts.');
 assert.match(kyc, /MAX_FILE_BYTES = 8 \* 1024 \* 1024/, 'KYC client file-size boundary must remain explicit.');
 
 console.log('Investment participant and Personal OS UX invariants: PASS');

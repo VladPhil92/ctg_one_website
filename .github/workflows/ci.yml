@@ -118,6 +118,12 @@ jobs:
             -v ON_ERROR_STOP=1 \
             -f scripts/golden-path-transactional-smoke.sql
 
+      - name: KYC transactional resilience contract
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -f scripts/kyc-resilience-schema-smoke.sql
+
       - name: HTTP security PostgreSQL contract
         run: |
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
@@ -153,3 +159,76 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
             -v ON_ERROR_STOP=1 \
             -f scripts/operations-intelligence-schema-smoke.sql
+
+  critical-authenticated-e2e:
+    name: Critical authenticated browser journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      E2E_AUTHENTICATED: "1"
+      ALLOW_LOCAL_SUPABASE_CSP: "1"
+      PLAYWRIGHT_PORT: "3000"
+      NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3000"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up pinned Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.111.0
+
+      - name: Start isolated local Supabase stack
+        run: supabase start
+
+      - name: Export isolated Supabase test credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          eval "$(supabase status -o env)"
+          : "${API_URL:?Local Supabase API_URL missing}"
+          : "${ANON_KEY:?Local Supabase ANON_KEY missing}"
+          : "${SERVICE_ROLE_KEY:?Local Supabase SERVICE_ROLE_KEY missing}"
+          echo "::add-mask::${SERVICE_ROLE_KEY}"
+          echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> "$GITHUB_ENV"
+          echo "E2E_SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}" >> "$GITHUB_ENV"
+
+      - name: Build Next.js against isolated Supabase
+        run: npm run build
+
+      - name: Install pinned Playwright test runtime
+        run: npm install --no-save --package-lock=false @playwright/test@1.62.0
+
+      - name: Verify runner Chrome availability
+        run: google-chrome --version
+
+      - name: Install Playwright video runtime
+        run: npx playwright install ffmpeg
+
+      - name: Run authenticated KYC resilience E2E
+        run: npx playwright test tests/e2e/critical-authenticated.spec.mjs --project=chromium
+
+      - name: Upload authenticated E2E report on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: authenticated-playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Stop isolated local Supabase stack
+        if: always()
+        run: supabase stop --no-backup
