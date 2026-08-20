@@ -1,7 +1,8 @@
 import React from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import styles from '@/styles/CommandCenter.module.css';
+import commandStyles from '@/styles/CommandCenter.module.css';
+import styles from '@/styles/PublicCommandCenter.module.css';
 
 interface PublicPageShellProps {
   children: React.ReactNode;
@@ -16,7 +17,7 @@ interface PublicPageShellProps {
 export function PublicPageShell({ children, contentClassName = '' }: PublicPageShellProps) {
   return (
     <main
-      className={`${styles.theme} ${styles.publicShell}`}
+      className={`${commandStyles.theme} ${styles.publicShell}`}
       data-public-command-center="true"
     >
       <Navbar />
