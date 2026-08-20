@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { embedTexts, generateGroundedAnswer, isKnowledgeAIConfigured, type GroundingSource } from '@/lib/ai/openai';
+import { validateGroundedAnswer } from '@/lib/ai/grounding.mjs';
 import { logger } from '@/lib/observability/logger';
 import { consumeAuthenticatedRateLimit } from '@/lib/security/api-rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const INSUFFICIENT_EVIDENCE_ANSWER =
+  'The available authorized knowledge does not contain enough evidence to answer this question.';
 
 const QuerySchema = z.object({
   question: z.string().trim().min(3).max(1000),
@@ -90,7 +94,7 @@ export async function POST(request: Request) {
         latencyMs: Date.now() - started,
       });
       return NextResponse.json({
-        answer: 'The available authorized knowledge does not contain enough evidence to answer this question.',
+        answer: INSUFFICIENT_EVIDENCE_ANSWER,
         sources: [],
         grounded: false,
         requestId,
@@ -109,12 +113,35 @@ export async function POST(request: Request) {
     }));
 
     const answer = await generateGroundedAnswer(parsed.data.question, sources);
+    const grounding = validateGroundedAnswer(answer, sources.map((source) => source.citation));
+
+    if (!grounding.grounded) {
+      logger.warn('knowledge.query.grounding_rejected', {
+        requestId,
+        userId: user.id,
+        businessUnit: parsed.data.businessUnit ?? null,
+        sourceCount: sources.length,
+        citationCount: grounding.citations.length,
+        invalidCitations: grounding.invalidCitations,
+        latencyMs: Date.now() - started,
+      });
+
+      return NextResponse.json({
+        answer: INSUFFICIENT_EVIDENCE_ANSWER,
+        sources: [],
+        grounded: false,
+        requestId,
+      }, {
+        headers: { 'X-RateLimit-Remaining': String(rateLimit.remaining) },
+      });
+    }
 
     logger.info('knowledge.query.completed', {
       requestId,
       userId: user.id,
       businessUnit: parsed.data.businessUnit ?? null,
       sourceCount: sources.length,
+      citationCount: grounding.citations.length,
       topSimilarity: matches[0]?.similarity ?? null,
       latencyMs: Date.now() - started,
     });
