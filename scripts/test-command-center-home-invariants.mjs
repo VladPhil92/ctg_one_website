@@ -3,12 +3,13 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [network, navbar, hero, footer, brandLogo, translations] = await Promise.all([
+const [network, navbar, hero, footer, brandLogo, languageContext, translations] = await Promise.all([
   read('src/components/BlockchainNetwork.tsx'),
   read('src/components/Navbar.tsx'),
   read('src/components/sections/HeroSection.tsx'),
   read('src/components/Footer.tsx'),
   read('src/components/BrandLogo.tsx'),
+  read('src/contexts/LanguageContext.tsx'),
   read('src/i18n/commandCenterTranslations.ts'),
 ]);
 
@@ -37,6 +38,10 @@ assert.match(brandLogo, /src="\/images\/logo\/ctg-one-coin-icon\.png"/, 'Brand l
 assert.match(brandLogo, />CTG <\//, 'Brand lockup must render CTG as text, not inside a banner image.');
 assert.match(brandLogo, />One<\//, 'Brand lockup must render One as text, not inside a banner image.');
 assert.match(brandLogo, /Technology/, 'Brand lockup must render the Technology descriptor.');
+assert.match(brandLogo, /data-no-translate/, 'Brand lockup must opt out of the internal DOM translation layer.');
+assert.match(brandLogo, /translate="no"/, 'Brand lockup must opt out of browser translation engines.');
+assert.match(languageContext, /IMMUTABLE_BRAND_NAMES = new Set\(\['CTG One', 'CTG One Technology'\]\)/, 'Language layer must preserve CTG One brand names verbatim.');
+assert.match(languageContext, /data-brand-lockup=\\"ctg-one-technology\\"/, 'Language layer must treat the CTG One brand lockup as translation-protected.');
 assert.match(navbar, /<BrandLogo priority/, 'Navbar must render the structural CTG One Technology lockup.');
 assert.match(footer, /<BrandLogo/, 'Footer must render the structural CTG One Technology lockup.');
 for (const source of [navbar, footer, brandLogo]) {
