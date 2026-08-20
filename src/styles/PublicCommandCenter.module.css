@@ -179,9 +179,15 @@
   -webkit-mask-image: linear-gradient(to bottom, black, transparent 90%);
 }
 
-.investmentShell > * {
+.investmentShell > :not(nav) {
   position: relative;
   z-index: 1;
+}
+
+.investmentShell > nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .mediaFrame {
