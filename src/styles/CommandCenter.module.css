@@ -55,9 +55,7 @@
   opacity: 0.42;
 }
 
-.logoGlow {
-  filter: drop-shadow(0 0 14px rgba(214, 174, 86, 0.07));
-}
+.logoGlow { filter: drop-shadow(0 0 14px rgba(214, 174, 86, 0.07)); }
 
 .heroShell {
   position: relative;
@@ -134,6 +132,69 @@
   filter: blur(2px);
 }
 
+.ecosystemOrbitOuter {
+  transform-origin: 260px 260px;
+  stroke-dasharray: 2 12;
+  animation: ecosystemOrbit 28s linear infinite;
+}
+
+.ecosystemOrbitInner {
+  transform-origin: 260px 260px;
+  stroke-dasharray: 3 14;
+  animation: ecosystemOrbitReverse 21s linear infinite;
+}
+
+.ecosystemConnection {
+  stroke-dasharray: 7 10;
+  animation: ecosystemFlow 5.8s linear infinite;
+  transition: stroke 180ms ease, stroke-opacity 180ms ease, stroke-width 180ms ease;
+}
+
+.ecosystemNode {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ecosystemNodeFloat 6.4s ease-in-out infinite;
+}
+
+.ecosystemCenter {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ecosystemCenterPulse 4.6s ease-in-out infinite;
+}
+
+.ecosystemHalo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ecosystemHaloPulse 4.6s ease-in-out infinite;
+}
+
+@keyframes ecosystemFlow {
+  to { stroke-dashoffset: -34; }
+}
+
+@keyframes ecosystemOrbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ecosystemOrbitReverse {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes ecosystemNodeFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes ecosystemCenterPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+
+@keyframes ecosystemHaloPulse {
+  0%, 100% { opacity: .72; transform: scale(.98); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
 .commandPanel {
   position: relative;
   overflow: hidden;
@@ -163,20 +224,14 @@
   min-width: 0;
   transition: background-color var(--ctg-transition);
 }
-
-.metricCell:hover {
-  background: rgba(255, 255, 255, 0.012);
-}
+.metricCell:hover { background: rgba(255, 255, 255, 0.012); }
 
 .statusCell {
   position: relative;
   min-width: 0;
   transition: background-color var(--ctg-transition);
 }
-
-.statusCell:hover {
-  background-color: rgba(255, 255, 255, 0.012);
-}
+.statusCell:hover { background-color: rgba(255, 255, 255, 0.012); }
 
 .techCard {
   position: relative;
@@ -194,13 +249,8 @@
   background: rgba(8, 14, 22, 0.88);
 }
 
-.blueTrace {
-  background: linear-gradient(90deg, rgba(36,140,255,.55), rgba(214,174,86,.16), transparent);
-}
-
-.goldTrace {
-  background: linear-gradient(90deg, rgba(214,174,86,.7), rgba(214,174,86,.12), transparent);
-}
+.blueTrace { background: linear-gradient(90deg, rgba(36,140,255,.55), rgba(214,174,86,.16), transparent); }
+.goldTrace { background: linear-gradient(90deg, rgba(214,174,86,.7), rgba(214,174,86,.12), transparent); }
 
 @media (min-width: 1280px) {
   .networkField { min-height: 570px; }
@@ -222,9 +272,19 @@
   .navFrameScrolled,
   .metricCell,
   .statusCell,
-  .techCard {
+  .techCard,
+  .ecosystemConnection {
     transition: none;
   }
 
   .techCard:hover { transform: none; }
+
+  .ecosystemOrbitOuter,
+  .ecosystemOrbitInner,
+  .ecosystemConnection,
+  .ecosystemNode,
+  .ecosystemCenter,
+  .ecosystemHalo {
+    animation: none !important;
+  }
 }
