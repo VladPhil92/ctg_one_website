@@ -8,6 +8,7 @@ import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import styles from '@/styles/CommandCenter.module.css';
+import publicStyles from '@/styles/PublicCommandCenter.module.css';
 
 export const InvestmentSpotlightSection: React.FC = () => {
   const { locale } = useLanguage();
@@ -68,19 +69,19 @@ export const InvestmentSpotlightSection: React.FC = () => {
       <Container size="large" className="relative z-10">
         <div className="grid items-stretch gap-7 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10 xl:gap-16">
           <FadeInSection direction="left">
-            <div className={`${styles.commandPanel} relative min-h-[410px] overflow-hidden p-2 sm:min-h-[520px] lg:min-h-[620px]`}>
-              <div className="relative h-full min-h-[394px] overflow-hidden rounded-[18px] sm:min-h-[504px] lg:min-h-[604px]">
+            <div className={`${styles.commandPanel} relative overflow-hidden p-2`}>
+              <div className={`${publicStyles.mediaFrame} ${publicStyles.mediaSpotlight} relative w-full`}>
                 <Image
                   src="/images/inversion/ctg-craft-beer-hefeweizen.webp"
                   alt={copy.imageAlt}
                   fill
                   quality={90}
-                  sizes="(max-width: 1024px) 100vw, 44vw"
-                  className="object-cover object-center"
+                  sizes="(max-width: 640px) 94vw, (max-width: 1024px) 88vw, 44vw"
+                  className={`${publicStyles.mediaImage} ${publicStyles.focusHefeweizen}`}
                   data-ctg-photo="high-fidelity-source"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#030507] via-black/10 to-transparent" aria-hidden="true" />
-                <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
+                <div className="absolute inset-0 z-[1] bg-gradient-to-t from-[#030507] via-black/10 to-transparent" aria-hidden="true" />
+                <div className="absolute inset-x-0 bottom-0 z-[3] p-6 sm:p-8">
                   <div className="border-t border-white/[.09] pt-5">
                     <span className="block text-[11px] font-semibold uppercase tracking-[.16em] text-[#f1c75b]">CTG Craft Beer</span>
                     <span className="mt-1 block text-xs text-text-muted">{copy.imageCaption}</span>
