@@ -5,6 +5,7 @@ import { Locale, translatePhrase } from '@/i18n/translations';
 import { translateExtendedPhrase } from '@/i18n/extendedTranslations';
 import { translateContentPhrase } from '@/i18n/contentTranslations';
 import { translateInvestmentEconomicsPhrase } from '@/i18n/investmentEconomicsTranslations';
+import { translateCommandCenterPhrase } from '@/i18n/commandCenterTranslations';
 
 type LanguageContextValue = {
   locale: Locale;
@@ -24,6 +25,8 @@ function translateValue(value: string, locale: Locale) {
   if (extended !== value) return extended;
   const investmentEconomics = translateInvestmentEconomicsPhrase(value, locale);
   if (investmentEconomics !== value) return investmentEconomics;
+  const commandCenter = translateCommandCenterPhrase(value, locale);
+  if (commandCenter !== value) return commandCenter;
   return translateContentPhrase(value, locale);
 }
 

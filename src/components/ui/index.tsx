@@ -3,44 +3,35 @@
 import React, { ReactNode } from 'react';
 import { Badge } from './Badge';
 
-// ============================================
-// EXPORTS
-// ============================================
 export { Card, StatCard } from './Card';
 export { Button } from './Button';
 export { Badge } from './Badge';
 export { FadeInSection, StaggeredContainer, StaggeredItem } from './FadeInSection';
 
-// ============================================
-// CONTAINER
-// ============================================
 interface ContainerProps {
   children: ReactNode;
   className?: string;
   size?: 'default' | 'small' | 'large';
 }
 
-export const Container: React.FC<ContainerProps> = ({ 
-  children, 
+export const Container: React.FC<ContainerProps> = ({
+  children,
   className = '',
-  size = 'default'
+  size = 'default',
 }) => {
   const maxWidthClass = {
     small: 'max-w-4xl',
     default: 'max-w-6xl',
-    large: 'max-w-7xl',
+    large: 'max-w-[1500px]',
   }[size];
 
   return (
-    <div className={`w-full ${maxWidthClass} mx-auto px-8 lg:px-12 ${className}`}>
+    <div className={`w-full ${maxWidthClass} mx-auto px-5 sm:px-8 lg:px-12 2xl:px-16 ${className}`}>
       {children}
     </div>
   );
 };
 
-// ============================================
-// SECTION HEADER
-// ============================================
 interface SectionHeaderProps {
   badge?: string;
   title: string;
@@ -63,9 +54,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       {badge && <Badge variant="accent" className="mb-10">{badge}</Badge>}
       <h2 className="text-3xl md:text-4xl font-outfit font-semibold mb-6 tracking-tight">
         {title}{' '}
-        {titleHighlight && (
-          <span className="text-accent">{titleHighlight}</span>
-        )}
+        {titleHighlight && <span className="text-accent">{titleHighlight}</span>}
       </h2>
       {description && (
         <p className="text-base text-text-muted max-w-xl mx-auto leading-relaxed">
@@ -76,9 +65,6 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   );
 };
 
-// ============================================
-// GRADIENT TEXT
-// ============================================
 interface GradientTextProps {
   children: ReactNode;
   className?: string;
@@ -94,9 +80,6 @@ export const GradientText: React.FC<GradientTextProps> = ({
   return <span className={`${gradientClass} ${className}`}>{children}</span>;
 };
 
-// ============================================
-// ICON BOX
-// ============================================
 interface IconBoxProps {
   icon: ReactNode;
   size?: 'sm' | 'md' | 'lg';
@@ -118,25 +101,14 @@ export const IconBox: React.FC<IconBoxProps> = ({
 
   return (
     <div
-      className={`
-        flex items-center justify-center
-        rounded-xl
-        ${sizeClasses[size]}
-        ${className}
-      `}
-      style={{
-        backgroundColor: `${color}15`,
-        color: color,
-      }}
+      className={`flex items-center justify-center rounded-xl ${sizeClasses[size]} ${className}`}
+      style={{ backgroundColor: `${color}15`, color }}
     >
       {icon}
     </div>
   );
 };
 
-// ============================================
-// DIVIDER
-// ============================================
 interface DividerProps {
   className?: string;
 }

@@ -7,6 +7,30 @@ async function preferSpanish(page) {
   });
 }
 
+const ECOSYSTEM_LABELS_ES = [
+  'Estrategia de IA',
+  'Comercio',
+  'Hospitalidad',
+  'Educación',
+  'Salud',
+  'Legal',
+  'Diseño',
+  'Fintech',
+];
+
+const RESPONSIVE_VIEWPORTS = [
+  { width: 1920, height: 1080 },
+  { width: 1600, height: 1000 },
+  { width: 1440, height: 900 },
+  { width: 1366, height: 768 },
+  { width: 1280, height: 800 },
+  { width: 1024, height: 768 },
+  { width: 768, height: 1024 },
+  { width: 430, height: 932 },
+  { width: 390, height: 844 },
+  { width: 360, height: 800 },
+];
+
 test.describe('CTG One home UI/UX accessibility contract', () => {
   test('Spanish home renders explicit localized card copy without English fallback', async ({ page }) => {
     await preferSpanish(page);
@@ -32,6 +56,13 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     ]) {
       await expect(page.getByText(label, { exact: true })).toBeVisible();
     }
+
+    await expect(page.getByText('Núcleo en línea', { exact: true })).toBeVisible();
+    await expect(page.getByText('PRODUCTO OPERATIVO / CASO-001', { exact: true })).toBeVisible();
+    await expect(page.getByText('Cartagena · Capa de producción física', { exact: true })).toBeVisible();
+    await expect(page.getByText('Core online', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('LIVE PRODUCT / CASE-001', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Cartagena · Physical production layer', { exact: true })).toHaveCount(0);
   });
 
   test('public positioning remains technology-first and Rewards honors Spanish locale', async ({ page }) => {
@@ -122,6 +153,31 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
         .filter(({ width, height }) => width < 44 || height < 44),
     );
     expect(undersizedTargets).toEqual([]);
+  });
+
+  test('command center preserves all eight ecosystem nodes without horizontal overflow across target breakpoints', async ({ page }) => {
+    await preferSpanish(page);
+
+    for (const viewport of RESPONSIVE_VIEWPORTS) {
+      await page.setViewportSize(viewport);
+      await page.goto('/');
+
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect(page.locator('[data-ecosystem-diagram]')).toBeVisible();
+
+      const layout = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+        bodyScrollWidth: document.body.scrollWidth,
+        innerWidth: window.innerWidth,
+      }));
+      expect(layout.scrollWidth, `${viewport.width}px document overflow`).toBeLessThanOrEqual(layout.clientWidth + 1);
+      expect(layout.bodyScrollWidth, `${viewport.width}px body overflow`).toBeLessThanOrEqual(layout.innerWidth + 1);
+
+      for (const label of ECOSYSTEM_LABELS_ES) {
+        await expect(page.locator('[data-ecosystem-diagram] text', { hasText: label }), `${viewport.width}px missing node ${label}`).toHaveCount(1);
+      }
+    }
   });
 
   test('canonical privacy route redirects legacy path without disturbing product namespace', async ({ page }) => {
