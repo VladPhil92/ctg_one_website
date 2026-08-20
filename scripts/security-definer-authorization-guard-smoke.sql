@@ -5,15 +5,15 @@
 -- Supabase Security Advisor intentionally warns when authenticated users can
 -- execute SECURITY DEFINER functions. CTG One has reviewed RPCs that require
 -- definer rights and re-check authorization internally. The existing exposure
--- contract freezes the callable signatures and fixed search_path. This contract
--- additionally freezes the exact reviewed executable body of every
--- authenticated-only SECURITY DEFINER RPC with SHA-256.
+-- contract freezes the callable signatures. This contract additionally freezes
+-- the canonical executable body and the security-relevant function configuration
+-- of every authenticated-only SECURITY DEFINER RPC.
 --
 -- This deliberately does NOT try to parse PL/pgSQL authorization semantics.
 -- PostgreSQL has a rich lexer/grammar and heuristic regexes can be bypassed by
--- valid syntax. Instead, any privileged-body change or new privileged RPC makes
--- CI fail until the migration/function change is explicitly reviewed and the
--- fingerprint manifest is deliberately updated in the same PR.
+-- valid syntax. Instead, any privileged-body change, new privileged RPC, unsafe
+-- search_path change, or SQL-standard parsed body makes CI fail until explicitly
+-- reviewed.
 --
 -- CRLF/LF is normalized before hashing because line-ending representation is
 -- not executable logic and older production functions may retain CRLF bodies.
@@ -28,9 +28,13 @@ CREATE TEMP TABLE reviewed_authenticated_security_definer_bodies(
 CREATE TEMP VIEW actual_authenticated_security_definer_bodies AS
 SELECT
   n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS signature,
-  encode(digest(replace(p.prosrc, E'\r\n', E'\n'), 'sha256'), 'hex') AS body_sha256
+  l.lanname AS language_name,
+  encode(digest(replace(p.prosrc, E'\r\n', E'\n'), 'sha256'), 'hex') AS body_sha256,
+  coalesce(p.proconfig, ARRAY[]::text[]) AS function_config,
+  p.prosqlbody IS NOT NULL AS has_parsed_sql_body
 FROM pg_proc p
 JOIN pg_namespace n ON n.oid = p.pronamespace
+JOIN pg_language l ON l.oid = p.prolang
 WHERE n.nspname IN ('public', 'graphql_public')
   AND p.prosecdef
   AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
@@ -53,6 +57,9 @@ DECLARE
   v_unreviewed text[];
   v_stale text[];
   v_changed text[];
+  v_bad_config text[];
+  v_parsed_sql text[];
+  v_bad_language text[];
 BEGIN
   SELECT coalesce(array_agg(a.signature ORDER BY a.signature), ARRAY[]::text[])
   INTO v_unreviewed
@@ -72,6 +79,32 @@ BEGIN
   JOIN reviewed_authenticated_security_definer_bodies r USING (signature)
   WHERE a.body_sha256 IS DISTINCT FROM r.body_sha256;
 
+  -- Freeze exact reviewed search_path values. The migration-health RPC is the
+  -- only reviewed exception because it intentionally needs pg_catalog explicit.
+  SELECT coalesce(array_agg(a.signature ORDER BY a.signature), ARRAY[]::text[])
+  INTO v_bad_config
+  FROM actual_authenticated_security_definer_bodies a
+  WHERE a.function_config IS DISTINCT FROM
+    CASE
+      WHEN a.signature = 'public.get_system_migration_health()'
+        THEN ARRAY['search_path=public, pg_catalog']::text[]
+      ELSE ARRAY['search_path=public']::text[]
+    END;
+
+  -- SQL-standard BEGIN ATOMIC bodies live in prosqlbody rather than prosrc.
+  -- None of the reviewed privileged surface uses that representation today;
+  -- fail closed if it ever appears so a dedicated canonical fingerprint can be
+  -- introduced rather than silently treating an empty prosrc as authoritative.
+  SELECT coalesce(array_agg(a.signature ORDER BY a.signature), ARRAY[]::text[])
+  INTO v_parsed_sql
+  FROM actual_authenticated_security_definer_bodies a
+  WHERE a.has_parsed_sql_body;
+
+  SELECT coalesce(array_agg(a.signature ORDER BY a.signature), ARRAY[]::text[])
+  INTO v_bad_language
+  FROM actual_authenticated_security_definer_bodies a
+  WHERE a.language_name NOT IN ('plpgsql', 'sql');
+
   IF cardinality(v_unreviewed) > 0 THEN
     RAISE EXCEPTION 'unreviewed authenticated SECURITY DEFINER function(s): %', v_unreviewed;
   END IF;
@@ -83,6 +116,18 @@ BEGIN
   IF cardinality(v_changed) > 0 THEN
     RAISE EXCEPTION 'reviewed SECURITY DEFINER body changed; review authorization before updating SHA-256: %', v_changed;
   END IF;
+
+  IF cardinality(v_bad_config) > 0 THEN
+    RAISE EXCEPTION 'reviewed SECURITY DEFINER function configuration changed: %', v_bad_config;
+  END IF;
+
+  IF cardinality(v_parsed_sql) > 0 THEN
+    RAISE EXCEPTION 'reviewed SECURITY DEFINER uses unsupported parsed SQL body representation: %', v_parsed_sql;
+  END IF;
+
+  IF cardinality(v_bad_language) > 0 THEN
+    RAISE EXCEPTION 'reviewed SECURITY DEFINER uses unreviewed language: %', v_bad_language;
+  END IF;
 END $$;
 
-SELECT 'SECURITY DEFINER reviewed-body contract: PASS' AS result;
+SELECT 'SECURITY DEFINER reviewed-body/config contract: PASS' AS result;
