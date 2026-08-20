@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import styles from '@/styles/CommandCenter.module.css';
 
 const ICONS: Record<string, LucideIcon> = {
   '/about': Eye,
@@ -45,41 +46,41 @@ export const HomeOverviewSection: React.FC = () => {
       };
 
   return (
-    <section className="relative overflow-hidden py-20 sm:py-28 md:py-32 lg:py-36" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+    <section className={`${styles.theme} relative overflow-hidden py-20 sm:py-28 md:py-32 lg:py-36`} style={{ backgroundColor: '#050a10' }}>
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute left-1/2 top-[7%] h-[760px] w-[760px] -translate-x-1/2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(212,162,89,0.045) 0%, rgba(212,162,89,0.012) 38%, transparent 70%)' }} />
+        <div className="absolute left-1/2 top-[8%] h-[760px] w-[760px] -translate-x-1/2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(36,140,255,0.045) 0%, rgba(214,174,86,0.028) 36%, transparent 70%)' }} />
         <div
-          className="absolute inset-0 opacity-[0.17]"
+          className="absolute inset-0 opacity-[0.2]"
           style={{
-            backgroundImage: 'linear-gradient(rgba(212,162,89,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(212,162,89,0.055) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(rgba(36,140,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(214,174,86,0.035) 1px, transparent 1px)',
             backgroundSize: '72px 72px',
-            maskImage: 'linear-gradient(to bottom, transparent, black 18%, black 82%, transparent)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 18%, black 82%, transparent)',
+            maskImage: 'linear-gradient(to bottom, transparent, black 15%, black 84%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 15%, black 84%, transparent)',
           }}
         />
       </div>
 
-      <Container className="relative z-10">
+      <Container size="large" className="relative z-10">
         <FadeInSection>
-          <div className="mb-12 grid items-end gap-8 lg:mb-16 lg:grid-cols-[0.78fr_1.22fr] lg:gap-16">
+          <div className="mb-12 grid items-end gap-8 lg:mb-16 lg:grid-cols-[0.82fr_1.18fr] lg:gap-20">
             <div>
-              <div className="mb-5 inline-flex items-center gap-2.5">
-                <span className="h-px w-8 shrink-0 bg-accent/60" aria-hidden="true" />
-                <span className="min-w-0 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-accent leading-tight">{intro.eyebrow}</span>
+              <div className="mb-5 inline-flex items-center gap-3">
+                <span className="h-px w-10 shrink-0 bg-gradient-to-r from-[#d6ae56] to-[#248cff]/30" aria-hidden="true" />
+                <span className="min-w-0 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-[#f1c75b] leading-tight">{intro.eyebrow}</span>
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-semibold tracking-[-0.03em] leading-[1.05]">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.7rem] font-outfit font-semibold tracking-[-0.04em] leading-[1.02]">
                 <span className="text-white">{intro.title}</span>
                 <br />
-                <span className="text-accent">{intro.highlight}</span>
+                <span className="bg-gradient-to-r from-[#f1c75b] via-[#d6ae56] to-[#b88932] bg-clip-text text-transparent">{intro.highlight}</span>
               </h2>
             </div>
 
             <div className="min-w-0 lg:pb-1">
               <p className="max-w-2xl text-sm sm:text-base text-text-muted leading-relaxed">{intro.description}</p>
               <div className="mt-6 flex min-w-0 items-center gap-4 text-text-dim" aria-hidden="true">
-                <Orbit className="h-[17px] w-[17px] shrink-0 text-accent" strokeWidth={1.4} />
-                <span className="h-px max-w-[180px] flex-1 bg-gradient-to-r from-accent/35 to-transparent" />
-                <Sparkles className="h-3.5 w-3.5 shrink-0" strokeWidth={1.4} />
+                <Orbit className="h-[18px] w-[18px] shrink-0 text-[#d6ae56]" strokeWidth={1.4} />
+                <span className={`h-px max-w-[220px] flex-1 ${styles.blueTrace}`} />
+                <Sparkles className="h-4 w-4 shrink-0 text-[#248cff]/70" strokeWidth={1.4} />
               </div>
             </div>
           </div>
@@ -97,32 +98,34 @@ export const HomeOverviewSection: React.FC = () => {
                 <a
                   href={item.href}
                   aria-label={accessibleLabel}
-                  className="group isolate relative block min-h-[320px] overflow-hidden border border-white/[0.075] bg-[#080808]/95 p-7 transition-[border-color,transform,background-color] duration-300 hover:-translate-y-1 hover:border-accent/40 hover:bg-[#0a0a0a] sm:min-h-[345px] sm:p-8"
-                  style={{ boxShadow: '0 18px 70px rgba(0,0,0,0.18)' }}
+                  className={`${styles.techCard} group isolate block min-h-[330px] p-7 sm:min-h-[360px] sm:p-8`}
                 >
-                  <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: 'radial-gradient(circle, rgba(212,162,89,0.13), transparent 67%)' }} aria-hidden="true" />
-                  <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/0 to-transparent transition-all duration-500 group-hover:via-accent/50" aria-hidden="true" />
+                  <div className="pointer-events-none absolute right-0 top-0 h-px w-2/3 bg-gradient-to-l from-[#248cff]/30 via-[#d6ae56]/20 to-transparent" aria-hidden="true" />
+                  <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#248cff]/[.025] blur-3xl transition-colors duration-300 group-hover:bg-[#d6ae56]/[.055]" aria-hidden="true" />
 
                   <div className="relative z-10 flex h-full min-w-0 flex-col">
                     <div className="mb-9 flex min-w-0 items-start justify-between gap-5">
-                      <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-accent/25 bg-accent/[0.035]">
-                        <span className="absolute inset-[6px] rounded-full border border-accent/[0.09]" aria-hidden="true" />
-                        <Icon className="relative z-10 h-[21px] w-[21px] shrink-0 text-accent" strokeWidth={1.35} aria-hidden="true" />
+                      <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#d6ae56]/25 bg-[#d6ae56]/[0.035]">
+                        <span className="absolute inset-[6px] rounded-xl border border-[#248cff]/[0.09]" aria-hidden="true" />
+                        <Icon className="relative z-10 h-[21px] w-[21px] shrink-0 text-[#f1c75b]" strokeWidth={1.35} aria-hidden="true" />
                       </div>
-                      <span className="shrink-0 font-outfit text-xs font-semibold tracking-[0.16em] text-text-dim transition-colors duration-300 group-hover:text-accent">{number}</span>
+                      <div className="text-right">
+                        <span className="block font-mono text-xs font-semibold tracking-[0.16em] text-[#248cff]/60 transition-colors duration-300 group-hover:text-[#d6ae56]">MODULE-{number}</span>
+                        <span className="mt-2 block h-px w-16 bg-gradient-to-l from-[#248cff]/35 to-transparent" aria-hidden="true" />
+                      </div>
                     </div>
 
-                    <span className="mb-3 block text-[11px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-accent leading-tight">{copy.badge}</span>
-                    <h3 className="mb-4 text-xl sm:text-2xl font-outfit font-medium tracking-[-0.02em] leading-tight">
+                    <span className="mb-3 block text-[11px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-[#d6ae56] leading-tight">{copy.badge}</span>
+                    <h3 className="mb-4 text-xl sm:text-2xl font-outfit font-medium tracking-[-0.025em] leading-tight">
                       <span className="text-white">{copy.title}</span>{' '}
-                      <span className="text-text-muted transition-colors duration-300 group-hover:text-accent">{copy.highlight}</span>
+                      <span className="text-text-muted transition-colors duration-300 group-hover:text-[#f1c75b]">{copy.highlight}</span>
                     </h3>
                     <p className="mb-8 line-clamp-5 text-sm text-text-muted leading-relaxed">{copy.description}</p>
 
                     <div className="mt-auto flex min-w-0 items-center justify-between gap-4 border-t border-white/[0.07] pt-5">
-                      <span className="min-w-0 text-xs font-semibold uppercase tracking-[0.12em] text-text-dim transition-colors duration-300 group-hover:text-accent">{copy.cta}</span>
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/[0.1] transition-all duration-300 group-hover:border-accent/35 group-hover:bg-accent/[0.04]" aria-hidden="true">
-                        <ArrowUpRight className="h-4 w-4 shrink-0 text-text-dim transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent" />
+                      <span className="min-w-0 text-xs font-semibold uppercase tracking-[0.12em] text-text-dim transition-colors duration-300 group-hover:text-[#f1c75b]">{copy.cta}</span>
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/[0.1] bg-black/10 transition-all duration-300 group-hover:border-[#248cff]/35 group-hover:bg-[#071a32]/40" aria-hidden="true">
+                        <ArrowUpRight className="h-4 w-4 shrink-0 text-text-dim transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#f1c75b]" />
                       </span>
                     </div>
                   </div>
