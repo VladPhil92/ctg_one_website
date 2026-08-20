@@ -10,6 +10,8 @@ const deployment = await read('src/lib/observability/deployment.ts');
 const infrastructureHealth = await read('src/lib/observability/infrastructure-health.ts');
 const playwrightConfig = await read('playwright.config.mjs');
 const authE2E = await read('tests/e2e/auth.spec.mjs');
+const criticalJourneysE2E = await read('tests/e2e/critical-journeys.spec.mjs');
+const authenticatedCriticalE2E = await read('tests/e2e/critical-authenticated.spec.mjs');
 const loginPage = await read('src/app/(auth)/iniciar-sesion/page.tsx');
 const registrationPage = await read('src/app/(auth)/registro/page.tsx');
 const authInput = await read('src/components/auth/AuthInput.tsx');
@@ -33,8 +35,9 @@ assert.ok(infrastructureHealth.includes('EXPECTED_DATABASE_MIGRATION'), 'Schema 
 assert.ok(infrastructureHealth.includes("id: 'deployment-identity'"), 'Admin System Health must expose the exact deployment identity.');
 assert.ok(packageJson.scripts?.test?.includes('test-migration-integrity.mjs'), 'Migration integrity test must remain part of npm test.');
 assert.ok(packageJson.scripts?.test?.includes('test-governance-invariants.mjs'), 'Governance invariants must remain part of npm test.');
+assert.ok(packageJson.scripts?.test?.includes('test-kyc-transactional-resilience-invariants.mjs'), 'KYC resilience invariants must remain part of npm test.');
 
-// Browser E2E is part of the same required CI job that protects main.
+// Browser E2E is part of the same required CI workflow that protects main.
 assert.ok(ci.includes('@playwright/test@1.62.0'), 'CI must pin the Playwright test runtime to an explicit version.');
 assert.ok(ci.includes('Verify runner Chrome availability'), 'CI must verify the hosted runner browser before E2E.');
 assert.ok(ci.includes('google-chrome --version'), 'CI must fail closed if the hosted runner does not provide Google Chrome.');
@@ -50,6 +53,22 @@ assert.ok(!authE2E.includes('ctgone.com'), 'Baseline browser E2E must not target
 assert.ok(!authE2E.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Browser E2E must never require the Supabase service-role secret.');
 assert.ok(authE2E.includes("page.route('**/auth/v1/**'"), 'Baseline auth E2E must intercept all Supabase auth network traffic.');
 assert.ok(authE2E.includes('E2E_AUTH_NETWORK_BLOCKED'), 'Intercepted auth traffic must terminate in a deterministic local E2E response.');
+
+// Critical authenticated mutation coverage must be isolated to the repository's
+// disposable local Supabase stack and disabled in the baseline browser job.
+assert.ok(ci.includes('Critical authenticated browser journey'), 'CI must retain the authenticated critical-journey job.');
+assert.ok(ci.includes('Start isolated local Supabase stack'), 'Authenticated browser E2E must start a disposable local Supabase stack.');
+assert.ok(ci.includes('supabase start'), 'Authenticated browser E2E must use local Supabase rather than hosted production.');
+assert.ok(ci.includes('E2E_AUTHENTICATED: "1"'), 'Authenticated E2E must require its explicit execution flag.');
+assert.ok(ci.includes('critical-authenticated.spec.mjs'), 'CI must execute the authenticated critical spec explicitly.');
+assert.ok(authenticatedCriticalE2E.includes("process.env.E2E_AUTHENTICATED === '1'"), 'Authenticated mutation tests must fail closed unless explicitly enabled.');
+assert.ok(authenticatedCriticalE2E.includes('E2E_TRANSIENT_STORAGE_FAILURE'), 'Authenticated KYC E2E must inject the partial Storage failure scenario.');
+assert.ok(authenticatedCriticalE2E.includes("url.endsWith('/cedula_back')"), 'KYC E2E must fail the second required document rather than the whole flow generically.');
+assert.ok(authenticatedCriticalE2E.includes('sin duplicar tu presentación'), 'KYC E2E must assert retry-safe participant guidance.');
+assert.ok(!authenticatedCriticalE2E.includes('ctgone.com'), 'Authenticated critical E2E must never target production directly.');
+assert.ok(!authenticatedCriticalE2E.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Authenticated browser tests must not use a service-role secret.');
+assert.ok(!criticalJourneysE2E.includes('ctgone.com'), 'Critical baseline journeys must not hard-code production.');
+
 assert.ok(loginPage.includes('<Button type="submit"'), 'Login must use one semantic form-submit path.');
 assert.ok(registrationPage.includes('<Button type="submit"'), 'Registration must use one semantic form-submit path.');
 assert.ok(!loginPage.includes('onEnter={handleSubmit}'), 'Login must not duplicate form submit through an input key handler.');
