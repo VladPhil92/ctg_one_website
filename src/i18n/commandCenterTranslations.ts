@@ -10,6 +10,7 @@ const PAIRS: Pair[] = [
   { en: 'LINK STABLE', es: 'ENLACE ESTABLE' },
   { en: 'LIVE PRODUCT / CASE-001', es: 'PRODUCTO OPERATIVO / CASO-001' },
   { en: 'Physical production layer', es: 'Capa de producción física' },
+  { en: 'Cartagena · Physical production layer', es: 'Cartagena · Capa de producción física' },
   { en: 'CTG/CORE-01', es: 'CTG/NÚCLEO-01' },
   { en: 'NET 08/08', es: 'RED 08/08' },
   { en: 'SYNC 100', es: 'SINCR. 100' },
