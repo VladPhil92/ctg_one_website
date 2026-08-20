@@ -20,6 +20,13 @@ update public.kyc_submissions
 set submitted_at = coalesce(submitted_at, created_at)
 where intake_state = 'submitted' and submitted_at is null;
 
+-- The legacy 0002 trigger marked profiles pending as soon as a submission row
+-- was inserted. Under the resumable protocol that row represents an unfinished
+-- upload, so pending must only be set by finalize_kyc_submission() after both
+-- durable Storage objects are verified.
+drop trigger if exists on_kyc_submission_created on public.kyc_submissions;
+drop function if exists public.handle_new_kyc_submission();
+
 -- Exactly one resumable intake may exist per participant. The partial unique
 -- index is the database-level concurrency guard: two simultaneous browser
 -- attempts cannot manufacture duplicate unfinished submissions.
@@ -33,6 +40,15 @@ create unique index if not exists kyc_documents_submission_type_key
 -- Browser clients must no longer create KYC rows/documents directly.
 drop policy if exists kyc_submissions_insert on public.kyc_submissions;
 drop policy if exists kyc_documents_insert on public.kyc_documents;
+
+-- Table privileges and RLS solve different layers. Authenticated clients need
+-- SELECT to reach the existing owner/admin RLS policies used by AuthContext and
+-- the KYC status hook, but all KYC row writes are now RPC-only.
+grant select on table public.profiles to authenticated;
+grant select on table public.kyc_submissions to authenticated;
+grant select on table public.kyc_documents to authenticated;
+revoke insert, update, delete on table public.kyc_submissions from authenticated;
+revoke insert, update, delete on table public.kyc_documents from authenticated;
 
 create or replace function public.begin_kyc_submission()
 returns uuid
