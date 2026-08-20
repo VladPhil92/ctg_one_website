@@ -12,6 +12,8 @@ export function BrandLogo({ priority = false, compact = false, className = '' }:
       aria-hidden="true"
       className={`inline-flex shrink-0 items-center gap-2.5 ${className}`}
       data-brand-lockup="ctg-one-technology"
+      data-no-translate
+      translate="no"
     >
       <span className="relative flex h-10 w-10 shrink-0 items-center justify-center sm:h-11 sm:w-11">
         <Image

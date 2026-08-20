@@ -17,8 +17,29 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 const STORAGE_KEY = 'ctg-one-language';
 const COOKIE_KEY = 'ctg_locale';
+const IMMUTABLE_BRAND_NAMES = new Set(['CTG One', 'CTG One Technology']);
+const NO_TRANSLATE_SELECTOR = '[data-no-translate], [data-brand-lockup="ctg-one-technology"]';
+const CTG_ONE_TECHNOLOGY_COMPACT = 'ctgonetechnology';
+
+function normalizeCompactText(value: string) {
+  return value.replace(/\s+/g, '').toLowerCase();
+}
+
+function belongsToStructuralBrandLockup(element: Element | null) {
+  if (!element) return false;
+  if (element.closest(NO_TRANSLATE_SELECTOR)) return true;
+
+  const link = element.closest('a');
+  return Boolean(
+    link
+    && normalizeCompactText(link.textContent ?? '') === CTG_ONE_TECHNOLOGY_COMPACT,
+  );
+}
 
 function translateValue(value: string, locale: Locale) {
+  const trimmed = value.trim();
+  if (IMMUTABLE_BRAND_NAMES.has(trimmed)) return value;
+
   const primary = translatePhrase(value, locale);
   if (primary !== value) return primary;
   const extended = translateExtendedPhrase(value, locale);
@@ -33,13 +54,13 @@ function translateValue(value: string, locale: Locale) {
 function translateNode(node: Node, locale: Locale) {
   if (node.nodeType === Node.TEXT_NODE && node.textContent) {
     const parent = node.parentElement;
-    if (parent?.closest('[data-no-translate]')) return;
+    if (belongsToStructuralBrandLockup(parent)) return;
     const translated = translateValue(node.textContent, locale);
     if (translated !== node.textContent) node.textContent = translated;
     return;
   }
 
-  if (!(node instanceof HTMLElement) || node.closest('[data-no-translate]')) return;
+  if (!(node instanceof HTMLElement) || belongsToStructuralBrandLockup(node)) return;
   const attributes = ['placeholder', 'title', 'aria-label'] as const;
   attributes.forEach((attribute) => {
     const value = node.getAttribute(attribute);
