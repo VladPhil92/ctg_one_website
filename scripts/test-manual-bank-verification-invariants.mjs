@@ -59,7 +59,8 @@ assert.ok(admin.includes('No confirmes por apariencia del comprobante'), 'Financ
 assert.ok(adminRepository.includes('createSignedUrl'), 'Finance repository must preserve private proof inspection through a short-lived signed URL.');
 assert.ok(adminRepository.includes("rpc('reject_investment_bank_proof'"), 'Finance repository must retain an explicit proof-rejection path with no money facts.');
 
-assert.ok(paymentConfig.includes('NEXT_PUBLIC_INVESTMENT_BANCOLOMBIA_QR_URL'), 'Approved QR asset location must be external configuration, not invented source data.');
+assert.ok(paymentConfig.includes('/api/investment/payment-qr'), 'Investment payment rail must point to the first-party approved QR route.');
+assert.ok(!paymentConfig.includes('NEXT_PUBLIC_INVESTMENT_BANCOLOMBIA_QR_URL'), 'Approved QR must not depend on a mutable external runtime image URL.');
 assert.ok(paymentConfig.includes("bankName: 'Bancolombia'") && paymentConfig.includes("accountType: 'Cuenta de Ahorros'"), 'Investment QR configuration must describe the agreed Bancolombia savings rail.');
 const expectedVersion = Number(schemaVersion.match(/'(\d{4})'/)?.[1] ?? '0');
 assert.ok(expectedVersion >= 39, 'Runtime expected migration must not regress below manual Bancolombia verification 0039.');
