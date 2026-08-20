@@ -12,8 +12,6 @@ import {
   Wallet,
   Mail,
   ArrowUpRight,
-  Orbit,
-  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -77,11 +75,7 @@ export const HomeOverviewSection: React.FC = () => {
 
             <div className="min-w-0 lg:pb-1">
               <p className="max-w-2xl text-sm sm:text-base text-text-muted leading-relaxed">{intro.description}</p>
-              <div className="mt-6 flex min-w-0 items-center gap-4 text-text-dim" aria-hidden="true">
-                <Orbit className="h-[18px] w-[18px] shrink-0 text-[#d6ae56]" strokeWidth={1.4} />
-                <span className={`h-px max-w-[220px] flex-1 ${styles.blueTrace}`} />
-                <Sparkles className="h-4 w-4 shrink-0 text-[#248cff]/70" strokeWidth={1.4} />
-              </div>
+              <div className="mt-6 h-px w-24 bg-gradient-to-r from-[#d6ae56]/55 via-[#248cff]/20 to-transparent" aria-hidden="true" />
             </div>
           </div>
         </FadeInSection>
@@ -89,7 +83,6 @@ export const HomeOverviewSection: React.FC = () => {
         <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
           {HOME_OVERVIEW_ITEMS.map((item, index) => {
             const Icon = ICONS[item.href];
-            const number = String(index + 1).padStart(2, '0');
             const copy = localizeHomeOverview(item, locale);
             const accessibleLabel = `${copy.cta}: ${copy.title} ${copy.highlight}`;
 
@@ -104,14 +97,9 @@ export const HomeOverviewSection: React.FC = () => {
                   <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#248cff]/[.025] blur-3xl transition-colors duration-300 group-hover:bg-[#d6ae56]/[.055]" aria-hidden="true" />
 
                   <div className="relative z-10 flex h-full min-w-0 flex-col">
-                    <div className="mb-9 flex min-w-0 items-start justify-between gap-5">
-                      <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#d6ae56]/25 bg-[#d6ae56]/[0.035]">
-                        <span className="absolute inset-[6px] rounded-xl border border-[#248cff]/[0.09]" aria-hidden="true" />
-                        <Icon className="relative z-10 h-[21px] w-[21px] shrink-0 text-[#f1c75b]" strokeWidth={1.35} aria-hidden="true" />
-                      </div>
-                      <div className="text-right">
-                        <span className="block font-mono text-xs font-semibold tracking-[0.16em] text-[#248cff]/60 transition-colors duration-300 group-hover:text-[#d6ae56]">MODULE-{number}</span>
-                        <span className="mt-2 block h-px w-16 bg-gradient-to-l from-[#248cff]/35 to-transparent" aria-hidden="true" />
+                    <div className="mb-9">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#d6ae56]/22 bg-[#d6ae56]/[0.03]">
+                        <Icon className="h-[21px] w-[21px] shrink-0 text-[#f1c75b]" strokeWidth={1.35} aria-hidden="true" />
                       </div>
                     </div>
 
