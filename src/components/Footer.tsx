@@ -49,13 +49,10 @@ export const Footer: React.FC = () => {
       <Container className="relative z-10">
         <div className="flex flex-col justify-between gap-8 border-b border-white/[0.07] pb-10 sm:pb-12 lg:flex-row lg:items-end">
           <div className="max-w-xl">
-            <a href="/" aria-label={logoLabel} className="group mb-7 inline-flex min-h-11 items-center gap-4">
-              <div className="relative h-11 w-11 overflow-hidden rounded-full border border-accent/25 transition-colors duration-300 group-hover:border-accent/50">
-                <Image src="/images/logo/CTGLOGO.jpeg" alt="" fill className="object-cover" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-base font-outfit font-semibold text-white tracking-wide">CTG One</span>
-                <span className="text-[11px] font-semibold text-accent uppercase tracking-[0.16em]">{t('Technology')}</span>
+            <a href="/" aria-label={logoLabel} className="group mb-7 inline-flex min-h-12 items-center">
+              <div className="relative h-12 w-[176px] overflow-hidden rounded-xl border border-accent/15 bg-black/25 px-2 transition-colors duration-300 group-hover:border-accent/35">
+                <div className="absolute inset-0 bg-gradient-to-r from-accent/[.05] via-transparent to-sky-300/[.02]" aria-hidden="true" />
+                <Image src="/images/logo/ctg-one-logo.png" alt="" fill className="relative object-contain object-left p-1.5" sizes="176px" />
               </div>
             </a>
 
