@@ -34,7 +34,11 @@ assert.match(shell, /data-public-command-center="true"/, 'Public shell must expo
 assert.match(shell, /publicAtmosphere/, 'Public shell must retain the shared atmospheric layer.');
 assert.match(publicStyles, /#030507/, 'Public shell must retain the command-center primary background.');
 assert.match(publicStyles, /#d6ae56/, 'Public shell must retain the approved gold accent.');
-assert.match(publicStyles, /#248cff/, 'Public shell must retain the restrained blue systems accent.');
+assert.match(
+  publicStyles,
+  /#248cff|rgba\(36,\s*140,\s*255,/i,
+  'Public shell must retain the restrained blue systems accent.',
+);
 assert.match(publicStyles, /prefers-reduced-motion/, 'Public design must preserve reduced-motion behavior.');
 
 assert.match(investmentLayout, /commandStyles\.theme/, 'Investment must inherit command-center tokens without changing its route-scoped domain shell.');
