@@ -3,10 +3,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, Menu, X } from 'lucide-react';
-import Image from 'next/image';
 import { PLATFORM_NAV_ITEMS, PRIMARY_NAV_ITEMS } from '@/lib/constants';
 import { Button } from './ui/Button';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { BrandLogo } from './BrandLogo';
 import { AFTER_PRIMARY_NAVIGATION_ID, SkipLink } from './SkipLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -101,14 +101,7 @@ export const Navbar: React.FC = () => {
         >
           <div className="relative z-10 flex min-h-[72px] items-center justify-between gap-5 lg:min-h-[78px]">
             <a href="/" className="z-10 flex min-h-12 shrink-0 items-center" aria-label={logoLabel}>
-              <Image
-                src="/images/logo/ctg-one-logo.png"
-                alt=""
-                width={196}
-                height={48}
-                priority
-                className={`${styles.logoGlow} h-auto w-[132px] object-contain sm:w-[168px] 2xl:w-[188px]`}
-              />
+              <BrandLogo priority className="transition-transform duration-300 hover:-translate-y-px" />
             </a>
 
             <div className="hidden min-w-0 flex-1 items-center justify-center gap-4 xl:flex 2xl:gap-7">
@@ -238,7 +231,7 @@ export const Navbar: React.FC = () => {
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#d6ae56]/[.05] via-transparent to-[#248cff]/[.035]" aria-hidden="true" />
             <div className="relative flex min-h-full flex-col px-6 pb-8 pt-28 sm:px-8 sm:pt-32">
               <div className="mb-7 border-b border-white/[.07] pb-6">
-                <Image src="/images/logo/ctg-one-logo.png" alt="" width={196} height={48} className="h-auto w-[168px] object-contain" />
+                <BrandLogo />
               </div>
               <div aria-label={mobileLabel} className="flex-1">
                 <div className="space-y-1">
