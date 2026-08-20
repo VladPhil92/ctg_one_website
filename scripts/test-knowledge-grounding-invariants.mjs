@@ -1,24 +1,24 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { extractCitationNumbers, validateGroundedAnswer } from '../src/lib/ai/grounding.mjs';
+import { extractCitationIdentifiers, validateGroundedAnswer } from '../src/lib/ai/grounding.mjs';
 
 const route = readFileSync('src/app/api/knowledge/query/route.ts', 'utf8');
 const groundingModule = readFileSync('src/lib/ai/grounding.mjs', 'utf8');
 
 assert.deepEqual(
-  extractCitationNumbers('Supported by [1] and [2]. Repeating [1] changes nothing.'),
+  extractCitationIdentifiers('Supported by [1] and [2]. Repeating [1] changes nothing.'),
   [1, 2],
   'citation parser must preserve unique source references in first-seen order',
 );
 
 assert.deepEqual(
-  extractCitationNumbers('Combined evidence [1, 3] plus ordinary markdown [docs].'),
+  extractCitationIdentifiers('Combined evidence [1, 3] plus ordinary markdown [docs].'),
   [1, 3],
   'citation parser must support grouped numeric citations without treating arbitrary brackets as sources',
 );
 
 assert.deepEqual(
-  extractCitationNumbers('Observe malformed numeric references [0], [-1], [+2].'),
+  extractCitationIdentifiers('Observe malformed numeric references [0], [-1], [+2].'),
   [0, -1, 2],
   'citation parser must retain non-positive numeric identifiers so validation can reject them',
 );
@@ -52,7 +52,13 @@ assert.deepEqual(negativeCitation.invalidCitations, [-4]);
 const unsafeCitationNumber = Number.MAX_SAFE_INTEGER + 1;
 const unsafeCitation = validateGroundedAnswer(`Supported [1], fabricated [${unsafeCitationNumber}].`, [1]);
 assert.equal(unsafeCitation.grounded, false, 'unsafe integer source identifiers must fail closed');
-assert.deepEqual(unsafeCitation.invalidCitations, [unsafeCitationNumber]);
+assert.deepEqual(unsafeCitation.invalidCitations, [String(unsafeCitationNumber)]);
+
+const enormousCitationId = '9'.repeat(400);
+const enormousCitation = validateGroundedAnswer(`Supported [1], fabricated [${enormousCitationId}].`, [1]);
+assert.equal(enormousCitation.grounded, false, 'arbitrarily large numeric citation identifiers must never disappear through number coercion');
+assert.deepEqual(enormousCitation.invalidCitations, [enormousCitationId]);
+assert.equal(enormousCitation.citations.length, 2, 'invalid large identifiers must remain observable beside valid citations');
 
 assert.doesNotMatch(
   groundingModule,
