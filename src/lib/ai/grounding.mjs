@@ -1,28 +1,37 @@
 // @ts-check
 
+const MIN_SAFE_INTEGER_BIGINT = BigInt(Number.MIN_SAFE_INTEGER);
+const MAX_SAFE_INTEGER_BIGINT = BigInt(Number.MAX_SAFE_INTEGER);
+
 /**
- * Extract unique numeric citations from bracket citations such as [1], [2], [1, 3]
- * or malformed source identifiers such as [0] and [-1]. Non-numeric markdown
- * brackets are ignored.
+ * Extract unique numeric citation identifiers from bracket citations such as
+ * [1], [2], [1, 3], [0], [-1] or arbitrarily large integer identifiers.
+ * Non-numeric markdown brackets are ignored.
  *
- * Deliberately retain non-positive and non-safe numeric identifiers here. Route
- * citations are positive safe integers, so discarding malformed numeric tokens
- * before validation could let a fabricated source reference bypass the fail-closed
- * integrity gate when it appears beside an otherwise valid citation.
+ * Safe integer identifiers are normalized to numbers. Integers outside the
+ * JavaScript safe range are retained verbatim as strings so they can never be
+ * lost through floating-point coercion before the fail-closed validation step.
  *
  * @param {string} answer
- * @returns {number[]}
+ * @returns {Array<number | string>}
  */
-export function extractCitationNumbers(answer) {
+export function extractCitationIdentifiers(answer) {
   const citations = [];
   const seen = new Set();
   const pattern = /\[\s*([+-]?\d+(?:\s*,\s*[+-]?\d+)*)\s*\]/g;
 
   for (const match of answer.matchAll(pattern)) {
     for (const raw of match[1].split(',')) {
-      const citation = Number(raw.trim());
-      if (!Number.isFinite(citation) || seen.has(citation)) continue;
-      seen.add(citation);
+      const token = raw.trim();
+      const integer = BigInt(token);
+      const citation =
+        integer >= MIN_SAFE_INTEGER_BIGINT && integer <= MAX_SAFE_INTEGER_BIGINT
+          ? Number(integer)
+          : token;
+      const key = typeof citation === 'number' ? `number:${citation}` : `string:${citation}`;
+
+      if (seen.has(key)) continue;
+      seen.add(key);
       citations.push(citation);
     }
   }
@@ -32,12 +41,12 @@ export function extractCitationNumbers(answer) {
 
 /**
  * A generated answer is considered grounded only when it contains at least one
- * numeric citation and every citation points to a source that was actually
- * supplied to the model for this request.
+ * numeric citation identifier and every identifier points to a source that was
+ * actually supplied to the model for this request.
  *
- * Allowed source identifiers are always positive safe integers. Any observed
- * numeric identifier outside that domain is therefore retained in the parsed
- * citation set and rejected as invalid.
+ * Allowed source identifiers are always positive safe integers. Non-positive
+ * identifiers and values outside the JavaScript safe-integer domain are
+ * therefore retained by the parser and rejected rather than silently discarded.
  *
  * This deliberately does not attempt to judge semantic correctness. It is a
  * deterministic post-generation integrity gate that prevents unsupported or
@@ -45,15 +54,19 @@ export function extractCitationNumbers(answer) {
  *
  * @param {string} answer
  * @param {number[]} allowedCitations
- * @returns {{ grounded: boolean, citations: number[], invalidCitations: number[], hasCitations: boolean }}
+ * @returns {{ grounded: boolean, citations: Array<number | string>, invalidCitations: Array<number | string>, hasCitations: boolean }}
  */
 export function validateGroundedAnswer(answer, allowedCitations) {
   const allowed = new Set(
     allowedCitations.filter((citation) => Number.isSafeInteger(citation) && citation > 0),
   );
-  const citations = extractCitationNumbers(answer);
+  const citations = extractCitationIdentifiers(answer);
   const invalidCitations = citations.filter(
-    (citation) => !Number.isSafeInteger(citation) || citation <= 0 || !allowed.has(citation),
+    (citation) =>
+      typeof citation !== 'number' ||
+      !Number.isSafeInteger(citation) ||
+      citation <= 0 ||
+      !allowed.has(citation),
   );
   const hasCitations = citations.length > 0;
 
