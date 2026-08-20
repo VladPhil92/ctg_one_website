@@ -42,6 +42,15 @@ begin
     raise exception 'legacy direct kyc_documents insert policy still exists';
   end if;
 
+  if exists (
+    select 1 from pg_trigger
+    where tgrelid = 'public.kyc_submissions'::regclass
+      and tgname = 'on_kyc_submission_created'
+      and not tgisinternal
+  ) then
+    raise exception 'legacy pre-finalize KYC pending trigger still exists';
+  end if;
+
   if not exists (
     select 1 from pg_indexes
     where schemaname = 'public'
@@ -69,6 +78,28 @@ begin
       and policyname = 'kyc_documents_storage_delete_incomplete'
   ) then
     raise exception 'incomplete-intake Storage compensation policy missing';
+  end if;
+end;
+$$;
+
+-- Authenticated clients need SELECT so RLS can expose only their permitted
+-- rows. Direct KYC row writes remain forbidden and must go through reviewed RPCs.
+do $$
+begin
+  if not has_table_privilege('authenticated', 'public.profiles', 'SELECT') then
+    raise exception 'authenticated cannot read RLS-protected own profile';
+  end if;
+  if not has_table_privilege('authenticated', 'public.kyc_submissions', 'SELECT') then
+    raise exception 'authenticated cannot read RLS-protected KYC submissions';
+  end if;
+  if not has_table_privilege('authenticated', 'public.kyc_documents', 'SELECT') then
+    raise exception 'authenticated cannot read RLS-protected KYC documents';
+  end if;
+  if has_table_privilege('authenticated', 'public.kyc_submissions', 'INSERT') then
+    raise exception 'authenticated unexpectedly has direct kyc_submissions INSERT';
+  end if;
+  if has_table_privilege('authenticated', 'public.kyc_documents', 'INSERT') then
+    raise exception 'authenticated unexpectedly has direct kyc_documents INSERT';
   end if;
 end;
 $$;
