@@ -191,15 +191,18 @@ jobs:
       - name: Start isolated local Supabase stack
         run: supabase start
 
-      - name: Export local public Supabase credentials
+      - name: Export isolated Supabase test credentials
         shell: bash
         run: |
           set -euo pipefail
           eval "$(supabase status -o env)"
           : "${API_URL:?Local Supabase API_URL missing}"
           : "${ANON_KEY:?Local Supabase ANON_KEY missing}"
+          : "${SERVICE_ROLE_KEY:?Local Supabase SERVICE_ROLE_KEY missing}"
+          echo "::add-mask::${SERVICE_ROLE_KEY}"
           echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> "$GITHUB_ENV"
+          echo "E2E_SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}" >> "$GITHUB_ENV"
 
       - name: Build Next.js against isolated Supabase
         run: npm run build
