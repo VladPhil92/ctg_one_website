@@ -31,7 +31,7 @@ create or replace function public.begin_kyc_submission()
 returns uuid
 language plpgsql
 security definer
-set search_path = public, storage
+set search_path = public
 as $$
 declare
   v_user_id uuid := auth.uid();
@@ -41,8 +41,6 @@ begin
     raise exception 'authentication required';
   end if;
 
-  -- Reuse the caller's current unfinished intake so retries do not create
-  -- duplicate submissions after refresh/network interruption.
   select id
     into v_submission_id
     from public.kyc_submissions
@@ -56,7 +54,6 @@ begin
     return v_submission_id;
   end if;
 
-  -- A participant may only have one submitted review in flight.
   if exists (
     select 1
       from public.kyc_submissions
@@ -83,7 +80,7 @@ create or replace function public.register_kyc_document(
 returns void
 language plpgsql
 security definer
-set search_path = public, storage
+set search_path = public
 as $$
 declare
   v_user_id uuid := auth.uid();
@@ -112,8 +109,6 @@ begin
     raise exception 'invalid storage path';
   end if;
 
-  -- Do not persist a document reference unless Storage already contains
-  -- the object at the deterministic private path.
   if not exists (
     select 1
       from storage.objects
@@ -134,7 +129,7 @@ create or replace function public.finalize_kyc_submission(p_submission_id uuid)
 returns void
 language plpgsql
 security definer
-set search_path = public, storage
+set search_path = public
 as $$
 declare
   v_user_id uuid := auth.uid();
@@ -187,9 +182,8 @@ begin
 end;
 $$;
 
--- Allow compensation only while the intake is unfinished. This lets the
--- browser remove already-uploaded objects if a later registration step fails,
--- without allowing deletion of documents that have entered review.
+-- Allow compensation only while the intake is unfinished. This lets a retry
+-- remove an incomplete upload without permitting deletion after review begins.
 drop policy if exists kyc_documents_storage_delete_incomplete on storage.objects;
 create policy kyc_documents_storage_delete_incomplete on storage.objects
   for delete using (
@@ -204,61 +198,28 @@ create policy kyc_documents_storage_delete_incomplete on storage.objects
     )
   );
 
--- Review decisions are forbidden until intake finalization has proven both
--- durable metadata and durable Storage objects.
-create or replace function public.approve_kyc(p_submission_id uuid, p_admin_notes text default null)
-returns void
-language plpgsql security definer set search_path = public
+-- Keep the reviewed approve_kyc/reject_kyc privileged bodies unchanged. A
+-- table-level guard blocks any terminal review transition until intake has
+-- been finalized, so all existing admin RPC hashes remain stable.
+create or replace function public.guard_kyc_review_intake()
+returns trigger
+language plpgsql
+set search_path = public
 as $$
-declare
-  v_sub record;
 begin
-  if not public.is_admin() then
-    raise exception 'not authorized';
+  if old.status = 'pending'
+     and new.status in ('verified', 'rejected')
+     and old.intake_state <> 'submitted' then
+    raise exception 'submission intake incomplete';
   end if;
-
-  select * into v_sub from public.kyc_submissions where id = p_submission_id for update;
-  if v_sub is null then raise exception 'submission not found'; end if;
-  if v_sub.intake_state <> 'submitted' then raise exception 'submission intake incomplete'; end if;
-  if v_sub.status <> 'pending' then raise exception 'submission already %', v_sub.status; end if;
-
-  update public.kyc_submissions
-     set status = 'verified', reviewed_by = auth.uid(), reviewed_at = now()
-   where id = p_submission_id;
-  update public.profiles set kyc_status = 'verified' where id = v_sub.user_id;
-
-  insert into public.admin_audit_log (admin_id, action, target_table, target_id, details)
-  values (auth.uid(), 'approve_kyc', 'kyc_submissions', p_submission_id,
-          jsonb_build_object('user_id', v_sub.user_id));
+  return new;
 end;
 $$;
 
-create or replace function public.reject_kyc(p_submission_id uuid, p_reason text)
-returns void
-language plpgsql security definer set search_path = public
-as $$
-declare
-  v_sub record;
-begin
-  if not public.is_admin() then
-    raise exception 'not authorized';
-  end if;
-
-  select * into v_sub from public.kyc_submissions where id = p_submission_id for update;
-  if v_sub is null then raise exception 'submission not found'; end if;
-  if v_sub.intake_state <> 'submitted' then raise exception 'submission intake incomplete'; end if;
-  if v_sub.status <> 'pending' then raise exception 'submission already %', v_sub.status; end if;
-
-  update public.kyc_submissions
-     set status = 'rejected', reviewed_by = auth.uid(), reviewed_at = now(), rejection_reason = p_reason
-   where id = p_submission_id;
-  update public.profiles set kyc_status = 'rejected' where id = v_sub.user_id;
-
-  insert into public.admin_audit_log (admin_id, action, target_table, target_id, details)
-  values (auth.uid(), 'reject_kyc', 'kyc_submissions', p_submission_id,
-          jsonb_build_object('reason', p_reason));
-end;
-$$;
+drop trigger if exists kyc_review_requires_submitted_intake on public.kyc_submissions;
+create trigger kyc_review_requires_submitted_intake
+  before update of status on public.kyc_submissions
+  for each row execute function public.guard_kyc_review_intake();
 
 revoke all on function public.begin_kyc_submission() from public;
 revoke all on function public.register_kyc_document(uuid, text, text) from public;
