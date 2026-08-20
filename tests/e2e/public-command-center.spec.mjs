@@ -53,12 +53,27 @@ test.describe('CTG One public command-center design system', () => {
     }
   });
 
-  test('investment keeps its protected domain shell while inheriting command-center design', async ({ page }) => {
+  test('investment keeps its protected domain shell and sticky navigation while inheriting command-center design', async ({ page }) => {
     await preferSpanish(page);
     const response = await page.goto('/inversion');
     expect(response?.status()).toBeLessThan(400);
     await expect(page.locator('[data-public-command-center="investment"]')).toBeVisible();
     await expectNoHorizontalOverflow(page, '/inversion');
+
+    const nav = page.locator('[data-public-command-center="investment"] > nav').first();
+    await expect(nav).toBeVisible();
+    const before = await nav.evaluate((node) => ({
+      position: getComputedStyle(node).position,
+      zIndex: Number(getComputedStyle(node).zIndex),
+      top: node.getBoundingClientRect().top,
+    }));
+    expect(before.position).toBe('sticky');
+    expect(before.zIndex).toBeGreaterThanOrEqual(50);
+
+    await page.evaluate(() => window.scrollTo(0, Math.min(700, document.documentElement.scrollHeight - window.innerHeight)));
+    await page.waitForTimeout(100);
+    const afterTop = await nav.evaluate((node) => node.getBoundingClientRect().top);
+    expect(Math.abs(afterTop)).toBeLessThanOrEqual(1);
   });
 
   test('restored CTG Craft Beer assets are detailed WebP sources, not tiny derivatives', async ({ request }) => {
