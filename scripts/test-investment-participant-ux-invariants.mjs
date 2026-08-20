@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+const readBinary = (path) => readFile(new URL(`../${path}`, import.meta.url));
 const [
   app,
   appLayout,
@@ -15,6 +17,8 @@ const [
   accountDashboard,
   deposits,
   kyc,
+  paymentInstructions,
+  approvedInvestmentQr,
 ] = await Promise.all([
   read('src/app/inversion/app/page.tsx'),
   read('src/app/inversion/app/layout.tsx'),
@@ -28,6 +32,8 @@ const [
   read('src/app/dashboard/page.tsx'),
   read('src/app/dashboard/depositos/page.tsx'),
   read('src/app/dashboard/kyc/page.tsx'),
+  read('src/lib/payment-instructions.ts'),
+  readBinary('public/images/inversion/bancolombia-breb-grupo-pisao.jpg'),
 ]);
 
 assert.match(app, /useInvestmentOrders/, 'Canonical participant app must own order/tracking visibility.');
@@ -59,6 +65,24 @@ assert.match(resumePayment, /No se creará una nueva reserva/, 'Resume UI must t
 assert.match(checkout, /next=\/inversion\/app\/nueva\//, 'New-order checkout login continuation must remain inside the canonical investment app.');
 assert.match(checkout, /href="\/inversion\/app"/, 'Post-proof continuation must return to the canonical participant app.');
 assert.doesNotMatch(checkout, /\/dashboard\/inversion/, 'Checkout client must not route new participant flows through the legacy dashboard namespace.');
+
+assert.match(
+  paymentInstructions,
+  /\/images\/inversion\/bancolombia-breb-grupo-pisao\.jpg/,
+  'Investment checkout must use the approved first-party Bancolombia/Bre-B QR asset.',
+);
+assert.doesNotMatch(
+  paymentInstructions,
+  /NEXT_PUBLIC_INVESTMENT_BANCOLOMBIA_QR_URL/,
+  'Approved investment QR must not depend on an external runtime image URL.',
+);
+assert.equal(
+  createHash('sha256').update(approvedInvestmentQr).digest('hex'),
+  '67771a2a6fc178fc7743221919477dfd0720c504692806ca889bde62b1633e97',
+  'Approved Bancolombia/Bre-B QR asset bytes changed unexpectedly.',
+);
+assert.match(checkout, /INVESTMENT_BANK_TRANSFER_INSTRUCTIONS\.qrImageUrl/, 'New-order checkout must render the approved payment QR.');
+assert.match(resumePayment, /INVESTMENT_BANK_TRANSFER_INSTRUCTIONS\.qrImageUrl/, 'Resume-payment checkout must render the approved payment QR.');
 
 assert.match(legacyDashboard, /redirect\('\/inversion\/app'\)/, 'Legacy participant dashboard must remain a compatibility redirect.');
 assert.match(legacyCheckout, /redirect\(`\/inversion\/app\/nueva\//, 'Legacy checkout URLs must redirect to the canonical checkout.');
