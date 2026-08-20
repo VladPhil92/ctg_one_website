@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -15,6 +16,9 @@ const [
   accountDashboard,
   deposits,
   kyc,
+  paymentInstructions,
+  paymentQrData,
+  paymentQrRoute,
 ] = await Promise.all([
   read('src/app/inversion/app/page.tsx'),
   read('src/app/inversion/app/layout.tsx'),
@@ -28,6 +32,9 @@ const [
   read('src/app/dashboard/page.tsx'),
   read('src/app/dashboard/depositos/page.tsx'),
   read('src/app/dashboard/kyc/page.tsx'),
+  read('src/lib/payment-instructions.ts'),
+  read('src/lib/investment/payment-qr.ts'),
+  read('src/app/api/investment/payment-qr/route.ts'),
 ]);
 
 assert.match(app, /useInvestmentOrders/, 'Canonical participant app must own order/tracking visibility.');
@@ -59,6 +66,32 @@ assert.match(resumePayment, /No se creará una nueva reserva/, 'Resume UI must t
 assert.match(checkout, /next=\/inversion\/app\/nueva\//, 'New-order checkout login continuation must remain inside the canonical investment app.');
 assert.match(checkout, /href="\/inversion\/app"/, 'Post-proof continuation must return to the canonical participant app.');
 assert.doesNotMatch(checkout, /\/dashboard\/inversion/, 'Checkout client must not route new participant flows through the legacy dashboard namespace.');
+
+assert.match(
+  paymentInstructions,
+  /\/api\/investment\/payment-qr/,
+  'Investment checkout must use the approved first-party Bancolombia/Bre-B QR route.',
+);
+assert.doesNotMatch(
+  paymentInstructions,
+  /NEXT_PUBLIC_INVESTMENT_BANCOLOMBIA_QR_URL/,
+  'Approved investment QR must not depend on an external runtime image URL.',
+);
+const matrixBase64 = paymentQrData.match(/INVESTMENT_PAYMENT_QR_MATRIX_BASE64\s*=\s*\n\s*'([^']+)'/)?.[1];
+assert.ok(matrixBase64, 'Approved payment QR matrix data must remain present.');
+const packedQrMatrix = Buffer.from(matrixBase64, 'base64');
+assert.equal(packedQrMatrix.length, 742, 'Approved payment QR matrix must remain the reviewed 77x77 packed symbol.');
+assert.equal(
+  createHash('sha256').update(packedQrMatrix).digest('hex'),
+  '447f15c1e5ef09a32f34fc4b1a7ed948d071037868fc299514f03b64dda4857f',
+  'Approved Bancolombia/Bre-B QR module matrix changed unexpectedly.',
+);
+assert.match(paymentQrData, /INVESTMENT_PAYMENT_QR_SIZE = 77/, 'Approved payment QR must remain QR version 15.');
+assert.match(paymentQrRoute, /INVESTMENT_PAYMENT_QR_MATRIX_BASE64/, 'Payment QR route must render from the reviewed matrix data.');
+assert.match(paymentQrRoute, /image\/svg\+xml/, 'Payment QR route must serve a crisp scanner-safe SVG.');
+assert.match(paymentQrRoute, /max-age=31536000, immutable/, 'Approved payment QR should be immutably cacheable.');
+assert.match(checkout, /INVESTMENT_BANK_TRANSFER_INSTRUCTIONS\.qrImageUrl/, 'New-order checkout must render the approved payment QR.');
+assert.match(resumePayment, /INVESTMENT_BANK_TRANSFER_INSTRUCTIONS\.qrImageUrl/, 'Resume-payment checkout must render the approved payment QR.');
 
 assert.match(legacyDashboard, /redirect\('\/inversion\/app'\)/, 'Legacy participant dashboard must remain a compatibility redirect.');
 assert.match(legacyCheckout, /redirect\(`\/inversion\/app\/nueva\//, 'Legacy checkout URLs must redirect to the canonical checkout.');
