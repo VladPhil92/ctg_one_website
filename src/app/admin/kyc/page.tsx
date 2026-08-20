@@ -25,7 +25,7 @@ export default async function AdminKycPage({ searchParams }: { searchParams: Sea
     .select('id,user_id,status,created_at', { count: 'exact' })
     .eq('status', 'pending')
     .eq('intake_state', 'submitted')
-    .order('submitted_at', { ascending: true })
+    .order('created_at', { ascending: true })
     .order('id', { ascending: true })
     .range(from, to);
 
