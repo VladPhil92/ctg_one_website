@@ -84,8 +84,8 @@ export const Navbar: React.FC = () => {
   const contactItem = PRIMARY_NAV_ITEMS[4];
 
   const navLinkClass = (active: boolean) =>
-    `inline-flex min-h-11 items-center text-sm uppercase tracking-[0.11em] font-semibold transition-colors duration-300 ${
-      active ? 'text-white' : 'text-text-dim hover:text-white'
+    `relative inline-flex min-h-11 items-center text-sm uppercase tracking-[0.11em] font-semibold transition-colors duration-300 ${
+      active ? 'text-white after:absolute after:bottom-1 after:left-0 after:right-0 after:h-px after:bg-accent/70' : 'text-text-dim hover:text-white'
     }`;
 
   return (
@@ -93,23 +93,29 @@ export const Navbar: React.FC = () => {
       <SkipLink />
       <nav
         aria-label={primaryLabel}
-        className={`fixed left-0 right-0 top-0 z-50 transition-[padding,background-color,border-color,backdrop-filter] duration-300 ${isScrolled ? 'py-3' : 'py-5 sm:py-6'}`}
+        className={`fixed left-0 right-0 top-0 z-50 transition-[padding,background-color,border-color,backdrop-filter] duration-300 ${isScrolled ? 'py-2.5' : 'py-4 sm:py-5'}`}
         style={{
-          backgroundColor: isScrolled ? 'rgba(5, 5, 5, 0.94)' : 'rgba(5,5,5,0.22)',
-          backdropFilter: isScrolled ? 'blur(20px)' : 'blur(8px)',
-          WebkitBackdropFilter: isScrolled ? 'blur(20px)' : 'blur(8px)',
-          borderBottom: isScrolled ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid transparent',
+          backgroundColor: isScrolled ? 'rgba(4, 6, 9, 0.95)' : 'rgba(4,6,9,0.54)',
+          backdropFilter: isScrolled ? 'blur(24px) saturate(135%)' : 'blur(14px) saturate(120%)',
+          WebkitBackdropFilter: isScrolled ? 'blur(24px) saturate(135%)' : 'blur(14px) saturate(120%)',
+          borderBottom: isScrolled ? '1px solid rgba(212, 162, 89, 0.14)' : '1px solid rgba(255,255,255,0.045)',
+          boxShadow: isScrolled ? '0 18px 55px rgba(0,0,0,.22)' : 'none',
         }}
       >
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/25 to-transparent" aria-hidden="true" />
         <div className="mx-auto max-w-7xl px-5 sm:px-8 xl:px-10">
           <div className="flex items-center justify-between gap-8">
-            <a href="/" className="z-10 flex min-h-11 shrink-0 items-center gap-4 xl:mr-5" aria-label={logoLabel}>
-              <div className="relative h-10 w-10 overflow-hidden rounded-full border border-white/[.08]">
-                <Image src="/images/logo/CTGLOGO.jpeg" alt="" fill className="object-cover" priority />
-              </div>
-              <div className="hidden sm:flex flex-col">
-                <span className="text-sm font-outfit font-semibold text-white tracking-wide">CTG One</span>
-                <span className="text-[11px] text-text-dim uppercase tracking-[0.16em]">{t('Technology')}</span>
+            <a href="/" className="z-10 flex min-h-12 shrink-0 items-center xl:mr-5" aria-label={logoLabel}>
+              <div className="relative h-11 w-[142px] overflow-hidden rounded-xl border border-accent/15 bg-black/25 px-2 shadow-[inset_0_1px_0_rgba(255,255,255,.035),0_10px_35px_rgba(0,0,0,.2)] sm:w-[164px]">
+                <div className="absolute inset-0 bg-gradient-to-r from-accent/[.055] via-transparent to-sky-300/[.025]" aria-hidden="true" />
+                <Image
+                  src="/images/logo/ctg-one-logo.png"
+                  alt=""
+                  fill
+                  className="relative object-contain object-left p-1.5"
+                  priority
+                  sizes="164px"
+                />
               </div>
             </a>
 
@@ -141,8 +147,9 @@ export const Navbar: React.FC = () => {
                     id={PLATFORM_MENU_ID}
                     role="menu"
                     aria-label={platformsLabel}
-                    className="absolute left-1/2 top-[calc(100%+10px)] w-64 -translate-x-1/2 overflow-hidden rounded-xl border border-white/[.1] bg-[#090909]/98 p-2 shadow-2xl backdrop-blur-xl"
+                    className="absolute left-1/2 top-[calc(100%+12px)] w-72 -translate-x-1/2 overflow-hidden rounded-2xl border border-accent/15 bg-[#06080b]/[.985] p-2.5 shadow-[0_28px_80px_rgba(0,0,0,.48)] backdrop-blur-2xl"
                   >
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent/[.045] via-transparent to-sky-300/[.025]" aria-hidden="true" />
                     {PLATFORM_NAV_ITEMS.map((item) => {
                       const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                       return (
@@ -151,7 +158,7 @@ export const Navbar: React.FC = () => {
                           href={item.href}
                           role="menuitem"
                           aria-current={active ? 'page' : undefined}
-                          className={`flex min-h-11 items-center rounded-lg px-4 text-sm font-medium transition-colors ${active ? 'bg-accent/[.08] text-accent' : 'text-text-muted hover:bg-white/[.045] hover:text-white'}`}
+                          className={`relative flex min-h-11 items-center rounded-xl px-4 text-sm font-medium transition-colors ${active ? 'bg-accent/[.09] text-accent' : 'text-text-muted hover:bg-white/[.05] hover:text-white'}`}
                         >
                           {t(item.label)}
                         </a>
@@ -193,7 +200,7 @@ export const Navbar: React.FC = () => {
                 ref={menuButtonRef}
                 type="button"
                 onClick={() => setIsOpen((open) => !open)}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/[.08] bg-black/20"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-accent/15 bg-black/30 shadow-[inset_0_1px_0_rgba(255,255,255,.04)]"
                 aria-label={isOpen ? closeMenuLabel : openMenuLabel}
                 aria-expanded={isOpen}
                 aria-controls={MOBILE_NAVIGATION_ID}
@@ -222,9 +229,10 @@ export const Navbar: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-label={mobileLabel}
-            className="fixed bottom-0 right-0 top-0 z-40 w-[86%] max-w-sm overflow-y-auto border-l border-white/[.08] bg-[#080808]/[.985] xl:hidden"
+            className="fixed bottom-0 right-0 top-0 z-40 w-[86%] max-w-sm overflow-y-auto border-l border-accent/15 bg-[#06080b]/[.985] xl:hidden"
           >
-            <div className="flex min-h-full flex-col px-6 pb-8 pt-24 sm:px-8 sm:pt-28">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-accent/[.045] via-transparent to-sky-300/[.02]" aria-hidden="true" />
+            <div className="relative flex min-h-full flex-col px-6 pb-8 pt-24 sm:px-8 sm:pt-28">
               <nav aria-label={mobileLabel} className="flex-1">
                 <div className="space-y-1">
                   {PRIMARY_NAV_ITEMS.map((item, index) => {
@@ -236,7 +244,7 @@ export const Navbar: React.FC = () => {
                         href={item.href}
                         aria-current={active ? 'page' : undefined}
                         onClick={() => setIsOpen(false)}
-                        className={`flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold uppercase tracking-[0.12em] ${active ? 'bg-white/[.04] text-white' : 'text-text-muted hover:bg-white/[.035] hover:text-white'}`}
+                        className={`flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold uppercase tracking-[0.12em] ${active ? 'bg-accent/[.07] text-white' : 'text-text-muted hover:bg-white/[.035] hover:text-white'}`}
                       >
                         {t(item.label)}
                       </a>
