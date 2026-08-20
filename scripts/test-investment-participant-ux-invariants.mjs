@@ -3,7 +3,6 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const readBinary = (path) => readFile(new URL(`../${path}`, import.meta.url));
 const [
   app,
   appLayout,
@@ -18,7 +17,8 @@ const [
   deposits,
   kyc,
   paymentInstructions,
-  approvedInvestmentQr,
+  paymentQrData,
+  paymentQrRoute,
 ] = await Promise.all([
   read('src/app/inversion/app/page.tsx'),
   read('src/app/inversion/app/layout.tsx'),
@@ -33,7 +33,8 @@ const [
   read('src/app/dashboard/depositos/page.tsx'),
   read('src/app/dashboard/kyc/page.tsx'),
   read('src/lib/payment-instructions.ts'),
-  readBinary('public/images/inversion/bancolombia-breb-grupo-pisao.jpg'),
+  read('src/lib/investment/payment-qr.ts'),
+  read('src/app/api/investment/payment-qr/route.ts'),
 ]);
 
 assert.match(app, /useInvestmentOrders/, 'Canonical participant app must own order/tracking visibility.');
@@ -68,19 +69,27 @@ assert.doesNotMatch(checkout, /\/dashboard\/inversion/, 'Checkout client must no
 
 assert.match(
   paymentInstructions,
-  /\/images\/inversion\/bancolombia-breb-grupo-pisao\.jpg/,
-  'Investment checkout must use the approved first-party Bancolombia/Bre-B QR asset.',
+  /\/api\/investment\/payment-qr/,
+  'Investment checkout must use the approved first-party Bancolombia/Bre-B QR route.',
 );
 assert.doesNotMatch(
   paymentInstructions,
   /NEXT_PUBLIC_INVESTMENT_BANCOLOMBIA_QR_URL/,
   'Approved investment QR must not depend on an external runtime image URL.',
 );
+const matrixBase64 = paymentQrData.match(/INVESTMENT_PAYMENT_QR_MATRIX_BASE64\s*=\s*\n\s*'([^']+)'/)?.[1];
+assert.ok(matrixBase64, 'Approved payment QR matrix data must remain present.');
+const packedQrMatrix = Buffer.from(matrixBase64, 'base64');
+assert.equal(packedQrMatrix.length, 742, 'Approved payment QR matrix must remain the reviewed 77x77 packed symbol.');
 assert.equal(
-  createHash('sha256').update(approvedInvestmentQr).digest('hex'),
-  '67771a2a6fc178fc7743221919477dfd0720c504692806ca889bde62b1633e97',
-  'Approved Bancolombia/Bre-B QR asset bytes changed unexpectedly.',
+  createHash('sha256').update(packedQrMatrix).digest('hex'),
+  '447f15c1e5ef09a32f34fc4b1a7ed948d071037868fc299514f03b64dda4857f',
+  'Approved Bancolombia/Bre-B QR module matrix changed unexpectedly.',
 );
+assert.match(paymentQrData, /INVESTMENT_PAYMENT_QR_SIZE = 77/, 'Approved payment QR must remain QR version 15.');
+assert.match(paymentQrRoute, /INVESTMENT_PAYMENT_QR_MATRIX_BASE64/, 'Payment QR route must render from the reviewed matrix data.');
+assert.match(paymentQrRoute, /image\/svg\+xml/, 'Payment QR route must serve a crisp scanner-safe SVG.');
+assert.match(paymentQrRoute, /max-age=31536000, immutable/, 'Approved payment QR should be immutably cacheable.');
 assert.match(checkout, /INVESTMENT_BANK_TRANSFER_INSTRUCTIONS\.qrImageUrl/, 'New-order checkout must render the approved payment QR.');
 assert.match(resumePayment, /INVESTMENT_BANK_TRANSFER_INSTRUCTIONS\.qrImageUrl/, 'Resume-payment checkout must render the approved payment QR.');
 
