@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { Container } from '@/components/ui';
+import { BrandLogo } from '@/components/BrandLogo';
 import { FOOTER, CONTACT } from '@/data/content';
 import { NAV_ITEMS } from '@/lib/constants';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -52,14 +52,7 @@ export const Footer: React.FC = () => {
         <div className="flex flex-col justify-between gap-8 border-b border-white/[0.07] pb-10 sm:pb-12 lg:flex-row lg:items-end">
           <div className="max-w-xl">
             <a href="/" aria-label={logoLabel} className="group mb-7 inline-flex min-h-12 items-center">
-              <Image
-                src="/images/logo/ctg-one-logo.png"
-                alt=""
-                width={196}
-                height={48}
-                className={`${styles.logoGlow} h-auto w-[174px] object-contain transition-[filter,transform] duration-300 group-hover:-translate-y-px sm:w-[192px]`}
-                sizes="192px"
-              />
+              <BrandLogo className="transition-transform duration-300 group-hover:-translate-y-px" />
             </a>
 
             <div className="mb-4 flex items-center gap-2.5">

@@ -3,11 +3,12 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [network, navbar, hero, footer, translations] = await Promise.all([
+const [network, navbar, hero, footer, brandLogo, translations] = await Promise.all([
   read('src/components/BlockchainNetwork.tsx'),
   read('src/components/Navbar.tsx'),
   read('src/components/sections/HeroSection.tsx'),
   read('src/components/Footer.tsx'),
+  read('src/components/BrandLogo.tsx'),
   read('src/i18n/commandCenterTranslations.ts'),
 ]);
 
@@ -32,10 +33,16 @@ for (const label of [
 }
 
 assert.match(network, /href="\/images\/logo\/ctg-one-coin-icon\.png"/, 'Ecosystem core must use the approved compact CTG One mark.');
-assert.match(navbar, /src="\/images\/logo\/ctg-one-logo\.png"/, 'Navbar must use the official CTG One Technology lockup.');
-assert.doesNotMatch(navbar, /CTGLOGO\.jpeg/, 'Navbar must not regress to the legacy cropped JPEG logo.');
-assert.match(footer, /src="\/images\/logo\/ctg-one-logo\.png"/, 'Footer must use the official CTG One Technology lockup.');
-assert.doesNotMatch(footer, /CTGLOGO\.jpeg/, 'Footer must not regress to the legacy cropped JPEG logo.');
+assert.match(brandLogo, /src="\/images\/logo\/ctg-one-coin-icon\.png"/, 'Brand lockup must use the María Mulata mark.');
+assert.match(brandLogo, />CTG <\//, 'Brand lockup must render CTG as text, not inside a banner image.');
+assert.match(brandLogo, />One<\//, 'Brand lockup must render One as text, not inside a banner image.');
+assert.match(brandLogo, /Technology/, 'Brand lockup must render the Technology descriptor.');
+assert.match(navbar, /<BrandLogo priority/, 'Navbar must render the structural CTG One Technology lockup.');
+assert.match(footer, /<BrandLogo/, 'Footer must render the structural CTG One Technology lockup.');
+for (const source of [navbar, footer, brandLogo]) {
+  assert.doesNotMatch(source, /ctg-one-logo\.png/, 'Signature/banner logo asset must never be rendered by the CTG One brand lockup.');
+  assert.doesNotMatch(source, /CTGLOGO\.jpeg/, 'Legacy cropped JPEG logo must never be rendered by the CTG One brand lockup.');
+}
 
 for (const capability of ['identity-auth', 'data-security', 'delivery-platform', 'ai-layer']) {
   assert.ok(hero.includes(`id: '${capability}'`), `System Status must retain capability: ${capability}`);
