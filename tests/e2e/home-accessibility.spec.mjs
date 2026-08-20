@@ -59,10 +59,10 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
 
     await expect(page.getByText('Núcleo en línea', { exact: true })).toBeVisible();
     await expect(page.getByText('PRODUCTO OPERATIVO / CASO-001', { exact: true })).toBeVisible();
-    await expect(page.getByText('Capa de producción física', { exact: true })).toBeVisible();
+    await expect(page.getByText('Cartagena · Capa de producción física', { exact: true })).toBeVisible();
     await expect(page.getByText('Core online', { exact: true })).toHaveCount(0);
     await expect(page.getByText('LIVE PRODUCT / CASE-001', { exact: true })).toHaveCount(0);
-    await expect(page.getByText('Physical production layer', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Cartagena · Physical production layer', { exact: true })).toHaveCount(0);
   });
 
   test('public positioning remains technology-first and Rewards honors Spanish locale', async ({ page }) => {
