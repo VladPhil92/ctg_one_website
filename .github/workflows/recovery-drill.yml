@@ -153,6 +153,7 @@ jobs:
             scripts/golden-path-transactional-smoke.sql \
             scripts/http-security-schema-smoke.sql \
             scripts/security-definer-exposure-smoke.sql \
+            scripts/kyc-transactional-resilience-schema-smoke.sql \
             scripts/domain-event-outbox-schema-smoke.sql \
             scripts/document-notification-os-schema-smoke.sql \
             scripts/operations-intelligence-schema-smoke.sql; do
