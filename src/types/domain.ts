@@ -1,8 +1,3 @@
-// Hand-written types mirroring supabase/migrations/0001_init.sql. Once a
-// real Supabase project exists, `supabase gen types typescript` can
-// generate a `Database` type from the live schema and these can be
-// derived from it instead — not blocking for now.
-
 export type UserRole = 'user' | 'admin';
 export type KycStatus = 'not_submitted' | 'pending' | 'verified' | 'rejected';
 
@@ -46,12 +41,14 @@ export interface Transaction {
   created_at: string;
 }
 
-export type KycSubmissionStatus = 'pending' | 'verified' | 'rejected';
+export type KycSubmissionStatus = 'draft' | 'pending' | 'verified' | 'rejected';
 
 export interface KycSubmission {
   id: string;
   user_id: string;
   status: KycSubmissionStatus;
+  client_request_id: string | null;
+  submitted_at: string | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
   rejection_reason: string | null;

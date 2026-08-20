@@ -19,6 +19,11 @@ import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 
+type KycDraftResult = {
+  id: string;
+  status: 'draft' | 'pending' | 'verified' | 'rejected';
+};
+
 export default function KycUploadPage() {
   const { userId, profile, isAuthenticated, isLoading: isAuthLoading, refreshProfile } = useAuth();
   const { submission, isLoading: isSubmissionLoading, refresh: refreshSubmission } = useLatestKycSubmission();
@@ -54,34 +59,58 @@ export default function KycUploadPage() {
     setIsSubmitting(true);
     try {
       const supabase = createClient();
+      const requestId = crypto.randomUUID();
 
-      const { data: newSubmission, error: submissionError } = await supabase
-        .from('kyc_submissions')
-        .insert({ user_id: userId })
-        .select()
-        .single();
-      if (submissionError) throw submissionError;
+      const { data: draftData, error: draftError } = await supabase.rpc('begin_kyc_submission', {
+        p_request_id: requestId,
+      });
+      if (draftError) throw draftError;
 
-      const uploads: Array<{ documentType: string; file: File }> = [
+      const draft = draftData as KycDraftResult | null;
+      if (!draft?.id) throw new Error('KYC_DRAFT_UNAVAILABLE');
+
+      if (draft.status === 'pending') {
+        await Promise.all([refreshProfile(), refreshSubmission()]);
+        setJustSubmitted(true);
+        return;
+      }
+      if (draft.status !== 'draft') {
+        throw new Error('KYC_DRAFT_NOT_EDITABLE');
+      }
+
+      const uploads: Array<{ documentType: 'cedula_front' | 'cedula_back'; file: File }> = [
         { documentType: 'cedula_front', file: frontFile },
         { documentType: 'cedula_back', file: backFile },
       ];
 
       for (const { documentType, file } of uploads) {
-        const path = `${userId}/${newSubmission.id}-${documentType}-${file.name}`;
-        const { error: uploadError } = await supabase.storage.from('kyc-documents').upload(path, file);
+        const path = `${userId}/${draft.id}/${documentType}`;
+        const { error: uploadError } = await supabase.storage
+          .from('kyc-documents')
+          .upload(path, file, {
+            upsert: true,
+            contentType: file.type || undefined,
+          });
         if (uploadError) throw uploadError;
 
-        const { error: docError } = await supabase
-          .from('kyc_documents')
-          .insert({ submission_id: newSubmission.id, document_type: documentType, storage_path: path });
-        if (docError) throw docError;
+        const { error: documentError } = await supabase.rpc('register_kyc_document', {
+          p_submission_id: draft.id,
+          p_document_type: documentType,
+          p_storage_path: path,
+        });
+        if (documentError) throw documentError;
       }
+
+      const { error: finalizeError } = await supabase.rpc('finalize_kyc_submission', {
+        p_submission_id: draft.id,
+      });
+      if (finalizeError) throw finalizeError;
 
       await Promise.all([refreshProfile(), refreshSubmission()]);
       setJustSubmitted(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo enviar tu verificación');
+    } catch {
+      await Promise.all([refreshProfile(), refreshSubmission()]);
+      setError('No se pudo completar el envío. Puedes intentarlo de nuevo sin duplicar tu presentación.');
     } finally {
       setIsSubmitting(false);
     }
