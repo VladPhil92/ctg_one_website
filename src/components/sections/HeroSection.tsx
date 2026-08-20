@@ -6,20 +6,32 @@ import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { HERO } from '@/data/content';
-import { getCapabilityProof, getPublicProofStatus } from '@/data/technology-proof';
+import { getCapabilityProof, getPublicProofStatus, type PublicProofStatus } from '@/data/technology-proof';
 import { BlockchainNetwork } from '@/components/BlockchainNetwork';
-import { Cpu, Sparkles, Network, ShieldCheck } from 'lucide-react';
+import { Cpu, Sparkles, Network, ShieldCheck, RadioTower } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const capabilityRail = [
-  { id: 'identity-auth', icon: Cpu, en: 'Identity platform', es: 'Plataforma de identidad' },
-  { id: 'data-security', icon: ShieldCheck, en: 'Data & security', es: 'Datos y seguridad' },
-  { id: 'delivery-platform', icon: Network, en: 'Delivery infrastructure', es: 'Infraestructura de entrega' },
-  { id: 'ai-layer', icon: Sparkles, en: 'Applied AI', es: 'IA aplicada' },
+  { id: 'identity-auth', code: 'IDN-01', icon: Cpu, en: 'Identity platform', es: 'Plataforma de identidad' },
+  { id: 'data-security', code: 'SEC-02', icon: ShieldCheck, en: 'Data & security', es: 'Datos y seguridad' },
+  { id: 'delivery-platform', code: 'INF-03', icon: Network, en: 'Delivery infrastructure', es: 'Infraestructura de entrega' },
+  { id: 'ai-layer', code: 'AIX-04', icon: Sparkles, en: 'Applied AI', es: 'IA aplicada' },
 ].map((item) => ({ ...item, status: getPublicProofStatus(getCapabilityProof(item.id)) }));
 
 const WHATSAPP_CONVERSATION_URL =
   'https://wa.me/573186428218?text=Hola%20CTG%20One%2C%20quiero%20conocer%20m%C3%A1s%20sobre%20su%20ecosistema%20y%20servicios.';
+
+function localizedStatus(status: PublicProofStatus, locale: 'en' | 'es') {
+  if (locale === 'en') return status;
+  const labels: Record<PublicProofStatus, string> = {
+    LIVE: 'OPERATIVO',
+    BETA: 'BETA',
+    PARTIAL: 'PARCIAL',
+    'IN DEVELOPMENT': 'EN DESARROLLO',
+    ROADMAP: 'HOJA DE RUTA',
+  };
+  return labels[status];
+}
 
 export const HeroSection: React.FC = () => {
   const { locale, t } = useLanguage();
@@ -36,10 +48,19 @@ export const HeroSection: React.FC = () => {
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div
           className="absolute -top-32 right-[-10%] h-[700px] w-[700px] md:h-[980px] md:w-[980px]"
-          style={{ background: 'radial-gradient(circle, rgba(212,162,89,0.065) 0%, rgba(212,162,89,0.018) 34%, transparent 68%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(212,162,89,0.075) 0%, rgba(212,162,89,0.022) 34%, transparent 68%)' }}
         />
         <div
-          className="absolute bottom-[-14%] left-[18%] h-[45%] w-[75%] opacity-50"
+          className="absolute inset-0 opacity-[0.17]"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(212,162,89,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(212,162,89,0.055) 1px, transparent 1px)',
+            backgroundSize: '56px 56px',
+            maskImage: 'linear-gradient(to bottom, black 0%, black 72%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 72%, transparent 100%)',
+          }}
+        />
+        <div
+          className="absolute bottom-[-14%] left-[18%] h-[45%] w-[75%] opacity-55"
           style={{
             backgroundImage: 'repeating-radial-gradient(ellipse at center, transparent 0 13px, rgba(212,162,89,0.08) 14px 14.7px, transparent 15px 26px)',
             transform: 'perspective(520px) rotateX(68deg) scaleX(1.35)',
@@ -48,12 +69,23 @@ export const HeroSection: React.FC = () => {
             WebkitMaskImage: 'linear-gradient(to top, black, transparent 76%)',
           }}
         />
-        <div className="absolute inset-x-0 top-[30%] h-px bg-gradient-to-r from-transparent via-white/[0.035] to-transparent" />
+        <div className="absolute left-[8%] top-[18%] h-40 w-px bg-gradient-to-b from-transparent via-accent/30 to-transparent" />
+        <div className="absolute inset-x-0 top-[30%] h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
       </div>
 
       <Container className="relative z-10">
-        <div className="grid grid-cols-1 items-center gap-8 sm:gap-10 md:gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:gap-16 xl:gap-20">
+        <div className="grid grid-cols-1 items-center gap-8 sm:gap-10 md:gap-12 lg:grid-cols-[0.94fr_1.06fr] lg:gap-14 xl:gap-18">
           <div className="order-1 max-w-2xl">
+            <FadeInSection delay={0.02}>
+              <div className="mb-4 inline-flex items-center gap-2.5 rounded-full border border-accent/15 bg-accent/[.035] px-3.5 py-2 text-[9px] font-semibold uppercase tracking-[.18em] text-accent">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-accent/35" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+                </span>
+                {locale === 'es' ? 'Núcleo tecnológico activo' : 'Technology core online'}
+              </div>
+            </FadeInSection>
+
             <FadeInSection delay={0.04}>
               <Badge variant="accent" className="mb-5 sm:mb-7">{t(HERO.badge)}</Badge>
             </FadeInSection>
@@ -82,22 +114,45 @@ export const HeroSection: React.FC = () => {
             </FadeInSection>
 
             <FadeInSection delay={0.24}>
-              <div className="grid grid-cols-2 gap-x-5 gap-y-4 border-y border-white/[0.075] py-5 xl:grid-cols-4">
-                {capabilityRail.map(({ id, icon: Icon, en, es, status }) => (
-                  <div key={id} className="flex min-w-0 items-center gap-2.5">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-accent/20 bg-accent/[0.035]">
-                      <Icon className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.5} aria-hidden="true" />
-                    </span>
-                    <span className="min-w-0 text-[11px] sm:text-xs font-medium uppercase tracking-[0.08em] text-text-dim leading-tight">
-                      {locale === 'es' ? es : en} · {status}
-                    </span>
+              <div className="mb-8 rounded-[22px] border border-white/[0.075] bg-[#07090c]/80 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.035),0_24px_70px_rgba(0,0,0,.22)] backdrop-blur-sm">
+                <div className="mb-2 flex items-center justify-between px-2 pb-2">
+                  <div className="flex items-center gap-2 text-[8px] font-semibold uppercase tracking-[.18em] text-text-dim">
+                    <RadioTower size={12} className="text-accent" />
+                    {locale === 'es' ? 'Matriz de capacidades' : 'Capability matrix'}
                   </div>
-                ))}
+                  <span className="font-mono text-[8px] tracking-[.14em] text-accent/55">CTG-CORE/04</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {capabilityRail.map(({ id, code, icon: Icon, en, es, status }) => (
+                    <div
+                      key={id}
+                      className="group relative min-h-[88px] overflow-hidden rounded-xl border border-white/[0.065] bg-white/[0.018] p-4 transition-colors duration-300 hover:border-accent/25 hover:bg-accent/[.025]"
+                    >
+                      <div className="absolute right-[-24px] top-[-24px] h-20 w-20 rounded-full bg-accent/[.035] blur-xl transition-opacity group-hover:bg-accent/[.07]" aria-hidden="true" />
+                      <div className="relative flex h-full items-start gap-3.5">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent/[0.035]">
+                          <Icon className="h-[17px] w-[17px] shrink-0 text-accent" strokeWidth={1.5} aria-hidden="true" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1.5 flex items-center justify-between gap-3">
+                            <span className="font-mono text-[8px] tracking-[.14em] text-accent/55">{code}</span>
+                            <span className="shrink-0 rounded-full border border-white/[.07] bg-black/20 px-2 py-1 text-[7px] font-semibold uppercase tracking-[.12em] text-text-dim">
+                              {localizedStatus(status, locale)}
+                            </span>
+                          </div>
+                          <span className="block text-[12px] font-semibold uppercase tracking-[0.075em] text-text-secondary leading-snug sm:text-[13px]">
+                            {locale === 'es' ? es : en}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </FadeInSection>
 
             <FadeInSection delay={0.28}>
-              <div className="grid grid-cols-2 gap-5 pt-6 sm:grid-cols-4 sm:gap-8 sm:pt-7">
+              <div className="grid grid-cols-2 gap-5 border-t border-white/[0.065] pt-6 sm:grid-cols-4 sm:gap-8 sm:pt-7">
                 {HERO.metrics.map((metric, idx) => (
                   <div key={idx} className="min-w-0">
                     <span className="mb-1 block text-xl font-outfit font-medium text-white sm:text-2xl">{t(metric.value)}</span>
@@ -110,13 +165,20 @@ export const HeroSection: React.FC = () => {
 
           <div className="order-2 flex min-w-0 justify-center pt-2 lg:justify-end lg:pt-0">
             <FadeInSection delay={0.12} direction="right" className="flex w-full justify-center lg:justify-end">
-              <div className="relative w-full max-w-[390px] sm:max-w-[470px] lg:max-w-[520px]">
-                <div
-                  className="absolute inset-[8%] rounded-full pointer-events-none"
-                  style={{ boxShadow: '0 0 120px rgba(212,162,89,0.055), inset 0 0 80px rgba(212,162,89,0.02)' }}
-                  aria-hidden="true"
-                />
-                <BlockchainNetwork size="lg" interactive />
+              <div className="relative w-full max-w-[410px] sm:max-w-[490px] lg:max-w-[540px]">
+                <div className="relative overflow-hidden rounded-[30px] border border-white/[.065] bg-[#05070a]/45 p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.03),0_35px_110px_rgba(0,0,0,.3)] backdrop-blur-sm">
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/45 to-transparent" aria-hidden="true" />
+                  <div className="flex items-center justify-between px-2 pb-1 pt-1 text-[8px] uppercase tracking-[.16em] text-text-dim">
+                    <span>{locale === 'es' ? 'Grafo del ecosistema' : 'Ecosystem graph'}</span>
+                    <span className="font-mono text-accent/60">NODE-MAP / LIVE</span>
+                  </div>
+                  <div
+                    className="absolute inset-[12%] rounded-full pointer-events-none"
+                    style={{ boxShadow: '0 0 140px rgba(212,162,89,0.07), inset 0 0 90px rgba(212,162,89,0.025)' }}
+                    aria-hidden="true"
+                  />
+                  <BlockchainNetwork size="lg" interactive />
+                </div>
               </div>
             </FadeInSection>
           </div>
