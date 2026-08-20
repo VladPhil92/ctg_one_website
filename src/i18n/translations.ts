@@ -7,6 +7,7 @@ export const PHRASES: Pair[] = [
   { en: 'Home', es: 'Inicio' },
   { en: 'About', es: 'Nosotros' },
   { en: 'Technology', es: 'Tecnología' },
+  { en: 'Products', es: 'Productos' },
   { en: 'Ecosystem', es: 'Ecosistema' },
   { en: 'Investment', es: 'Inversión' },
   { en: 'Rewards', es: 'Recompensas' },
