@@ -41,7 +41,7 @@ assert.match(brandLogo, /Technology/, 'Brand lockup must render the Technology d
 assert.match(brandLogo, /data-no-translate/, 'Brand lockup must opt out of the internal DOM translation layer.');
 assert.match(brandLogo, /translate="no"/, 'Brand lockup must opt out of browser translation engines.');
 assert.match(languageContext, /IMMUTABLE_BRAND_NAMES = new Set\(\['CTG One', 'CTG One Technology'\]\)/, 'Language layer must preserve CTG One brand names verbatim.');
-assert.match(languageContext, /data-brand-lockup=\\"ctg-one-technology\\"/, 'Language layer must treat the CTG One brand lockup as translation-protected.');
+assert.match(languageContext, /data-brand-lockup="ctg-one-technology"/, 'Language layer must treat the CTG One brand lockup as translation-protected.');
 assert.match(navbar, /<BrandLogo priority/, 'Navbar must render the structural CTG One Technology lockup.');
 assert.match(footer, /<BrandLogo/, 'Footer must render the structural CTG One Technology lockup.');
 for (const source of [navbar, footer, brandLogo]) {
