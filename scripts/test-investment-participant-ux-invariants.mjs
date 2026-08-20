@@ -11,6 +11,10 @@ const [
   resumePayment,
   legacyDashboard,
   legacyCheckout,
+  accountSurface,
+  accountDashboard,
+  deposits,
+  kyc,
 ] = await Promise.all([
   read('src/app/inversion/app/page.tsx'),
   read('src/app/inversion/app/layout.tsx'),
@@ -20,6 +24,10 @@ const [
   read('src/components/inversion/InvestmentResumePaymentClient.tsx'),
   read('src/app/dashboard/inversion/page.tsx'),
   read('src/app/dashboard/inversion/nueva/[slug]/page.tsx'),
+  read('src/components/dashboard/AccountSurface.tsx'),
+  read('src/app/dashboard/page.tsx'),
+  read('src/app/dashboard/depositos/page.tsx'),
+  read('src/app/dashboard/kyc/page.tsx'),
 ]);
 
 assert.match(app, /useInvestmentOrders/, 'Canonical participant app must own order/tracking visibility.');
@@ -56,4 +64,30 @@ assert.match(legacyDashboard, /redirect\('\/inversion\/app'\)/, 'Legacy particip
 assert.match(legacyCheckout, /redirect\(`\/inversion\/app\/nueva\//, 'Legacy checkout URLs must redirect to the canonical checkout.');
 assert.match(appLayout, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false/, 'Authenticated participant surfaces must be noindex/nofollow.');
 
-console.log('Investment participant UX invariants: PASS');
+// Personal OS account surface: keep account workflows visually coherent without
+// weakening their existing financial or identity boundaries.
+assert.match(accountDashboard, /PERSONAL OS/, 'Account dashboard must retain the Personal OS identity.');
+assert.match(accountSurface, /Volver al Personal OS/, 'Secondary account workflows must expose a consistent return path.');
+assert.match(accountSurface, /prefers-reduced-motion:reduce/, 'Shared account motion must honor reduced-motion preferences.');
+assert.match(accountSurface, /accountHero/, 'Shared account workflows must retain the Personal OS command-surface hierarchy.');
+
+for (const [name, source] of [['deposits', deposits], ['kyc', kyc]]) {
+  assert.match(source, /AccountSurface/, `${name} must render through the shared Personal OS account surface.`);
+  assert.doesNotMatch(source, /style=\{\{/, `${name} must not regress to isolated inline theme styling.`);
+  assert.match(source, /type="submit"/, `${name} primary submission must use native form semantics.`);
+  assert.match(source, /role="alert"/, `${name} must expose submission errors to assistive technology.`);
+}
+
+assert.match(deposits, /next=\/dashboard\/depositos/, 'Deposit auth continuation must return the user to the deposit workflow.');
+assert.match(deposits, /PAYMENT_INSTRUCTIONS_CONFIGURED/, 'Deposit UI must retain the payment-rail configuration gate.');
+assert.match(deposits, /profile\?\.kyc_status === 'verified'/, 'Deposit submission must remain gated by verified account KYC.');
+assert.match(deposits, /\.from\('transactions'\)\.insert/, 'Deposit UI must retain the canonical transaction write path.');
+assert.match(deposits, /aria-pressed=\{method === item\.value\}/, 'Deposit rail selection must expose pressed state semantics.');
+
+assert.match(kyc, /next=\/dashboard\/kyc/, 'KYC auth continuation must return the user to the identity workflow.');
+assert.match(kyc, /\.from\('kyc_submissions'\)/, 'KYC UI must retain the canonical submission path.');
+assert.match(kyc, /\.from\('kyc-documents'\)\.upload/, 'KYC UI must retain the private document upload boundary.');
+assert.match(kyc, /\.from\('kyc_documents'\)/, 'KYC UI must retain the document metadata write path.');
+assert.match(kyc, /MAX_FILE_BYTES = 8 \* 1024 \* 1024/, 'KYC client file-size boundary must remain explicit.');
+
+console.log('Investment participant and Personal OS UX invariants: PASS');

@@ -2,9 +2,17 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Navbar } from '@/components/Navbar';
-import { Container } from '@/components/ui';
+import {
+  CheckCircle2,
+  FileCheck2,
+  Fingerprint,
+  ScanFace,
+  ShieldAlert,
+  ShieldCheck,
+  UploadCloud,
+} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { AccountSurface } from '@/components/dashboard/AccountSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLatestKycSubmission } from '@/hooks/useLatestKycSubmission';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
@@ -23,7 +31,7 @@ export default function KycUploadPage() {
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
-      router.push('/iniciar-sesion');
+      router.replace('/iniciar-sesion?next=/dashboard/kyc');
     }
   }, [isAuthenticated, isAuthLoading, router]);
 
@@ -79,80 +87,129 @@ export default function KycUploadPage() {
     }
   };
 
-  if (isAuthLoading) return null;
-  if (!isAuthenticated) return null;
+  if (isAuthLoading || !isAuthenticated) return null;
 
   const kycStatus = profile?.kyc_status ?? 'not_submitted';
   const showForm = !justSubmitted && (kycStatus === 'not_submitted' || kycStatus === 'rejected');
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <Navbar />
-      <div className="min-h-screen pt-24 pb-16">
-        <Container size="small">
-          <h1 className="text-3xl font-outfit font-bold text-white mb-2">Verificación de identidad</h1>
-          <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>
-            Necesitamos verificar tu identidad antes de que puedas recargar tu cuenta.
-          </p>
+    <AccountSurface
+      code="ID-04"
+      eyebrow="Identity Layer"
+      title="Verificación de identidad"
+      description="Protege las capacidades financieras de tu cuenta mediante una validación documental vinculada a tu identidad CTG One."
+      icon={<Fingerprint size={20} />}
+    >
+      {kycStatus === 'verified' && (
+        <StatusNotice tone="success" icon={<CheckCircle2 size={17} />} title="Identidad verificada">
+          Tu Identity Layer está validado. Ya puedes acceder a los flujos que requieren KYC.
+        </StatusNotice>
+      )}
 
-          {kycStatus === 'verified' && (
-            <StatusCard color="var(--success)" title="✓ Verificado">
-              Tu identidad ya fue verificada. Puedes recargar tu cuenta cuando quieras.
-            </StatusCard>
-          )}
+      {(kycStatus === 'pending' || justSubmitted) && (
+        <StatusNotice tone="warning" icon={<ShieldCheck size={17} />} title="Verificación en revisión">
+          Recibimos tu documentación. Un administrador debe completar la revisión antes de habilitar las capacidades protegidas.
+        </StatusNotice>
+      )}
 
-          {(kycStatus === 'pending' || justSubmitted) && (
-            <StatusCard color="var(--accent)" title="En revisión">
-              Ya recibimos tu documento. Un administrador lo revisará pronto.
-            </StatusCard>
-          )}
+      {!isSubmissionLoading && kycStatus === 'rejected' && submission?.rejection_reason && (
+        <StatusNotice tone="error" icon={<ShieldAlert size={17} />} title="Verificación requiere atención">
+          {submission.rejection_reason}
+        </StatusNotice>
+      )}
 
-          {!isSubmissionLoading && kycStatus === 'rejected' && submission?.rejection_reason && (
-            <div
-              className="p-4 rounded-lg mb-6 text-sm"
-              style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--error)', color: 'var(--error)' }}
-            >
-              Tu verificación anterior fue rechazada: {submission.rejection_reason}
+      {showForm && (
+        <section className="accountPanel">
+          <div className="accountPanelHeader">
+            <div>
+              <p className="accountMicro">Document capture</p>
+              <h2>Registrar documento</h2>
+              <p>Adjunta ambas caras de tu cédula. Cada archivo debe ser una imagen o PDF de máximo 8 MB.</p>
             </div>
-          )}
+            <div className="accountNode"><ScanFace size={17} /></div>
+          </div>
 
-          {showForm && (
-            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-              <FileField label="Cédula — lado frontal" onChange={setFrontFile} />
-              <FileField label="Cédula — lado posterior" onChange={setBackFile} />
+          <form onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }}>
+            <FileField
+              label="Cédula — lado frontal"
+              hint="Frente del documento, legible y completo"
+              onChange={setFrontFile}
+            />
+            <FileField
+              label="Cédula — lado posterior"
+              hint="Reverso del documento, legible y completo"
+              onChange={setBackFile}
+            />
 
-              {error && <p className="text-sm mb-4" style={{ color: 'var(--error)' }}>{error}</p>}
+            {error && <p className="accountError" role="alert">{error}</p>}
 
-              <Button onClick={handleSubmit} loading={isSubmitting} variant="primary" size="md">
-                Enviar para revisión
-              </Button>
-            </form>
-          )}
-        </Container>
+            <div className="accountNotice mb-5">
+              <FileCheck2 size={17} />
+              <div>
+                <strong>Documentos protegidos</strong>
+                <p>Los archivos se almacenan en el bucket privado de KYC y quedan asociados a esta presentación para revisión.</p>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              loading={isSubmitting}
+              variant="primary"
+              size="md"
+              icon={<UploadCloud size={16} />}
+              iconPosition="left"
+            >
+              Enviar para revisión
+            </Button>
+          </form>
+        </section>
+      )}
+    </AccountSurface>
+  );
+}
+
+function StatusNotice({
+  title,
+  tone,
+  icon,
+  children,
+}: {
+  title: string;
+  tone: 'success' | 'warning' | 'error';
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`accountNotice ${tone}`} role="status" aria-live="polite">
+      {icon}
+      <div>
+        <strong>{title}</strong>
+        <p>{children}</p>
       </div>
     </div>
   );
 }
 
-function StatusCard({ title, color, children }: { title: string; color: string; children: React.ReactNode }) {
+function FileField({
+  label,
+  hint,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  onChange: (file: File | null) => void;
+}) {
   return (
-    <div className="p-6 rounded-lg mb-6" style={{ backgroundColor: 'var(--bg-card)', border: `1px solid ${color}` }}>
-      <p className="text-sm font-semibold mb-1" style={{ color }}>{title}</p>
-      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{children}</p>
-    </div>
-  );
-}
-
-function FileField({ label, onChange }: { label: string; onChange: (file: File | null) => void }) {
-  return (
-    <label className="block mb-5">
-      <span className="block text-[11px] uppercase tracking-[0.15em] text-text-dim mb-2">{label}</span>
+    <label className="accountField">
+      <span className="accountFieldLabel">{label}</span>
       <input
         type="file"
         accept="image/*,application/pdf"
-        onChange={(e) => onChange(e.target.files?.[0] ?? null)}
-        className="w-full text-sm text-white"
+        onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+        className="accountFile"
+        required
       />
+      <span className="block mt-2 text-[10px] text-white/30">{hint}</span>
     </label>
   );
 }
