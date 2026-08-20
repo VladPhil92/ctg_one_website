@@ -43,16 +43,20 @@ export const PAYMENT_INSTRUCTIONS_CONFIGURED =
 
 /**
  * CTG Craft Beer Investment currently operates with one deliberately simple
- * inbound rail: direct Bancolombia transfer using the company's QR image.
+ * inbound rail: direct Bancolombia/Bre-B transfer using the approved company
+ * QR image supplied for the investment checkout.
  *
- * The QR asset is public display material, not a credential. Keep the actual
- * image outside source code and configure its public URL in Render when the
- * approved QR asset is available.
+ * The QR is public display material, not a credential. It is versioned as a
+ * first-party static asset so checkout availability cannot depend on an
+ * external image host or a Render environment variable. Replacing this asset
+ * is a payment-rail change and must pass the repository fingerprint invariant.
  */
+const INVESTMENT_BANCOLOMBIA_QR_ASSET = '/images/inversion/bancolombia-breb-grupo-pisao.jpg';
+
 export const INVESTMENT_BANK_TRANSFER_INSTRUCTIONS = {
   bankName: 'Bancolombia',
   accountType: 'Cuenta de Ahorros',
-  qrImageUrl: process.env.NEXT_PUBLIC_INVESTMENT_BANCOLOMBIA_QR_URL ?? PENDING,
+  qrImageUrl: INVESTMENT_BANCOLOMBIA_QR_ASSET,
 };
 
 export const INVESTMENT_BANK_TRANSFER_CONFIGURED =
