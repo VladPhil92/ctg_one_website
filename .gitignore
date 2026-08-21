@@ -19,6 +19,12 @@ playwright-report/
 test-results/
 blob-report/
 
+# Private operating evidence
+.private-evidence/
+evidence/investment/private/
+*.investment-operating-evidence.capture.json
+*.investment-operating-evidence.review.json
+
 # Misc
 .DS_Store
 *.pem
