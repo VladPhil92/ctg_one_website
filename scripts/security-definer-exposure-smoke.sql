@@ -80,7 +80,7 @@ BEGIN
     RAISE EXCEPTION 'public funding result changed: %',v_result;
   END IF;
   SELECT coalesce(array_agg(DISTINCT m[1] ORDER BY m[1]),ARRAY[]::text[]) INTO v_refs FROM regexp_matches(v_definition,E'public\\.([A-Za-z0-9_]+)','g') m;
-  IF v_refs IS DISTINCT FROM ARRAY['get_public_investment_lot_funding','investment_funding_allocations','investment_orders','investment_production_lots']::text[] THEN
+  IF v_refs IS DISTINCT FROM ARRAY['get_public_investment_lot_funding','investment_funding_allocations','investment_orders','investment_production_lots','investment_reinvestment_requests']::text[] THEN
     RAISE EXCEPTION 'public funding object set changed: %',v_refs;
   END IF;
   IF v_definition ~* '(participant_user_id|capital_committed_cents|external_reference|payment_proof_storage_path|payment_proof_sha256|bank_verified_reference|bank_verified_amount_cents|bank_received_at|bank_verified_by)' THEN

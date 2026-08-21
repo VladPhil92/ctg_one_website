@@ -10,6 +10,7 @@ import { useInvestmentOrders } from '@/hooks/useInvestmentOrders';
 import { useInvestmentSummary } from '@/hooks/useInvestmentSummary';
 import { InvestmentTrackingChart } from '@/components/inversion/InvestmentTrackingChart';
 import { InvestmentLiquidityPanel } from '@/components/inversion/InvestmentLiquidityPanel';
+import { InvestmentReinvestmentPanel } from '@/components/inversion/InvestmentReinvestmentPanel';
 import { formatCents } from '@/lib/format';
 import {
   INVESTMENT_ORDER_STATUS_LABELS,
@@ -115,6 +116,8 @@ export default function InvestmentAppPage() {
             <Metric code="INV-ALC" icon={<PackageCheck size={16} />} label="Asignaciones" value={summaryLoading ? '—' : String(summary.allocations.length)} />
             <Metric code="INV-TRK" icon={<Beer size={16} />} label="Lotes en tracking" value={ordersLoading ? '—' : String(activeLots)} />
           </div>
+
+          <InvestmentReinvestmentPanel onRefresh={refreshSummary} />
 
           <InvestmentLiquidityPanel
             availableBalanceCents={summary.availableBalanceCents}

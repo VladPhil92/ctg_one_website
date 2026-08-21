@@ -52,6 +52,20 @@ JOIN reviewed_authenticated_security_definer_bodies r USING (signature)
 WHERE a.body_sha256 IS DISTINCT FROM r.body_sha256
 ORDER BY a.signature;
 
+-- New privileged functions must still fail closed, but print their exact clean
+-- database fingerprints first so reviewers can inspect and deliberately add the
+-- reviewed values to the manifest. This is diagnostic output only; it never
+-- auto-updates the allowlist or body-fingerprint registry.
+SELECT
+  a.signature,
+  a.body_sha256 AS unreviewed_body_sha256,
+  a.language_name,
+  a.function_config
+FROM actual_authenticated_security_definer_bodies a
+LEFT JOIN reviewed_authenticated_security_definer_bodies r USING (signature)
+WHERE r.signature IS NULL
+ORDER BY a.signature;
+
 DO $$
 DECLARE
   v_unreviewed text[];
