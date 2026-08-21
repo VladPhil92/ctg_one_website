@@ -175,7 +175,12 @@ function validateLiquidity(liquidity, settlement, path) {
   if (!settlement.finalized) {
     assert(liquidity.approvedReinvestmentCents === 0, `${path}.approvedReinvestmentCents requires finalized settlement`);
     assert(liquidity.confirmedWithdrawalDebitCents === 0, `${path}.confirmedWithdrawalDebitCents requires finalized settlement`);
+    return;
   }
+  assert(
+    liquidity.approvedReinvestmentCents + liquidity.confirmedWithdrawalDebitCents <= settlement.participantCreditCents,
+    `${path} confirmed/approved liquidity cannot exceed participant settlement credit`,
+  );
 }
 
 function validateLots(lots) {
