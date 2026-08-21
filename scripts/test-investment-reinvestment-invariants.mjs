@@ -3,10 +3,12 @@ import { readFileSync } from 'node:fs';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
+// Phase 15 owns the immutable 0065 contract. It deliberately does not assert
+// that 0065 remains the repository's latest migration; later phases own current
+// schema-version expectations.
 const migration = read('supabase/migrations/0065_participant_liquidity_loop.sql');
 const component = read('src/components/inversion/InvestmentReinvestmentPanel.tsx');
 const participantPage = read('src/app/inversion/app/page.tsx');
-const schemaVersion = read('src/lib/observability/schema-version.ts');
 const proof = read('src/data/technology-proof.ts');
 const allowlist = read('scripts/security-definer-authenticated-allowlist.txt');
 const exposureSmoke = read('scripts/security-definer-exposure-smoke.sql');
@@ -47,9 +49,6 @@ assert.doesNotMatch(component, /rpc\('request_reinvestment'/);
 assert.match(participantPage, /InvestmentReinvestmentPanel/);
 assert.match(participantPage, /<InvestmentReinvestmentPanel onRefresh=\{refreshSummary\}/);
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0065'/);
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'participant_liquidity_loop'/);
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 65/);
 assert.match(proof, /status: 'PARTIAL'[\s\S]*publicStatus: 'BETA'/);
 assert.match(proof, /Participant withdrawal and server-priced reinvestment request loop implemented/i);
 assert.match(proof, /phase: '15'/);

@@ -41,6 +41,7 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
       'Order, allocation, inventory, ledger and settlement schema/RPCs implemented',
       'Production batch state machine and serialization implemented',
       'Participant withdrawal and server-priced reinvestment request loop implemented with shared spend and target-lot capacity reservations',
+      'Finance reinvestment queue exposes bounded review evidence and canonical approve/reject actions without allowing quantity or capital overrides',
       'New external funding is server-gated by authenticated identity, VERIFIED investment KYC, explicit per-lot FUNDING_OPEN state and remaining PostgreSQL capacity; no separate global funding feature flag is claimed',
       'Clean-database migration and Golden Path contracts run in CI',
     ],
@@ -132,4 +133,5 @@ export const TECHNICAL_CHANGELOG = [
   { phase: '13', title: 'Versioned evaluation corpus', detail: 'Added a representative first-party public evaluation corpus and dataset, pinned to exact Git blob identities with fail-closed provenance and drift validation before controlled run capture.' },
   { phase: '14', title: 'Controlled evaluation capture', detail: 'Added explicit-authorized isolated corpus seeding, real query capture, human semantic review worksheets and fail-closed conversion into authorized evaluation evidence; the first authorized human-reviewed run still pending.' },
   { phase: '15', title: 'Participant liquidity loop', detail: 'Closed the participant settlement-to-reinvestment loop with server-priced case intent, shared balance/capacity reservations, immutable participant quantity, cancellation/rejection paths and a participant reinvestment console while retaining BETA status.' },
+  { phase: '16', title: 'Finance reinvestment queue', detail: 'Added a bounded Finance OS review queue for pending reinvestments with current KYC, source-credit, spendable-balance and target-lot context, while approvals remain immutable server-side commands.' },
 ] as const;
