@@ -15,6 +15,9 @@ const PROHIBITED_KEYS = new Set([
   'participantuserid', 'participantid', 'orderid', 'allocationid', 'payoutid',
   'externalreference', 'merchantreference', 'paymentreference', 'withdrawalid',
 ]);
+const OPAQUE_VALIDATED_KEYS = new Set([
+  'captureid', 'sha256', 'lotdigestsha256', 'commit', 'evidencesha256',
+]);
 const EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 const UUID_PATTERN = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 const LONG_DIGIT_PATTERN = /\b\d{10,}\b/;
@@ -42,6 +45,7 @@ function walkForSensitiveContent(value, path = '$') {
       if (PROHIBITED_KEYS.has(normalized)) {
         throw new Error(`Sensitive field is prohibited in operating evidence: ${path}.${key}`);
       }
+      if (OPAQUE_VALIDATED_KEYS.has(normalized)) continue;
       walkForSensitiveContent(entry, `${path}.${key}`);
     }
     return;
@@ -175,7 +179,12 @@ function validateLiquidity(liquidity, settlement, path) {
   if (!settlement.finalized) {
     assert(liquidity.approvedReinvestmentCents === 0, `${path}.approvedReinvestmentCents requires finalized settlement`);
     assert(liquidity.confirmedWithdrawalDebitCents === 0, `${path}.confirmedWithdrawalDebitCents requires finalized settlement`);
+    return;
   }
+  assert(
+    liquidity.approvedReinvestmentCents + liquidity.confirmedWithdrawalDebitCents <= settlement.participantCreditCents,
+    `${path} confirmed/approved liquidity cannot exceed participant settlement credit`,
+  );
 }
 
 function validateLots(lots) {
