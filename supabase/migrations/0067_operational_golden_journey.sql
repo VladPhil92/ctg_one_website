@@ -32,11 +32,8 @@ begin
   if not public.has_investment_permission('ops.read') then raise exception 'ops.read required'; end if;
 
   select coalesce(jsonb_agg(jsonb_build_object(
-    'id', id,
-    'code', code,
-    'beerStyle', beer_style,
-    'status', status,
-    'createdAt', created_at
+    'id', id, 'code', code, 'beerStyle', beer_style,
+    'status', status, 'createdAt', created_at
   ) order by created_at desc, id), '[]'::jsonb)
   into v_options
   from (
@@ -58,23 +55,16 @@ begin
 
   if v_selected is null then
     return jsonb_build_object(
-      'lotOptions', v_options,
-      'selectedLot', null,
-      'nextAction', 'CREATE_LOT',
-      'generatedAt', now()
+      'lotOptions', v_options, 'selectedLot', null,
+      'nextAction', 'CREATE_LOT', 'generatedAt', now()
     );
   end if;
 
   select jsonb_build_object(
-    'id', l.id,
-    'code', l.code,
-    'beerStyle', l.beer_style,
-    'destination', l.destination,
-    'status', l.status,
-    'caseSizeUnits', l.case_size_units,
-    'totalCases', l.total_cases,
-    'totalEligibleCases', l.total_eligible_units,
-    'createdAt', l.created_at
+    'id', l.id, 'code', l.code, 'beerStyle', l.beer_style,
+    'destination', l.destination, 'status', l.status,
+    'caseSizeUnits', l.case_size_units, 'totalCases', l.total_cases,
+    'totalEligibleCases', l.total_eligible_units, 'createdAt', l.created_at
   ) into v_lot
   from public.investment_production_lots l
   where l.id = v_selected;
@@ -101,8 +91,11 @@ begin
   join public.investment_orders o on o.id = r.order_id
   where o.lot_id = v_selected;
 
+  -- RETURNED is intentionally non-terminal: a credited return still requires
+  -- physical disposition (for example DAMAGED, EXPIRED, LOST or RECALLED)
+  -- or a later resale before SOLD_OUT can be authoritative.
   select count(*)::bigint,
-         count(*) filter (where status in ('SOLD','RETURNED','DAMAGED','EXPIRED','LOST','RECALLED'))::bigint
+         count(*) filter (where status in ('SOLD','DAMAGED','EXPIRED','LOST','RECALLED'))::bigint
   into v_serialized, v_terminal
   from public.investment_bottle_units
   where lot_id = v_selected;
@@ -182,15 +175,14 @@ begin
 
   if v_settlement_id is null then
     v_settlement := jsonb_build_object(
-      'finalized', false,
-      'settlementId', null,
+      'finalized', false, 'settlementId', null,
       'netDistributableProfitCents', null,
-      'participantCreditCount', 0,
-      'participantCreditCents', 0
+      'participantCreditCount', 0, 'participantCreditCents', 0
     );
     v_liquidity := jsonb_build_object(
       'sourceLinkedReinvestmentCount', 0,
       'sourceLinkedReinvestmentCents', 0,
+      'sourceLinkedApprovedReinvestmentCents', 0,
       'creditedParticipantWithdrawalCountAfterSettlement', 0,
       'creditedParticipantWithdrawalCentsAfterSettlement', 0,
       'note', 'Withdrawals are participant-balance operations and are not source-settlement attributed.'
