@@ -89,7 +89,9 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
       'Server-side OpenAI embeddings and Responses integration',
       'Citation metadata returned independently of generated text',
       'Deterministic post-generation citation integrity gate fails closed on missing or fabricated source references',
-      'Reproducible evaluation harness implemented; authorized semantic and operating evidence still required for LIVE promotion',
+      'Reproducible evaluation harness implemented with regression thresholds and human-review requirements',
+      'Versioned first-party public evaluation corpus and dataset are Git-blob pinned with fail-closed drift validation',
+      'Captured authorized semantic and operating evidence still required for LIVE promotion',
     ],
     publicPath: '/ai',
   },
@@ -126,4 +128,5 @@ export const TECHNICAL_CHANGELOG = [
   { phase: '10', title: 'CTG Knowledge v0.1', detail: 'Implemented the first authenticated RAG pilot with curated ingestion, pgvector retrieval, server-side model access, grounded answers and structured source metadata; LIVE promotion remains evidence-gated.' },
   { phase: '11', title: 'Grounding integrity hardening', detail: 'Added deterministic post-generation citation validation so CTG Knowledge fails closed when model output lacks citations or references sources that were not supplied for the request.' },
   { phase: '12', title: 'Reproducible AI evaluation', detail: 'Added a provider-independent evaluation harness, synthetic CI fixtures, regression thresholds and explicit separation between test evidence and authorized semantic/operating evidence.' },
+  { phase: '13', title: 'Versioned evaluation corpus', detail: 'Added a representative first-party public evaluation corpus and dataset, pinned to exact Git blob identities with fail-closed provenance and drift validation before controlled run capture.' },
 ] as const;
