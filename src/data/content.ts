@@ -16,7 +16,6 @@ export const ECOSYSTEM_UNITS = [
   { id: 'veterinary', name: 'Nvet Care', description: 'Veterinary service and marketplace concept with technology capabilities tracked by maturity status.', icon: 'nvetcare', color: '#8c9aae' },
   { id: 'dental', name: 'Oralgreen', description: 'Comprehensive dental care based in Sincelejo.', icon: 'oralgreen', color: '#7dae9a' },
   { id: 'legal', name: 'Legalyst Consultores', description: 'Conciliation, legal advice and trademark services.', icon: 'scale', color: '#c4956a', url: 'legalystconsultores.com' },
-  { id: 'design', name: 'CTG One Design', description: 'Corporate identity, branding and digital communication.', icon: 'palette', color: '#ae9a8c' },
   { id: 'credits', name: 'Vantage Libranza Plus', description: 'Payroll-credit business unit; digital capabilities are tracked separately by maturity status.', icon: 'wallet', color: '#8cae9a' },
   { id: 'gastrobar', name: 'PISÁO Gastrobar', description: 'Caribbean casual-dining gastrobar in Cartagena.', icon: 'pisao', color: '#7a9a5c', url: 'pisaogastrobar.com' },
   { id: 'craftbeer', name: 'CTG Craft Beer', description: 'Craft-beer production and commercialization operation in Cartagena.', icon: 'craftbeer', color: '#c9a962' },

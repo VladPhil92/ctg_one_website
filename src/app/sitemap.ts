@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { ECOSYSTEM_PROCESSES } from '@/data/ecosystem-processes';
 
 const siteUrl = 'https://ctgone.com';
 
@@ -8,6 +9,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/about', changeFrequency: 'monthly' as const, priority: 0.9 },
     { path: '/services', changeFrequency: 'monthly' as const, priority: 0.9 },
     { path: '/ecosystem', changeFrequency: 'monthly' as const, priority: 0.9 },
+    ...ECOSYSTEM_PROCESSES.map(({ slug }) => ({
+      path: `/ecosystem/process/${slug}`,
+      changeFrequency: 'monthly' as const,
+      priority: 0.72,
+    })),
     { path: '/products', changeFrequency: 'weekly' as const, priority: 0.8 },
     { path: '/technology/status', changeFrequency: 'weekly' as const, priority: 0.9 },
     { path: '/changelog', changeFrequency: 'weekly' as const, priority: 0.7 },

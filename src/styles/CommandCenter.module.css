@@ -150,10 +150,78 @@
   transition: stroke 180ms ease, stroke-opacity 180ms ease, stroke-width 180ms ease;
 }
 
+.ecosystemEnergyOutbound,
+.ecosystemEnergyReturn {
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.ecosystemEnergyOutbound {
+  stroke-dasharray: 4 58;
+  stroke-dashoffset: 62;
+  filter: drop-shadow(0 0 3px rgba(241, 199, 91, .38));
+  animation: ecosystemOutboundFlow 2.8s linear infinite;
+}
+
+.ecosystemEnergyReturn {
+  stroke-dasharray: 3 64;
+  stroke-dashoffset: 67;
+  filter: drop-shadow(0 0 2px rgba(36, 140, 255, .24));
+  animation: ecosystemReturnFlow 3.25s linear infinite;
+}
+
+.ecosystemNodeLink {
+  outline: none;
+  text-decoration: none;
+}
+
+.ecosystemNodeLink:focus-visible .ecosystemNode {
+  filter: drop-shadow(0 0 8px rgba(241, 199, 91, .36));
+}
+
 .ecosystemNode {
   transform-box: fill-box;
   transform-origin: center;
   animation: ecosystemNodeFloat 6.4s ease-in-out infinite;
+}
+
+.ecosystemNodeReceive {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: .12;
+  animation: ecosystemNodeReceivePulse 2.8s ease-out infinite;
+}
+
+.coreEnergyField {
+  pointer-events: none;
+}
+
+.coreEnergyGlow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: coreEnergyGlowPulse 2.2s ease-in-out infinite;
+}
+
+.coreEnergyRing {
+  transform-origin: 260px 260px;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  animation: coreEnergyRingBurst 2.2s cubic-bezier(.16,.72,.2,1) infinite;
+}
+
+.coreEnergyRay {
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 7 38;
+  stroke-dashoffset: 42;
+  opacity: 0;
+  animation: coreEnergyRayBurst 1.95s linear infinite;
+}
+
+.coreEnergySpark {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0.18;
+  animation: coreEnergySparkPulse 1.7s ease-out infinite;
 }
 
 .ecosystemCenter {
@@ -172,6 +240,22 @@
   to { stroke-dashoffset: -34; }
 }
 
+@keyframes ecosystemOutboundFlow {
+  0% { stroke-dashoffset: 62; opacity: 0; }
+  10% { opacity: .24; }
+  38% { opacity: 1; }
+  78% { opacity: .62; }
+  100% { stroke-dashoffset: -62; opacity: 0; }
+}
+
+@keyframes ecosystemReturnFlow {
+  0% { stroke-dashoffset: 67; opacity: 0; }
+  18% { opacity: .16; }
+  52% { opacity: .62; }
+  86% { opacity: .28; }
+  100% { stroke-dashoffset: -67; opacity: 0; }
+}
+
 @keyframes ecosystemOrbit {
   to { transform: rotate(360deg); }
 }
@@ -183,6 +267,39 @@
 @keyframes ecosystemNodeFloat {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
+}
+
+@keyframes ecosystemNodeReceivePulse {
+  0%, 100% { opacity: .08; transform: scale(.9); }
+  34% { opacity: .18; transform: scale(.98); }
+  52% { opacity: .68; transform: scale(1.12); }
+  72% { opacity: .18; transform: scale(1.24); }
+}
+
+@keyframes coreEnergyGlowPulse {
+  0%, 100% { opacity: .42; transform: scale(.88); }
+  48% { opacity: .9; transform: scale(1.16); }
+}
+
+@keyframes coreEnergyRingBurst {
+  0% { opacity: 0; transform: scale(.78); }
+  12% { opacity: .72; }
+  52% { opacity: .3; }
+  100% { opacity: 0; transform: scale(2.08); }
+}
+
+@keyframes coreEnergyRayBurst {
+  0% { opacity: 0; stroke-dashoffset: 42; }
+  16% { opacity: .88; }
+  58% { opacity: .42; }
+  100% { opacity: 0; stroke-dashoffset: -44; }
+}
+
+@keyframes coreEnergySparkPulse {
+  0% { opacity: 0; transform: scale(.55); }
+  28% { opacity: .94; transform: scale(1.3); }
+  62% { opacity: .28; transform: scale(.9); }
+  100% { opacity: 0; transform: scale(.62); }
 }
 
 @keyframes ecosystemCenterPulse {
@@ -282,9 +399,24 @@
   .ecosystemOrbitOuter,
   .ecosystemOrbitInner,
   .ecosystemConnection,
+  .ecosystemEnergyOutbound,
+  .ecosystemEnergyReturn,
   .ecosystemNode,
+  .ecosystemNodeReceive,
+  .coreEnergyGlow,
+  .coreEnergyRing,
+  .coreEnergyRay,
+  .coreEnergySpark,
   .ecosystemCenter,
   .ecosystemHalo {
     animation: none !important;
   }
+
+  .ecosystemEnergyOutbound { opacity: .32; stroke-dasharray: 2 16; stroke-dashoffset: 0; }
+  .ecosystemEnergyReturn { opacity: .18; stroke-dasharray: 2 18; stroke-dashoffset: 0; }
+  .ecosystemNodeReceive { opacity: .18; transform: none; }
+  .coreEnergyGlow { opacity: .5; }
+  .coreEnergyRing { opacity: .16; transform: none; }
+  .coreEnergyRay { opacity: .24; stroke-dasharray: 2 9; stroke-dashoffset: 0; }
+  .coreEnergySpark { opacity: .28; transform: none; }
 }

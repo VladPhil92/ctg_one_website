@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [network, navbar, hero, footer, brandLogo, languageContext, translations] = await Promise.all([
+const [network, navbar, hero, footer, brandLogo, languageContext, translations, processes, processPage] = await Promise.all([
   read('src/components/BlockchainNetwork.tsx'),
   read('src/components/Navbar.tsx'),
   read('src/components/sections/HeroSection.tsx'),
@@ -11,13 +11,15 @@ const [network, navbar, hero, footer, brandLogo, languageContext, translations] 
   read('src/components/BrandLogo.tsx'),
   read('src/contexts/LanguageContext.tsx'),
   read('src/i18n/commandCenterTranslations.ts'),
+  read('src/data/ecosystem-processes.ts'),
+  read('src/app/ecosystem/process/[slug]/page.tsx'),
 ]);
 
 const nodeIds = [...network.matchAll(/\{ id: '([^']+)', en:/g)].map((match) => match[1]);
 assert.deepEqual(
   nodeIds,
-  ['ai', 'commerce', 'hospitality', 'education', 'health', 'legal', 'design', 'fintech'],
-  'Homepage ecosystem core must retain exactly the eight approved nodes in canonical orbital order.',
+  ['ai', 'commerce', 'hospitality', 'education', 'health', 'legal', 'beer', 'fintech'],
+  'Homepage ecosystem core must retain exactly the eight approved process nodes in canonical orbital order.',
 );
 
 for (const label of [
@@ -27,11 +29,28 @@ for (const label of [
   'Educación',
   'Salud',
   'Legal',
-  'Diseño',
+  'Cerveza',
   'Fintech',
 ]) {
   assert.ok(network.includes(label), `Ecosystem core must retain Spanish node label: ${label}`);
 }
+assert.doesNotMatch(network, /es: 'Diseño'/, 'The former Design orbit node must not return.');
+assert.match(network, /icon: Beer, href: '\/ecosystem\/process\/beer'/, 'Beer must have a dedicated process node and route.');
+
+for (const slug of ['ai', 'commerce', 'hospitality', 'education', 'health', 'legal', 'beer', 'fintech']) {
+  assert.ok(network.includes(`href: '/ecosystem/process/${slug}'`), `Node ${slug} must link to its process subpage.`);
+  assert.ok(processes.includes(`slug: '${slug}'`), `Process registry must contain ${slug}.`);
+}
+assert.match(processes, /slug: 'beer'[\s\S]*?primaryHref: '\/inversion'/, 'Beer process must route explicitly to CTG Craft Beer Investment.');
+assert.match(processPage, /generateStaticParams/, 'Ecosystem process subpages must be generated from the canonical process registry.');
+assert.match(processPage, /getEcosystemProcess/, 'Dynamic process routes must fail closed through the canonical registry.');
+
+assert.match(network, /data-core-energy="radial-emission"/, 'CTG nucleus must expose the radial energy field.');
+assert.match(network, /styles\.ecosystemEnergyOutbound/, 'Energy must travel from the CTG nucleus to the outer nodes.');
+assert.match(network, /styles\.ecosystemEnergyReturn/, 'Energy must recirculate from outer nodes to the CTG nucleus.');
+assert.match(network, /styles\.ecosystemNodeReceive/, 'Outer nodes must visibly react to arriving energy.');
+assert.match(network, /role="navigation"/, 'Interactive ecosystem graphic must expose navigation semantics.');
+assert.match(network, /data-ecosystem-process-link=/, 'Each orbital node must expose a process-navigation contract.');
 
 assert.match(network, /href="\/images\/logo\/ctg-one-coin-icon\.png"/, 'Ecosystem core must use the approved compact CTG One mark.');
 assert.match(brandLogo, /src="\/images\/logo\/ctg-one-coin-icon\.png"/, 'Brand lockup must use the María Mulata mark.');
