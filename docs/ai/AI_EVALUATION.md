@@ -35,14 +35,24 @@ The gate verifies that:
 
 If the gate fails, the API returns the standard insufficient-evidence response with `grounded: false` and no source list. This prevents fabricated source identifiers or uncited model output from being represented as grounded knowledge.
 
-This is an integrity control, not a semantic truth oracle. It does not prove that each cited source actually entails every generated claim. Semantic groundedness, retrieval quality and citation entailment still require representative evaluation datasets and human-reviewed scoring before any LIVE promotion.
+This is an integrity control, not a semantic truth oracle. It does not prove that each cited source actually entails every generated claim.
+
+## Reproducible evaluation harness
+
+CTG Knowledge now has a provider-independent scoring harness for already-captured evaluation runs. The detailed contract is defined in `docs/ai/CTG_KNOWLEDGE_EVALUATION.md`.
+
+The harness measures retrieval recall/ranking, citation validity/relevance, no-evidence abstention, reviewed grounded-case quality, safety, human-review coverage, latency and estimated cost when supplied.
+
+Synthetic CI fixtures validate the scorer itself but are categorically ineligible to become release evidence. Real semantic groundedness, citation entailment and operating quality still require an authorized representative dataset, captured real runs, and human-reviewed scoring before any LIVE promotion.
+
+The scorer produces regression evidence only. It does not mutate `Technology Proof`, deploy a model, or automatically promote a capability.
 
 ## Regression discipline
 
 Material changes to model, prompt, retrieval, tool policy, grounding validation or system configuration should be evaluated against the same representative fixtures before production promotion.
 
-Deterministic grounding invariants are part of the repository CI suite and must remain provider-independent so ordinary pull requests do not consume paid model calls.
+Deterministic grounding and evaluation invariants are part of the repository CI suite and must remain provider-independent so ordinary pull requests do not consume paid model calls.
 
 ## LIVE gate
 
-A production AI capability requires explicit acceptance thresholds, regression results, known failure modes, fallback behavior, observability, and an accountable release owner.
+A production AI capability requires explicit acceptance thresholds, regression results, known failure modes, fallback behavior, observability, an authorized evaluation corpus, human-reviewed semantic evidence, and an accountable release owner.
