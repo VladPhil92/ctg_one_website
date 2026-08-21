@@ -91,6 +91,7 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
       'Deterministic post-generation citation integrity gate fails closed on missing or fabricated source references',
       'Reproducible evaluation harness implemented; authorized semantic and operating evidence still required for LIVE promotion',
       'Versioned first-party public evaluation corpus and dataset are Git-blob pinned with fail-closed drift validation',
+      'Controlled isolated-environment seeding, run capture, human-review, and finalization tooling implemented; first authorized human-reviewed run still pending',
     ],
     publicPath: '/ai',
   },
@@ -128,4 +129,5 @@ export const TECHNICAL_CHANGELOG = [
   { phase: '11', title: 'Grounding integrity hardening', detail: 'Added deterministic post-generation citation validation so CTG Knowledge fails closed when model output lacks citations or references sources that were not supplied for the request.' },
   { phase: '12', title: 'Reproducible AI evaluation', detail: 'Added a provider-independent evaluation harness, synthetic CI fixtures, regression thresholds and explicit separation between test evidence and authorized semantic/operating evidence.' },
   { phase: '13', title: 'Versioned evaluation corpus', detail: 'Added a representative first-party public evaluation corpus and dataset, pinned to exact Git blob identities with fail-closed provenance and drift validation before controlled run capture.' },
+  { phase: '14', title: 'Controlled evaluation capture', detail: 'Added explicit-authorized isolated corpus seeding, real query capture, human semantic review worksheets and fail-closed conversion into authorized evaluation evidence; the first authorized human-reviewed run still pending.' },
 ] as const;
