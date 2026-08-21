@@ -14,7 +14,7 @@ const ECOSYSTEM_LABELS_ES = [
   'Educación',
   'Salud',
   'Legal',
-  'Diseño',
+  'Cerveza',
   'Fintech',
 ];
 
