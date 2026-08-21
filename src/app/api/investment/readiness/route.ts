@@ -20,7 +20,7 @@ export async function GET() {
     databaseSchemaCompatible: schema.compatible,
     privilegedSchemaProbeConfigured: schema.configured,
     productionDeploymentIdentified:
-      deployment.provider !== 'render' || Boolean(deployment.commit),
+      deployment.provider === 'render' && Boolean(deployment.commit),
     technicalMaturityHonest: capability.status === 'PARTIAL',
     publicReleaseStageHonest: publicStatus === 'BETA',
   };
