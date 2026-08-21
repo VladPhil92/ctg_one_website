@@ -163,8 +163,8 @@ select pg_temp.assert_journey(:'return_returned_count'::integer=1,'exactly one b
 select pg_temp.assert_journey(:'return_gross_credit_cents'::bigint=3000,'return gross must match original sale item');
 select pg_temp.assert_journey(:'return_tax_credit_cents'::bigint=200,'return tax must use deterministic per-item allocation');
 select pg_temp.assert_journey(
-  (select count(*)=3 and count(*) filter(where status='SOLD')=3 from public.investment_bottle_units where lot_id=:'source_lot_id'::uuid),
-  'three bottles must remain SOLD after one return'
+  (select count(*)=4 and count(*) filter(where status='SOLD')=3 and count(*) filter(where status='RETURNED')=1 from public.investment_bottle_units where lot_id=:'source_lot_id'::uuid),
+  'four serialized bottles must resolve to three SOLD and one RETURNED after the credit note'
 );
 select pg_temp.assert_journey(
   (select count(*)=1 from public.investment_bottle_units where lot_id=:'source_lot_id'::uuid and status='RETURNED'),
