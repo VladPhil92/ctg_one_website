@@ -150,19 +150,21 @@ begin
     );
 
   select jsonb_build_object(
-    'saleCount', count(distinct s.id),
-    'documentedSoldUnits', count(distinct si.id),
-    'grossRevenueCents', coalesce(sum(distinct case when s.id is not null then s.gross_revenue_cents end), 0),
-    'taxRecognizedCents', coalesce(sum(distinct case when s.id is not null then s.tax_recognized_cents end), 0),
+    'saleCount', (select count(*) from public.investment_sales s where s.lot_id = v_selected),
+    'documentedSoldUnits', (
+      select count(*)
+      from public.investment_sale_items si
+      join public.investment_sales s on s.id = si.sale_id
+      where s.lot_id = v_selected
+    ),
+    'grossRevenueCents', coalesce((select sum(s.gross_revenue_cents) from public.investment_sales s where s.lot_id = v_selected), 0),
+    'taxRecognizedCents', coalesce((select sum(s.tax_recognized_cents) from public.investment_sales s where s.lot_id = v_selected), 0),
     'creditNoteCount', (select count(*) from public.investment_sales_credit_notes cn where cn.lot_id = v_selected),
     'returnedUnits', (select count(*) from public.investment_sales_credit_note_items cni where cni.lot_id = v_selected),
     'grossCreditCents', coalesce((select sum(cn.gross_credit_cents) from public.investment_sales_credit_notes cn where cn.lot_id = v_selected), 0),
     'taxCreditCents', coalesce((select sum(cn.tax_credit_cents) from public.investment_sales_credit_notes cn where cn.lot_id = v_selected), 0),
     'returnGenealogyMismatches', v_return_mismatches
-  ) into v_sales
-  from public.investment_sales s
-  left join public.investment_sale_items si on si.sale_id = s.id
-  where s.lot_id = v_selected;
+  ) into v_sales;
 
   select jsonb_build_object(
     'netRevenueCents', coalesce(sum(amount_cents) filter (where entry_type = 'REVENUE'), 0) - coalesce(sum(amount_cents) filter (where entry_type = 'REVENUE_REVERSAL'), 0),
