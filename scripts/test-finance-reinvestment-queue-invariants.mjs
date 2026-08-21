@@ -38,5 +38,8 @@ assert.match(schema, /EXPECTED_DATABASE_MIGRATION = '0066'/);
 assert.match(schema, /EXPECTED_DATABASE_MIGRATION_NAME = 'finance_reinvestment_queue'/);
 assert.match(schema, /EXPECTED_DATABASE_MIGRATION_COUNT = 66/);
 assert.match(proof, /publicStatus: 'BETA'/);
+assert.match(proof, /Finance reinvestment queue exposes bounded review evidence/i);
+assert.match(proof, /phase: '16'/);
+assert.match(proof, /Finance reinvestment queue/i);
 
 console.log('Finance reinvestment queue invariants passed.');
