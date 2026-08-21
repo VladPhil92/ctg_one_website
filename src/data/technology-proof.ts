@@ -41,7 +41,7 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
       'Order, allocation, inventory, ledger and settlement schema/RPCs implemented',
       'Production batch state machine and serialization implemented',
       'Participant withdrawal and server-priced reinvestment request loop implemented with shared spend and target-lot capacity reservations',
-      'Public registration and funding remain fail-closed behind feature flags',
+      'New external funding is server-gated by authenticated identity, VERIFIED investment KYC, explicit per-lot FUNDING_OPEN state and remaining PostgreSQL capacity; no separate global funding feature flag is claimed',
       'Clean-database migration and Golden Path contracts run in CI',
     ],
     publicPath: '/inversion',
