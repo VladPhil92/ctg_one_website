@@ -13,6 +13,7 @@ const ITEMS: Item[] = [
   { href: '/admin/system-health', label: 'System Health', roles: ['SUPER_ADMIN'] },
   { href: '/admin/operations', label: 'Producción OS', roles: ['SUPER_ADMIN','PRODUCTION_MANAGER'] },
   { href: '/admin/operations/overview', label: 'Ops Intelligence', roles: ['SUPER_ADMIN','FINANCE_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER','AUDITOR'] },
+  { href: '/admin/operations/journey', label: 'Golden Journey', roles: ['SUPER_ADMIN','FINANCE_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER','AUDITOR'] },
   { href: '/admin/operations/inventory', label: 'Inventario', roles: ['SUPER_ADMIN','FINANCE_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER','AUDITOR'] },
   { href: '/admin/operations/scanner', label: 'Scanner', roles: ['SUPER_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER'] },
   { href: '/admin/operations/returns', label: 'Devoluciones', roles: ['SUPER_ADMIN','SALES_MANAGER'] },
