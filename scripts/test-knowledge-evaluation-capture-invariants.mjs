@@ -117,15 +117,22 @@ assert.equal(report.releaseEvidenceEligible, true);
 assert.equal(report.metrics.humanReviewCoverage, 1);
 assert.equal(report.metrics.totalEstimatedCostUsd, 0.0015);
 
-assert.throws(
-  () => assertIsolatedEvaluationBaseUrl('https://ctgone.com'),
-  /must never be seeded or captured against production/,
-);
-assert.throws(
-  () => assertIsolatedEvaluationBaseUrl('https://ctg-one-website.onrender.com'),
-  /must never be seeded or captured against production/,
-);
+for (const productionUrl of [
+  'https://ctgone.com',
+  'https://ctgone.com.',
+  'https://WWW.CTGONE.COM.',
+  'https://ctg-one-website.onrender.com',
+  'https://ctg-one-website.onrender.com.',
+]) {
+  assert.throws(
+    () => assertIsolatedEvaluationBaseUrl(productionUrl),
+    /must never be seeded or captured against production/,
+    `Production target must be denied after hostname normalization: ${productionUrl}`,
+  );
+}
+
 assert.equal(assertIsolatedEvaluationBaseUrl('http://127.0.0.1:3000').environmentKind, 'isolated-local');
+assert.equal(assertIsolatedEvaluationBaseUrl('http://[::1]:3000').environmentKind, 'isolated-local');
 assert.equal(assertIsolatedEvaluationBaseUrl('https://evaluation.example.test').environmentKind, 'isolated-remote');
 assert.throws(() => assertIsolatedEvaluationBaseUrl('http://evaluation.example.test'), /must use HTTPS/);
 
