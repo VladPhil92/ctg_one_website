@@ -150,10 +150,46 @@
   transition: stroke 180ms ease, stroke-opacity 180ms ease, stroke-width 180ms ease;
 }
 
+.ecosystemEnergyOutbound,
+.ecosystemEnergyReturn {
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.ecosystemEnergyOutbound {
+  stroke-dasharray: 4 58;
+  stroke-dashoffset: 62;
+  filter: drop-shadow(0 0 3px rgba(241, 199, 91, .38));
+  animation: ecosystemOutboundFlow 2.8s linear infinite;
+}
+
+.ecosystemEnergyReturn {
+  stroke-dasharray: 3 64;
+  stroke-dashoffset: 67;
+  filter: drop-shadow(0 0 2px rgba(36, 140, 255, .24));
+  animation: ecosystemReturnFlow 3.25s linear infinite;
+}
+
+.ecosystemNodeLink {
+  outline: none;
+  text-decoration: none;
+}
+
+.ecosystemNodeLink:focus-visible .ecosystemNode {
+  filter: drop-shadow(0 0 8px rgba(241, 199, 91, .36));
+}
+
 .ecosystemNode {
   transform-box: fill-box;
   transform-origin: center;
   animation: ecosystemNodeFloat 6.4s ease-in-out infinite;
+}
+
+.ecosystemNodeReceive {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: .12;
+  animation: ecosystemNodeReceivePulse 2.8s ease-out infinite;
 }
 
 .coreEnergyField {
@@ -204,6 +240,22 @@
   to { stroke-dashoffset: -34; }
 }
 
+@keyframes ecosystemOutboundFlow {
+  0% { stroke-dashoffset: 62; opacity: 0; }
+  10% { opacity: .24; }
+  38% { opacity: 1; }
+  78% { opacity: .62; }
+  100% { stroke-dashoffset: -62; opacity: 0; }
+}
+
+@keyframes ecosystemReturnFlow {
+  0% { stroke-dashoffset: 67; opacity: 0; }
+  18% { opacity: .16; }
+  52% { opacity: .62; }
+  86% { opacity: .28; }
+  100% { stroke-dashoffset: -67; opacity: 0; }
+}
+
 @keyframes ecosystemOrbit {
   to { transform: rotate(360deg); }
 }
@@ -215,6 +267,13 @@
 @keyframes ecosystemNodeFloat {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
+}
+
+@keyframes ecosystemNodeReceivePulse {
+  0%, 100% { opacity: .08; transform: scale(.9); }
+  34% { opacity: .18; transform: scale(.98); }
+  52% { opacity: .68; transform: scale(1.12); }
+  72% { opacity: .18; transform: scale(1.24); }
 }
 
 @keyframes coreEnergyGlowPulse {
@@ -340,7 +399,10 @@
   .ecosystemOrbitOuter,
   .ecosystemOrbitInner,
   .ecosystemConnection,
+  .ecosystemEnergyOutbound,
+  .ecosystemEnergyReturn,
   .ecosystemNode,
+  .ecosystemNodeReceive,
   .coreEnergyGlow,
   .coreEnergyRing,
   .coreEnergyRay,
@@ -350,6 +412,9 @@
     animation: none !important;
   }
 
+  .ecosystemEnergyOutbound { opacity: .32; stroke-dasharray: 2 16; stroke-dashoffset: 0; }
+  .ecosystemEnergyReturn { opacity: .18; stroke-dasharray: 2 18; stroke-dashoffset: 0; }
+  .ecosystemNodeReceive { opacity: .18; transform: none; }
   .coreEnergyGlow { opacity: .5; }
   .coreEnergyRing { opacity: .16; transform: none; }
   .coreEnergyRay { opacity: .24; stroke-dasharray: 2 9; stroke-dashoffset: 0; }
