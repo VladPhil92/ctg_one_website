@@ -34,9 +34,10 @@ assert.match(nav, /\/admin\/finance\/reinvestment/);
 assert.match(nav, /Reinvestment Rail/);
 assert.match(nav, /SUPER_ADMIN','FINANCE_ADMIN/);
 assert.match(allowlist, /public\.get_finance_reinvestment_queue_snapshot\(p_active_limit integer, p_history_limit integer\)/);
-assert.match(schema, /EXPECTED_DATABASE_MIGRATION = '0066'/);
-assert.match(schema, /EXPECTED_DATABASE_MIGRATION_NAME = 'finance_reinvestment_queue'/);
-assert.match(schema, /EXPECTED_DATABASE_MIGRATION_COUNT = 66/);
+
+// Phase 16 owns migration 0066 but must not assume it remains the repository tip.
+const migrationCount = Number(schema.match(/EXPECTED_DATABASE_MIGRATION_COUNT = (\d+)/)?.[1] ?? 0);
+assert.ok(migrationCount >= 66, 'current schema cannot predate Phase 16 migration 0066');
 assert.match(proof, /publicStatus: 'BETA'/);
 assert.match(proof, /Finance reinvestment queue exposes bounded review evidence/i);
 assert.match(proof, /phase: '16'/);
