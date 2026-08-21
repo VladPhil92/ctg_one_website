@@ -23,6 +23,10 @@ assert.match(route, /'Cache-Control': 'no-store, max-age=0'/, 'Readiness respons
 assert.doesNotMatch(route, /\.from\(['"]investment_/i, 'Readiness endpoint must not query Investment domain rows directly.');
 assert.doesNotMatch(route, /\b(insert|update|delete)\b/i, 'Readiness endpoint must contain no mutation path.');
 
+assert.match(verifier, /const healthOrigin = new URL\(healthUrl\)\.origin/, 'Verifier must anchor auxiliary probes to HEALTH_URL origin.');
+assert.match(verifier, /`\$\{healthOrigin\}\/api\/investment\/readiness`/, 'Readiness URL must derive from the health origin by default.');
+assert.match(verifier, /`\$\{healthOrigin\}\/inversion`/, 'Investment surface URL must derive from the health origin by default.');
+assert.match(verifier, /parsed\.origin !== healthOrigin/, 'Explicit readiness overrides must remain on the same origin as HEALTH_URL.');
 assert.match(verifier, /method:\s*'GET'/, 'Production verifier must be read-only HTTP GET.');
 assert.doesNotMatch(verifier, /method:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/, 'Production verifier must not issue mutating HTTP methods.');
 assert.match(verifier, /capability\?\.technicalStatus !== 'PARTIAL'/, 'Verifier must reject accidental technical maturity promotion.');
@@ -35,8 +39,10 @@ assert.match(verifier, /requestTimeoutMs > 30000/, 'Verifier network requests mu
 assert.match(verifier, /process\.exit\(1\)/, 'Any readiness mismatch must fail closed.');
 
 assert.match(workflow, /node scripts\/verify-investment-production-readiness\.mjs/, 'Post-deploy workflow must execute Investment readiness verification after deployment health.');
-assert.match(workflow, /INVESTMENT_READINESS_URL:/, 'Workflow must define the canonical readiness endpoint.');
-assert.match(workflow, /INVESTMENT_SURFACE_URL:/, 'Workflow must define the canonical public Investment surface.');
+assert.match(workflow, /HEALTH_URL:\s*\$\{\{ github\.event\.inputs\.health_url \|\| 'https:\/\/ctgone\.com\/api\/health' \}\}/, 'Workflow must pass the selected health endpoint into both deployment and Investment verification.');
+assert.match(workflow, /Investment probes derive from the same origin/i, 'Manual health override must document same-origin Investment probe derivation.');
+assert.doesNotMatch(workflow, /INVESTMENT_READINESS_URL:\s*https:\/\/ctgone\.com/i, 'Workflow must not pin readiness to production when HEALTH_URL is overridden.');
+assert.doesNotMatch(workflow, /INVESTMENT_SURFACE_URL:\s*https:\/\/ctgone\.com/i, 'Workflow must not pin Investment surface to production when HEALTH_URL is overridden.');
 assert.doesNotMatch(workflow, /INVESTMENT.*(?:SERVICE_ROLE|PASSWORD|SECRET)/i, 'Read-only Investment canary must not require new privileged credentials.');
 
 assert.match(proof, /phase:\s*'18'/, 'Technology changelog must record Phase 18.');
