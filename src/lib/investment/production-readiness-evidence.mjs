@@ -114,6 +114,7 @@ export function validateInvestmentProductionReadinessEvidence(evidence) {
     const surface = new URL(evidence.observed.surfaceFinalUrl);
     assert(surface.origin === evidence.origin, 'PASS evidence surface origin must equal evidence.origin');
     assert(surface.pathname === '/inversion', 'PASS evidence must resolve to canonical /inversion');
+    assert(surface.search === '', 'PASS evidence canonical Investment surface must not include a query string');
   } else {
     assert(evidence.failures.length > 0, 'FAIL evidence must explain at least one failure');
   }
