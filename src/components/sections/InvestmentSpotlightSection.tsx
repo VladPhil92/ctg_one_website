@@ -71,21 +71,22 @@ export const InvestmentSpotlightSection: React.FC = () => {
           <FadeInSection direction="left">
             <div className={`${styles.commandPanel} relative overflow-hidden p-2`}>
               <div className={`${publicStyles.mediaFrame} ${publicStyles.mediaSpotlight} relative w-full`}>
-                <Image
-                  src="/images/inversion/ctg-craft-beer-hefeweizen.webp"
-                  alt={copy.imageAlt}
-                  fill
-                  quality={90}
-                  sizes="(max-width: 640px) 94vw, (max-width: 1024px) 88vw, 44vw"
-                  className={`${publicStyles.mediaImage} ${publicStyles.focusHefeweizen}`}
-                  data-ctg-photo="high-fidelity-source"
-                />
-                <div className="absolute inset-0 z-[1] bg-gradient-to-t from-[#030507] via-black/10 to-transparent" aria-hidden="true" />
-                <div className="absolute inset-x-0 bottom-0 z-[3] p-6 sm:p-8">
-                  <div className="border-t border-white/[.09] pt-5">
-                    <span className="block text-[11px] font-semibold uppercase tracking-[.16em] text-[#f1c75b]">CTG Craft Beer</span>
-                    <span className="mt-1 block text-xs text-text-muted">{copy.imageCaption}</span>
-                  </div>
+                <div className={publicStyles.mediaSpotlightViewport} data-ctg-photo-viewport="native-320x480">
+                  <Image
+                    src="/images/inversion/ctg-craft-beer-hefeweizen.webp"
+                    alt={copy.imageAlt}
+                    fill
+                    unoptimized
+                    sizes="320px"
+                    className={`${publicStyles.mediaImage} ${publicStyles.focusHefeweizen}`}
+                    data-ctg-photo="high-fidelity-source"
+                    data-ctg-source-size="320x480"
+                  />
+                  <div className={publicStyles.mediaSpotlightShade} aria-hidden="true" />
+                </div>
+                <div className={publicStyles.mediaSpotlightCaption} data-ctg-photo-caption="outside-image">
+                  <span className="block text-[11px] font-semibold uppercase tracking-[.16em] text-[#f1c75b]">CTG Craft Beer</span>
+                  <span className="mt-1 block text-xs text-text-muted">{copy.imageCaption}</span>
                 </div>
               </div>
             </div>
