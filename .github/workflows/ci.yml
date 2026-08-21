@@ -124,6 +124,12 @@ jobs:
             -v ON_ERROR_STOP=1 \
             -f scripts/investment-reinvestment-schema-smoke.sql
 
+      - name: Investment Operational Golden Journey
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -f scripts/investment-operational-golden-journey.sql
+
       - name: KYC transactional resilience contract
         run: |
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
