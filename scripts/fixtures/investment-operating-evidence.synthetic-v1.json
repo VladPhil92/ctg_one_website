@@ -1,0 +1,58 @@
+{
+  "captureVersion": "ctg-investment-operating-evidence-v1",
+  "classification": "synthetic-ci",
+  "redactionPolicyVersion": "ctg-investment-redaction-v1",
+  "captureId": "ioe-000000000000000000000001",
+  "capturedAt": "2026-08-21T00:00:00.000Z",
+  "environment": {
+    "baseUrl": "https://ci.invalid",
+    "provider": "ci",
+    "branch": "synthetic",
+    "commit": "cccccccccccccccccccccccccccccccccccccccc",
+    "schemaMigration": "0067",
+    "schemaMigrationName": "operational_golden_journey",
+    "schemaMigrationCount": 67,
+    "schemaCompatible": true,
+    "productionReadinessVerified": false
+  },
+  "sourceDigests": [
+    {
+      "label": "synthetic-first-party-export",
+      "sourceClass": "first-party-export",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "lots": [
+    {
+      "lotDigestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "observedStatus": "SETTLED",
+      "funding": {
+        "allocatedCapitalCents": 230000,
+        "cashReceiptCents": 230000,
+        "approvedReinvestmentDebitCents": 0,
+        "internalCapitalCents": 0,
+        "unbackedExternalCapitalCents": 0,
+        "reconciled": true
+      },
+      "production": {
+        "serializedUnits": 48,
+        "terminalPhysicalUnits": 48,
+        "inventoryReconciled": true
+      },
+      "sales": {
+        "documentedSoldUnits": 48,
+        "returnedUnits": 2,
+        "returnGenealogyMismatches": 0
+      },
+      "settlement": {
+        "finalized": true,
+        "netDistributableProfitCents": 100000,
+        "participantCreditCents": 280000
+      },
+      "liquidity": {
+        "approvedReinvestmentCents": 140000,
+        "confirmedWithdrawalDebitCents": 140000
+      }
+    }
+  ]
+}
