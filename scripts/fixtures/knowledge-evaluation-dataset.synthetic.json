@@ -1,0 +1,35 @@
+{
+  "version": "ctg-knowledge-eval-synthetic-v1",
+  "retrievalK": 3,
+  "description": "Synthetic CI-only fixtures. These facts are fictional and must never be treated as CTG operating evidence.",
+  "cases": [
+    {
+      "id": "known-single-source",
+      "question": "What retention period does Fixture Alpha define?",
+      "expectedEvidenceIds": ["fixture-alpha#retention"],
+      "expectsEvidence": true,
+      "businessUnit": "SYNTHETIC"
+    },
+    {
+      "id": "known-multi-source",
+      "question": "Which controls apply to Fixture Beta approvals?",
+      "expectedEvidenceIds": ["fixture-beta#approval", "fixture-beta#audit"],
+      "expectsEvidence": true,
+      "businessUnit": "SYNTHETIC"
+    },
+    {
+      "id": "ranking-noise",
+      "question": "What status does Fixture Gamma assign to the sample workflow?",
+      "expectedEvidenceIds": ["fixture-gamma#status"],
+      "expectsEvidence": true,
+      "businessUnit": "SYNTHETIC"
+    },
+    {
+      "id": "no-authorized-evidence",
+      "question": "What does the synthetic corpus say about Fixture Delta?",
+      "expectedEvidenceIds": [],
+      "expectsEvidence": false,
+      "businessUnit": "SYNTHETIC"
+    }
+  ]
+}
