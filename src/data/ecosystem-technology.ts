@@ -151,24 +151,6 @@ export const ECOSYSTEM_TECHNOLOGY_UNITS: EcosystemTechnologyUnit[] = [
     osModules: ['Identity', 'Documents', 'Automation', 'AI'],
   },
   {
-    id: 'design',
-    name: 'CTG One Design',
-    icon: 'palette',
-    businessEs: 'Diseño y marca',
-    businessEn: 'Design and brand',
-    operatingProblemEs: 'Mantener consistencia visual y reutilización de componentes entre múltiples unidades.',
-    operatingProblemEn: 'Maintain visual consistency and component reuse across multiple business units.',
-    currentStateEs: 'Existe reutilización parcial de sistema visual, activos de marca y componentes de interfaz dentro del ecosistema.',
-    currentStateEn: 'There is partial reuse of visual system, brand assets, and interface components across the ecosystem.',
-    status: 'PARTIAL',
-    capabilities: [
-      { nameEs: 'Sistema visual', nameEn: 'Visual system', status: 'PARTIAL' },
-      { nameEs: 'Componentes reutilizables', nameEn: 'Reusable components', status: 'PARTIAL' },
-      { nameEs: 'Biblioteca centralizada', nameEn: 'Centralized library', status: 'ROADMAP' },
-    ],
-    osModules: ['Experience', 'Design System'],
-  },
-  {
     id: 'credits',
     name: 'Vantage Libranza Plus',
     icon: 'wallet',
@@ -221,7 +203,7 @@ export const ECOSYSTEM_TECHNOLOGY_UNITS: EcosystemTechnologyUnit[] = [
       { nameEs: 'Liquidaciones automáticas', nameEn: 'Automatic settlements', status: 'ROADMAP' },
     ],
     osModules: ['Identity', 'Data', 'Transactions', 'Security', 'Inventory'],
-    href: '/products',
+    href: '/inversion',
   },
   {
     id: 'guestlogistics',
