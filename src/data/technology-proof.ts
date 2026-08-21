@@ -46,6 +46,7 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
       'A clean-database transactional journey certifies sale return, settlement credit, reinvestment and confirmed payout as one conserved economic loop',
       'Post-deploy Production readiness canary verifies exact Render identity, runtime schema compatibility and the canonical Investment surface without production mutations; real operating evidence remains required for LIVE promotion',
       'Private redacted operating-evidence capture, validation, human-review and finalization tooling is implemented with PII/identifier rejection, source hashing and synthetic-evidence separation; no real production operating capture has been approved yet',
+      'SUPER_ADMIN release gate matrix consolidates technical, runtime, operating-evidence, pending-business-decision and fail-closed exposure state without enabling automatic LIVE promotion',
       'New external funding is server-gated by authenticated identity, VERIFIED investment KYC, explicit per-lot FUNDING_OPEN state and remaining PostgreSQL capacity; no separate global funding feature flag is claimed',
       'Clean-database migration and Golden Path contracts run in CI',
     ],
@@ -141,4 +142,5 @@ export const TECHNICAL_CHANGELOG = [
   { phase: '17', title: 'Operational Golden Journey', detail: 'Added a bounded per-lot lifecycle reconstruction and a clean-database transactional journey proving funding, payment, production, sale/return, settlement, reinvestment and confirmed payout as one conserved operating loop.' },
   { phase: '18', title: 'Investment production readiness canary', detail: 'Added a public-safe read-only readiness endpoint and post-deploy canary that pin exact Render identity, runtime schema compatibility, PARTIAL/BETA truth and the canonical Investment surface while keeping real operating evidence explicitly pending.' },
   { phase: '19', title: 'Investment operating evidence capture', detail: 'Added a private-by-default redacted operating-evidence pipeline with source hashing, PII/identifier rejection, financial conservation checks, explicit human review and synthetic-vs-production evidence separation; real production evidence remains uncaptured until an authorized review is performed.' },
+  { phase: '20', title: 'Investment release gate matrix', detail: 'Added a SUPER_ADMIN release-readiness read model that consolidates technical proof, Render/schema state, reviewed operating evidence, pending business decisions and fail-closed exposure controls while prohibiting automatic LIVE promotion.' },
 ] as const;
