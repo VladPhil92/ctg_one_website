@@ -17,7 +17,7 @@ AI capabilities are not promoted to LIVE because demos look convincing. Release 
 
 ## Release pipeline
 
-`dataset -> run -> score -> human review -> compare -> release decision`
+`corpus -> dataset -> run -> score -> human review -> compare -> release decision`
 
 Evaluation datasets should represent real, authorized use cases while minimizing unnecessary personal or sensitive data.
 
@@ -39,7 +39,7 @@ This is an integrity control, not a semantic truth oracle. It does not prove tha
 
 ## Reproducible evaluation harness
 
-CTG Knowledge now has a provider-independent scoring harness for already-captured evaluation runs. The detailed contract is defined in `docs/ai/CTG_KNOWLEDGE_EVALUATION.md`.
+CTG Knowledge has a provider-independent scoring harness for already-captured evaluation runs. The detailed scoring contract is defined in `docs/ai/CTG_KNOWLEDGE_EVALUATION.md`.
 
 The harness measures retrieval recall/ranking, citation validity/relevance, no-evidence abstention, reviewed grounded-case quality, safety, human-review coverage, latency and estimated cost when supplied.
 
@@ -47,12 +47,22 @@ Synthetic CI fixtures validate the scorer itself but are categorically ineligibl
 
 The scorer produces regression evidence only. It does not mutate `Technology Proof`, deploy a model, or automatically promote a capability.
 
+## Versioned corpus provenance
+
+A representative dataset must also be bound to reviewed evidence rather than floating over whatever documents happen to exist at execution time.
+
+The first-party public corpus contract is defined in `docs/ai/CTG_KNOWLEDGE_EVALUATION_CORPUS.md`. Its source manifest pins exact Git blob identities and Markdown sections. CI recomputes those identities and fails closed when source content drifts.
+
+The corpus packager is provider-independent and emits stable evaluation source URIs. It does not ingest data, call a model, or create operating evidence. A real captured run is a separate controlled step.
+
 ## Regression discipline
 
-Material changes to model, prompt, retrieval, tool policy, grounding validation or system configuration should be evaluated against the same representative fixtures before production promotion.
+Material changes to corpus, dataset, model, prompt, retrieval, tool policy, grounding validation or system configuration should be evaluated against deliberately versioned fixtures before production promotion.
 
-Deterministic grounding and evaluation invariants are part of the repository CI suite and must remain provider-independent so ordinary pull requests do not consume paid model calls.
+Source changes that alter evaluation meaning require corpus/dataset review and versioning. Blob SHAs must never be refreshed blindly merely to make CI green.
+
+Deterministic grounding, corpus-provenance and evaluation invariants are part of the repository CI suite and must remain provider-independent so ordinary pull requests do not consume paid model calls.
 
 ## LIVE gate
 
-A production AI capability requires explicit acceptance thresholds, regression results, known failure modes, fallback behavior, observability, an authorized evaluation corpus, human-reviewed semantic evidence, and an accountable release owner.
+A production AI capability requires explicit acceptance thresholds, regression results, known failure modes, fallback behavior, observability, an authorized evaluation corpus, captured human-reviewed semantic evidence, measured operating behavior, and an accountable release owner.
