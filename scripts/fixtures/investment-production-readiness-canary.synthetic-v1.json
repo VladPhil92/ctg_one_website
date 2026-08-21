@@ -1,0 +1,22 @@
+{
+  "evidenceVersion": "ctg-investment-production-readiness-evidence-v1",
+  "classification": "synthetic-ci",
+  "capturedAt": "2026-01-01T00:00:00.000Z",
+  "origin": "https://ci.invalid",
+  "result": "PASS",
+  "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "expectedBranch": "main",
+  "expectedMigration": "0067",
+  "expectedMigrationName": "operational_golden_journey",
+  "expectedMigrationCount": 67,
+  "observed": {
+    "readinessHttp": 200,
+    "readinessStatus": "ready",
+    "deploymentCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "publicStatus": "BETA",
+    "productionOperatingEvidence": "pending",
+    "surfaceHttp": 200,
+    "surfaceFinalUrl": "https://ci.invalid/inversion"
+  },
+  "failures": []
+}
