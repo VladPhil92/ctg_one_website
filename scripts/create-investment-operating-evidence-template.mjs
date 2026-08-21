@@ -43,8 +43,8 @@ const template = {
     schemaMigration: schema.migration,
     schemaMigrationName: schema.name,
     schemaMigrationCount: schema.count,
-    schemaCompatible: isProduction,
-    productionReadinessVerified: isProduction,
+    schemaCompatible: false,
+    productionReadinessVerified: false,
   },
   sourceDigests: [
     {
@@ -89,4 +89,4 @@ const template = {
 };
 
 writeFileSync(outputPath, `${JSON.stringify(template, null, 2)}\n`, 'utf8');
-console.error(`Operating evidence template written to ${outputPath}. It is intentionally invalid until every placeholder is replaced with redacted first-party evidence.`);
+console.error(`Operating evidence template written to ${outputPath}. It is intentionally invalid until every placeholder is replaced and production schema/readiness facts are explicitly verified.`);
