@@ -1,3 +1,3 @@
-export const EXPECTED_DATABASE_MIGRATION = '0066' as const;
-export const EXPECTED_DATABASE_MIGRATION_NAME = 'finance_reinvestment_queue' as const;
-export const EXPECTED_DATABASE_MIGRATION_COUNT = 66 as const;
+export const EXPECTED_DATABASE_MIGRATION = '0067' as const;
+export const EXPECTED_DATABASE_MIGRATION_NAME = 'operational_golden_journey' as const;
+export const EXPECTED_DATABASE_MIGRATION_COUNT = 67 as const;
