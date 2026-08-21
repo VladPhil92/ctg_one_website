@@ -22,7 +22,13 @@ declare
   v_serialized bigint := 0;
   v_terminal bigint := 0;
   v_allocation_capital bigint := 0;
+  v_order_allocation_capital bigint := 0;
+  v_reinvestment_allocation_capital bigint := 0;
+  v_internal_allocation_capital bigint := 0;
+  v_unbacked_allocation_capital bigint := 0;
   v_receipt_cents bigint := 0;
+  v_reinvestment_debit_cents bigint := 0;
+  v_funding_reconciled boolean := false;
   v_inventory_reconciled boolean := false;
   v_return_mismatches bigint := 0;
   v_settlement_id uuid;
@@ -69,27 +75,107 @@ begin
   from public.investment_production_lots l
   where l.id = v_selected;
 
-  select
-    coalesce(sum(a.capital_committed_cents), 0)::bigint,
-    jsonb_build_object(
-      'allocationCount', count(a.id),
-      'allocatedCases', coalesce(sum(a.case_equivalent_units), 0),
-      'allocatedCapitalCents', coalesce(sum(a.capital_committed_cents), 0),
-      'externalParticipantCount', count(distinct a.participant_user_id) filter (where a.participant_user_id is not null),
-      'orderCount', (select count(*) from public.investment_orders o where o.lot_id = v_selected),
-      'allocatedOrderCount', (select count(*) from public.investment_orders o where o.lot_id = v_selected and o.status = 'ALLOCATED'),
-      'receiptCount', (select count(*) from public.investment_payment_receipts r join public.investment_orders o on o.id = r.order_id where o.lot_id = v_selected),
-      'receiptCents', coalesce((select sum(r.amount_cents) from public.investment_payment_receipts r join public.investment_orders o on o.id = r.order_id where o.lot_id = v_selected), 0)
-    )
-  into v_allocation_capital, v_funding
+  -- Funding can enter a lot through three authoritative paths:
+  --   1. an allocated checkout order backed by payment receipts;
+  --   2. an approved participant reinvestment backed by REINVESTMENT_DEBIT;
+  --   3. an explicitly CTG-internal allocation, which does not require a bank receipt.
+  -- Any external allocation outside those paths remains unbacked and fails closed.
+  select coalesce(sum(a.capital_committed_cents), 0)::bigint,
+         coalesce(sum(a.capital_committed_cents) filter (where a.is_ctg_internal), 0)::bigint
+  into v_allocation_capital, v_internal_allocation_capital
   from public.investment_funding_allocations a
   where a.lot_id = v_selected;
+
+  select coalesce(sum(a.capital_committed_cents), 0)::bigint
+  into v_order_allocation_capital
+  from public.investment_funding_allocations a
+  where a.lot_id = v_selected
+    and exists (
+      select 1
+      from public.investment_orders o
+      where o.lot_id = v_selected
+        and o.allocation_id = a.id
+        and o.status = 'ALLOCATED'
+    );
 
   select coalesce(sum(r.amount_cents), 0)::bigint
   into v_receipt_cents
   from public.investment_payment_receipts r
   join public.investment_orders o on o.id = r.order_id
-  where o.lot_id = v_selected;
+  where o.lot_id = v_selected
+    and o.status = 'ALLOCATED'
+    and o.allocation_id is not null;
+
+  select coalesce(sum(a.capital_committed_cents), 0)::bigint
+  into v_reinvestment_allocation_capital
+  from public.investment_funding_allocations a
+  where a.lot_id = v_selected
+    and exists (
+      select 1
+      from public.investment_ledger_entries le
+      join public.investment_reinvestment_requests rr
+        on rr.id::text = le.reference
+      where le.allocation_id = a.id
+        and le.lot_id = v_selected
+        and le.entry_type = 'REINVESTMENT_DEBIT'
+        and le.amount_cents = -a.capital_committed_cents
+        and rr.target_lot_id = v_selected
+        and rr.participant_user_id = a.participant_user_id
+        and rr.status = 'APPROVED'
+        and rr.amount_cents = a.capital_committed_cents
+    );
+
+  select coalesce(sum(-le.amount_cents), 0)::bigint
+  into v_reinvestment_debit_cents
+  from public.investment_ledger_entries le
+  join public.investment_reinvestment_requests rr
+    on rr.id::text = le.reference
+  join public.investment_funding_allocations a
+    on a.id = le.allocation_id
+   and a.lot_id = v_selected
+  where le.lot_id = v_selected
+    and le.entry_type = 'REINVESTMENT_DEBIT'
+    and le.amount_cents < 0
+    and rr.target_lot_id = v_selected
+    and rr.participant_user_id = a.participant_user_id
+    and rr.status = 'APPROVED'
+    and rr.amount_cents = a.capital_committed_cents;
+
+  v_unbacked_allocation_capital :=
+    v_allocation_capital
+    - v_order_allocation_capital
+    - v_reinvestment_allocation_capital
+    - v_internal_allocation_capital;
+
+  v_funding_reconciled :=
+    v_allocation_capital > 0
+    and v_receipt_cents = v_order_allocation_capital
+    and v_reinvestment_debit_cents = v_reinvestment_allocation_capital
+    and v_unbacked_allocation_capital = 0;
+
+  select jsonb_build_object(
+    'allocationCount', count(a.id),
+    'allocatedCases', coalesce(sum(a.case_equivalent_units), 0),
+    'allocatedCapitalCents', v_allocation_capital,
+    'externalParticipantCount', count(distinct a.participant_user_id) filter (where a.participant_user_id is not null),
+    'orderCount', (select count(*) from public.investment_orders o where o.lot_id = v_selected),
+    'allocatedOrderCount', (select count(*) from public.investment_orders o where o.lot_id = v_selected and o.status = 'ALLOCATED'),
+    'receiptCount', (
+      select count(*)
+      from public.investment_payment_receipts r
+      join public.investment_orders o on o.id = r.order_id
+      where o.lot_id = v_selected and o.status = 'ALLOCATED' and o.allocation_id is not null
+    ),
+    'receiptCents', v_receipt_cents,
+    'orderBackedAllocationCapitalCents', v_order_allocation_capital,
+    'reinvestmentBackedAllocationCapitalCents', v_reinvestment_allocation_capital,
+    'reinvestmentDebitCents', v_reinvestment_debit_cents,
+    'internalAllocationCapitalCents', v_internal_allocation_capital,
+    'unbackedAllocationCapitalCents', v_unbacked_allocation_capital,
+    'isReconciled', v_funding_reconciled
+  ) into v_funding
+  from public.investment_funding_allocations a
+  where a.lot_id = v_selected;
 
   -- RETURNED is intentionally non-terminal: a credited return still requires
   -- physical disposition (for example DAMAGED, EXPIRED, LOST or RECALLED)
@@ -231,7 +317,7 @@ begin
 
   v_next_action := case
     when v_allocation_capital = 0 then 'FUNDING'
-    when v_receipt_cents <> v_allocation_capital then 'PAYMENT_RECONCILIATION'
+    when not v_funding_reconciled then 'PAYMENT_RECONCILIATION'
     when v_serialized = 0 then 'PRODUCTION_SERIALIZATION'
     when not v_inventory_reconciled then 'INVENTORY_RECONCILIATION'
     when v_terminal < v_serialized then 'SALES_OR_PHYSICAL_CLOSE'
@@ -252,7 +338,7 @@ begin
     'liquidity', v_liquidity,
     'milestones', jsonb_build_array(
       jsonb_build_object('key','FUNDING','complete',v_allocation_capital > 0),
-      jsonb_build_object('key','PAYMENT_RECONCILIATION','complete',v_allocation_capital > 0 and v_receipt_cents = v_allocation_capital),
+      jsonb_build_object('key','PAYMENT_RECONCILIATION','complete',v_funding_reconciled),
       jsonb_build_object('key','PRODUCTION_SERIALIZATION','complete',v_serialized > 0),
       jsonb_build_object('key','INVENTORY_RECONCILIATION','complete',v_inventory_reconciled),
       jsonb_build_object('key','COMMERCIAL_CLOSE','complete',v_serialized > 0 and v_terminal = v_serialized),
