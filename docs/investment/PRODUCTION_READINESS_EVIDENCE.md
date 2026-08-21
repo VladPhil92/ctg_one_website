@@ -27,17 +27,20 @@ It does not query participant, KYC, order, allocation, ledger, inventory, settle
 
 `scripts/verify-investment-production-readiness.mjs` runs after the existing deployment-health verifier in the `Post-Deploy Health Canary` workflow.
 
+The verifier derives `/api/investment/readiness` and `/inversion` from the origin of `HEALTH_URL`. A manual dispatch that points the health canary at staging or another HTTPS origin therefore checks the matching Investment endpoints on that same environment instead of accidentally crossing back to production. Explicit Investment URL overrides, when used outside the workflow, are rejected unless they remain same-origin with `HEALTH_URL`.
+
 The verifier fails closed unless all of the following are true:
 
 1. the readiness endpoint is healthy;
-2. the deployed Render commit exactly equals the workflow target SHA;
-3. the deployed branch is `main`;
-4. the runtime database schema matches the repository migration contract;
-5. Investment remains technically `PARTIAL` and publicly `BETA`;
-6. CI Operational Golden Journey evidence is marked `certified`;
-7. real production operating evidence remains marked `pending`;
-8. the canary is explicitly `read-only`;
-9. `https://ctgone.com/inversion` resolves successfully as the canonical HTML surface.
+2. the deployed runtime identifies itself as Render and exposes a commit;
+3. the deployed Render commit exactly equals the workflow target SHA;
+4. the deployed branch is `main`;
+5. the runtime database schema matches the repository migration contract;
+6. Investment remains technically `PARTIAL` and publicly `BETA`;
+7. CI Operational Golden Journey evidence is marked `certified`;
+8. real production operating evidence remains marked `pending`;
+9. the canary is explicitly `read-only`;
+10. the same-origin `/inversion` route resolves successfully as the canonical HTML surface.
 
 The canary uses only public HTTPS GET requests. It introduces no service-role key, database password, provider credential, mutation command or paid third-party dependency.
 
@@ -51,7 +54,7 @@ This is deterministic test evidence, not proof that the same sequence has occurr
 
 ### Deployment readiness evidence
 
-A successful Phase 18 canary proves that the expected Git revision is live on Render, its runtime schema is compatible, its Investment release stage remains correctly represented and its public Investment surface is reachable.
+A successful Phase 18 canary proves that the expected Git revision is live on the selected Render environment, its runtime schema is compatible, its Investment release stage remains correctly represented and its public Investment surface is reachable.
 
 ### Production operating evidence
 
@@ -64,6 +67,7 @@ No such evidence is synthesized by this phase. Absence of real operating evidenc
 The readiness system is intentionally observational:
 
 - HTTP methods are GET only;
+- all canary probes remain on the selected health origin;
 - no participant authentication is impersonated;
 - no domain command RPC is invoked;
 - no money movement is initiated or confirmed;
