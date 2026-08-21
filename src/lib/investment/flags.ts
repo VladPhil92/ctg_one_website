@@ -1,10 +1,9 @@
 // Feature flags for CTG Craft Beer Inversión (ADR-010, docs/investment/adr).
-// Every flag defaults to false when its env var is unset — fail closed, so
-// a missing env var can never accidentally open real funding/withdrawals.
-// None of these are wired to real money-moving code yet (see
-// docs/investment/DOMAIN_MODEL.md — this PR ships the UI-skeleton milestone
-// only); they exist now so future work has a conservative switch to land
-// behind from day one.
+// Every flag defaults to false when its env var is unset — fail closed, so a
+// missing env var cannot accidentally broaden public funding or automated
+// money movement. Financial authorization and invariants remain enforced in
+// PostgreSQL/RPCs; these flags control product exposure/integration modes and
+// never replace KYC, lot state, capacity, ledger or settlement controls.
 
 function flag(name: string): boolean {
   return process.env[name] === 'true';
