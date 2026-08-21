@@ -270,20 +270,35 @@ select pg_temp.assert_journey(
   'liquidity split must conserve settlement credit to zero residual balance'
 );
 
--- Phase 17 read model reconstructs the source-lot journey without writes.
+-- Phase 17 read model reconstructs both funding paths without writes.
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000713',true);
-select public.get_investment_operational_journey(:'source_lot_id'::uuid) as journey_snapshot \gset
+select public.get_investment_operational_journey(:'source_lot_id'::uuid) as source_journey_snapshot \gset
+select public.get_investment_operational_journey(:'target_lot_id'::uuid) as target_journey_snapshot \gset
 reset role;
 
-select pg_temp.assert_journey((:'journey_snapshot'::jsonb->>'nextAction')='CLOSED_LOOP','snapshot must identify closed loop');
-select pg_temp.assert_journey((:'journey_snapshot'::jsonb#>>'{settlement,finalized}')::boolean,'snapshot must expose settlement');
-select pg_temp.assert_journey((:'journey_snapshot'::jsonb#>>'{settlement,participantCreditCents}')::bigint=6500,'snapshot must expose exact participant credit');
-select pg_temp.assert_journey((:'journey_snapshot'::jsonb#>>'{sales,returnedUnits}')::bigint=1,'snapshot must expose credited return');
-select pg_temp.assert_journey((:'journey_snapshot'::jsonb#>>'{sales,returnGenealogyMismatches}')::bigint=0,'return genealogy must reconcile');
-select pg_temp.assert_journey((:'journey_snapshot'::jsonb#>>'{production,terminalPhysicalUnits}')::bigint=4,'all physical units must be terminal');
-select pg_temp.assert_journey((:'journey_snapshot'::jsonb#>>'{liquidity,sourceLinkedApprovedReinvestmentCents}')::bigint=2300,'snapshot must preserve settlement-to-reinvestment genealogy');
-select pg_temp.assert_journey((:'journey_snapshot'::jsonb#>>'{liquidity,creditedParticipantWithdrawalCentsAfterSettlement}')::bigint=4200,'snapshot must report later withdrawal activity without source attribution');
+-- Source lot: cash/order funding must reconcile exactly to payment receipts.
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb->>'nextAction')='CLOSED_LOOP','source snapshot must identify closed loop');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{funding,isReconciled}')::boolean,'source funding must reconcile');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{funding,orderBackedAllocationCapitalCents}')::bigint=4600,'source order-backed allocation must be 4600');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{funding,receiptCents}')::bigint=4600,'source receipts must reconcile to 4600');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{funding,unbackedAllocationCapitalCents}')::bigint=0,'source lot must have no unbacked allocation');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{settlement,finalized}')::boolean,'source snapshot must expose settlement');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{settlement,participantCreditCents}')::bigint=6500,'source snapshot must expose exact participant credit');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{sales,returnedUnits}')::bigint=1,'source snapshot must expose credited return');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{sales,returnGenealogyMismatches}')::bigint=0,'return genealogy must reconcile');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{production,terminalPhysicalUnits}')::bigint=4,'all source physical units must be terminal');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{liquidity,sourceLinkedApprovedReinvestmentCents}')::bigint=2300,'source snapshot must preserve settlement-to-reinvestment genealogy');
+select pg_temp.assert_journey((:'source_journey_snapshot'::jsonb#>>'{liquidity,creditedParticipantWithdrawalCentsAfterSettlement}')::bigint=4200,'source snapshot must report later withdrawal activity without source attribution');
+
+-- Target lot: approved reinvestment is authoritative funding without a bank receipt.
+select pg_temp.assert_journey((:'target_journey_snapshot'::jsonb#>>'{funding,isReconciled}')::boolean,'reinvestment-funded target must reconcile without a bank receipt');
+select pg_temp.assert_journey((:'target_journey_snapshot'::jsonb#>>'{funding,receiptCents}')::bigint=0,'reinvestment target must not fabricate bank receipts');
+select pg_temp.assert_journey((:'target_journey_snapshot'::jsonb#>>'{funding,orderBackedAllocationCapitalCents}')::bigint=0,'reinvestment target must not fabricate order-backed capital');
+select pg_temp.assert_journey((:'target_journey_snapshot'::jsonb#>>'{funding,reinvestmentBackedAllocationCapitalCents}')::bigint=2300,'target allocation must be backed by approved reinvestment');
+select pg_temp.assert_journey((:'target_journey_snapshot'::jsonb#>>'{funding,reinvestmentDebitCents}')::bigint=2300,'target reinvestment debit must reconcile to allocation capital');
+select pg_temp.assert_journey((:'target_journey_snapshot'::jsonb#>>'{funding,unbackedAllocationCapitalCents}')::bigint=0,'target lot must have no unbacked allocation');
+select pg_temp.assert_journey((:'target_journey_snapshot'::jsonb->>'nextAction')='PRODUCTION_SERIALIZATION','reinvestment-funded target must advance to production instead of payment reconciliation');
 
 rollback;
 select 'Investment Operational Golden Journey: PASS' as result;
