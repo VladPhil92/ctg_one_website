@@ -24,11 +24,13 @@ concurrency:
 
 jobs:
   production-canary:
-    name: Verify Render commit and Supabase schema
+    name: Verify Render commit, schema and Investment readiness
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
       HEALTH_URL: ${{ github.event.inputs.health_url || 'https://ctgone.com/api/health' }}
+      INVESTMENT_READINESS_URL: https://ctgone.com/api/investment/readiness
+      INVESTMENT_SURFACE_URL: https://ctgone.com/inversion
       EXPECTED_DEPLOYMENT_SHA: ${{ github.event.inputs.expected_sha || github.sha }}
       EXPECTED_DEPLOYMENT_BRANCH: main
       CANARY_ATTEMPTS: '24'
@@ -48,3 +50,6 @@ jobs:
 
       - name: Verify production deployment identity
         run: node scripts/verify-deployment-health.mjs
+
+      - name: Verify Investment production readiness
+        run: node scripts/verify-investment-production-readiness.mjs
