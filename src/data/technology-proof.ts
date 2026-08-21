@@ -44,6 +44,7 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
       'Finance reinvestment queue exposes bounded review evidence and canonical approve/reject actions without allowing quantity or capital overrides',
       'Operational Golden Journey reconstructs funding, payment, production, inventory, sale/return, settlement and post-settlement liquidity evidence per lot',
       'A clean-database transactional journey certifies sale return, settlement credit, reinvestment and confirmed payout as one conserved economic loop',
+      'Post-deploy Production readiness canary verifies exact Render identity, runtime schema compatibility and the canonical Investment surface without production mutations; real operating evidence remains required for LIVE promotion',
       'New external funding is server-gated by authenticated identity, VERIFIED investment KYC, explicit per-lot FUNDING_OPEN state and remaining PostgreSQL capacity; no separate global funding feature flag is claimed',
       'Clean-database migration and Golden Path contracts run in CI',
     ],
@@ -137,4 +138,5 @@ export const TECHNICAL_CHANGELOG = [
   { phase: '15', title: 'Participant liquidity loop', detail: 'Closed the participant settlement-to-reinvestment loop with server-priced case intent, shared balance/capacity reservations, immutable participant quantity, cancellation/rejection paths and a participant reinvestment console while retaining BETA status.' },
   { phase: '16', title: 'Finance reinvestment queue', detail: 'Added a bounded Finance OS review queue for pending reinvestments with current KYC, source-credit, spendable-balance and target-lot context, while approvals remain immutable server-side commands.' },
   { phase: '17', title: 'Operational Golden Journey', detail: 'Added a bounded per-lot lifecycle reconstruction and a clean-database transactional journey proving funding, payment, production, sale/return, settlement, reinvestment and confirmed payout as one conserved operating loop.' },
+  { phase: '18', title: 'Investment production readiness canary', detail: 'Added a public-safe read-only readiness endpoint and post-deploy canary that pin exact Render identity, runtime schema compatibility, PARTIAL/BETA truth and the canonical Investment surface while keeping real operating evidence explicitly pending.' },
 ] as const;
