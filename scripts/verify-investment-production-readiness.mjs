@@ -81,6 +81,15 @@ async function fetchWithTimeout(url, accept) {
   }
 }
 
+function safeScalar(value) {
+  if (value === null || value === undefined) return 'null';
+  return String(value).replace(/\s+/g, ' ').slice(0, 80);
+}
+
+function mismatch(failures, key, value) {
+  failures.push(`${key}=${safeScalar(value)}`);
+}
+
 function emptyObserved() {
   return {
     readinessHttp: null,
@@ -108,33 +117,40 @@ async function runProbe() {
     }
 
     if (readiness) {
-      observed.readinessStatus = readiness?.status ?? null;
-      observed.deploymentCommit = readiness?.deployment?.commit ?? null;
-      observed.publicStatus = readiness?.capability?.publicStatus ?? null;
-      observed.productionOperatingEvidence = readiness?.evidence?.productionOperatingEvidence ?? null;
+      observed.readinessStatus = typeof readiness?.status === 'string' ? readiness.status.slice(0, 80) : null;
+      const deploymentCommit = readiness?.deployment?.commit;
+      observed.deploymentCommit = typeof deploymentCommit === 'string' && /^[0-9a-f]{40}$/.test(deploymentCommit)
+        ? deploymentCommit
+        : null;
+      observed.publicStatus = typeof readiness?.capability?.publicStatus === 'string'
+        ? readiness.capability.publicStatus.slice(0, 80)
+        : null;
+      observed.productionOperatingEvidence = typeof readiness?.evidence?.productionOperatingEvidence === 'string'
+        ? readiness.evidence.productionOperatingEvidence.slice(0, 80)
+        : null;
 
-      if (!readinessResult.response.ok) failures.push(`readiness.http=${readinessResult.response.status}`);
-      if (readiness?.status !== 'ready') failures.push(`readiness.status=${String(readiness?.status)}`);
-      if (readiness?.service !== 'ctg-craft-beer-investment') failures.push(`readiness.service=${String(readiness?.service)}`);
-      if (readiness?.capability?.id !== 'investment-platform') failures.push(`capability.id=${String(readiness?.capability?.id)}`);
-      if (readiness?.capability?.technicalStatus !== 'PARTIAL') failures.push(`capability.technicalStatus=${String(readiness?.capability?.technicalStatus)}`);
-      if (readiness?.capability?.publicStatus !== 'BETA') failures.push(`capability.publicStatus=${String(readiness?.capability?.publicStatus)}`);
-      if (readiness?.deployment?.provider !== 'render') failures.push(`deployment.provider=${String(readiness?.deployment?.provider)}`);
-      if (readiness?.deployment?.commit !== expectedSha) failures.push(`deployment.commit=${String(readiness?.deployment?.commit)}`);
-      if (readiness?.deployment?.branch !== expectedBranch) failures.push(`deployment.branch=${String(readiness?.deployment?.branch)}`);
+      if (!readinessResult.response.ok) mismatch(failures, 'readiness.http', readinessResult.response.status);
+      if (readiness?.status !== 'ready') mismatch(failures, 'readiness.status', readiness?.status);
+      if (readiness?.service !== 'ctg-craft-beer-investment') mismatch(failures, 'readiness.service', readiness?.service);
+      if (readiness?.capability?.id !== 'investment-platform') mismatch(failures, 'capability.id', readiness?.capability?.id);
+      if (readiness?.capability?.technicalStatus !== 'PARTIAL') mismatch(failures, 'capability.technicalStatus', readiness?.capability?.technicalStatus);
+      if (readiness?.capability?.publicStatus !== 'BETA') mismatch(failures, 'capability.publicStatus', readiness?.capability?.publicStatus);
+      if (readiness?.deployment?.provider !== 'render') mismatch(failures, 'deployment.provider', readiness?.deployment?.provider);
+      if (deploymentCommit !== expectedSha) mismatch(failures, 'deployment.commit', deploymentCommit);
+      if (readiness?.deployment?.branch !== expectedBranch) mismatch(failures, 'deployment.branch', readiness?.deployment?.branch);
       if (readiness?.schema?.compatible !== true) failures.push('schema.compatible!=true');
-      if (readiness?.schema?.expectedMigration !== expectedMigration) failures.push(`schema.expectedMigration=${String(readiness?.schema?.expectedMigration)}`);
-      if (readiness?.schema?.expectedMigrationName !== expectedMigrationName) failures.push(`schema.expectedMigrationName=${String(readiness?.schema?.expectedMigrationName)}`);
-      if (readiness?.schema?.expectedMigrationCount !== expectedMigrationCount) failures.push(`schema.expectedMigrationCount=${String(readiness?.schema?.expectedMigrationCount)}`);
+      if (readiness?.schema?.expectedMigration !== expectedMigration) mismatch(failures, 'schema.expectedMigration', readiness?.schema?.expectedMigration);
+      if (readiness?.schema?.expectedMigrationName !== expectedMigrationName) mismatch(failures, 'schema.expectedMigrationName', readiness?.schema?.expectedMigrationName);
+      if (readiness?.schema?.expectedMigrationCount !== expectedMigrationCount) mismatch(failures, 'schema.expectedMigrationCount', readiness?.schema?.expectedMigrationCount);
       if (readiness?.checks?.databaseSchemaCompatible !== true) failures.push('checks.databaseSchemaCompatible!=true');
       if (readiness?.checks?.privilegedSchemaProbeConfigured !== true) failures.push('checks.privilegedSchemaProbeConfigured!=true');
       if (readiness?.checks?.productionDeploymentIdentified !== true) failures.push('checks.productionDeploymentIdentified!=true');
       if (readiness?.checks?.technicalMaturityHonest !== true) failures.push('checks.technicalMaturityHonest!=true');
       if (readiness?.checks?.publicReleaseStageHonest !== true) failures.push('checks.publicReleaseStageHonest!=true');
-      if (readiness?.evidence?.ciOperationalGoldenJourney !== 'certified') failures.push(`evidence.ciOperationalGoldenJourney=${String(readiness?.evidence?.ciOperationalGoldenJourney)}`);
-      if (readiness?.evidence?.productionDeploymentReadiness !== 'verified') failures.push(`evidence.productionDeploymentReadiness=${String(readiness?.evidence?.productionDeploymentReadiness)}`);
-      if (readiness?.evidence?.productionOperatingEvidence !== 'pending') failures.push(`evidence.productionOperatingEvidence=${String(readiness?.evidence?.productionOperatingEvidence)}`);
-      if (readiness?.evidence?.mutationMode !== 'read-only') failures.push(`evidence.mutationMode=${String(readiness?.evidence?.mutationMode)}`);
+      if (readiness?.evidence?.ciOperationalGoldenJourney !== 'certified') mismatch(failures, 'evidence.ciOperationalGoldenJourney', readiness?.evidence?.ciOperationalGoldenJourney);
+      if (readiness?.evidence?.productionDeploymentReadiness !== 'verified') mismatch(failures, 'evidence.productionDeploymentReadiness', readiness?.evidence?.productionDeploymentReadiness);
+      if (readiness?.evidence?.productionOperatingEvidence !== 'pending') mismatch(failures, 'evidence.productionOperatingEvidence', readiness?.evidence?.productionOperatingEvidence);
+      if (readiness?.evidence?.mutationMode !== 'read-only') mismatch(failures, 'evidence.mutationMode', readiness?.evidence?.mutationMode);
     }
   } catch (error) {
     failures.push(`readiness.request_error=${error instanceof Error ? error.name : 'UnknownError'}`);
@@ -143,17 +159,22 @@ async function runProbe() {
   try {
     const surfaceResult = await fetchWithTimeout(investmentUrl, 'text/html');
     observed.surfaceHttp = surfaceResult.response.status;
-    observed.surfaceFinalUrl = surfaceResult.response.url;
     const finalSurfaceUrl = new URL(surfaceResult.response.url);
     const expectedSurfaceUrl = new URL(investmentUrl);
-    if (!surfaceResult.response.ok) failures.push(`surface.http=${surfaceResult.response.status}`);
+    observed.surfaceFinalUrl = finalSurfaceUrl.protocol === 'https:' ? finalSurfaceUrl.href : null;
+    if (!surfaceResult.response.ok) mismatch(failures, 'surface.http', surfaceResult.response.status);
     if (!surfaceResult.response.headers.get('content-type')?.toLowerCase().includes('text/html')) {
-      failures.push(`surface.contentType=${String(surfaceResult.response.headers.get('content-type'))}`);
+      mismatch(failures, 'surface.contentType', surfaceResult.response.headers.get('content-type'));
     }
-    if (finalSurfaceUrl.origin !== expectedSurfaceUrl.origin || finalSurfaceUrl.pathname !== expectedSurfaceUrl.pathname) {
-      failures.push(`surface.finalPath=${finalSurfaceUrl.origin}${finalSurfaceUrl.pathname}`);
+    if (
+      finalSurfaceUrl.protocol !== 'https:'
+      || finalSurfaceUrl.origin !== expectedSurfaceUrl.origin
+      || finalSurfaceUrl.pathname !== expectedSurfaceUrl.pathname
+      || finalSurfaceUrl.search !== ''
+    ) {
+      mismatch(failures, 'surface.finalPath', `${finalSurfaceUrl.origin}${finalSurfaceUrl.pathname}${finalSurfaceUrl.search}`);
     }
-    if (surfaceResult.body.length < 500) failures.push(`surface.bodyLength=${surfaceResult.body.length}`);
+    if (surfaceResult.body.length < 500) mismatch(failures, 'surface.bodyLength', surfaceResult.body.length);
   } catch (error) {
     failures.push(`surface.request_error=${error instanceof Error ? error.name : 'UnknownError'}`);
   }
