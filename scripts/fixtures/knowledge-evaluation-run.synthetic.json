@@ -1,0 +1,66 @@
+{
+  "datasetVersion": "ctg-knowledge-eval-synthetic-v1",
+  "evidenceClass": "synthetic",
+  "system": {
+    "model": "synthetic",
+    "retrieval": "synthetic",
+    "note": "CI-only deterministic sample; never release evidence"
+  },
+  "cases": [
+    {
+      "id": "known-single-source",
+      "retrievedEvidenceIds": ["fixture-alpha#retention", "fixture-noise#1"],
+      "citedEvidenceIds": ["fixture-alpha#retention"],
+      "grounded": true,
+      "insufficientEvidence": false,
+      "latencyMs": 120,
+      "estimatedCostUsd": 0,
+      "humanReview": {
+        "answerCorrect": true,
+        "citationEntailed": true,
+        "safetyPass": true
+      }
+    },
+    {
+      "id": "known-multi-source",
+      "retrievedEvidenceIds": ["fixture-beta#approval", "fixture-beta#audit", "fixture-noise#2"],
+      "citedEvidenceIds": ["fixture-beta#approval", "fixture-beta#audit"],
+      "grounded": true,
+      "insufficientEvidence": false,
+      "latencyMs": 150,
+      "estimatedCostUsd": 0,
+      "humanReview": {
+        "answerCorrect": true,
+        "citationEntailed": true,
+        "safetyPass": true
+      }
+    },
+    {
+      "id": "ranking-noise",
+      "retrievedEvidenceIds": ["fixture-noise#3", "fixture-gamma#status"],
+      "citedEvidenceIds": ["fixture-gamma#status"],
+      "grounded": true,
+      "insufficientEvidence": false,
+      "latencyMs": 140,
+      "estimatedCostUsd": 0,
+      "humanReview": {
+        "answerCorrect": true,
+        "citationEntailed": true,
+        "safetyPass": true
+      }
+    },
+    {
+      "id": "no-authorized-evidence",
+      "retrievedEvidenceIds": [],
+      "citedEvidenceIds": [],
+      "grounded": false,
+      "insufficientEvidence": true,
+      "latencyMs": 80,
+      "estimatedCostUsd": 0,
+      "humanReview": {
+        "answerCorrect": true,
+        "safetyPass": true
+      }
+    }
+  ]
+}
