@@ -7,7 +7,10 @@ import { Badge } from '@/components/ui/Badge';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ECOSYSTEM_TECHNOLOGY_UNITS } from '@/data/ecosystem-technology';
+import {
+  ECOSYSTEM_TECHNOLOGY_UNITS,
+  type EcosystemTechnologyUnit,
+} from '@/data/ecosystem-technology';
 import type { EcosystemProcess } from '@/data/ecosystem-processes';
 
 const statusClasses: Record<string, string> = {
@@ -23,7 +26,7 @@ export const EcosystemProcessDetail: React.FC<{ process: EcosystemProcess }> = (
   const steps = es ? process.stepsEs : process.stepsEn;
   const units = process.businessUnitIds
     .map((id) => ECOSYSTEM_TECHNOLOGY_UNITS.find((unit) => unit.id === id))
-    .filter((unit): unit is NonNullable<typeof unit> => Boolean(unit));
+    .filter((unit): unit is EcosystemTechnologyUnit => Boolean(unit));
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-bg-primary py-20 sm:py-24 md:py-28">
