@@ -11,6 +11,14 @@ export const INVESTMENT_REQUIRED_BUSINESS_DECISION_IDS = Object.freeze([
   'BR-005',
 ]);
 
+// A successful Phase 18 production-readiness canary result may be wired here
+// only after the exact deployed commit has been observed on Render. The release
+// matrix re-checks the result, branch, commit and failure list against the
+// deployment currently being evaluated, so stale canary evidence cannot pass.
+// Null means no production canary result is currently accepted for release
+// governance.
+export const INVESTMENT_PRODUCTION_READINESS_CANARY = null;
+
 // A reviewed, redacted operating-evidence report may be wired here only after
 // the Phase 19 private review/finalization process has produced an authorized
 // safe report. Null means no production operating evidence is currently
