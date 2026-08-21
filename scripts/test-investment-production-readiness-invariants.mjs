@@ -14,6 +14,7 @@ const [route, verifier, workflow, proof, docs] = await Promise.all([
 assert.match(route, /getCapabilityProof\('investment-platform'\)/, 'Readiness route must derive maturity from the canonical capability registry.');
 assert.match(route, /getPublicProofStatus\(capability\)/, 'Readiness route must derive public stage from canonical capability truth.');
 assert.match(route, /probeRuntimeSchemaCompatibility\(\)/, 'Readiness route must verify runtime schema compatibility.');
+assert.match(route, /deployment\.provider === 'render' && Boolean\(deployment\.commit\)/, 'Production readiness must require a real Render deployment identity.');
 assert.match(route, /capability\.status === 'PARTIAL'/, 'Technical Investment maturity must remain PARTIAL.');
 assert.match(route, /publicStatus === 'BETA'/, 'Public Investment release must remain BETA.');
 assert.match(route, /productionOperatingEvidence:\s*'pending'/, 'Deployment readiness must never be mislabeled as real operating evidence.');
