@@ -10,7 +10,7 @@ on:
         required: false
         type: string
       health_url:
-        description: 'Health endpoint to verify'
+        description: 'Health endpoint to verify; Investment probes derive from the same origin'
         required: false
         default: 'https://ctgone.com/api/health'
         type: string
@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   production-canary:
-    name: Verify Render commit and Supabase schema
+    name: Verify Render commit, schema and Investment readiness
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
@@ -48,3 +48,6 @@ jobs:
 
       - name: Verify production deployment identity
         run: node scripts/verify-deployment-health.mjs
+
+      - name: Verify Investment production readiness
+        run: node scripts/verify-investment-production-readiness.mjs
