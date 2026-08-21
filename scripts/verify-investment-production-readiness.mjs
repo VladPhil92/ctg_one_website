@@ -1,7 +1,11 @@
 import { readFile } from 'node:fs/promises';
 
-const readinessUrl = process.env.INVESTMENT_READINESS_URL ?? 'https://ctgone.com/api/investment/readiness';
-const investmentUrl = process.env.INVESTMENT_SURFACE_URL ?? 'https://ctgone.com/inversion';
+const healthUrl = process.env.HEALTH_URL?.trim() || 'https://ctgone.com/api/health';
+const healthOrigin = new URL(healthUrl).origin;
+const readinessUrl = process.env.INVESTMENT_READINESS_URL?.trim()
+  || `${healthOrigin}/api/investment/readiness`;
+const investmentUrl = process.env.INVESTMENT_SURFACE_URL?.trim()
+  || `${healthOrigin}/inversion`;
 const expectedSha = process.env.EXPECTED_DEPLOYMENT_SHA?.trim() ?? '';
 const expectedBranch = process.env.EXPECTED_DEPLOYMENT_BRANCH?.trim() || 'main';
 const requestTimeoutMs = Number(process.env.CANARY_REQUEST_TIMEOUT_MS ?? '10000');
@@ -13,9 +17,16 @@ if (!Number.isInteger(requestTimeoutMs) || requestTimeoutMs < 1000 || requestTim
   throw new Error('CANARY_REQUEST_TIMEOUT_MS must be between 1000 and 30000 milliseconds.');
 }
 
-for (const [label, value] of [['INVESTMENT_READINESS_URL', readinessUrl], ['INVESTMENT_SURFACE_URL', investmentUrl]]) {
+for (const [label, value] of [
+  ['HEALTH_URL', healthUrl],
+  ['INVESTMENT_READINESS_URL', readinessUrl],
+  ['INVESTMENT_SURFACE_URL', investmentUrl],
+]) {
   const parsed = new URL(value);
   if (parsed.protocol !== 'https:') throw new Error(`${label} must use HTTPS.`);
+  if (parsed.origin !== healthOrigin) {
+    throw new Error(`${label} must use the same origin as HEALTH_URL.`);
+  }
 }
 
 const schemaVersionSource = await readFile(
@@ -99,6 +110,7 @@ if (finalSurfaceUrl.origin !== expectedSurfaceUrl.origin || finalSurfaceUrl.path
 if (surfaceResult.body.length < 500) failures.push(`surface.bodyLength=${surfaceResult.body.length}`);
 
 const diagnostic = {
+  healthUrl,
   readinessUrl,
   investmentUrl,
   expectedSha,
