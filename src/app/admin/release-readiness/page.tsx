@@ -4,6 +4,7 @@ import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { getCapabilityProof } from '@/data/technology-proof';
 import {
   INVESTMENT_HUMAN_RELEASE_APPROVED,
+  INVESTMENT_PRODUCTION_READINESS_CANARY,
   INVESTMENT_REQUIRED_BUSINESS_DECISION_IDS,
   INVESTMENT_REVIEWED_OPERATING_EVIDENCE,
 } from '@/data/investment-release-governance.mjs';
@@ -46,13 +47,14 @@ export default async function InvestmentReleaseReadinessPage() {
   if (profile?.role !== 'admin') redirect('/dashboard');
   if (investmentProfile?.investment_role !== 'SUPER_ADMIN') redirect('/admin');
 
-  const [schema] = await Promise.all([probeRuntimeSchemaCompatibility()]);
+  const schema = await probeRuntimeSchemaCompatibility();
   const matrix = buildInvestmentReleaseGateMatrix({
     capability: getCapabilityProof('investment-platform'),
     deployment: getDeploymentMetadata(),
     schemaCompatible: schema.compatible,
     flags: investmentFlags,
     pendingBusinessDecisionIds: INVESTMENT_REQUIRED_BUSINESS_DECISION_IDS,
+    productionReadinessCanary: INVESTMENT_PRODUCTION_READINESS_CANARY,
     operatingEvidenceReport: INVESTMENT_REVIEWED_OPERATING_EVIDENCE,
     humanReleaseApproved: INVESTMENT_HUMAN_RELEASE_APPROVED,
   });
