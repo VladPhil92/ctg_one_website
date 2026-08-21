@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { formatCents } from '@/lib/format';
 import { StatCard } from '@/components/admin/StatCard';
-import { Beer, BrainCircuit, CircleDollarSign, Database, Factory, ShieldCheck, Users, ArrowUpRight } from 'lucide-react';
+import { Beer, BrainCircuit, CircleDollarSign, Database, Factory, ShieldCheck, Users, ArrowUpRight, ListChecks } from 'lucide-react';
 
 type AdminCommandSnapshot = {
   generated_at: string;
@@ -68,6 +68,7 @@ export default async function AdminOverviewPage() {
         <Module href="/admin/depositos" icon={<CircleDollarSign size={19}/>} code="FIN-04" title="Account Operations" text={`${pendingDeposits} recargas pendientes. Administra el saldo operacional CTG One, separado del ledger de inversión.`}/>
         <Module href="/admin/knowledge" icon={<BrainCircuit size={19}/>} code="KNW-05" title="Knowledge Curation" text="Administra el corpus autorizado de CTG Knowledge y conserva evidencia antes de respuestas."/>
         <Module href="/admin/usuarios" icon={<Users size={19}/>} code="IAM-06" title="Users & Access" text="Consulta usuarios y roles globales. Las facultades específicas de inversión continúan gobernadas por investment_role."/>
+        <Module href="/admin/release-readiness" icon={<ListChecks size={19}/>} code="REL-07" title="Investment Release Readiness" text="Consolida evidencia técnica, runtime, operación, decisiones pendientes y controles fail-closed antes de cualquier promoción de Investment."/>
       </div>
     </section>
 
