@@ -104,6 +104,25 @@ test.describe('CTG One public command-center design system', () => {
     await expectNoHorizontalOverflow(page, '/');
   });
 
+  test('ecosystem core exposes eight process links and beer routes to CTG Craft Beer Investment', async ({ page }) => {
+    await preferSpanish(page);
+    const response = await page.goto('/');
+    expect(response?.status()).toBeLessThan(400);
+
+    const processLinks = page.locator('[data-ecosystem-process-link]');
+    await expect(processLinks).toHaveCount(8);
+
+    const beerLink = page.locator('[data-ecosystem-process-link="beer"]');
+    await expect(beerLink).toHaveAttribute('href', '/ecosystem/process/beer');
+    await expect(beerLink).toHaveAttribute('aria-label', /Cerveza/);
+
+    const beerResponse = await page.goto('/ecosystem/process/beer');
+    expect(beerResponse?.status()).toBeLessThan(400);
+    await expect(page.getByText('Cerveza', { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /Abrir CTG Craft Beer Inversión/i })).toHaveAttribute('href', '/inversion');
+    await expectNoHorizontalOverflow(page, '/ecosystem/process/beer');
+  });
+
   test('investment keeps its protected domain shell and sticky navigation while inheriting command-center design', async ({ page }) => {
     await preferSpanish(page);
     const response = await page.goto('/inversion');
