@@ -252,13 +252,15 @@ select pg_temp.assert_journey(
   'withdrawal must become PAID only after payout confirmation'
 );
 select pg_temp.assert_journey(
-  (select count(*)=1 and amount_cents=-4200 and source_payout_id=:'payout_id'::uuid
+  (select count(*)=1
+       and coalesce(sum(amount_cents),0)=-4200
+       and coalesce(bool_and(source_payout_id=:'payout_id'::uuid),false)
    from public.investment_ledger_entries
    where entry_type='WITHDRAWAL_DEBIT' and participant_user_id='00000000-0000-0000-0000-000000000711'),
   'withdrawal debit must retain authoritative payout genealogy'
 );
 select pg_temp.assert_journey(
-  (select count(*)=1 and amount_cents=-2300
+  (select count(*)=1 and coalesce(sum(amount_cents),0)=-2300
    from public.investment_ledger_entries
    where entry_type='REINVESTMENT_DEBIT' and reference=:'reinvestment_request_id'),
   'reinvestment debit must be exact and unique'
