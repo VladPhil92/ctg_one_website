@@ -11,7 +11,22 @@ type Milestone = { key: string; complete: boolean };
 type Snapshot = {
   lotOptions: LotOption[];
   selectedLot: null | { id: string; code: string; beerStyle: string; destination: string; status: string; totalCases: number; totalEligibleCases: number };
-  funding?: { allocationCount: number; allocatedCases: number; allocatedCapitalCents: number; externalParticipantCount: number; orderCount: number; allocatedOrderCount: number; receiptCount: number; receiptCents: number };
+  funding?: {
+    allocationCount: number;
+    allocatedCases: number;
+    allocatedCapitalCents: number;
+    externalParticipantCount: number;
+    orderCount: number;
+    allocatedOrderCount: number;
+    receiptCount: number;
+    receiptCents: number;
+    orderBackedAllocationCapitalCents: number;
+    reinvestmentBackedAllocationCapitalCents: number;
+    reinvestmentDebitCents: number;
+    internalAllocationCapitalCents: number;
+    unbackedAllocationCapitalCents: number;
+    isReconciled: boolean;
+  };
   production?: { eventCount: number; serializedUnits: number; terminalPhysicalUnits: number; statusCounts: Record<string, number> };
   inventory?: { isReconciled: boolean; canonicalLocationGaps: number; locationMismatches: number; statusMismatches: number; saleLinkMismatches: number };
   sales?: { saleCount: number; documentedSoldUnits: number; grossRevenueCents: number; taxRecognizedCents: number; creditNoteCount: number; returnedUnits: number; grossCreditCents: number; taxCreditCents: number; returnGenealogyMismatches: number };
@@ -24,7 +39,7 @@ type Snapshot = {
 };
 
 const NEXT_LABEL: Record<string,string> = {
-  CREATE_LOT: 'Crear lote', FUNDING: 'Completar funding', PAYMENT_RECONCILIATION: 'Conciliar pagos',
+  CREATE_LOT: 'Crear lote', FUNDING: 'Completar funding', PAYMENT_RECONCILIATION: 'Conciliar fuentes de funding',
   PRODUCTION_SERIALIZATION: 'Producir y serializar', INVENTORY_RECONCILIATION: 'Conciliar inventario',
   SALES_OR_PHYSICAL_CLOSE: 'Cerrar ventas / inventario', RETURN_RECONCILIATION: 'Conciliar devoluciones',
   SETTLEMENT: 'Finalizar settlement', CLOSED_LOOP: 'Ciclo cerrado',
@@ -81,7 +96,14 @@ export function InvestmentOperationalJourney() {
     <section className="rounded-2xl border border-white/[.08] bg-white/[.02] p-5 sm:p-6"><div className="mb-5 flex items-center gap-2"><Route size={15} className="text-accent"/><h2 className="font-outfit text-xl font-semibold">Milestones</h2></div><div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3">{(snapshot.milestones??[]).map(m=><div key={m.key} className="rounded-xl border border-white/[.07] p-4"><div className="flex items-center gap-2">{m.complete?<CheckCircle2 size={14} className="text-emerald-300"/>:<CircleAlert size={14} className="text-amber-300"/>}<p className="text-[9px] uppercase tracking-[.12em] text-text-muted">{m.key.replaceAll('_',' ')}</p></div></div>)}</div></section>
 
     <section className="grid lg:grid-cols-2 gap-4">
-      <Panel title="Funding & Payment"><Row label="Órdenes / asignadas" value={`${f.orderCount} / ${f.allocatedOrderCount}`}/><Row label="Casos asignados" value={String(f.allocatedCases)}/><Row label="Participantes externos" value={String(f.externalParticipantCount)}/><Row label="Recibos conciliados" value={`${f.receiptCount} · ${formatCents(f.receiptCents)}`}/></Panel>
+      <Panel title="Funding & Payment">
+        <Row label="Funding reconciliado" value={f.isReconciled?'Sí':'No'} alert={!f.isReconciled}/>
+        <Row label="Órdenes / asignadas" value={`${f.orderCount} / ${f.allocatedOrderCount}`}/>
+        <Row label="Orden → recibos" value={`${formatCents(f.orderBackedAllocationCapitalCents)} → ${formatCents(f.receiptCents)}`} alert={f.orderBackedAllocationCapitalCents!==f.receiptCents}/>
+        <Row label="Reinversión → débito" value={`${formatCents(f.reinvestmentBackedAllocationCapitalCents)} → ${formatCents(f.reinvestmentDebitCents)}`} alert={f.reinvestmentBackedAllocationCapitalCents!==f.reinvestmentDebitCents}/>
+        <Row label="Capital CTG interno" value={formatCents(f.internalAllocationCapitalCents)}/>
+        <Row label="Capital sin respaldo" value={formatCents(f.unbackedAllocationCapitalCents)} alert={f.unbackedAllocationCapitalCents!==0}/>
+      </Panel>
       <Panel title="Physical & Inventory"><Row label="Eventos producción" value={String(p.eventCount)}/><Row label="Unidades terminales" value={`${p.terminalPhysicalUnits}/${p.serializedUnits}`}/><Row label="Inventario reconciliado" value={i.isReconciled?'Sí':'No'} alert={!i.isReconciled}/><Row label="Mismatches" value={String(i.canonicalLocationGaps+i.locationMismatches+i.statusMismatches+i.saleLinkMismatches)} alert={i.canonicalLocationGaps+i.locationMismatches+i.statusMismatches+i.saleLinkMismatches>0}/></Panel>
       <Panel title="Sales & Returns"><Row label="Ventas / unidades documentadas" value={`${s.saleCount} / ${s.documentedSoldUnits}`}/><Row label="Notas crédito / devueltas" value={`${s.creditNoteCount} / ${s.returnedUnits}`}/><Row label="Crédito comercial" value={formatCents(s.grossCreditCents)}/><Row label="Genealogía devolución" value={s.returnGenealogyMismatches===0?'Reconciliada':`${s.returnGenealogyMismatches} mismatch`} alert={s.returnGenealogyMismatches>0}/></Panel>
       <Panel title="Finance & Settlement"><Row label="Comercial neto de impuesto" value={formatCents(netCommercial)}/><Row label="Costo producción" value={formatCents(fin.productionCostCents)}/><Row label="NDLP" value={st.netDistributableProfitCents==null?'Pendiente':formatCents(st.netDistributableProfitCents)}/><Row label="Settlement" value={st.finalized?'Finalizado':'Pendiente'} alert={!st.finalized}/></Panel>
