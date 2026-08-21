@@ -19,11 +19,17 @@ export function assertIsolatedEvaluationBaseUrl(value) {
     throw new Error('Evaluation base URL is invalid');
   }
 
-  if (PRODUCTION_HOSTS.has(url.hostname.toLowerCase())) {
+  const normalizedHostname = url.hostname
+    .toLowerCase()
+    .replace(/^\[/, '')
+    .replace(/\]$/, '')
+    .replace(/\.+$/, '');
+
+  if (PRODUCTION_HOSTS.has(normalizedHostname)) {
     throw new Error('Authorized evaluation corpus must never be seeded or captured against production');
   }
 
-  const local = ['localhost', '127.0.0.1', '::1'].includes(url.hostname.toLowerCase());
+  const local = ['localhost', '127.0.0.1', '::1'].includes(normalizedHostname);
   if (!local && url.protocol !== 'https:') {
     throw new Error('Remote evaluation environments must use HTTPS');
   }
