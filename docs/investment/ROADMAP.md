@@ -17,8 +17,9 @@ or real-world usage that hasn't happened yet. Don't let completed items grow
 back into long paragraphs here — the PR history is the detailed record;
 this file's job is to say what's left and why.
 
-Originating audit: 2026-08-22. Last restructured: 2026-08-22 (same day,
-after the audit's full initial batch shipped).
+Originating audit: 2026-08-22. Last updated: 2026-08-22 (added the
+code-level technical-gap findings below, independent of the original
+doc/config audit).
 
 ## Completado
 
@@ -33,6 +34,42 @@ typecheck + build gate, and is merged to `main`.
 - **`programDisplayName` migrated in investment-scoped files** (#171) — 6 files now import `investmentConfig.programDisplayName` instead of a repeated literal; byte-identical rendered output, diff-verified.
 
 ## Pendiente
+
+### Listo para desarrollar — no depende de nadie más
+
+Found during a 2026-08-22 code-level check (not doc review) of what
+`flags.ts`'s unused exposure flags actually gate. Unlike the flags
+themselves — deliberately inert per ADR-010 until legal/regulatory
+readiness — these two are genuine product gaps, not intentional
+conservatism, and don't require `BR-001..BR-005` to be answered first:
+
+- **No hay flujo de aceptación de acuerdo.** `investment_participant_profiles.agreement_accepted_at`
+  exists but no UI anywhere ever sets it — a participant can complete an
+  order without explicitly viewing/accepting anything. Buildable now: a
+  required checkbox at order time referencing the current
+  `/inversion/legal` content, writing the timestamp through a new
+  `SECURITY DEFINER` RPC (mirrors the `approve_deposit`/`approve_kyc`
+  pattern) — no new legal text to invent, no `agreementType` taxonomy
+  decision needed, just capturing that today's terms were shown and
+  accepted.
+- **`pse` y `crypto` están declarados en `InvestmentPaymentMethod` pero
+  no implementados** — el checkout solo ofrece `bank_transfer` (QR
+  Bancolombia + comprobante verificado a mano). **Necesita una decisión
+  de alcance antes de codear:** si se implementan como otro rail
+  *manual* (el participante paga por esa vía y un admin verifica, como
+  hoy) caen fuera de `paymentGatewayEnabled`/ADR-010 y son tan
+  construibles como el punto anterior; si implican una integración con
+  un proveedor real (confirmación automática de PSE, custodia de
+  cripto), entonces sí caen bajo el mismo freno deliberado de ADR-010
+  que `paymentGatewayEnabled` — construirlas antes de esa señal
+  repetiría el error que ADR-010 previene. Confirmar cuál de los dos
+  antes de empezar.
+- **Menor:** el comentario en `src/app/api/investment/participant/withdrawals/route.ts`
+  dice que `approve_withdrawal()`/`mark_withdrawal_paid()` "not built as
+  a route yet" — falso, están construidos en
+  `/admin/finance/rails` vía `initiate_investment_payout`/
+  `confirm_investment_payout`. Comentario desactualizado, no un gap
+  funcional; limpiar en el mismo cambio que toque ese archivo.
 
 ### Bloqueado por decisiones humanas/de negocio — no es tarea de ingeniería
 
