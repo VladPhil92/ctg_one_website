@@ -43,17 +43,20 @@ Audit date: **2026-08-22** (updated same day after PR #166 merged).
 
 ## Immediate cleanup (low risk, do first)
 
-1. **`TESTING_STRATEGY.md` is stale.** It states "no automated test runner
-   is configured... no committed Playwright config." Both are now false:
-   `npm test` runs 49 invariant suites and CI runs
-   `npx playwright test --project=chromium` with a committed
-   `playwright.config.mjs` and `tests/e2e/*.spec.mjs`. Rewrite it to
-   describe the actual current suite and where new investment tests should
-   be added, rather than the pre-domain-milestone plan.
-2. **`DOMAIN_MODEL.md` and `INFORMATION_ARCHITECTURE.md`** still point to a
-   `NEXT TASK` recommendation from the original Step 1 audit, which no
-   longer reflects where the project is. Either remove the pointer or
-   replace it with a reference to this roadmap.
+1. **DONE — `TESTING_STRATEGY.md` was stale**, claiming no automated test
+   runner or Playwright config existed. Rewritten to describe the real ~50
+   invariant scripts (grouped by concern: financial, inventory,
+   authorization, release governance, public truth) and the seven
+   `tests/e2e/*.spec.mjs` Playwright specs, both enforced in CI, plus how to
+   add tests for new work.
+2. **DONE — `DOMAIN_MODEL.md` was stale**, describing an unimplemented
+   "target model" with illustrative table names that no longer match
+   reality. Rewritten against the actual 32 `investment_*` tables (grouped
+   by bounded context), real column shapes cross-checked with
+   `src/types/investment.ts`, and the authoritative `SECURITY DEFINER` RPCs.
+   Its stale `NEXT TASK` pointer now points at this roadmap instead.
+   **`INFORMATION_ARCHITECTURE.md` still has the same stale pointer and is
+   still open** — not yet done.
 3. **`LEGAL_CONFIGURATION.md`** describes `src/lib/investment/config.ts`
    as "planned" for `programDisplayName`, `participantDisplayName`,
    `legalInstrumentDisplayName`, `eligibilityRules`, `minimumAllocation`,
@@ -76,9 +79,9 @@ Audit date: **2026-08-22** (updated same day after PR #166 merged).
   folds into P3 below rather than being a separate item.
 
 ### P1 — Close the documentation-drift gaps above
-- Cheap, no runtime risk, prevents future agents/humans from following
-  outdated instructions (`TESTING_STRATEGY.md` in particular could mislead
-  someone into thinking no test suite exists).
+- `TESTING_STRATEGY.md` and `DOMAIN_MODEL.md` done (see above).
+  `INFORMATION_ARCHITECTURE.md`'s stale `NEXT TASK` pointer remains —
+  cheap, no runtime risk, same fix pattern as the other two.
 
 ### P2 — Legal/commercial configuration surface
 - Build `src/lib/investment/config.ts` per `LEGAL_CONFIGURATION.md`, wired
