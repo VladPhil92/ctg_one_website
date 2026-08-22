@@ -64,14 +64,9 @@ Audit date: **2026-08-22** (updated same day after PR #166 merged).
    a second parallel admin tree — documented as a deliberate architectural
    choice, not a gap. Also added `/beer/[serial]` and the real
    `/api/investment/*` routes, neither of which were in the original plan.
-4. **`LEGAL_CONFIGURATION.md`** describes `src/lib/investment/config.ts`
-   as "planned" for `programDisplayName`, `participantDisplayName`,
-   `legalInstrumentDisplayName`, `eligibilityRules`, `minimumAllocation`,
-   `maximumAllocation`, `riskDisclosureText`, `agreementType`. That file
-   still does not exist — the current `src/lib/investment/` only has
-   `constants.ts`, `flags.ts`, `economics.ts`, `queries.ts`, `rbac.ts`,
-   `payment-qr.ts`, `provider-adapter.ts`. This is a real, scoped gap (see
-   P2 below), not just a doc problem.
+4. **DONE — `src/lib/investment/config.ts` built** (see P2 below). This was
+   a real code gap, not just stale prose — `LEGAL_CONFIGURATION.md` is now
+   rewritten to match what actually exists.
 
 ## Priorities
 
@@ -91,12 +86,25 @@ Audit date: **2026-08-22** (updated same day after PR #166 merged).
   "planned" `config.ts` remains open — that one is a real code gap, not
   just stale prose, so it stays under P2 below rather than here.
 
-### P2 — Legal/commercial configuration surface
-- Build `src/lib/investment/config.ts` per `LEGAL_CONFIGURATION.md`, wired
-  to the existing feature-flag pattern (fail-closed defaults, env-driven).
-  This does not require BR-001..BR-005 to be resolved — the point is that
-  terminology and limits become configurable instead of hard-coded, which
-  is already required by `PRODUCT_CONSTITUTION.md`.
+### P2 — DONE: Legal/commercial configuration surface
+- Built `src/lib/investment/config.ts`: `programDisplayName`,
+  `participantDisplayName`, `legalInstrumentDisplayName`,
+  `publicFundingEnabled`/`publicRegistrationEnabled` (re-exported from
+  `flags.ts`, not duplicated), `minimumAllocationCases` (reads
+  `MIN_INVESTMENT_CASES`), `maximumAllocationCases` (`null` by default —
+  no commercial cap has been decided; env-overridable, never a guessed
+  number), `eligibilityRules` (read-only description of what's already
+  enforced in PostgreSQL), `riskDisclosureText` (wired into
+  `/inversion/simulador`, the one place `LEGAL_CONFIGURATION.md` names
+  explicitly), and `agreementType` (`null` — genuinely unimplemented,
+  not invented).
+- Deliberately did **not** mass-migrate the ~16 existing hard-coded
+  `'CTG Craft Beer Inversión'` occurrences to import from `config.ts` —
+  several are in shared marketing components out of scope to touch
+  (`ServicesSection.tsx`, `ecosystem-technology.ts`), and even the
+  investment-scoped ones are a separate, purely-cosmetic refactor with no
+  behavior change. `LEGAL_CONFIGURATION.md` now documents this explicitly
+  as "known pending hard-coded copy" so it doesn't silently look finished.
 
 ### P3 — First real operating evidence
 - The Phase 19 pipeline (`npm run investment:evidence:*`) is fully built
