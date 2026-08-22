@@ -5,6 +5,14 @@ export type CreatedInvestmentOrder = {
   capital_required_cents: number;
 };
 
+// Idempotent: only sets agreement_accepted_at the first time. Safe to call
+// on every checkout attempt even if the participant already accepted.
+export async function acceptInvestmentAgreement(): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc('accept_investment_agreement');
+  if (error) throw error;
+}
+
 export async function createInvestmentOrder(input: {
   lotId: string;
   cases: number;

@@ -76,6 +76,8 @@ ADR-011; investment roles live on `investment_participant_profiles.investment_ro
 
 Representative examples — the RPC re-checks authorization itself, the route
 handler's own check is a UX fast-path only (see `SECURITY_MODEL.md`):
+`create_investment_order` (gated on both `kyc_status = 'VERIFIED'` and
+`agreement_accepted_at is not null`), `accept_investment_agreement`,
 `create_funding_allocation`, `approve_investment_order`, `transition_lot_status`,
 `finalize_settlement`, `request_withdrawal` / `approve_withdrawal` /
 `reject_withdrawal` / `mark_withdrawal_paid`, `request_reinvestment` /

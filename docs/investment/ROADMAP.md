@@ -32,26 +32,12 @@ typecheck + build gate, and is merged to `main`.
 - **`INFORMATION_ARCHITECTURE.md` rewritten** (#169) — planned a route tree that was never built that way; now documents the real routes and *why* they diverged (shared Admin OS reuse, not a gap).
 - **`src/lib/investment/config.ts` built** (#170) — the legal/commercial config surface `LEGAL_CONFIGURATION.md` had called "planned" since before the domain milestone. A Codex review caught `maximumAllocationCases` as unenforced env-configurable dead weight; fixed same-PR by removing the fake override rather than half-wiring enforcement into a financial RPC.
 - **`programDisplayName` migrated in investment-scoped files** (#171) — 6 files now import `investmentConfig.programDisplayName` instead of a repeated literal; byte-identical rendered output, diff-verified.
+- **Agreement acceptance flow built** (`0068_investment_agreement_acceptance.sql`) — `accept_investment_agreement()` RPC (idempotent, audit-logged) plus a new fail-closed gate in `create_investment_order()` requiring `agreement_accepted_at is not null`, mirroring the existing KYC gate. `InvestmentCheckoutClient.tsx`'s existing risk checkbox now links to `/inversion/legal` and calls the RPC through the browser-repository boundary. Verified against a full local 68-migration Postgres run (not just static checks): all Golden Path CI smoke scripts pass, including the `security-definer-authorization-guard-smoke.sql` body-hash reconciliation (0 drift) and the reinvestment-blocked-order test (confirmed it still fails for capacity, not agreement, once fixtures were updated).
 
 ## Pendiente
 
-### Listo para desarrollar — no depende de nadie más
+### Sin bloqueo de negocio, pero no lista para codear directo
 
-Found during a 2026-08-22 code-level check (not doc review) of what
-`flags.ts`'s unused exposure flags actually gate. Unlike the flags
-themselves — deliberately inert per ADR-010 until legal/regulatory
-readiness — these two are genuine product gaps, not intentional
-conservatism, and don't require `BR-001..BR-005` to be answered first:
-
-- **No hay flujo de aceptación de acuerdo.** `investment_participant_profiles.agreement_accepted_at`
-  exists but no UI anywhere ever sets it — a participant can complete an
-  order without explicitly viewing/accepting anything. Buildable now: a
-  required checkbox at order time referencing the current
-  `/inversion/legal` content, writing the timestamp through a new
-  `SECURITY DEFINER` RPC (mirrors the `approve_deposit`/`approve_kyc`
-  pattern) — no new legal text to invent, no `agreementType` taxonomy
-  decision needed, just capturing that today's terms were shown and
-  accepted.
 - **`pse` y `crypto` están declarados en `InvestmentPaymentMethod` pero
   no implementados** — el checkout solo ofrece `bank_transfer` (QR
   Bancolombia + comprobante verificado a mano). **Necesita una decisión

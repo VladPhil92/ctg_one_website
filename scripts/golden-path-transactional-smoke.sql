@@ -34,12 +34,12 @@ insert into auth.users (
   ('00000000-0000-0000-0000-000000000301', 'gp-finance@ctgone.test',     'authenticated', 'authenticated', '{}'::jsonb, '{"full_name":"Golden Path Finance"}'::jsonb,     now(), now()),
   ('00000000-0000-0000-0000-000000000401', 'gp-sales@ctgone.test',       'authenticated', 'authenticated', '{}'::jsonb, '{"full_name":"Golden Path Sales"}'::jsonb,       now(), now());
 
-insert into public.investment_participant_profiles(user_id, investment_role, kyc_status)
+insert into public.investment_participant_profiles(user_id, investment_role, kyc_status, agreement_accepted_at)
 values
-  ('00000000-0000-0000-0000-000000000101', 'PARTICIPANT',        'VERIFIED'),
-  ('00000000-0000-0000-0000-000000000201', 'PRODUCTION_MANAGER', 'VERIFIED'),
-  ('00000000-0000-0000-0000-000000000301', 'FINANCE_ADMIN',      'VERIFIED'),
-  ('00000000-0000-0000-0000-000000000401', 'SALES_MANAGER',      'VERIFIED');
+  ('00000000-0000-0000-0000-000000000101', 'PARTICIPANT',        'VERIFIED', now()),
+  ('00000000-0000-0000-0000-000000000201', 'PRODUCTION_MANAGER', 'VERIFIED', now()),
+  ('00000000-0000-0000-0000-000000000301', 'FINANCE_ADMIN',      'VERIFIED', now()),
+  ('00000000-0000-0000-0000-000000000401', 'SALES_MANAGER',      'VERIFIED', now());
 
 select pg_temp.assert_true(
   (select count(*) = 4 from public.profiles where email like 'gp-%@ctgone.test'),
