@@ -6,6 +6,7 @@ import {
   getPublicLotFundingSummaries,
   getPublicSimulationLots,
 } from '@/lib/investment/queries';
+import { investmentConfig } from '@/lib/investment/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,8 @@ export default async function SimuladorPage() {
         <InvestmentSimulatorClient lots={lots} formula={formula} fundingByLot={fundingByLot} />
 
         <p className="text-[11px] text-text-dim leading-relaxed mt-10">
-          Los escenarios son estimados y no constituyen una rentabilidad garantizada ni una reserva de capacidad. La liquidación real depende de las ventas, costos, impuestos, ajustes y reglas contractuales efectivamente aplicables al lote y a la versión de fórmula financiera que quede fijada en cada allocation. Consulta <a href="/inversion/riesgos" className="text-accent hover:underline">riesgos</a>{' '}
+          {investmentConfig.riskDisclosureText}{' '}
+          Consulta <a href="/inversion/riesgos" className="text-accent hover:underline">riesgos</a>{' '}
           y <a href="/inversion/legal" className="text-accent hover:underline">condiciones legales</a>.
         </p>
       </Container>
