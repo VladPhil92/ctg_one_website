@@ -32,7 +32,8 @@ assert.doesNotMatch(verifier, /method:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/, 'Pr
 assert.match(verifier, /capability\?\.technicalStatus !== 'PARTIAL'/, 'Verifier must reject accidental technical maturity promotion.');
 assert.match(verifier, /capability\?\.publicStatus !== 'BETA'/, 'Verifier must reject accidental public maturity promotion.');
 assert.match(verifier, /productionOperatingEvidence !== 'pending'/, 'Verifier must preserve the operating-evidence boundary.');
-assert.match(verifier, /deployment\?\.commit !== expectedSha/, 'Verifier must require exact deployed Git identity.');
+assert.match(verifier, /const deploymentCommit = readiness\?\.deployment\?\.commit/, 'Verifier must source observed deployment identity directly from readiness payload.');
+assert.match(verifier, /deploymentCommit !== expectedSha/, 'Verifier must require exact deployed Git identity.');
 assert.match(verifier, /schema\?\.expectedMigrationCount !== expectedMigrationCount/, 'Verifier must pin deployed schema metadata to repository truth.');
 assert.match(verifier, /surfaceResult\.response\.url/, 'Verifier must reject redirects away from the canonical Investment surface.');
 assert.match(verifier, /requestTimeoutMs > 30000/, 'Verifier network requests must be bounded.');

@@ -1,3 +1,5 @@
+import { isSuccessfulInvestmentProductionReadinessEvidence } from './production-readiness-evidence.mjs';
+
 export const INVESTMENT_RELEASE_GATE_VERSION = 'ctg-investment-release-gates-v1';
 
 const TECHNICAL_EVIDENCE_MARKERS = Object.freeze([
@@ -35,24 +37,6 @@ function isReviewedProductionEvidence(report) {
   );
 }
 
-function isSuccessfulProductionReadinessCanary(canary, deployment) {
-  return Boolean(
-    canary
-    && canary.result === 'PASS'
-    && Array.isArray(canary.failures)
-    && canary.failures.length === 0
-    && canary.expectedBranch === 'main'
-    && canary.expectedBranch === deployment?.branch
-    && isFullGitSha(canary.expectedSha)
-    && canary.expectedSha === deployment?.commit
-    && canary.observed?.readinessStatus === 'ready'
-    && canary.observed?.deploymentCommit === deployment?.commit
-    && canary.observed?.publicStatus === 'BETA'
-    && canary.observed?.productionOperatingEvidence === 'pending'
-    && canary.observed?.surfaceHttp === 200,
-  );
-}
-
 export function buildInvestmentReleaseGateMatrix(input) {
   const {
     capability,
@@ -85,7 +69,7 @@ export function buildInvestmentReleaseGateMatrix(input) {
     && schemaCompatible === true,
   );
   const canaryVerified = deploymentIdentityReady
-    && isSuccessfulProductionReadinessCanary(productionReadinessCanary, deployment);
+    && isSuccessfulInvestmentProductionReadinessEvidence(productionReadinessCanary, deployment);
   const runtimeReady = deploymentIdentityReady && canaryVerified;
 
   const operatingEvidenceAccepted = isReviewedProductionEvidence(operatingEvidenceReport);
@@ -100,9 +84,6 @@ export function buildInvestmentReleaseGateMatrix(input) {
     && businessDecisionsResolved;
   const releaseAuthorized = promotionReviewEligible && humanReleaseApproved;
 
-  // Exposure may remain safe while closed during controlled beta. Once opened,
-  // it is safe only after every prerequisite AND the final human release
-  // decision have passed. Review eligibility alone never authorizes exposure.
   const publicExposureSafe = publicExposureClosed || releaseAuthorized;
   const automaticMoneyMovementSafe = automaticMoneyMovementClosed || releaseAuthorized;
 
@@ -123,11 +104,11 @@ export function buildInvestmentReleaseGateMatrix(input) {
       'Production runtime, schema and canary',
       runtimeReady ? 'PASS' : 'PENDING_EVIDENCE',
       runtimeReady
-        ? 'Render main deployment, compatible schema and a successful Phase 18 canary all identify the exact same deployed commit.'
+        ? 'Render main deployment, compatible schema and a successful versioned Phase 21 canary artifact all identify the exact same deployed commit.'
         : deploymentIdentityReady
-          ? 'Deployment identity and schema are compatible, but a successful Phase 18 canary pinned to this exact commit is still required.'
-          : 'A Render/main/full-SHA/schema-compatible runtime plus a successful Phase 18 canary must be observed before release review.',
-      '/api/health + Phase 18 readiness canary result',
+          ? 'Deployment identity and schema are compatible, but an accepted successful production-canary artifact pinned to this exact commit is still required.'
+          : 'A Render/main/full-SHA/schema-compatible runtime plus a matching successful production-canary artifact must be observed before release review.',
+      '/api/health + versioned production-readiness canary artifact',
     ),
     gate(
       'operating-evidence',

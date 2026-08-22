@@ -25,6 +25,9 @@ evidence/investment/private/
 *.investment-operating-evidence.capture.json
 *.investment-operating-evidence.review.json
 
+# Generated post-deploy canary evidence
+canary-evidence/
+
 # Misc
 .DS_Store
 *.pem
