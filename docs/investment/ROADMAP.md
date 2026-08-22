@@ -55,9 +55,16 @@ Audit date: **2026-08-22** (updated same day after PR #166 merged).
    by bounded context), real column shapes cross-checked with
    `src/types/investment.ts`, and the authoritative `SECURITY DEFINER` RPCs.
    Its stale `NEXT TASK` pointer now points at this roadmap instead.
-   **`INFORMATION_ARCHITECTURE.md` still has the same stale pointer and is
-   still open** — not yet done.
-3. **`LEGAL_CONFIGURATION.md`** describes `src/lib/investment/config.ts`
+3. **DONE — `INFORMATION_ARCHITECTURE.md` was stale**, planning a fully
+   separate `/inversion/app/*` (ten subroutes) and `/inversion/admin/*`
+   (twelve subroutes) tree that was never built that way. Rewritten against
+   the real route tree: the participant surface consolidated into one
+   `/inversion/app` dashboard with internal panels, and admin/operations
+   surfaces reused the shared cross-business `/admin/*` Admin OS instead of
+   a second parallel admin tree — documented as a deliberate architectural
+   choice, not a gap. Also added `/beer/[serial]` and the real
+   `/api/investment/*` routes, neither of which were in the original plan.
+4. **`LEGAL_CONFIGURATION.md`** describes `src/lib/investment/config.ts`
    as "planned" for `programDisplayName`, `participantDisplayName`,
    `legalInstrumentDisplayName`, `eligibilityRules`, `minimumAllocation`,
    `maximumAllocation`, `riskDisclosureText`, `agreementType`. That file
@@ -78,10 +85,11 @@ Audit date: **2026-08-22** (updated same day after PR #166 merged).
   — the artifact format now exists, but nothing has populated it yet. This
   folds into P3 below rather than being a separate item.
 
-### P1 — Close the documentation-drift gaps above
-- `TESTING_STRATEGY.md` and `DOMAIN_MODEL.md` done (see above).
-  `INFORMATION_ARCHITECTURE.md`'s stale `NEXT TASK` pointer remains —
-  cheap, no runtime risk, same fix pattern as the other two.
+### P1 — DONE: documentation-drift cleanup
+- `TESTING_STRATEGY.md`, `DOMAIN_MODEL.md`, and `INFORMATION_ARCHITECTURE.md`
+  all rewritten against reality (see above). `LEGAL_CONFIGURATION.md`'s
+  "planned" `config.ts` remains open — that one is a real code gap, not
+  just stale prose, so it stays under P2 below rather than here.
 
 ### P2 — Legal/commercial configuration surface
 - Build `src/lib/investment/config.ts` per `LEGAL_CONFIGURATION.md`, wired
