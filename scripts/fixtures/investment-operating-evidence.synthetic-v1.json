@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0067",
-    "schemaMigrationName": "operational_golden_journey",
-    "schemaMigrationCount": 67,
+    "schemaMigration": "0068",
+    "schemaMigrationName": "investment_agreement_acceptance",
+    "schemaMigrationCount": 68,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

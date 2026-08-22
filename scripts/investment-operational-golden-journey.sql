@@ -25,12 +25,12 @@ values
   ('00000000-0000-0000-0000-000000000713','journey-finance@ctgone.test','authenticated','authenticated','{}'::jsonb,'{"full_name":"Journey Finance"}'::jsonb,now(),now()),
   ('00000000-0000-0000-0000-000000000714','journey-sales@ctgone.test','authenticated','authenticated','{}'::jsonb,'{"full_name":"Journey Sales"}'::jsonb,now(),now());
 
-insert into public.investment_participant_profiles(user_id,investment_role,kyc_status)
+insert into public.investment_participant_profiles(user_id,investment_role,kyc_status,agreement_accepted_at)
 values
-  ('00000000-0000-0000-0000-000000000711','PARTICIPANT','VERIFIED'),
-  ('00000000-0000-0000-0000-000000000712','PRODUCTION_MANAGER','VERIFIED'),
-  ('00000000-0000-0000-0000-000000000713','FINANCE_ADMIN','VERIFIED'),
-  ('00000000-0000-0000-0000-000000000714','SALES_MANAGER','VERIFIED');
+  ('00000000-0000-0000-0000-000000000711','PARTICIPANT','VERIFIED',now()),
+  ('00000000-0000-0000-0000-000000000712','PRODUCTION_MANAGER','VERIFIED',now()),
+  ('00000000-0000-0000-0000-000000000713','FINANCE_ADMIN','VERIFIED',now()),
+  ('00000000-0000-0000-0000-000000000714','SALES_MANAGER','VERIFIED',now());
 
 insert into public.investment_formula_versions(version,participant_profit_share,ctg_profit_share,status,approved_at)
 select 'CI-OPERATIONAL-GOLDEN-JOURNEY',0.5000,0.5000,'ACTIVE',now()

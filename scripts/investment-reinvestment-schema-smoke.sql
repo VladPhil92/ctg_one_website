@@ -135,11 +135,11 @@ insert into auth.users (
   ('00000000-0000-0000-0000-000000000602', 'reinvest-production@ctgone.test',  'authenticated', 'authenticated', '{}'::jsonb, '{"full_name":"Reinvestment Production"}'::jsonb, now(), now()),
   ('00000000-0000-0000-0000-000000000603', 'reinvest-finance@ctgone.test',     'authenticated', 'authenticated', '{}'::jsonb, '{"full_name":"Reinvestment Finance"}'::jsonb, now(), now());
 
-insert into public.investment_participant_profiles(user_id, investment_role, kyc_status)
+insert into public.investment_participant_profiles(user_id, investment_role, kyc_status, agreement_accepted_at)
 values
-  ('00000000-0000-0000-0000-000000000601', 'PARTICIPANT',        'VERIFIED'),
-  ('00000000-0000-0000-0000-000000000602', 'PRODUCTION_MANAGER', 'VERIFIED'),
-  ('00000000-0000-0000-0000-000000000603', 'FINANCE_ADMIN',      'VERIFIED');
+  ('00000000-0000-0000-0000-000000000601', 'PARTICIPANT',        'VERIFIED', now()),
+  ('00000000-0000-0000-0000-000000000602', 'PRODUCTION_MANAGER', 'VERIFIED', now()),
+  ('00000000-0000-0000-0000-000000000603', 'FINANCE_ADMIN',      'VERIFIED', now());
 
 -- Ensure the withdrawal path reaches the shared-spend guard instead of failing
 -- earlier because the participant has no payout destination.

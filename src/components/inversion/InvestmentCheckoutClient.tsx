@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInvestmentProfile } from '@/hooks/useInvestmentProfile';
 import { Button } from '@/components/ui/Button';
 import { formatCents } from '@/lib/format';
 import { MIN_INVESTMENT_CASES } from '@/lib/investment/constants';
@@ -12,6 +13,7 @@ import {
   INVESTMENT_BANK_TRANSFER_INSTRUCTIONS,
 } from '@/lib/payment-instructions';
 import {
+  acceptInvestmentAgreement,
   createInvestmentOrder,
   uploadInvestmentPaymentProof,
 } from '@/modules/investment/checkout/browser-repository';
@@ -27,6 +29,7 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024;
 
 export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProductionLot; funding: LotFundingSummary }) {
   const { userId, isAuthenticated, isLoading } = useAuth();
+  const { profile, refresh: refreshProfile } = useInvestmentProfile();
   const router = useRouter();
   const canInvest = funding.availableCasesEquivalent >= MIN_INVESTMENT_CASES;
   const initialCases = canInvest ? MIN_INVESTMENT_CASES : funding.availableCasesEquivalent;
@@ -71,6 +74,10 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
     }
     setError(null); setBusy(true);
     try {
+      if (!profile?.agreement_accepted_at) {
+        await acceptInvestmentAgreement();
+        await refreshProfile();
+      }
       const idempotencyKey = orderIdempotencyKey.current ?? crypto.randomUUID();
       orderIdempotencyKey.current = idempotencyKey;
       const order = await createInvestmentOrder({
@@ -139,7 +146,7 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
 
           <label className="flex items-start gap-3 rounded-xl border border-white/[.07] p-4 cursor-pointer mb-5" style={{background:'rgba(255,255,255,.018)'}}>
             <input type="checkbox" checked={accepted} disabled={!!orderId || !canInvest} onChange={(event) => setAccepted(event.target.checked)} className="mt-1 accent-accent" />
-            <span className="text-xs text-text-muted leading-relaxed">Entiendo que esta participación financia un equivalente productivo dentro de un lote físico, que no existe rentabilidad garantizada y que la inversión solo se activa después de la verificación bancaria humana.</span>
+            <span className="text-xs text-text-muted leading-relaxed">Entiendo que esta participación financia un equivalente productivo dentro de un lote físico, que no existe rentabilidad garantizada y que la inversión solo se activa después de la verificación bancaria humana. Leí y acepto las <a href="/inversion/legal" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline" onClick={(event) => event.stopPropagation()}>condiciones legales</a>.</span>
           </label>
 
           {!orderId

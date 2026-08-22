@@ -18,7 +18,29 @@ classifications are explicitly unresolved (see `BUSINESS_MODEL.md`
 | `maximumAllocationCases` | Implemented, always `null` | No commercial maximum has been decided — this is an *additional* undecided item, not one of the numbered `BR-*` decisions in `BUSINESS_MODEL.md`. Deliberately **not** env-configurable: neither `InvestmentCheckoutClient` (capped only at lot capacity) nor `create_investment_order` consult a maximum, so an override here would silently do nothing if set. Wire real enforcement through both the checkout UI and the RPC (a new migration) before adding one back. |
 | `eligibilityRules` | Implemented, read-only | Describes rules already enforced authoritatively inside PostgreSQL `SECURITY DEFINER` RPCs (`SECURITY_MODEL.md`). This is documentation for UI/copy use — flipping these booleans would not change server behavior, so it is not a real "configuration" in the tunable sense. |
 | `riskDisclosureText` | Implemented, wired into `/inversion/simulador` | The exact disclaimer text previously inline in that page, now centralized. Not yet wired into other places that show similar disclaimers (`InvestmentFooter.tsx` has its own, differently-worded, bilingual disclaimer — left as-is; unifying that copy is a separate, explicit decision, not bundled here). |
-| `agreementType` | Not implemented, `null` | No contract-type concept exists in the product beyond the `agreement_accepted_at` timestamp column on `investment_participant_profiles`. Not a `CONFIRMED` business rule — never invent a value here (`PRODUCT_CONSTITUTION.md` §Stop conditions). |
+| `agreementType` | Field itself still `null` — no taxonomy decided | The *acceptance capture* is now implemented (`accept_investment_agreement()`, gated into `create_investment_order`; see below) — a participant can no longer complete an order without it. What remains unimplemented is only the contract-*type* concept itself: there is still no `CONFIRMED` classification of what kind of agreement this is. Never invent one (`PRODUCT_CONSTITUTION.md` §Stop conditions). |
+
+## Agreement acceptance
+
+`investment_participant_profiles.agreement_accepted_at` existed since the
+original schema (`0004_investment_schema.sql`) but nothing ever set it —
+a participant could complete an order without ever explicitly accepting
+anything. `0068_investment_agreement_acceptance.sql` closes that gap:
+
+- `accept_investment_agreement()` is a `SECURITY DEFINER` RPC (same
+  pattern as `ensure_investment_participant_profile()`/`approve_kyc()`)
+  that sets the timestamp once, idempotently, and audit-logs itself. It
+  does not invent contract terms or a legal taxonomy — it only records
+  that `/inversion/legal`'s current content was shown and accepted.
+- `create_investment_order()` now fails closed with `'investment
+  agreement not accepted'` if `agreement_accepted_at is null`, mirroring
+  the existing `kyc_status = 'VERIFIED'` gate. A client-side checkbox
+  alone was never authorization — this is the actual enforcement point.
+- `InvestmentCheckoutClient.tsx`'s existing risk-acknowledgment checkbox
+  now also links to `/inversion/legal` and, on first use, calls the RPC
+  through `src/modules/investment/checkout/browser-repository.ts` before
+  creating the order. Returning participants who already have an
+  accepted agreement are not asked to call the RPC again.
 
 ## Known pending hard-coded copy
 

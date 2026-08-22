@@ -1,3 +1,4 @@
+public.accept_investment_agreement()
 public.approve_deposit(p_transaction_id uuid, p_admin_notes text)
 public.approve_kyc(p_submission_id uuid, p_admin_notes text)
 public.approve_reinvestment(p_request_id uuid, p_case_equivalent_units integer)
