@@ -40,12 +40,14 @@ export async function createInvestmentOrder(input: {
 export async function uploadInvestmentPaymentProof(input: {
   orderId: string;
   proof: File;
+  rail: 'bank_transfer' | 'crypto';
 }): Promise<void> {
   const response = await fetch(`/api/investment/orders/${input.orderId}/payment-proof`, {
     method: 'POST',
     headers: {
       'Content-Type': input.proof.type,
       'X-File-Name': encodeURIComponent(input.proof.name.slice(0, 180)),
+      'X-Payment-Rail': input.rail,
     },
     body: input.proof,
   });

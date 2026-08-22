@@ -30,10 +30,14 @@ assert.ok(!checkout.includes(".rpc('accept_investment_agreement'"), 'Checkout UI
 assert.ok(checkout.includes('/inversion/legal'), 'Checkout UI must link to the actual legal terms, not just assert understanding');
 assert.match(checkout, /profile\?\.agreement_accepted_at/, 'Checkout UI must skip re-accepting when the participant already has an accepted agreement on file');
 
-// Schema version bookkeeping.
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0068'/, 'schema-version.ts must point at the new latest migration');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'investment_agreement_acceptance'/);
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 68/);
+// Pinning the exact latest migration here would break this suite on every
+// later migration. test-migration-integrity.mjs already reconciles
+// schema-version.ts against the real newest file; this only guards regression
+// below the migration that introduced the acceptance gate.
+assert.ok(
+  Number(schemaVersion.match(/EXPECTED_DATABASE_MIGRATION_COUNT = (\d+)/)?.[1] ?? 0) >= 68,
+  'Runtime expected migration must not regress below the agreement-acceptance gate.',
+);
 
 // Every clean-database CI fixture that calls create_investment_order
 // expecting success must give its participant an accepted agreement —

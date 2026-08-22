@@ -130,6 +130,12 @@ jobs:
             -v ON_ERROR_STOP=1 \
             -f scripts/investment-operational-golden-journey.sql
 
+      - name: Manual crypto verification PostgreSQL contract
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -f scripts/investment-manual-crypto-verification-smoke.sql
+
       - name: KYC transactional resilience contract
         run: |
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \

@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0068",
-  "expectedMigrationName": "investment_agreement_acceptance",
-  "expectedMigrationCount": 68,
+  "expectedMigration": "0069",
+  "expectedMigrationName": "investment_manual_crypto_verification",
+  "expectedMigrationCount": 69,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

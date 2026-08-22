@@ -116,6 +116,11 @@ export async function POST(
     return NextResponse.json({ error: 'payment proof content does not match declared file type' }, { status: 415 });
   }
 
+  const rail = (request.headers.get('x-payment-rail') ?? 'bank_transfer').trim().toLowerCase();
+  if (rail !== 'bank_transfer' && rail !== 'crypto') {
+    return NextResponse.json({ error: 'unsupported payment rail' }, { status: 400 });
+  }
+
   const originalName = safeOriginalName(request.headers.get('x-file-name'), extension);
   const sha256 = createHash('sha256').update(bytes).digest('hex');
   const storagePath = `${user.id}/investment-orders/${orderId}/${sha256}.${extension}`;
@@ -131,7 +136,11 @@ export async function POST(
     return NextResponse.json({ error: uploadError.message }, { status: 400 });
   }
 
-  const { data, error: rpcError } = await admin.rpc('submit_investment_order_bank_proof_server', {
+  const proofRpc = rail === 'crypto'
+    ? 'submit_investment_order_crypto_proof_server'
+    : 'submit_investment_order_bank_proof_server';
+
+  const { data, error: rpcError } = await admin.rpc(proofRpc, {
     p_participant_user_id: user.id,
     p_order_id: orderId,
     p_payment_proof_storage_path: storagePath,

@@ -16,6 +16,7 @@ import { CheckCircle2, ExternalLink, Landmark, RefreshCw, ShieldCheck, TriangleA
 
 type VerificationDraft = {
   bankReference: string;
+  cryptoNetwork: string;
   receivedAmountCop: string;
   bankReceivedAt: string;
   notes: string;
@@ -29,6 +30,7 @@ const nowLocal = () => {
 
 const freshDraft = (amountCents = 0): VerificationDraft => ({
   bankReference: '',
+  cryptoNetwork: '',
   receivedAmountCop: String(Math.round(amountCents / 100)),
   bankReceivedAt: nowLocal(),
   notes: '',
@@ -102,9 +104,15 @@ export default function InvestmentOrdersAdminPage() {
   };
 
   const verify = async (order: InvestmentOrder) => {
+    const isCrypto = order.payment_method === 'crypto';
     const draft = drafts[order.id] ?? freshDraft(order.capital_required_cents);
     if (!draft.bankReference.trim() || !draft.receivedAmountCop.trim() || !draft.bankReceivedAt) {
-      return setError('Referencia Bancolombia, monto recibido y fecha/hora del abono son obligatorios.');
+      return setError(isCrypto
+        ? 'Hash de transacción, monto recibido y fecha/hora de confirmación son obligatorios.'
+        : 'Referencia Bancolombia, monto recibido y fecha/hora del abono son obligatorios.');
+    }
+    if (isCrypto && !draft.cryptoNetwork.trim()) {
+      return setError('La red observada en el explorador es obligatoria.');
     }
     const amountCop = Number(draft.receivedAmountCop);
     if (!Number.isFinite(amountCop) || amountCop <= 0) return setError('Monto recibido inválido.');
@@ -114,18 +122,27 @@ export default function InvestmentOrdersAdminPage() {
     setBusyId(order.id);
     setError(null);
     setMessage(null);
-    const { error: rpcError } = await repository.verifyBancolombiaTransfer({
-      p_order_id: order.id,
-      p_bank_reference: draft.bankReference.trim(),
-      p_received_amount_cents: Math.round(amountCop * 100),
-      p_bank_received_at: receivedAt.toISOString(),
-      p_notes: draft.notes.trim() || null,
-    });
+    const { error: rpcError } = isCrypto
+      ? await repository.verifyCryptoTransfer({
+        p_order_id: order.id,
+        p_transaction_hash: draft.bankReference.trim(),
+        p_network: draft.cryptoNetwork.trim(),
+        p_received_amount_cents: Math.round(amountCop * 100),
+        p_received_at: receivedAt.toISOString(),
+        p_notes: draft.notes.trim() || null,
+      })
+      : await repository.verifyBancolombiaTransfer({
+        p_order_id: order.id,
+        p_bank_reference: draft.bankReference.trim(),
+        p_received_amount_cents: Math.round(amountCop * 100),
+        p_bank_received_at: receivedAt.toISOString(),
+        p_notes: draft.notes.trim() || null,
+      });
 
     if (rpcError) setError(rpcError.message);
     else {
       setMessage(
-        `Dinero confirmado en Bancolombia. Se activaron receipt, allocation, ledger y contrato para ${formatCents(order.capital_required_cents)}.`,
+        `Dinero confirmado en ${isCrypto ? 'cadena' : 'Bancolombia'}. Se activaron receipt, allocation, ledger y contrato para ${formatCents(order.capital_required_cents)}.`,
       );
       await load();
     }
@@ -167,10 +184,10 @@ export default function InvestmentOrdersAdminPage() {
       <Container>
         <div className="mb-9 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Badge variant="accent" className="mb-4">Human Bank Verification</Badge>
-            <h1 className="text-3xl font-outfit font-semibold text-white sm:text-4xl">Verificación Bancolombia</h1>
+            <Badge variant="accent" className="mb-4">Human Payment Verification</Badge>
+            <h1 className="text-3xl font-outfit font-semibold text-white sm:text-4xl">Verificación de pagos</h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-text-muted">
-              El comprobante es evidencia presentada por el participante. La inversión solo se activa cuando Finance verifica de forma independiente el abono real en la cuenta Bancolombia e ingresa aquí la referencia observada.
+              El comprobante es evidencia presentada por el participante. La inversión solo se activa cuando Finance verifica de forma independiente el movimiento real —el abono en la cuenta Bancolombia o la transacción en el explorador público de la red— e ingresa aquí la referencia observada.
             </p>
             <p className="mt-2 text-[11px] text-text-dim">Cola paginada · {totalCount} órdenes pendientes</p>
           </div>
@@ -181,14 +198,14 @@ export default function InvestmentOrdersAdminPage() {
 
         <div className="mb-8 grid gap-3 sm:grid-cols-3">
           <RailNote icon={<ShieldCheck size={15} />} label="Comprobante ≠ pago" text="OCR o IA nunca puede aprobar una inversión." />
-          <RailNote icon={<Landmark size={15} />} label="Fuente de verdad" text="El movimiento visto realmente en Bancolombia." />
+          <RailNote icon={<Landmark size={15} />} label="Fuente de verdad" text="El movimiento visto realmente en Bancolombia o en cadena." />
           <RailNote icon={<CheckCircle2 size={15} />} label="Activación atómica" text="Confirmación humana → receipt → allocation → ledger → contrato." />
         </div>
 
         <div className="mb-7 flex gap-3 rounded-xl border border-amber-400/20 bg-amber-400/[.04] p-4 text-xs leading-relaxed text-amber-100/80">
           <TriangleAlert size={17} className="shrink-0 text-amber-300" />
           <span>
-            <strong className="text-amber-200">No confirmes por apariencia del comprobante.</strong> Abre Bancolombia por un canal independiente, ubica el abono real y copia la referencia bancaria desde el movimiento recibido.
+            <strong className="text-amber-200">No confirmes por apariencia del comprobante.</strong> Abre Bancolombia o el explorador público de la red por un canal independiente, ubica el movimiento real y copia la referencia desde ahí.
           </span>
         </div>
 
@@ -209,13 +226,14 @@ export default function InvestmentOrdersAdminPage() {
           <p className="text-sm text-text-dim">Cargando órdenes...</p>
         ) : orders.length === 0 ? (
           <Card variant="bordered" padding="lg">
-            <p className="text-sm text-text-dim">No hay órdenes pendientes de transferencia o verificación bancaria.</p>
+            <p className="text-sm text-text-dim">No hay órdenes pendientes de transferencia o verificación.</p>
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             {orders.map((order) => {
               const draft = drafts[order.id] ?? freshDraft(order.capital_required_cents);
               const awaitingVerification = order.status === 'PENDING_BANK_VERIFICATION';
+              const isCrypto = order.payment_method === 'crypto';
               return (
                 <Card key={order.id} variant="bordered" padding="lg">
                   <div className="mb-5 flex justify-between gap-4">
@@ -247,12 +265,12 @@ export default function InvestmentOrdersAdminPage() {
                       </div>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <label className="text-xs text-text-muted">
-                          Referencia observada en Bancolombia
+                          {isCrypto ? 'Hash de transacción observado en el explorador' : 'Referencia observada en Bancolombia'}
                           <input
                             className="railInput mt-1.5"
                             value={draft.bankReference}
                             onChange={(event) => patchDraft(order.id, { bankReference: event.target.value })}
-                            placeholder="Referencia del movimiento recibido"
+                            placeholder={isCrypto ? 'Hash de la transacción confirmada' : 'Referencia del movimiento recibido'}
                           />
                         </label>
                         <label className="text-xs text-text-muted">
@@ -267,8 +285,19 @@ export default function InvestmentOrdersAdminPage() {
                           />
                         </label>
                       </div>
+                      {isCrypto && (
+                        <label className="block text-xs text-text-muted">
+                          Red observada en el explorador
+                          <input
+                            className="railInput mt-1.5"
+                            value={draft.cryptoNetwork}
+                            onChange={(event) => patchDraft(order.id, { cryptoNetwork: event.target.value })}
+                            placeholder="Red donde se confirmó la transacción"
+                          />
+                        </label>
+                      )}
                       <label className="block text-xs text-text-muted">
-                        Fecha/hora del abono en Bancolombia
+                        {isCrypto ? 'Fecha/hora de confirmación en cadena' : 'Fecha/hora del abono en Bancolombia'}
                         <input
                           type="datetime-local"
                           className="railInput mt-1.5"
@@ -282,11 +311,13 @@ export default function InvestmentOrdersAdminPage() {
                           className="railInput mt-1.5 min-h-20"
                           value={draft.notes}
                           onChange={(event) => patchDraft(order.id, { notes: event.target.value })}
-                          placeholder="Opcional: detalle observado en el movimiento bancario"
+                          placeholder={isCrypto ? 'Opcional: detalle observado en la transacción confirmada' : 'Opcional: detalle observado en el movimiento bancario'}
                         />
                       </label>
                       <div className="rounded-xl border border-white/[.06] p-3 text-[11px] leading-relaxed text-text-dim">
-                        Al confirmar declaras que verificaste el abono real por un canal independiente. El backend rechazará montos diferentes y referencias bancarias reutilizadas.
+                        {isCrypto
+                          ? 'Al confirmar declaras que verificaste la transacción en el explorador público de la red, con las confirmaciones suficientes. El backend rechazará montos diferentes y hashes reutilizados.'
+                          : 'Al confirmar declaras que verificaste el abono real por un canal independiente. El backend rechazará montos diferentes y referencias bancarias reutilizadas.'}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button onClick={() => void verify(order)} loading={busyId === order.id} variant="primary" size="sm">Confirmar dinero recibido</Button>
@@ -295,7 +326,7 @@ export default function InvestmentOrdersAdminPage() {
                     </div>
                   ) : (
                     <div className="border-t border-white/[.07] pt-4">
-                      <p className="mb-3 text-xs text-text-dim">Esperando que el participante realice la transferencia Bancolombia y suba el comprobante.</p>
+                      <p className="mb-3 text-xs text-text-dim">Esperando que el participante realice la transferencia y suba el comprobante.</p>
                       <Button onClick={() => void rejectUnpaid(order)} disabled={busyId === order.id} variant="secondary" size="sm">Rechazar orden</Button>
                     </div>
                   )}
