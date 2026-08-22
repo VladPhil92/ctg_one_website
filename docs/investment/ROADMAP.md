@@ -101,13 +101,21 @@ Audit date: **2026-08-22** (updated same day after PR #166 merged).
   `riskDisclosureText` (wired into `/inversion/simulador`, the one place
   `LEGAL_CONFIGURATION.md` names explicitly), and `agreementType`
   (`null` — genuinely unimplemented, not invented).
-- Deliberately did **not** mass-migrate the ~16 existing hard-coded
-  `'CTG Craft Beer Inversión'` occurrences to import from `config.ts` —
-  several are in shared marketing components out of scope to touch
-  (`ServicesSection.tsx`, `ecosystem-technology.ts`), and even the
-  investment-scoped ones are a separate, purely-cosmetic refactor with no
-  behavior change. `LEGAL_CONFIGURATION.md` now documents this explicitly
-  as "known pending hard-coded copy" so it doesn't silently look finished.
+- **Follow-up, done:** migrated all 6 investment-scoped hard-coded
+  `'CTG Craft Beer Inversión'` occurrences (`InvestmentFooter.tsx`,
+  `InvestmentCheckoutClient.tsx`, `InvestmentResumePaymentClient.tsx`,
+  `inversion/layout.tsx`, `inversion/legal/page.tsx`,
+  `inversion/como-funciona/page.tsx`) to import
+  `investmentConfig.programDisplayName` — diff-reviewed as byte-identical
+  rendered output, re-verified with the full test/typecheck/build gate.
+  Left the 8 occurrences in shared marketing/ecosystem/i18n/admin
+  surfaces (`ServicesSection.tsx`, `InvestmentSpotlightSection.tsx`,
+  `ProductsCaseStudiesSection.tsx`, `ecosystem-processes.ts`,
+  `ecosystem-technology.ts`, `changelog/page.tsx`, `admin/roles/page.tsx`,
+  `i18n/translations.ts`) untouched — out of scope for this initiative
+  without separate authorization per `CLAUDE.md`; confirmed with the user
+  before touching anything rather than assuming. `LEGAL_CONFIGURATION.md`
+  documents the remaining set explicitly.
 
 ### P3 — First real operating evidence
 - The Phase 19 pipeline (`npm run investment:evidence:*`) is fully built

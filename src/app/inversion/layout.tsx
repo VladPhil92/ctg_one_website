@@ -4,14 +4,15 @@ import { InvestmentNav } from '@/components/inversion/InvestmentNav';
 import { InvestmentFooter } from '@/components/inversion/InvestmentFooter';
 import commandStyles from '@/styles/CommandCenter.module.css';
 import publicStyles from '@/styles/PublicCommandCenter.module.css';
+import { investmentConfig } from '@/lib/investment/config';
 
 // Route-scoped layout (ADR-012): owns its own nav/footer chrome instead of
 // reusing the main site's <Navbar/>/<Footer/>, so this initiative never
 // needs to touch those shared components.
 export const metadata: Metadata = {
   title: {
-    default: 'CTG Craft Beer Inversión',
-    template: '%s | CTG Craft Beer Inversión',
+    default: investmentConfig.programDisplayName,
+    template: `%s | ${investmentConfig.programDisplayName}`,
   },
   description:
     'Participa en la producción real de CTG Craft Beer: financia un equivalente productivo dentro de un lote identificado, sigue la producción y las ventas, y consulta la liquidación.',
