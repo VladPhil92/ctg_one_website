@@ -34,6 +34,9 @@ jobs:
       CANARY_ATTEMPTS: '24'
       CANARY_INTERVAL_MS: '25000'
       CANARY_REQUEST_TIMEOUT_MS: '10000'
+      INVESTMENT_CANARY_ATTEMPTS: '3'
+      INVESTMENT_CANARY_INTERVAL_MS: '5000'
+      INVESTMENT_CANARY_EVIDENCE_PATH: canary-evidence/investment-production-readiness.json
 
     steps:
       - name: Checkout repository
@@ -50,4 +53,14 @@ jobs:
         run: node scripts/verify-deployment-health.mjs
 
       - name: Verify Investment production readiness
+        id: investment-canary
         run: node scripts/verify-investment-production-readiness.mjs
+
+      - name: Archive Investment readiness evidence
+        if: always() && steps.investment-canary.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: investment-production-readiness-${{ github.event.inputs.expected_sha || github.sha }}
+          path: canary-evidence/investment-production-readiness.json
+          if-no-files-found: error
+          retention-days: 14

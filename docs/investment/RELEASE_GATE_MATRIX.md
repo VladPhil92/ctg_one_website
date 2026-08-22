@@ -6,6 +6,8 @@ Status: **IMPLEMENTED; LIVE PROMOTION BLOCKED**
 
 Phase 20 provides one deterministic release-readiness view for CTG Craft Beer Investment. It consolidates technical proof, deployment/schema state, production-readiness canary evidence, reviewed operating evidence, unresolved business decisions and fail-closed exposure controls without turning any of those signals into an automatic promotion.
 
+Phase 21 adds the versioned canary evidence contract consumed by this matrix; it does not change the release authority or maturity boundary.
+
 The matrix is visible to `SUPER_ADMIN` at `/admin/release-readiness`.
 
 ## Source-of-truth boundaries
@@ -16,6 +18,7 @@ The matrix is a **read model**, not a new authority for the underlying facts:
 - deployment identity: Render metadata via `src/lib/observability/deployment.ts`;
 - schema compatibility: `src/lib/observability/runtime-schema.ts`;
 - production-readiness canary execution: `scripts/verify-investment-production-readiness.mjs`;
+- production-readiness evidence contract: `src/lib/investment/production-readiness-evidence.mjs`;
 - product exposure flags: `src/lib/investment/flags.ts`;
 - business-rule substance and decision status: `docs/investment/BUSINESS_MODEL.md`;
 - operating-evidence validation/finalization: Phase 19 tooling;
@@ -39,7 +42,7 @@ No unknown, omitted or stale state is interpreted optimistically.
 
 ### Technical contract
 
-Requires canonical Investment maturity to remain `PARTIAL / BETA` and requires the Phase 17, Phase 18 and Phase 19 evidence markers to remain present in `technology-proof.ts`.
+Requires canonical Investment maturity to remain `PARTIAL / BETA` and requires the relevant implemented evidence markers to remain present in `technology-proof.ts`.
 
 This gate certifies that the repository knows what has been implemented. It does not prove real production operation.
 
@@ -51,13 +54,16 @@ Requires all of the following at evaluation time:
 - branch is `main`;
 - deployment commit is a full 40-character Git SHA;
 - runtime schema compatibility is true;
-- an explicitly accepted Phase 18 canary result exists;
-- that canary result is `PASS` with an empty failure list;
+- an explicitly accepted, versioned `production-canary` artifact exists;
+- that artifact is structurally valid and reports `PASS` with an empty failure list;
+- its origin is exactly `https://ctgone.com`;
 - its expected branch is `main`;
 - its expected SHA and observed deployment SHA exactly equal the deployment being evaluated;
-- the canary observed readiness `ready`, public status `BETA`, pending production operating evidence and HTTP 200 on the canonical Investment surface.
+- the artifact records readiness HTTP 200/status `ready`, public status `BETA`, pending production operating evidence and HTTP 200 on the canonical `/inversion` surface.
 
-A local/preview environment, missing canary or stale canary from another deployment cannot satisfy this gate. `INVESTMENT_PRODUCTION_READINESS_CANARY` is currently `null`, therefore a production runtime may have compatible deployment/schema identity while the complete release runtime gate remains `PENDING_EVIDENCE`.
+Capture and release governance use the same shared validator. A local/preview artifact, `synthetic-ci` artifact, failed artifact, missing artifact or stale artifact from another deployment cannot satisfy this gate.
+
+`INVESTMENT_PRODUCTION_READINESS_CANARY` is currently `null`. Therefore a production runtime may have compatible deployment/schema identity while the complete release runtime gate remains `PENDING_EVIDENCE`. The post-deploy workflow may generate artifacts automatically, but it never auto-accepts them into this pointer.
 
 ### Reviewed production operating evidence
 
@@ -104,7 +110,7 @@ Even after all prerequisite gates become eligible for release review, a separate
 `promotionReviewEligible` requires:
 
 1. technical contract PASS;
-2. exact Render deployment/schema plus matching successful canary PASS;
+2. exact Render deployment/schema plus matching accepted versioned production-canary evidence PASS;
 3. reviewed production operating evidence PASS;
 4. no required pending business decisions.
 
@@ -116,15 +122,16 @@ Opening public funding/registration or automatic money movement before `liveProm
 
 ## Current expected state
 
-At Phase 20 implementation time:
+After Phase 21 implementation:
 
 - technical contract can PASS;
 - deployment identity/schema may be healthy independently;
-- accepted production canary evidence remains pending;
+- versioned production canary artifacts can be generated and retained;
+- accepted production canary evidence remains pending until explicitly reviewed/wired;
 - production operating evidence remains pending;
 - BR-001 through BR-005 remain blocking decisions;
 - public registration/funding and automatic money movement are expected to remain fail-closed;
 - human LIVE approval is false;
 - Investment remains `PARTIAL / BETA`.
 
-This is the intended state. Phase 20 improves release governance; it does not accelerate or imply a LIVE launch.
+This is the intended state. The release matrix and evidence capture improve governance; they do not accelerate or imply a LIVE launch.
