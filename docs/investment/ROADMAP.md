@@ -91,13 +91,16 @@ Audit date: **2026-08-22** (updated same day after PR #166 merged).
   `participantDisplayName`, `legalInstrumentDisplayName`,
   `publicFundingEnabled`/`publicRegistrationEnabled` (re-exported from
   `flags.ts`, not duplicated), `minimumAllocationCases` (reads
-  `MIN_INVESTMENT_CASES`), `maximumAllocationCases` (`null` by default —
-  no commercial cap has been decided; env-overridable, never a guessed
-  number), `eligibilityRules` (read-only description of what's already
-  enforced in PostgreSQL), `riskDisclosureText` (wired into
-  `/inversion/simulador`, the one place `LEGAL_CONFIGURATION.md` names
-  explicitly), and `agreementType` (`null` — genuinely unimplemented,
-  not invented).
+  `MIN_INVESTMENT_CASES`), `maximumAllocationCases` (always `null` — no
+  commercial cap has been decided, and deliberately not env-configurable:
+  a Codex review on PR #170 correctly caught that neither the checkout UI
+  nor `create_investment_order` consult a maximum, so an override would
+  silently do nothing if set — fixed by removing the fake configurability
+  rather than half-wiring enforcement into a financial RPC), `eligibilityRules`
+  (read-only description of what's already enforced in PostgreSQL),
+  `riskDisclosureText` (wired into `/inversion/simulador`, the one place
+  `LEGAL_CONFIGURATION.md` names explicitly), and `agreementType`
+  (`null` — genuinely unimplemented, not invented).
 - Deliberately did **not** mass-migrate the ~16 existing hard-coded
   `'CTG Craft Beer Inversión'` occurrences to import from `config.ts` —
   several are in shared marketing components out of scope to touch

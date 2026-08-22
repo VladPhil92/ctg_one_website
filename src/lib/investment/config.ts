@@ -14,13 +14,6 @@
 import { investmentFlags } from './flags';
 import { MIN_INVESTMENT_CASES } from './constants';
 
-function optionalPositiveInt(name: string): number | null {
-  const raw = process.env[name];
-  if (!raw) return null;
-  const parsed = Number(raw);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-}
-
 export const investmentConfig = {
   // Display terminology. Defined once here so it isn't reintroduced as a
   // fresh hard-coded literal in new investment-scoped UI; existing call
@@ -41,12 +34,16 @@ export const investmentConfig = {
   // single value, not a second copy of the rule.
   minimumAllocationCases: MIN_INVESTMENT_CASES,
   // No commercial maximum has been decided. This is not one of
-  // BR-001..BR-005 in BUSINESS_MODEL.md, but it is equally undecided —
-  // null means "no configured cap beyond the lot's remaining capacity",
-  // which is the only limit PostgreSQL currently enforces. Set
-  // CTG_INVESTMENT_MAX_ALLOCATION_CASES once a business decision exists;
-  // never assume a number here (PRODUCT_CONSTITUTION.md §Stop conditions).
-  maximumAllocationCases: optionalPositiveInt('CTG_INVESTMENT_MAX_ALLOCATION_CASES'),
+  // BR-001..BR-005 in BUSINESS_MODEL.md, but it is equally undecided.
+  // Deliberately always null, with no env override: neither the checkout
+  // UI (InvestmentCheckoutClient, capped only at lot capacity) nor the
+  // authoritative create_investment_order RPC consult a maximum today, so
+  // exposing one as "configurable" here would be a value that silently
+  // does nothing if set — worse than not having the field. Wire real
+  // enforcement through both the UI and the RPC (a new migration) before
+  // reintroducing an override; never assume a number in the meantime
+  // (PRODUCT_CONSTITUTION.md §Stop conditions).
+  maximumAllocationCases: null as number | null,
 
   // Eligibility is already enforced authoritatively inside PostgreSQL
   // SECURITY DEFINER RPCs (SECURITY_MODEL.md) — this is a read-only
