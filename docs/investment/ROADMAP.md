@@ -12,32 +12,32 @@ it will drift as work lands. For live facts, always defer to
 should be revised or superseded rather than trusted blindly once those
 sources move on.
 
-Audit date: **2026-08-22**.
+Audit date: **2026-08-22** (updated same day after PR #166 merged).
 
 ## Audit summary
 
 - Repository health: `npm test` (49 invariant suites), `npx tsc --noEmit`,
   `npm run build`, and `npm run audit:critical` all pass clean on `main`
-  (`fe1e190`). No high/critical dependency vulnerabilities.
-- Scale: 67 additive Supabase migrations, 20 merged "Investment" phases,
-  ~172 investment-scoped commits, all landed in the ~6 days since
-  `PRODUCT_CONSTITUTION.md` was first committed (2026-08-15). This has been
-  an unusually fast, densely phased build-out — governance discipline
-  (ADRs, fail-closed gates, evidence separation) is what has kept it
-  reviewable rather than the pace alone.
+  (`3d398da`, includes Phase 21). No high/critical dependency vulnerabilities.
+- Scale: 67+ additive Supabase migrations, 21 merged "Investment" phases,
+  all landed in the ~6 days since `PRODUCT_CONSTITUTION.md` was first
+  committed (2026-08-15). This has been an unusually fast, densely phased
+  build-out — governance discipline (ADRs, fail-closed gates, evidence
+  separation) is what has kept it reviewable rather than the pace alone.
 - Capability maturity: `investment-platform` is `PARTIAL` (technical) /
   `BETA` (public) in `technology-proof.ts` — unchanged and correctly
-  conservative throughout.
-- Release governance (Phase 20, `RELEASE_GATE_MATRIX.md`): technical
-  contract can PASS; production canary evidence, reviewed production
-  operating evidence, and all five `BR-*` business decisions remain
-  `PENDING`/`BLOCKED_DECISION` by design. Public funding/registration and
-  automatic money movement stay fail-closed (`SAFE_CLOSED`). No automatic
-  LIVE promotion path exists.
-- In flight: **PR #166** (`investment/production-readiness-evidence`,
-  draft, base `main`) — Phase 21, extends the Phase 18 canary into a
-  versioned, archived production-readiness evidence contract. CI had not
-  yet reported a status as of this audit.
+  conservative throughout, including after Phase 21.
+- Release governance (Phase 20/21, `RELEASE_GATE_MATRIX.md`): technical
+  contract can PASS; versioned production-canary artifacts can now be
+  generated and archived per deployed SHA (Phase 21), but an accepted
+  canary result, reviewed production operating evidence, and all five
+  `BR-*` business decisions remain `PENDING`/`BLOCKED_DECISION` by design —
+  artifact generation is explicitly never auto-accepted into release
+  review. Public funding/registration and automatic money movement stay
+  fail-closed (`SAFE_CLOSED`). No automatic LIVE promotion path exists.
+- **PR #166 (Phase 21) merged** during this audit (`3d398da`) — this
+  resolves the former P0 item below. Original P0 text is left in place,
+  struck through in spirit, so this doc's own history stays legible.
 - Documentation drift found (see Immediate cleanup below): three docs
   contain guidance that predates most of the current implementation.
 
@@ -65,10 +65,15 @@ Audit date: **2026-08-22**.
 
 ## Priorities
 
-### P0 — Land what's already in flight
-- Drive PR #166 to green CI and merge. It is additive (new evidence
-  contract + fixtures + tests) and does not change exposure flags,
-  `technology-proof.ts` maturity, or the `BR-*` blocking set.
+### P0 — DONE: PR #166 merged (Phase 21)
+- Landed as `3d398da`. Added versioned, SHA-bound, public-safe canary
+  evidence artifacts and a shared validator reused by release governance.
+  Confirmed additive: exposure flags, `technology-proof.ts` maturity
+  (`PARTIAL`/`BETA`), and the `BR-*` blocking set are all unchanged.
+- New follow-on from Phase 21 itself: an accepted canary result still has
+  to actually be produced and wired to `INVESTMENT_PRODUCTION_READINESS_CANARY`
+  — the artifact format now exists, but nothing has populated it yet. This
+  folds into P3 below rather than being a separate item.
 
 ### P1 — Close the documentation-drift gaps above
 - Cheap, no runtime risk, prevents future agents/humans from following
