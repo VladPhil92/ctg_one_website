@@ -1,6 +1,7 @@
 import React from 'react';
 import { Container, Badge, Card } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
+import { investmentConfig } from '@/lib/investment/config';
 
 const STEPS = [
   {
@@ -40,7 +41,7 @@ export default function ComoFuncionaPage() {
           De la capital a la liquidación, con trazabilidad completa
         </h1>
         <p className="text-base text-text-muted max-w-xl leading-relaxed mb-14">
-          CTG Craft Beer Inversión conecta tu aporte con producción real de cerveza. No eres
+          {investmentConfig.programDisplayName} conecta tu aporte con producción real de cerveza. No eres
           accionista de Cervecería Cartagena S.A.S. por participar, y no adquieres un valor
           negociable — participas en el resultado económico de un lote de producción identificado.
         </p>

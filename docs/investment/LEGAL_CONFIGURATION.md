@@ -1,6 +1,7 @@
 # Legal Configuration — CTG Craft Beer Inversión
 
-Status: **PARTIALLY IMPLEMENTED**
+Status: **IMPLEMENTED** (within this initiative's scope — see "Known
+pending hard-coded copy" for the explicitly out-of-scope remainder)
 
 Legal/commercial terminology must remain configurable, not embedded as
 irreversible technical naming or hard-coded UI copy, because several
@@ -11,7 +12,7 @@ classifications are explicitly unresolved (see `BUSINESS_MODEL.md`
 
 | Field | State | Notes |
 |---|---|---|
-| `programDisplayName`, `participantDisplayName`, `legalInstrumentDisplayName` | Implemented | Defined once; **not** a mass-migration of every existing hard-coded occurrence — see "Known pending hard-coded copy" below. |
+| `programDisplayName`, `participantDisplayName`, `legalInstrumentDisplayName` | Implemented; `programDisplayName` migrated in all investment-scoped call sites | See "Known pending hard-coded copy" below — the marketing/ecosystem/i18n/admin occurrences outside this initiative's scope remain, by explicit decision. |
 | `publicFundingEnabled`, `publicRegistrationEnabled` | Implemented | Re-exported from `flags.ts`, the actual fail-closed exposure flags — not a second copy of that state. |
 | `minimumAllocationCases` | Implemented | Reads `MIN_INVESTMENT_CASES` from `constants.ts`, the same value the server-side `create_investment_order` RPC enforces. Expressed in cases (cajas), not currency. |
 | `maximumAllocationCases` | Implemented, always `null` | No commercial maximum has been decided — this is an *additional* undecided item, not one of the numbered `BR-*` decisions in `BUSINESS_MODEL.md`. Deliberately **not** env-configurable: neither `InvestmentCheckoutClient` (capped only at lot capacity) nor `create_investment_order` consult a maximum, so an override here would silently do nothing if set. Wire real enforcement through both the checkout UI and the RPC (a new migration) before adding one back. |
@@ -21,19 +22,24 @@ classifications are explicitly unresolved (see `BUSINESS_MODEL.md`
 
 ## Known pending hard-coded copy
 
-`programDisplayName`'s literal value (`'CTG Craft Beer Inversión'`) still
-appears hard-coded in ~16 files across the repo, including some shared
-marketing components (`ServicesSection.tsx`, `ecosystem-technology.ts`)
-that are explicitly out of scope for this initiative to touch without a
-separately authorized change (`CLAUDE.md` — never modify existing
-marketing pages). The investment-scoped occurrences
-(`InvestmentFooter.tsx`, `inversion/layout.tsx`, `inversion/legal/page.tsx`,
-`inversion/como-funciona/page.tsx`, `payment-qr.ts`, checkout/resume-payment
-clients) have **not** been migrated to import from `config.ts` in this
-change either — that's a larger, purely-cosmetic refactor with no behavior
-change, better done as its own small PR than bundled here. Treat
-`config.ts` as the source new code should use, not as proof the old
-occurrences are gone.
+All investment-scoped occurrences of `programDisplayName`'s literal value
+(`'CTG Craft Beer Inversión'`) have been migrated to import
+`investmentConfig.programDisplayName`: `InvestmentFooter.tsx`,
+`InvestmentCheckoutClient.tsx`, `InvestmentResumePaymentClient.tsx`,
+`inversion/layout.tsx`, `inversion/legal/page.tsx`,
+`inversion/como-funciona/page.tsx` — verified to produce byte-identical
+rendered output (diff-reviewed, plus full `npm test`/typecheck/build).
+
+Eight occurrences remain hard-coded **by explicit decision**, out of scope
+for this initiative to touch without separate authorization (`CLAUDE.md` —
+never modify existing marketing pages, or unrelated shared
+components/data/i18n): `ServicesSection.tsx`, `InvestmentSpotlightSection.tsx`,
+`ProductsCaseStudiesSection.tsx`, `ecosystem-processes.ts`,
+`ecosystem-technology.ts`, `changelog/page.tsx`, `admin/roles/page.tsx`, and
+`i18n/translations.ts`. `payment-qr.ts` and `flags.ts` also mention the name
+but only inside source comments, not runtime UI copy — nothing to migrate
+there. If these shared surfaces are ever brought into scope, `config.ts` is
+the value they should import.
 
 ## Compliance note
 

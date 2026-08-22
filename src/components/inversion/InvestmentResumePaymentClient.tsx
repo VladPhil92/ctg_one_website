@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { formatCents } from '@/lib/format';
+import { investmentConfig } from '@/lib/investment/config';
 import {
   INVESTMENT_BANK_TRANSFER_CONFIGURED,
   INVESTMENT_BANK_TRANSFER_INSTRUCTIONS,
@@ -120,7 +121,7 @@ export function InvestmentResumePaymentClient({
             <p className="text-[9px] uppercase tracking-[.2em] text-accent mb-2">Transferencia oficial</p>
             <h3 className="text-xl font-outfit font-semibold text-white">QR Bancolombia</h3>
             <p className="text-xs text-text-muted mt-2 mb-5">{INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName} · {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.accountType}</p>
-            <div className="rounded-2xl bg-white p-4"><img src={INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl} alt="QR oficial de la cuenta de ahorros Bancolombia para CTG Craft Beer Inversión" className="mx-auto block max-h-[360px] w-auto max-w-full"/></div>
+            <div className="rounded-2xl bg-white p-4"><img src={INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl} alt={`QR oficial de la cuenta de ahorros Bancolombia para ${investmentConfig.programDisplayName}`} className="mx-auto block max-h-[360px] w-auto max-w-full"/></div>
             <p className="text-[11px] text-text-dim mt-4 leading-relaxed">Después de transferir, sube el comprobante en esta misma orden. No generes otra reserva.</p>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { investmentConfig } from '@/lib/investment/config';
 
 export const InvestmentFooter: React.FC = () => {
   const { locale } = useLanguage();
@@ -33,7 +34,7 @@ export const InvestmentFooter: React.FC = () => {
       </div>
       <p className="max-w-6xl mx-auto mt-8 text-[11px] text-text-dim leading-relaxed">
         {isEs
-          ? 'La participación en CTG Craft Beer Inversión no constituye la adquisición de acciones ni de ningún instrumento de patrimonio de Cervecería Cartagena S.A.S. Los valores proyectados son estimados y no constituyen una rentabilidad garantizada.'
+          ? `La participación en ${investmentConfig.programDisplayName} no constituye la adquisición de acciones ni de ningún instrumento de patrimonio de Cervecería Cartagena S.A.S. Los valores proyectados son estimados y no constituyen una rentabilidad garantizada.`
           : 'Participation in CTG Craft Beer Investment does not constitute the acquisition of shares or any equity instrument of Cervecería Cartagena S.A.S. Projected values are estimates and do not constitute guaranteed returns.'}{' '}
         © {new Date().getFullYear()} CTG One Technology.
       </p>

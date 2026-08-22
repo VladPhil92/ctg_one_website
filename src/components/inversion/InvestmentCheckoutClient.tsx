@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { formatCents } from '@/lib/format';
 import { MIN_INVESTMENT_CASES } from '@/lib/investment/constants';
+import { investmentConfig } from '@/lib/investment/config';
 import {
   INVESTMENT_BANK_TRANSFER_CONFIGURED,
   INVESTMENT_BANK_TRANSFER_INSTRUCTIONS,
@@ -193,7 +194,7 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
           <p className="text-xs text-text-muted mt-2 mb-5">{INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName} · {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.accountType}</p>
           <div className="rounded-2xl bg-white p-4">
             {/* QR is an approved public payment asset configured outside source code. */}
-            <img src={INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl} alt="QR oficial de la cuenta de ahorros Bancolombia para CTG Craft Beer Inversión" className="mx-auto block max-h-[360px] w-auto max-w-full" />
+            <img src={INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl} alt={`QR oficial de la cuenta de ahorros Bancolombia para ${investmentConfig.programDisplayName}`} className="mx-auto block max-h-[360px] w-auto max-w-full" />
           </div>
           <p className="text-[11px] text-text-dim mt-4 leading-relaxed">Después de transferir, vuelve a esta ventana y sube el comprobante. El comprobante será tratado como evidencia, no como confirmación de fondos.</p>
         </div>

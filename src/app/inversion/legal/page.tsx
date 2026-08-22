@@ -1,5 +1,6 @@
 import React from 'react';
 import { Container, Badge } from '@/components/ui';
+import { investmentConfig } from '@/lib/investment/config';
 
 export const metadata = { title: 'Legal' };
 
@@ -13,7 +14,7 @@ export default function LegalPage() {
         </h1>
         <div className="space-y-6 text-sm text-text-muted leading-relaxed">
           <p>
-            CTG Craft Beer Inversión es un programa de participación económica en lotes de
+            {investmentConfig.programDisplayName} es un programa de participación económica en lotes de
             producción identificables de Cervecería Cartagena S.A.S. La participación no
             constituye la adquisición de acciones ni de ningún instrumento de patrimonio de
             Cervecería Cartagena S.A.S., ni un valor negociable.
