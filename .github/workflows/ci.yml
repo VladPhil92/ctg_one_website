@@ -136,6 +136,12 @@ jobs:
             -v ON_ERROR_STOP=1 \
             -f scripts/investment-manual-crypto-verification-smoke.sql
 
+      - name: Investment RLS permission-hoisting contract
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -f scripts/investment-rls-permission-hoisting-smoke.sql
+
       - name: KYC transactional resilience contract
         run: |
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \

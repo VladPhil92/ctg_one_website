@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0069",
-    "schemaMigrationName": "investment_manual_crypto_verification",
-    "schemaMigrationCount": 69,
+    "schemaMigration": "0070",
+    "schemaMigrationName": "investment_rls_permission_hoisting",
+    "schemaMigrationCount": 70,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
