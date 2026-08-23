@@ -131,4 +131,6 @@ The result must remain advisory, e.g. `analysis complete — pending bank verifi
 
 ## Future provider integration
 
-The provider-neutral engine in `0034–0036` is retained for a future authenticated bank/payment-provider integration. During the present operating mode, inbound authoritative receipts are constrained to manual Bancolombia verification. A later migration may deliberately change that policy only after a real provider, authentication/signature rules and operational controls are available.
+The provider-neutral engine in `0034–0036` is retained for a future authenticated bank/payment-provider integration. A later migration may deliberately change that policy only after a real provider, authentication/signature rules and operational controls are available.
+
+Migration `0069` made the first such deliberate change, and it did **not** add a provider: it added a second *manual* rail with the same evidence chain and the same human-verification authority hierarchy — see `MANUAL_CRYPTO_VERIFICATION.md`. Inbound authoritative receipts are now constrained to manual Bancolombia **or** manual crypto verification; everything else still fails closed in `guard_investment_payment_receipt()`.

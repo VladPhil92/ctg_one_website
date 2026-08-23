@@ -59,3 +59,19 @@ export const INVESTMENT_BANK_TRANSFER_INSTRUCTIONS = {
 
 export const INVESTMENT_BANK_TRANSFER_CONFIGURED =
   configured(INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl);
+
+/**
+ * Second manual inbound rail. Like the bank rail it carries no provider or
+ * custody integration: the participant transfers on-chain and Finance confirms
+ * the movement on a public block explorer. The destination wallet is real
+ * operational data, so it is never embedded in source — checkout stays fail
+ * closed until all three values are configured in the deployment environment.
+ */
+export const INVESTMENT_CRYPTO_INSTRUCTIONS = {
+  network: process.env.NEXT_PUBLIC_INVESTMENT_CRYPTO_NETWORK ?? PENDING,
+  asset: process.env.NEXT_PUBLIC_INVESTMENT_CRYPTO_ASSET ?? PENDING,
+  address: process.env.NEXT_PUBLIC_INVESTMENT_CRYPTO_ADDRESS ?? PENDING,
+};
+
+export const INVESTMENT_CRYPTO_CONFIGURED =
+  Object.values(INVESTMENT_CRYPTO_INSTRUCTIONS).every(configured);

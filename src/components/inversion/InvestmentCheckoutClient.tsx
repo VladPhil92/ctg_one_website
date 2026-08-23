@@ -11,7 +11,13 @@ import { investmentConfig } from '@/lib/investment/config';
 import {
   INVESTMENT_BANK_TRANSFER_CONFIGURED,
   INVESTMENT_BANK_TRANSFER_INSTRUCTIONS,
+  INVESTMENT_CRYPTO_CONFIGURED,
+  INVESTMENT_CRYPTO_INSTRUCTIONS,
 } from '@/lib/payment-instructions';
+import {
+  InvestmentCryptoDestination,
+  InvestmentPaymentRailChoice,
+} from '@/components/inversion/InvestmentPaymentRailChoice';
 import {
   acceptInvestmentAgreement,
   createInvestmentOrder,
@@ -23,7 +29,7 @@ import {
   getProjectedLotCapacityPercent,
 } from '@/modules/investment/checkout/domain';
 import type { InvestmentProductionLot, LotFundingSummary } from '@/types/investment';
-import { Boxes, Check, FileCheck2, Landmark, Minus, Plus, QrCode, ShieldCheck, X } from 'lucide-react';
+import { Boxes, Check, Coins, FileCheck2, Landmark, Minus, Plus, QrCode, ShieldCheck, X } from 'lucide-react';
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 
@@ -39,6 +45,7 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
   const [proof, setProof] = useState<File | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  const [rail, setRail] = useState<'bank_transfer' | 'crypto'>('bank_transfer');
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -93,10 +100,14 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
     } finally { setBusy(false); }
   };
 
+  const railConfigured = rail === 'crypto' ? INVESTMENT_CRYPTO_CONFIGURED : INVESTMENT_BANK_TRANSFER_CONFIGURED;
+
   const submitProof = async () => {
     if (!orderId || !proof) return;
-    if (!INVESTMENT_BANK_TRANSFER_CONFIGURED) {
-      setError('El QR de Bancolombia aún no está configurado en producción. La orden queda reservada, pero no se aceptará evidencia hasta publicar el QR aprobado.');
+    if (!railConfigured) {
+      setError(rail === 'crypto'
+        ? 'La dirección de destino en cripto aún no está configurada en producción. La orden queda reservada, pero no se aceptará evidencia hasta publicarla.'
+        : 'El QR de Bancolombia aún no está configurado en producción. La orden queda reservada, pero no se aceptará evidencia hasta publicar el QR aprobado.');
       return;
     }
     if (proof.size <= 0 || proof.size > MAX_FILE_BYTES) {
@@ -106,7 +117,7 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
 
     setError(null); setBusy(true);
     try {
-      await uploadInvestmentPaymentProof({ orderId, proof });
+      await uploadInvestmentPaymentProof({ orderId, proof, rail });
       setSubmitted(true);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'No se pudo registrar el comprobante');
@@ -172,22 +183,26 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
         </section>
 
         <section className="rounded-[24px] border border-white/10 p-5 sm:p-6" style={{background:'rgba(255,255,255,.022)'}}>
-          <div className="flex items-center gap-3 mb-5"><div className="w-9 h-9 rounded-full border border-accent/20 flex items-center justify-center text-accent"><Landmark size={17}/></div><div><p className="text-[9px] uppercase tracking-[.22em] text-accent">02 · Transferencia</p><h2 className="text-lg font-outfit font-semibold mt-1">Bancolombia</h2></div></div>
+          <div className="flex items-center gap-3 mb-5"><div className="w-9 h-9 rounded-full border border-accent/20 flex items-center justify-center text-accent">{rail === 'crypto' ? <Coins size={17}/> : <Landmark size={17}/>}</div><div><p className="text-[9px] uppercase tracking-[.22em] text-accent">02 · Transferencia</p><h2 className="text-lg font-outfit font-semibold mt-1">{rail === 'crypto' ? 'Cripto' : 'Bancolombia'}</h2></div></div>
 
-          {!orderId ? <p className="text-xs text-text-dim">Primero crea la orden para fijar el valor exacto a transferir.</p> : submitted ? <div className="rounded-xl border border-accent/20 bg-accent/[.05] p-4"><p className="text-sm text-white font-medium">Comprobante recibido</p><p className="text-xs text-text-muted mt-2 leading-relaxed">Estado: <strong className="text-accent">pendiente de verificación bancaria humana</strong>. Ninguna IA ni lectura automática puede activar esta inversión.</p><Button href="/inversion/app" variant="secondary" size="sm" fullWidth className="mt-4">Volver a mis inversiones</Button></div> : <>
-            <div className="rounded-xl border border-white/[.07] p-4 mb-4 text-xs text-text-muted leading-relaxed">
-              Transfiere exactamente <strong className="text-white">{formatCents(displayCapital)}</strong> a la cuenta de ahorros de {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName}. Usa exclusivamente el QR oficial mostrado aquí.
-            </div>
+          {!orderId ? <p className="text-xs text-text-dim">Primero crea la orden para fijar el valor exacto a transferir.</p> : submitted ? <div className="rounded-xl border border-accent/20 bg-accent/[.05] p-4"><p className="text-sm text-white font-medium">Comprobante recibido</p><p className="text-xs text-text-muted mt-2 leading-relaxed">Estado: <strong className="text-accent">{rail === 'crypto' ? 'pendiente de verificación humana en cadena' : 'pendiente de verificación bancaria humana'}</strong>. Ninguna IA ni lectura automática puede activar esta inversión.</p><Button href="/inversion/app" variant="secondary" size="sm" fullWidth className="mt-4">Volver a mis inversiones</Button></div> : <>
+            <InvestmentPaymentRailChoice rail={rail} onChange={setRail} disabled={busy} />
 
-            <Button onClick={() => setShowQr(true)} disabled={!INVESTMENT_BANK_TRANSFER_CONFIGURED} variant="secondary" size="sm" fullWidth><QrCode size={14}/> Ver QR Bancolombia</Button>
-            {!INVESTMENT_BANK_TRANSFER_CONFIGURED && <p className="text-[11px] text-amber-300/80 mt-2">El QR aprobado todavía no está publicado en la configuración productiva. La orden permanece reservada.</p>}
+            {rail === 'crypto' ? <InvestmentCryptoDestination amountLabel={formatCents(displayCapital)} /> : <>
+              <div className="rounded-xl border border-white/[.07] p-4 mb-4 text-xs text-text-muted leading-relaxed">
+                Transfiere exactamente <strong className="text-white">{formatCents(displayCapital)}</strong> a la cuenta de ahorros de {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName}. Usa exclusivamente el QR oficial mostrado aquí.
+              </div>
+
+              <Button onClick={() => setShowQr(true)} disabled={!INVESTMENT_BANK_TRANSFER_CONFIGURED} variant="secondary" size="sm" fullWidth><QrCode size={14}/> Ver QR Bancolombia</Button>
+              {!INVESTMENT_BANK_TRANSFER_CONFIGURED && <p className="text-[11px] text-amber-300/80 mt-2">El QR aprobado todavía no está publicado en la configuración productiva. La orden permanece reservada.</p>}
+            </>}
 
             <label className="block rounded-xl border border-dashed border-white/15 p-4 mt-5 mb-5 cursor-pointer hover:border-accent/30 transition-colors">
               <div className="flex items-center gap-3"><FileCheck2 size={17} className="text-accent"/><div><p className="text-xs text-white">Subir comprobante</p><p className="text-[10px] text-text-dim mt-1">JPG, PNG, WEBP o PDF · máx. 8 MB</p></div></div>
               <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(event) => setProof(event.target.files?.[0] ?? null)} className="mt-3 w-full text-xs text-text-muted"/>
             </label>
             {proof && <p className="text-[10px] text-text-dim mb-4 break-all">Archivo: {proof.name}</p>}
-            <Button onClick={submitProof} disabled={!proof || !INVESTMENT_BANK_TRANSFER_CONFIGURED} loading={busy} variant="primary" size="md" fullWidth>Enviar comprobante a verificación</Button>
+            <Button onClick={submitProof} disabled={!proof || !railConfigured} loading={busy} variant="primary" size="md" fullWidth>Enviar comprobante a verificación</Button>
           </>}
           {error && <div className="mt-4 rounded-xl border border-red-400/20 bg-red-400/[.04] p-3 text-xs text-red-200">{error}</div>}
         </section>

@@ -146,6 +146,7 @@ export interface InvestmentOrder {
   bank_received_at: string | null;
   bank_verified_at: string | null;
   bank_verified_by: string | null;
+  crypto_network: string | null;
   contract_reference: string | null;
   contract_activated_at: string | null;
   allocation_id: string | null;
@@ -160,7 +161,7 @@ export interface InvestmentOrder {
 
 export const INVESTMENT_ORDER_STATUS_LABELS: Record<InvestmentOrderStatus, string> = {
   AWAITING_PAYMENT: 'Pendiente de transferencia',
-  PENDING_BANK_VERIFICATION: 'Pendiente de verificación bancaria',
+  PENDING_BANK_VERIFICATION: 'Pendiente de verificación de pago',
   PAYMENT_SUBMITTED: 'Verificación en proceso',
   PAYMENT_VERIFIED: 'Pago verificado',
   ALLOCATED: 'Participación activa',

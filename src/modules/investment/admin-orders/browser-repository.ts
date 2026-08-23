@@ -44,6 +44,18 @@ export function createInvestmentAdminOrdersRepository() {
       return await supabase.rpc('verify_investment_bancolombia_transfer', payload);
     },
 
+    async verifyCryptoTransfer(payload: {
+      p_order_id: string;
+      p_transaction_hash: string;
+      p_network: string;
+      p_received_amount_cents: number;
+      p_received_at: string;
+      p_notes: string | null;
+    }): Promise<{ error: RpcError }> {
+      const supabase = createClient();
+      return await supabase.rpc('verify_investment_crypto_transfer', payload);
+    },
+
     async rejectBankProof(orderId: string, reason: string): Promise<{ error: RpcError }> {
       const supabase = createClient();
       return await supabase.rpc('reject_investment_bank_proof', {
