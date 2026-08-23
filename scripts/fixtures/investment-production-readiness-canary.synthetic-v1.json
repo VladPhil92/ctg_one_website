@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0070",
-  "expectedMigrationName": "investment_rls_permission_hoisting",
-  "expectedMigrationCount": 70,
+  "expectedMigration": "0071",
+  "expectedMigrationName": "accounts_rls_permission_hoisting",
+  "expectedMigrationCount": 71,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
