@@ -145,6 +145,8 @@ export const NvetCareAppSection: React.FC = () => {
     conceptTag: 'Concepto de producto',
     mockupAlt: 'Maqueta de diseño de la pantalla de seguimiento de una visita veterinaria a domicilio, con el estado del servicio y el tiempo estimado de llegada.',
     ownerPhotoAlt: 'Una persona abraza a su perro en casa.',
+    featureShowcaseAlt: 'Un veterinario atiende a un perro en la sala de una casa, junto a los beneficios del servicio a domicilio y los pasos para reservarlo.',
+    missionBannerAlt: 'Una persona abraza a su perro y a su gato, junto al mensaje de misión de Nvet Care.',
   } : {
     badge: 'NVET CARE APP · Mobile app in development',
     eyebrow: 'On-demand home-visit veterinary marketplace in Cartagena',
@@ -186,6 +188,8 @@ export const NvetCareAppSection: React.FC = () => {
     conceptTag: 'Product concept',
     mockupAlt: 'Design mockup of the home-visit tracking screen, showing service status and estimated arrival time.',
     ownerPhotoAlt: 'A person hugging their dog at home.',
+    featureShowcaseAlt: 'A veterinarian tending to a dog in a living room, alongside the benefits of the home-visit service and the steps to book it.',
+    missionBannerAlt: 'A person hugging their dog and cat, alongside Nvet Care’s mission statement.',
   };
 
   const stepIcons = [MapPin, UserCheck, Car, CalendarCheck];
@@ -359,6 +363,23 @@ export const NvetCareAppSection: React.FC = () => {
         </Container>
       </section>
 
+      <section className="relative bg-white pb-20 sm:pb-28">
+        <Container>
+          <FadeInSection>
+            <div className="overflow-hidden rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+              <Image
+                src="/images/nvetcareapp/feature-showcase.jpg"
+                alt={copy.featureShowcaseAlt}
+                width={1402}
+                height={1122}
+                sizes="(min-width: 1152px) 1152px, 100vw"
+                className="h-auto w-full"
+              />
+            </div>
+          </FadeInSection>
+        </Container>
+      </section>
+
       <section className="relative bg-[#FAFBFC] border-y border-[#0A1B2E]/[0.05] py-20 sm:py-28">
         <Container>
           <SectionHeader badge={copy.capsBadge} title={copy.capsTitle} text={copy.capsText} />
@@ -398,6 +419,23 @@ export const NvetCareAppSection: React.FC = () => {
               </FadeInSection>
             ))}
           </div>
+        </Container>
+      </section>
+
+      <section className="relative bg-[#0D1B2A] py-20 sm:py-28">
+        <Container>
+          <FadeInSection>
+            <div className="overflow-hidden rounded-2xl">
+              <Image
+                src="/images/nvetcareapp/mission-banner.jpg"
+                alt={copy.missionBannerAlt}
+                width={1536}
+                height={1024}
+                sizes="(min-width: 1152px) 1152px, 100vw"
+                className="h-auto w-full"
+              />
+            </div>
+          </FadeInSection>
         </Container>
       </section>
 
