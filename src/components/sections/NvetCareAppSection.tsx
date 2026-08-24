@@ -291,7 +291,7 @@ export const NvetCareAppSection: React.FC = () => {
                     loading="eager"
                     className="relative h-auto w-full drop-shadow-[0_30px_60px_rgba(10,27,46,0.18)]"
                   />
-                  <p className="mt-4 text-center text-[9px] uppercase tracking-[0.14em] text-[#8592A0]">{copy.conceptTag}</p>
+                  <p className="mt-4 text-center text-[9px] font-medium uppercase tracking-[0.14em] text-[#4A5A68]">{copy.conceptTag}</p>
                 </div>
               </FadeInSection>
             </div>
@@ -398,7 +398,7 @@ export const NvetCareAppSection: React.FC = () => {
                 className="h-auto w-full"
               />
             </div>
-            <p className="mt-4 text-center text-[9px] uppercase tracking-[0.14em] text-[#8592A0]">{copy.conceptTag}</p>
+            <p className="mt-4 text-center text-[9px] font-medium uppercase tracking-[0.14em] text-[#4A5A68]">{copy.conceptTag}</p>
           </FadeInSection>
         </Container>
       </section>
