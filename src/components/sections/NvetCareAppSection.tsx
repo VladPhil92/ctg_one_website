@@ -105,10 +105,10 @@ export const NvetCareAppSection: React.FC = () => {
   const unit = ECOSYSTEM_TECHNOLOGY_UNITS.find((item) => item.id === 'veterinary');
 
   const copy = es ? {
-    badge: 'NVET CARE APP · Muy pronto en Cartagena',
+    badge: 'NVET CARE APP · En desarrollo en Cartagena',
     eyebrow: 'El veterinario llega hasta tu puerta, en Cartagena',
     title: 'Tu veterinario de confianza,', highlight: 'a un toque de distancia.',
-    description: 'Estamos construyendo la forma más fácil de cuidar a tu mascota en Cartagena: pides un veterinario verificado con unos toques, lo ves llegar a tu puerta y recibe atención profesional sin salir de casa — con pagos claros y seguros en cada visita.',
+    description: 'Estamos construyendo la forma más fácil de cuidar a tu mascota en Cartagena: pides un veterinario verificado con unos toques, lo ves llegar a tu puerta y recibes atención profesional sin salir de casa — con pagos claros y seguros en cada visita.',
     appStoreSub: 'Descarga en', appStore: 'App Store · Próximamente',
     playSub: 'Descarga en', play: 'Google Play · Próximamente',
     followProgress: 'Sigue nuestro progreso', followProgressHref: '/changelog',
@@ -140,7 +140,7 @@ export const NvetCareAppSection: React.FC = () => {
       { q: '¿Nvet Care reemplaza una urgencia veterinaria?', a: 'No. Para emergencias, contacta directamente a una clínica veterinaria de urgencias.' },
       { q: '¿Cómo me entero cuando esté disponible?', a: 'Escríbenos por nuestro canal de contacto; el avance real también queda reflejado en la página de novedades y en el mapa de tecnología.' },
     ],
-    closingTitle: 'Todavía no puedes descargarla... pero ya casi.', closingText: 'En cuanto haya algo real que mostrar, lo verás aquí primero. Sin adelantos falsos ni fechas inventadas — solo el progreso, tal cual va.',
+    closingTitle: 'Todavía no puedes descargarla, pero puedes ser de los primeros en enterarte.', closingText: 'En cuanto haya algo real que mostrar, lo verás aquí primero. Sin adelantos falsos ni fechas inventadas — solo el progreso, tal cual va.',
     contactCta: 'Escríbenos', changelogCta: 'Ver novedades',
     conceptTag: 'Concepto de producto',
     mockupAlt: 'Maqueta de diseño de la pantalla de seguimiento de una visita veterinaria a domicilio, con el estado del servicio y el tiempo estimado de llegada.',
@@ -158,7 +158,7 @@ export const NvetCareAppSection: React.FC = () => {
     mapTrackingFullAlt: 'Maqueta de diseño de la pantalla de seguimiento con mapa, mostrando la ruta del veterinario hacia la ubicación del cliente.',
     homeScreenPhotoAlt: 'Una persona sostiene un teléfono mostrando la pantalla de inicio del concepto de app, con servicios y una cita próxima de ejemplo.',
   } : {
-    badge: 'NVET CARE APP · Coming soon to Cartagena',
+    badge: 'NVET CARE APP · In development in Cartagena',
     eyebrow: 'The vet, right at your door, in Cartagena',
     title: 'Your trusted veterinarian,', highlight: 'one tap away.',
     description: 'We’re building the easiest way to care for your pet in Cartagena: request a verified veterinarian in a few taps, watch them arrive at your door, and get professional care without leaving home — with clear, secure payment every visit.',
@@ -193,7 +193,7 @@ export const NvetCareAppSection: React.FC = () => {
       { q: 'Does Nvet Care replace a veterinary emergency?', a: 'No. For emergencies, contact an emergency veterinary clinic directly.' },
       { q: 'How will I know when it launches?', a: 'Reach out through our contact channel; real progress is also reflected on our updates page and the technology map.' },
     ],
-    closingTitle: 'You can’t download it just yet... but we’re close.', closingText: 'The moment there’s something real to show, you’ll see it here first. No fake previews, no made-up dates — just the progress, as it happens.',
+    closingTitle: 'You can’t download it yet, but you can be the first to know.', closingText: 'The moment there’s something real to show, you’ll see it here first. No fake previews, no made-up dates — just the progress, as it happens.',
     contactCta: 'Contact us', changelogCta: 'See updates',
     conceptTag: 'Product concept',
     mockupAlt: 'Design mockup of the home-visit tracking screen, showing service status and estimated arrival time.',
