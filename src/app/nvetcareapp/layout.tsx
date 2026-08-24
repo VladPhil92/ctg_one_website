@@ -11,7 +11,7 @@ const poppins = Poppins({
   preload: true,
   variable: '--font-poppins-nvet',
   fallback: ['system-ui', 'Arial', 'sans-serif'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
 });
 
 const title = 'Nvet Care App | Marketplace veterinario a domicilio';
