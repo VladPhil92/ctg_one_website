@@ -4,8 +4,8 @@ import React, { type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  Apple, ArrowUpRight, Bell, CalendarCheck, Car, CreditCard, Eye, Heart,
-  MapPin, MessageCircle, PawPrint, ShieldCheck, Smartphone, Stethoscope,
+  Apple, ArrowUpRight, Bell, CalendarCheck, Car, CreditCard, Eye, Globe, Heart,
+  Home, MapPin, MessageCircle, PawPrint, ShieldCheck, Smartphone, Stethoscope,
   UserCheck, type LucideIcon,
 } from 'lucide-react';
 import { Container } from '@/components/ui';
@@ -147,6 +147,11 @@ export const NvetCareAppSection: React.FC = () => {
     ownerPhotoAlt: 'Una persona abraza a su perro en casa.',
     featureShowcaseAlt: 'Un veterinario atiende a un perro en la sala de una casa, junto a los beneficios del servicio a domicilio y los pasos para reservarlo.',
     missionBannerAlt: 'Una persona abraza a su perro y a su gato, junto al mensaje de misión de Nvet Care.',
+    missionStatementSr: 'Cuidamos hoy para un mañana mejor juntos. Unimos tecnología, veterinarios y familias para transformar la salud de las mascotas y construir un mundo más compasivo. Cuidado en casa. Confianza y seguridad. Bienestar integral. Tecnología que conecta. Impacto global. Nvet Care no es solo una app: es un movimiento por el bienestar animal.',
+    missionTitle: 'Cuidamos hoy para un mañana mejor juntos.',
+    missionText: 'Unimos tecnología, veterinarios y familias para transformar la salud de las mascotas y construir un mundo más compasivo.',
+    missionValues: ['Cuidado en casa', 'Confianza y seguridad', 'Bienestar integral', 'Tecnología que conecta', 'Impacto global'],
+    missionClosing: 'Nvet Care no es solo una app. Es un movimiento por el bienestar animal.',
     galleryBadge: 'Más conceptos de producto',
     galleryTitle: 'Otras pantallas del concepto.',
     galleryText: 'Ilustraciones adicionales del diseño en curso — mockups, no capturas de un producto ya publicado.',
@@ -195,6 +200,11 @@ export const NvetCareAppSection: React.FC = () => {
     ownerPhotoAlt: 'A person hugging their dog at home.',
     featureShowcaseAlt: 'A veterinarian tending to a dog in a living room, alongside the benefits of the home-visit service and the steps to book it.',
     missionBannerAlt: 'A person hugging their dog and cat, alongside Nvet Care’s mission statement.',
+    missionStatementSr: 'We care today for a better tomorrow, together. We bring together technology, veterinarians, and families to transform pet health and build a more compassionate world. Care at home. Trust and safety. Holistic wellbeing. Technology that connects. Global impact. Nvet Care isn’t just an app: it’s a movement for animal wellbeing.',
+    missionTitle: 'We care today for a better tomorrow, together.',
+    missionText: 'We bring together technology, veterinarians, and families to transform pet health and build a more compassionate world.',
+    missionValues: ['Care at home', 'Trust and safety', 'Holistic wellbeing', 'Technology that connects', 'Global impact'],
+    missionClosing: 'Nvet Care isn’t just an app. It’s a movement for animal wellbeing.',
     galleryBadge: 'More product concepts',
     galleryTitle: 'Other screens from the concept.',
     galleryText: 'Additional illustrations of the design in progress — mockups, not screenshots of an already-published product.',
@@ -203,6 +213,7 @@ export const NvetCareAppSection: React.FC = () => {
   };
 
   const stepIcons = [MapPin, UserCheck, Car, CalendarCheck];
+  const missionIcons = [Home, ShieldCheck, Heart, Smartphone, Globe];
 
   return (
     <div style={poppinsFont}>
@@ -373,6 +384,7 @@ export const NvetCareAppSection: React.FC = () => {
         </Container>
       </section>
 
+      {es && (
       <section className="relative bg-white pb-20 sm:pb-28">
         <Container>
           <FadeInSection>
@@ -386,9 +398,11 @@ export const NvetCareAppSection: React.FC = () => {
                 className="h-auto w-full"
               />
             </div>
+            <p className="mt-4 text-center text-[9px] uppercase tracking-[0.14em] text-[#8592A0]">{copy.conceptTag}</p>
           </FadeInSection>
         </Container>
       </section>
+      )}
 
       <section className="relative bg-white pb-20 sm:pb-28">
         <Container>
@@ -467,16 +481,39 @@ export const NvetCareAppSection: React.FC = () => {
       <section className="relative bg-[#0D1B2A] py-20 sm:py-28">
         <Container>
           <FadeInSection>
-            <div className="overflow-hidden rounded-2xl">
-              <Image
-                src="/images/nvetcareapp/mission-banner.jpg"
-                alt={copy.missionBannerAlt}
-                width={1536}
-                height={1024}
-                sizes="(min-width: 1152px) 1152px, 100vw"
-                className="h-auto w-full"
-              />
-            </div>
+            {es ? (
+              <div className="overflow-hidden rounded-2xl">
+                <Image
+                  src="/images/nvetcareapp/mission-banner.jpg"
+                  alt={copy.missionBannerAlt}
+                  width={1536}
+                  height={1024}
+                  sizes="(min-width: 1152px) 1152px, 100vw"
+                  className="h-auto w-full"
+                />
+                <span className="sr-only">{copy.missionStatementSr}</span>
+              </div>
+            ) : (
+              <div className="mx-auto max-w-2xl text-center">
+                <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl" style={poppinsFont}>{copy.missionTitle}</h2>
+                <p className="mb-9 text-sm leading-relaxed text-white/70 sm:text-base">{copy.missionText}</p>
+                <div className="mb-9 flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
+                  {copy.missionValues.map((label, index) => {
+                    const Icon = missionIcons[index];
+                    return (
+                      <div key={label} className="flex items-center gap-2">
+                        <Icon size={15} className="text-[#1E9C6C]" aria-hidden="true" />
+                        <span className="text-xs text-white/80">{label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-center gap-3 border-t border-white/10 pt-7">
+                  <Heart size={15} className="shrink-0 text-[#1E9C6C]" aria-hidden="true" />
+                  <p className="text-sm font-medium text-[#1E9C6C]">{copy.missionClosing}</p>
+                </div>
+              </div>
+            )}
           </FadeInSection>
         </Container>
       </section>
