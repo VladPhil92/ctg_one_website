@@ -28,26 +28,33 @@ depositor and an investment participant are).
 
 ## Decision
 The Nvet dashboard does **not** reuse `ctgone.com`'s `AuthContext` or
-Supabase session. It gets its own sign-in screen
-(`src/app/nvetcareapp/dashboard/iniciar-sesion`), separate from
-`/iniciar-sesion`.
+Supabase session. It gets its own sign-in screen at
+`src/app/nvetcareapp/iniciar-sesion` — a sibling of `dashboard/`, not
+nested inside it, so the protection rule below can't intercept the
+sign-in page itself and loop.
 
 The browser never holds the NestJS JWT directly. Sign-in posts to
 `POST /api/nvetcareapp/auth/login` (a Next.js Route Handler), which calls
 the NestJS `/auth/login` server-side and sets the access/refresh tokens
-as `httpOnly`, `secure`, `sameSite=lax` cookies scoped to
-`/nvetcareapp/dashboard` — not `localStorage`, which is what the existing
+as `httpOnly`, `secure`, `sameSite=lax` cookies with `Path=/` — not
+`localStorage`, which is what the existing
 `dashboard/src/services/auth.service.ts` in `Nvet-Care-App` currently
-does client-side. Every subsequent BFF route reads those cookies
-server-side and attaches the bearer token when calling the NestJS API.
-Token refresh is likewise proxied, so refresh-token rotation stays
-server-to-server.
+does client-side, and not path-scoped to `/nvetcareapp/dashboard` either:
+the BFF routes that need to read the cookie live under
+`/api/nvetcareapp/**`, a sibling path the browser wouldn't attach a
+`/nvetcareapp/dashboard`-scoped cookie to. Every subsequent BFF route
+reads the cookie server-side and attaches the bearer token when calling
+the NestJS API. Token refresh is likewise proxied, so refresh-token
+rotation stays server-to-server.
 
-`src/middleware.ts` is extended additively (a new `if` branch, no
-existing branch altered) to require a valid Nvet session cookie for
-`/nvetcareapp/dashboard/**`, the same way it already protects
-`/inversion/app/*` — but checking the Nvet cookie, not the Supabase
-session.
+This repo's request-interception entry point is `src/proxy.ts`, which
+delegates to `src/lib/supabase/middleware.ts` — that's the file that
+already protects `/inversion/app/*` and `/inversion/admin/*` with
+`pathname.startsWith(...)` checks (there is no `src/middleware.ts`).
+The same file gets a new, additive branch requiring a valid Nvet session
+cookie for `/nvetcareapp/dashboard/**` — explicitly excluding
+`/nvetcareapp/iniciar-sesion` — checking the Nvet cookie, not the
+Supabase session.
 
 ## Consequences
 - One extra login for anyone who is both a ctgone.com user and a Nvet

@@ -38,10 +38,11 @@ in `CTG_NVETCARE_API_URL`.
 - `POST /api/nvetcareapp/auth/login`, `POST /api/nvetcareapp/auth/refresh`,
   `POST /api/nvetcareapp/auth/logout` Route Handlers that proxy to the
   NestJS backend and manage the `httpOnly` cookies.
-- `src/app/nvetcareapp/dashboard/iniciar-sesion` page, styled per
-  `adr/ADR-004`.
-- The additive `middleware.ts` branch protecting
-  `/nvetcareapp/dashboard/**`.
+- `src/app/nvetcareapp/iniciar-sesion` page (outside `dashboard/**` —
+  see `adr/ADR-002` on why), styled per `adr/ADR-004`.
+- The additive branch in `src/lib/supabase/middleware.ts` (delegated to
+  from `src/proxy.ts`) protecting `/nvetcareapp/dashboard/**`, excluding
+  the sign-in page.
 - Verify: a real login round-trip against the Phase 1 deployment, a
   refresh after the 15-minute access-token expiry, and that a request
   with no/expired cookie is redirected to sign-in, not served stale data.
