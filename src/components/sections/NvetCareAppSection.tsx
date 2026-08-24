@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -9,23 +9,34 @@ import {
   UserCheck, type LucideIcon,
 } from 'lucide-react';
 import { Container } from '@/components/ui';
-import { Badge } from '@/components/ui/Badge';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ECOSYSTEM_TECHNOLOGY_UNITS, type TechnologyStatus } from '@/data/ecosystem-technology';
 
+// Nvet Care brand palette, sampled directly from the brand kit's own solid
+// button fill (#1E9C6C) and node-accent (#FF8F2E) assets — scoped to this
+// page only via Tailwind arbitrary values, not added to tailwind.config.ts.
+// Class names must stay static string literals (no interpolation) so
+// Tailwind's JIT scanner can pick them up.
 const statusClass: Record<TechnologyStatus, string> = {
-  LIVE: 'border-accent/30 text-accent bg-accent/[0.035]',
+  LIVE: 'border-[#1E9C6C]/30 text-[#1E9C6C] bg-[#1E9C6C]/[0.06]',
   PARTIAL: 'border-amber-200/15 text-amber-100/70 bg-amber-100/[0.02]',
   'IN DEVELOPMENT': 'border-sky-300/20 text-sky-200/75 bg-sky-200/[0.025]',
   ROADMAP: 'border-white/[0.07] text-text-dim bg-white/[0.015]',
 };
 const statusDot: Record<TechnologyStatus, string> = {
-  LIVE: 'bg-accent shadow-[0_0_10px_rgba(212,162,89,0.45)]',
+  LIVE: 'bg-[#1E9C6C] shadow-[0_0_10px_rgba(30,156,108,0.45)]',
   PARTIAL: 'bg-amber-200/60',
   'IN DEVELOPMENT': 'bg-sky-200/60',
   ROADMAP: 'bg-white/20',
 };
+
+// Nvet Care's own type system is Poppins end to end (H1-H3 and body), per
+// its brand kit. The global `h1..h6 { font-family: var(--font-outfit) }`
+// base rule in globals.css targets headings directly, so inheriting the
+// route's --font-poppins-nvet variable from an ancestor isn't enough —
+// each heading needs this applied on the element itself to win.
+const poppinsFont: React.CSSProperties = { fontFamily: 'var(--font-poppins-nvet), Poppins, sans-serif' };
 
 function StatusPill({ status }: { status: TechnologyStatus }) {
   return (
@@ -36,11 +47,23 @@ function StatusPill({ status }: { status: TechnologyStatus }) {
   );
 }
 
+// Nvet Care's own accent color (brand green) instead of the site's global
+// gold `Badge` variant — a local, page-scoped equivalent rather than
+// changing the shared `Badge` component's fixed color for every page.
+function NvetBadge({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`inline-flex items-center text-[11px] sm:text-xs uppercase tracking-[0.18em] font-semibold leading-snug text-[#1E9C6C] ${className}`.trim()}>
+      <span className="w-4 h-px mr-3 bg-[#1E9C6C]/80" aria-hidden="true" />
+      {children}
+    </div>
+  );
+}
+
 function SectionHeader({ badge, title, text }: { badge: string; title: string; text: string }) {
   return (
     <div className="mb-10 max-w-3xl sm:mb-14">
-      <Badge variant="accent" className="mb-6">{badge}</Badge>
-      <h2 className="mb-5 font-outfit text-3xl font-semibold tracking-[-0.035em] text-white sm:text-4xl">{title}</h2>
+      <NvetBadge className="mb-6">{badge}</NvetBadge>
+      <h2 className="mb-5 text-3xl font-semibold tracking-[-0.035em] text-white sm:text-4xl" style={poppinsFont}>{title}</h2>
       <p className="text-sm leading-relaxed text-text-muted sm:text-base">{text}</p>
     </div>
   );
@@ -147,11 +170,11 @@ export const NvetCareAppSection: React.FC = () => {
   const stepIcons = [MapPin, UserCheck, Car, CalendarCheck];
 
   return (
-    <>
+    <div style={poppinsFont}>
       <section className="relative overflow-hidden bg-bg-primary">
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute -top-40 right-[-14%] w-[900px] h-[900px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(140,154,174,0.09), transparent 68%)' }} />
-          <div className="absolute -bottom-32 left-[-10%] w-[700px] h-[700px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(212,162,89,0.06), transparent 70%)' }} />
+          <div className="absolute -bottom-32 left-[-10%] w-[700px] h-[700px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(30,156,108,0.07), transparent 70%)' }} />
         </div>
 
         <div className="relative py-20 sm:py-28 md:py-32">
@@ -164,15 +187,16 @@ export const NvetCareAppSection: React.FC = () => {
                       <span className="relative h-8 w-10">
                         <Image src="/images/logo/nvet-care-icon.png" alt="Nvet Care" fill sizes="40px" className="object-contain" />
                       </span>
+                      <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full bg-[#FF8F2E] ring-2 ring-bg-primary" aria-hidden="true" />
                     </span>
-                    <Badge variant="accent">{copy.badge}</Badge>
+                    <NvetBadge>{copy.badge}</NvetBadge>
                   </div>
                   <div className="mb-5 flex items-center gap-3">
-                    <span className="w-8 h-px bg-accent/60" />
+                    <span className="w-8 h-px bg-[#1E9C6C]/60" />
                     <span className="text-[11px] uppercase tracking-[0.18em] text-text-dim">{copy.eyebrow}</span>
                   </div>
-                  <h1 className="mb-7 font-outfit font-semibold text-4xl sm:text-5xl md:text-[3.4rem] leading-[1.05] tracking-[-0.04em]">
-                    <span className="text-white">{copy.title}</span>{' '}<span className="text-accent">{copy.highlight}</span>
+                  <h1 className="mb-7 font-semibold text-4xl sm:text-5xl md:text-[3.4rem] leading-[1.05] tracking-[-0.04em]" style={poppinsFont}>
+                    <span className="text-white">{copy.title}</span>{' '}<span className="text-[#1E9C6C]">{copy.highlight}</span>
                   </h1>
                   <p className="mb-9 text-sm sm:text-base leading-relaxed text-text-muted max-w-xl">{copy.description}</p>
 
@@ -180,7 +204,7 @@ export const NvetCareAppSection: React.FC = () => {
                     <StoreBadge icon={Apple} label={copy.appStore} sublabel={copy.appStoreSub} />
                     <StoreBadge icon={Smartphone} label={copy.play} sublabel={copy.playSub} />
                   </div>
-                  <Link href={copy.followProgressHref} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-accent hover:text-white transition-colors">
+                  <Link href={copy.followProgressHref} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-[#1E9C6C] hover:text-white transition-colors">
                     <Bell size={13} /> {copy.followProgress} <ArrowUpRight size={13} />
                   </Link>
                 </div>
@@ -192,7 +216,7 @@ export const NvetCareAppSection: React.FC = () => {
                     <div className="rounded-[2rem] border border-white/[0.06] bg-[#050a10] p-5 pt-8">
                       <div className="mx-auto mb-6 h-1 w-16 rounded-full bg-white/10" aria-hidden="true" />
                       <div className="mb-5 flex items-center gap-3">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-accent"><PawPrint size={16} /></span>
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-[#1E9C6C]"><PawPrint size={16} /></span>
                         <div className="min-w-0">
                           <div className="h-2 w-24 rounded-full bg-white/[0.09] mb-1.5" />
                           <div className="h-1.5 w-16 rounded-full bg-white/[0.05]" />
@@ -207,8 +231,8 @@ export const NvetCareAppSection: React.FC = () => {
                           </div>
                         </div>
                       ))}
-                      <div className="mt-4 rounded-xl border border-accent/15 bg-accent/[0.03] p-3 text-center">
-                        <span className="text-[9px] uppercase tracking-[0.14em] text-accent/80">{es ? 'Concepto de producto' : 'Product concept'}</span>
+                      <div className="mt-4 rounded-xl border border-[#1E9C6C]/15 bg-[#1E9C6C]/[0.05] p-3 text-center">
+                        <span className="text-[9px] uppercase tracking-[0.14em] text-[#1E9C6C]/90">{es ? 'Concepto de producto' : 'Product concept'}</span>
                       </div>
                     </div>
                   </div>
@@ -227,15 +251,15 @@ export const NvetCareAppSection: React.FC = () => {
                     <span className="text-[9px] uppercase tracking-[0.18em] text-text-dim">{copy.statusBadge}</span>
                     {unit && <StatusPill status={unit.status} />}
                   </div>
-                  <h2 className="mb-3 font-outfit text-lg text-white">{copy.statusTitle}</h2>
+                  <h2 className="mb-3 text-lg text-white" style={poppinsFont}>{copy.statusTitle}</h2>
                   <p className="text-sm leading-relaxed text-text-muted">{copy.statusText}</p>
                 </div>
               </FadeInSection>
               <FadeInSection direction="right" delay={0.05}>
-                <div className="h-full rounded-2xl border border-accent/15 bg-accent/[0.025] p-7 sm:p-8">
+                <div className="h-full rounded-2xl border border-[#1E9C6C]/15 bg-[#1E9C6C]/[0.04] p-7 sm:p-8">
                   <div className="mb-5 flex items-center gap-3">
-                    <Eye size={17} className="text-accent" />
-                    <span className="text-[9px] uppercase tracking-[0.18em] text-accent">{copy.evidenceTitle}</span>
+                    <Eye size={17} className="text-[#1E9C6C]" />
+                    <span className="text-[9px] uppercase tracking-[0.18em] text-[#1E9C6C]">{copy.evidenceTitle}</span>
                   </div>
                   <p className="text-sm leading-relaxed text-text-muted">{copy.evidenceText}</p>
                 </div>
@@ -257,14 +281,14 @@ export const NvetCareAppSection: React.FC = () => {
               return (
                 <FadeInSection key={card.title} delay={0.03 + index * 0.05}>
                   <div className="h-full rounded-2xl border border-white/[0.055] bg-black/20 p-7 sm:p-8">
-                    <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-full border border-accent/20 text-accent">
+                    <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-full border border-[#1E9C6C]/20 text-[#1E9C6C]">
                       <Icon size={18} />
                     </div>
-                    <h3 className="mb-5 font-outfit text-xl text-white">{card.title}</h3>
+                    <h3 className="mb-5 text-xl text-white" style={poppinsFont}>{card.title}</h3>
                     <ul className="space-y-3">
                       {card.items.map((item) => (
                         <li key={item} className="flex items-start gap-3 text-sm text-text-muted leading-relaxed">
-                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent/60" />
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#FF8F2E]/70" />
                           {item}
                         </li>
                       ))}
@@ -287,10 +311,10 @@ export const NvetCareAppSection: React.FC = () => {
                 <FadeInSection key={step.title} delay={0.03 + index * 0.05}>
                   <div className="h-full rounded-2xl border border-white/[0.055] bg-white/[0.01] p-6">
                     <div className="mb-5 flex items-center justify-between">
-                      <span className="font-mono text-[10px] text-accent/60">{String(index + 1).padStart(2, '0')}</span>
+                      <span className="font-mono text-[10px] text-[#FF8F2E]/80">{String(index + 1).padStart(2, '0')}</span>
                       <Icon size={16} className="text-text-dim" aria-hidden="true" />
                     </div>
-                    <h3 className="mb-2.5 font-outfit text-base text-white">{step.title}</h3>
+                    <h3 className="mb-2.5 text-base text-white" style={poppinsFont}>{step.title}</h3>
                     <p className="text-xs leading-relaxed text-text-muted">{step.text}</p>
                   </div>
                 </FadeInSection>
@@ -317,7 +341,7 @@ export const NvetCareAppSection: React.FC = () => {
               </div>
             </FadeInSection>
           )}
-          <Link href="/ecosystem" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-accent hover:text-white transition-colors">
+          <Link href="/ecosystem" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-[#1E9C6C] hover:text-white transition-colors">
             {copy.capsLink} <ArrowUpRight size={13} />
           </Link>
         </Container>
@@ -332,8 +356,8 @@ export const NvetCareAppSection: React.FC = () => {
               return (
                 <FadeInSection key={item.title} delay={0.03 + index * 0.04}>
                   <div className="h-full rounded-2xl border border-white/[0.05] p-6">
-                    <Icon size={18} className="text-accent mb-5" />
-                    <h3 className="mb-2.5 font-outfit text-sm text-white">{item.title}</h3>
+                    <Icon size={18} className="text-[#1E9C6C] mb-5" />
+                    <h3 className="mb-2.5 text-sm text-white" style={poppinsFont}>{item.title}</h3>
                     <p className="text-xs leading-relaxed text-text-dim">{item.text}</p>
                   </div>
                 </FadeInSection>
@@ -346,16 +370,16 @@ export const NvetCareAppSection: React.FC = () => {
       <section className="relative bg-bg-secondary border-t border-white/[0.035] py-20 sm:py-28">
         <Container>
           <FadeInSection>
-            <Badge variant="accent" className="mb-6">{copy.faqBadge}</Badge>
-            <h2 className="mb-10 font-outfit text-3xl font-semibold tracking-[-0.035em] text-white sm:text-4xl">{copy.faqTitle}</h2>
+            <NvetBadge className="mb-6">{copy.faqBadge}</NvetBadge>
+            <h2 className="mb-10 text-3xl font-semibold tracking-[-0.035em] text-white sm:text-4xl" style={poppinsFont}>{copy.faqTitle}</h2>
           </FadeInSection>
           <div className="grid sm:grid-cols-2 gap-4">
             {copy.faqs.map((faq, index) => (
               <FadeInSection key={faq.q} delay={0.02 + index * 0.03}>
                 <div className="h-full rounded-xl border border-white/[0.05] p-6">
                   <div className="mb-3 flex items-start gap-2.5">
-                    <MessageCircle size={14} className="mt-0.5 shrink-0 text-accent/70" />
-                    <h3 className="text-sm text-white">{faq.q}</h3>
+                    <MessageCircle size={14} className="mt-0.5 shrink-0 text-[#1E9C6C]/80" />
+                    <h3 className="text-sm text-white" style={poppinsFont}>{faq.q}</h3>
                   </div>
                   <p className="text-xs leading-relaxed text-text-muted">{faq.a}</p>
                 </div>
@@ -368,13 +392,13 @@ export const NvetCareAppSection: React.FC = () => {
       <section className="relative bg-bg-primary py-20 sm:py-24">
         <Container>
           <FadeInSection>
-            <div className="rounded-2xl border border-accent/15 bg-accent/[0.025] p-7 sm:p-10 grid md:grid-cols-[1fr_auto] gap-8 items-center">
+            <div className="rounded-2xl border border-[#1E9C6C]/15 bg-[#1E9C6C]/[0.04] p-7 sm:p-10 grid md:grid-cols-[1fr_auto] gap-8 items-center">
               <div>
-                <h2 className="mb-3 font-outfit text-2xl sm:text-3xl text-white">{copy.closingTitle}</h2>
+                <h2 className="mb-3 text-2xl sm:text-3xl text-white" style={poppinsFont}>{copy.closingTitle}</h2>
                 <p className="max-w-2xl text-sm leading-relaxed text-text-muted">{copy.closingText}</p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Link href="/contact" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-accent/25 px-5 py-3 text-xs uppercase tracking-[0.12em] text-accent hover:bg-accent/5 transition-colors whitespace-nowrap">
+                <Link href="/contact" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#1E9C6C]/25 px-5 py-3 text-xs uppercase tracking-[0.12em] text-[#1E9C6C] hover:bg-[#1E9C6C]/10 transition-colors whitespace-nowrap">
                   {copy.contactCta} <ArrowUpRight size={13} />
                 </Link>
                 <Link href="/changelog" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/[0.09] px-5 py-3 text-xs uppercase tracking-[0.12em] text-text-muted hover:text-white transition-colors whitespace-nowrap">
@@ -385,6 +409,6 @@ export const NvetCareAppSection: React.FC = () => {
           </FadeInSection>
         </Container>
       </section>
-    </>
+    </div>
   );
 };
