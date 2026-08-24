@@ -22,16 +22,16 @@ import { ECOSYSTEM_TECHNOLOGY_UNITS, type TechnologyStatus } from '@/data/ecosys
 // untouched. Class names must stay static string literals (no
 // interpolation) so Tailwind's JIT scanner can pick them up.
 const statusClass: Record<TechnologyStatus, string> = {
-  LIVE: 'border-[#1E9C6C]/25 text-[#1E9C6C] bg-[#1E9C6C]/[0.08]',
+  LIVE: 'border-[#34B27A]/25 text-[#34B27A] bg-[#34B27A]/[0.08]',
   PARTIAL: 'border-amber-500/25 text-amber-700 bg-amber-500/[0.08]',
   'IN DEVELOPMENT': 'border-sky-500/25 text-sky-700 bg-sky-500/[0.08]',
-  ROADMAP: 'border-[#0A1B2E]/12 text-[#5B6670] bg-[#0A1B2E]/[0.03]',
+  ROADMAP: 'border-[#0D1B2A]/12 text-[#5B6670] bg-[#0D1B2A]/[0.03]',
 };
 const statusDot: Record<TechnologyStatus, string> = {
-  LIVE: 'bg-[#1E9C6C] shadow-[0_0_8px_rgba(30,156,108,0.5)]',
+  LIVE: 'bg-[#34B27A] shadow-[0_0_8px_rgba(52,178,122,0.5)]',
   PARTIAL: 'bg-amber-500',
   'IN DEVELOPMENT': 'bg-sky-500',
-  ROADMAP: 'bg-[#0A1B2E]/30',
+  ROADMAP: 'bg-[#0D1B2A]/30',
 };
 
 // Poppins end to end (H1-H3 and body), per the brand kit's own typography
@@ -55,7 +55,7 @@ function StatusPill({ status }: { status: TechnologyStatus }) {
 // `Badge` component, which stays untouched for every other page.
 function NvetPill({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 rounded-full border-[1px] border-[#1E9C6C]/25 bg-[#1E9C6C]/[0.06] px-3.5 py-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1E9C6C] ${className}`.trim()}>
+    <span className={`inline-flex items-center gap-2 rounded-full border-[1px] border-[#34B27A]/25 bg-[#34B27A]/[0.06] px-3.5 py-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.16em] text-[#34B27A] ${className}`.trim()}>
       {children}
     </span>
   );
@@ -67,9 +67,9 @@ function NvetPill({ children, className = '' }: { children: ReactNode; className
 // Lucide icons.
 function NodeIcon({ icon: Icon, size = 18, tone = 'navy' }: { icon: LucideIcon; size?: number; tone?: 'navy' | 'green' }) {
   return (
-    <span className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-[1px] border-[#0A1B2E]/10 bg-white shadow-[0_1px_2px_rgba(10,27,46,0.04)]">
-      <Icon size={size} strokeWidth={1.75} className={tone === 'green' ? 'text-[#1E9C6C]' : 'text-[#0A1B2E]'} aria-hidden="true" />
-      <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full bg-[#FF8F2E] ring-2 ring-white" aria-hidden="true" />
+    <span className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-[1px] border-[#0D1B2A]/10 bg-white shadow-[0_1px_2px_rgba(13,27,42,0.04)]">
+      <Icon size={size} strokeWidth={1.75} className={tone === 'green' ? 'text-[#34B27A]' : 'text-[#0D1B2A]'} aria-hidden="true" />
+      <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full bg-[#FF8A3D] ring-2 ring-white" aria-hidden="true" />
     </span>
   );
 }
@@ -78,7 +78,7 @@ function SectionHeader({ badge, title, text }: { badge: string; title: string; t
   return (
     <div className="mb-10 max-w-3xl sm:mb-14">
       <NvetPill className="mb-6">{badge}</NvetPill>
-      <h2 className="mb-5 text-3xl font-bold tracking-[-0.025em] text-[#0A1B2E] sm:text-4xl" style={poppinsFont}>{title}</h2>
+      <h2 className="mb-5 text-3xl font-bold tracking-[-0.025em] text-[#0D1B2A] sm:text-4xl" style={poppinsFont}>{title}</h2>
       <p className="text-sm leading-relaxed text-[#4A5A68] sm:text-base">{text}</p>
     </div>
   );
@@ -87,13 +87,13 @@ function SectionHeader({ badge, title, text }: { badge: string; title: string; t
 function StoreBadge({ icon: Icon, label, sublabel }: { icon: LucideIcon; label: string; sublabel: string }) {
   return (
     <div
-      className="flex min-h-14 items-center gap-3 rounded-xl border-[1px] border-[#0A1B2E]/10 bg-[#0A1B2E]/[0.02] px-4 py-2.5 opacity-90"
+      className="flex min-h-14 items-center gap-3 rounded-xl border-[1px] border-[#0D1B2A]/10 bg-[#0D1B2A]/[0.02] px-4 py-2.5 opacity-90"
       aria-disabled="true"
     >
       <Icon size={22} className="shrink-0 text-[#5B6670]" aria-hidden="true" />
       <div className="min-w-0">
         <p className="text-[9px] uppercase tracking-[0.1em] text-[#8592A0]">{sublabel}</p>
-        <p className="truncate text-sm text-[#0A1B2E]">{label}</p>
+        <p className="truncate text-sm text-[#0D1B2A]">{label}</p>
       </div>
     </div>
   );
@@ -219,7 +219,7 @@ export const NvetCareAppSection: React.FC = () => {
     <div style={poppinsFont}>
       <section className="relative overflow-hidden bg-white">
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div className="absolute -top-40 right-[-14%] w-[900px] h-[900px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(30,156,108,0.05), transparent 68%)' }} />
+          <div className="absolute -top-40 right-[-14%] w-[900px] h-[900px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(52,178,122,0.05), transparent 68%)' }} />
           <div className="absolute -bottom-32 left-[-10%] w-[700px] h-[700px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,143,46,0.05), transparent 70%)' }} />
           <Image
             src="/images/logo/nvet-care-icon.png"
@@ -238,29 +238,29 @@ export const NvetCareAppSection: React.FC = () => {
               <FadeInSection>
                 <div className="max-w-2xl">
                   <div className="mb-6 flex items-center gap-3">
-                    <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl border-[1px] border-[#0A1B2E]/8 bg-[#0A1B2E]/[0.02]">
+                    <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl border-[1px] border-[#0D1B2A]/8 bg-[#0D1B2A]/[0.02]">
                       <span className="relative h-7 w-9">
                         <Image src="/images/logo/nvet-care-icon.png" alt="Nvet Care" fill sizes="36px" className="object-contain" />
                       </span>
                     </span>
                     <span className="text-xl font-bold tracking-[-0.01em]" style={poppinsFont}>
-                      <span className="text-[#0A1B2E]">Nvet</span> <span className="text-[#1E9C6C]">Care</span>
+                      <span className="text-[#0D1B2A]">Nvet</span> <span className="text-[#34B27A]">Care</span>
                     </span>
                   </div>
                   <NvetPill className="mb-6">{copy.badge}</NvetPill>
                   <div className="mb-5 flex items-center gap-3">
-                    <span className="w-8 h-px bg-[#1E9C6C]/60" />
+                    <span className="w-8 h-px bg-[#34B27A]/60" />
                     <span className="text-[11px] uppercase tracking-[0.18em] text-[#8592A0]">{copy.eyebrow}</span>
                   </div>
                   <h1 className="mb-7 font-extrabold text-4xl sm:text-5xl md:text-[3.4rem] leading-[1.05] tracking-[-0.03em]" style={poppinsFont}>
-                    <span className="text-[#0A1B2E]">{copy.title}</span>{' '}<span className="text-[#1E9C6C]">{copy.highlight}</span>
+                    <span className="text-[#0D1B2A]">{copy.title}</span>{' '}<span className="text-[#34B27A]">{copy.highlight}</span>
                   </h1>
                   <p className="mb-9 text-sm sm:text-base leading-relaxed text-[#4A5A68] max-w-xl">{copy.description}</p>
 
                   <div className="flex flex-wrap items-center gap-4 mb-6">
                     <Link
                       href={copy.followProgressHref}
-                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#1E9C6C] px-6 py-3 text-xs font-semibold uppercase tracking-[0.1em] text-white shadow-[0_10px_24px_rgba(30,156,108,0.28)] transition-transform hover:-translate-y-0.5 hover:bg-[#178258]"
+                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#34B27A] px-6 py-3 text-xs font-semibold uppercase tracking-[0.1em] text-white shadow-[0_10px_24px_rgba(52,178,122,0.28)] transition-transform hover:-translate-y-0.5 hover:bg-[#289463]"
                     >
                       <Bell size={13} /> {copy.followProgress} <ArrowUpRight size={13} />
                     </Link>
@@ -281,7 +281,7 @@ export const NvetCareAppSection: React.FC = () => {
                     aria-hidden="true"
                     width={266}
                     height={216}
-                    className="absolute -right-5 -top-8 hidden w-28 -rotate-6 rounded-2xl shadow-[0_20px_40px_rgba(10,27,46,0.18)] sm:block"
+                    className="absolute -right-5 -top-8 hidden w-28 -rotate-6 rounded-2xl shadow-[0_20px_40px_rgba(13,27,42,0.18)] sm:block"
                   />
                   <Image
                     src={es ? '/images/nvetcareapp/vet-tracking-mockup-es.png' : '/images/nvetcareapp/vet-tracking-mockup-en.png'}
@@ -289,7 +289,7 @@ export const NvetCareAppSection: React.FC = () => {
                     width={432}
                     height={348}
                     loading="eager"
-                    className="relative h-auto w-full drop-shadow-[0_30px_60px_rgba(10,27,46,0.18)]"
+                    className="relative h-auto w-full drop-shadow-[0_30px_60px_rgba(13,27,42,0.18)]"
                   />
                   <p className="mt-4 text-center text-[9px] font-medium uppercase tracking-[0.14em] text-[#4A5A68]">{copy.conceptTag}</p>
                 </div>
@@ -302,20 +302,20 @@ export const NvetCareAppSection: React.FC = () => {
           <Container>
             <div className="grid lg:grid-cols-2 gap-6">
               <FadeInSection direction="left">
-                <div className="h-full rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] bg-white p-7 sm:p-8 shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+                <div className="h-full rounded-2xl border-[1px] border-[#0D1B2A]/[0.08] bg-white p-7 sm:p-8 shadow-[0_1px_3px_rgba(13,27,42,0.04)]">
                   <div className="mb-5 flex items-center justify-between gap-4">
                     <span className="text-[9px] uppercase tracking-[0.18em] text-[#8592A0]">{copy.statusBadge}</span>
                     {unit && <StatusPill status={unit.status} />}
                   </div>
-                  <h2 className="mb-3 text-lg font-semibold text-[#0A1B2E]" style={poppinsFont}>{copy.statusTitle}</h2>
+                  <h2 className="mb-3 text-lg font-semibold text-[#0D1B2A]" style={poppinsFont}>{copy.statusTitle}</h2>
                   <p className="text-sm leading-relaxed text-[#4A5A68]">{copy.statusText}</p>
                 </div>
               </FadeInSection>
               <FadeInSection direction="right" delay={0.05}>
-                <div className="h-full rounded-2xl border-[1px] border-[#1E9C6C]/15 bg-[#1E9C6C]/[0.04] p-7 sm:p-8">
+                <div className="h-full rounded-2xl border-[1px] border-[#34B27A]/15 bg-[#34B27A]/[0.04] p-7 sm:p-8">
                   <div className="mb-5 flex items-center gap-3">
-                    <Eye size={17} className="text-[#1E9C6C]" />
-                    <span className="text-[9px] uppercase tracking-[0.18em] text-[#1E9C6C]">{copy.evidenceTitle}</span>
+                    <Eye size={17} className="text-[#34B27A]" />
+                    <span className="text-[9px] uppercase tracking-[0.18em] text-[#34B27A]">{copy.evidenceTitle}</span>
                   </div>
                   <p className="text-sm leading-relaxed text-[#4A5A68]">{copy.evidenceText}</p>
                 </div>
@@ -325,7 +325,7 @@ export const NvetCareAppSection: React.FC = () => {
         </div>
       </section>
 
-      <section className="relative bg-[#FAFBFC] border-y border-[#0A1B2E]/[0.05] py-20 sm:py-28">
+      <section className="relative bg-[#FAFBFC] border-y border-[#0D1B2A]/[0.05] py-20 sm:py-28">
         <Container>
           <SectionHeader badge={copy.audienceBadge} title={copy.audienceTitle} text={copy.audienceText} />
           <div className="grid md:grid-cols-2 gap-5">
@@ -334,7 +334,7 @@ export const NvetCareAppSection: React.FC = () => {
               { icon: Stethoscope, title: copy.vetTitle, items: copy.vetItems, tone: 'navy' as const, photo: null, photoAlt: '' },
             ].map((card, index) => (
               <FadeInSection key={card.title} delay={0.03 + index * 0.05}>
-                <div className="h-full overflow-hidden rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] bg-white shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+                <div className="h-full overflow-hidden rounded-2xl border-[1px] border-[#0D1B2A]/[0.08] bg-white shadow-[0_1px_3px_rgba(13,27,42,0.04)]">
                   {card.photo && (
                     <div className="relative h-40 w-full sm:h-48">
                       <Image src={card.photo} alt={card.photoAlt} fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
@@ -344,11 +344,11 @@ export const NvetCareAppSection: React.FC = () => {
                     <div className="mb-6">
                       <NodeIcon icon={card.icon} size={19} tone={card.tone} />
                     </div>
-                    <h3 className="mb-5 text-xl font-semibold text-[#0A1B2E]" style={poppinsFont}>{card.title}</h3>
+                    <h3 className="mb-5 text-xl font-semibold text-[#0D1B2A]" style={poppinsFont}>{card.title}</h3>
                     <ul className="space-y-3">
                       {card.items.map((item) => (
                         <li key={item} className="flex items-start gap-3 text-sm text-[#4A5A68] leading-relaxed">
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF8F2E]" />
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF8A3D]" />
                           {item}
                         </li>
                       ))}
@@ -369,12 +369,12 @@ export const NvetCareAppSection: React.FC = () => {
               const Icon = stepIcons[index];
               return (
                 <FadeInSection key={step.title} delay={0.03 + index * 0.05}>
-                  <div className="h-full rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] bg-white p-6 shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+                  <div className="h-full rounded-2xl border-[1px] border-[#0D1B2A]/[0.08] bg-white p-6 shadow-[0_1px_3px_rgba(13,27,42,0.04)]">
                     <div className="mb-5 flex items-center justify-between">
-                      <span className="font-mono text-[10px] text-[#FF8F2E] font-semibold">{String(index + 1).padStart(2, '0')}</span>
+                      <span className="font-mono text-[10px] text-[#FF8A3D] font-semibold">{String(index + 1).padStart(2, '0')}</span>
                       <NodeIcon icon={Icon} size={15} tone={index % 2 === 0 ? 'green' : 'navy'} />
                     </div>
-                    <h3 className="mb-2.5 text-base font-semibold text-[#0A1B2E]" style={poppinsFont}>{step.title}</h3>
+                    <h3 className="mb-2.5 text-base font-semibold text-[#0D1B2A]" style={poppinsFont}>{step.title}</h3>
                     <p className="text-xs leading-relaxed text-[#4A5A68]">{step.text}</p>
                   </div>
                 </FadeInSection>
@@ -388,7 +388,7 @@ export const NvetCareAppSection: React.FC = () => {
       <section className="relative bg-white pb-20 sm:pb-28">
         <Container>
           <FadeInSection>
-            <div className="overflow-hidden rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+            <div className="overflow-hidden rounded-2xl border-[1px] border-[#0D1B2A]/[0.08] shadow-[0_1px_3px_rgba(13,27,42,0.04)]">
               <Image
                 src="/images/nvetcareapp/feature-showcase.jpg"
                 alt={copy.featureShowcaseAlt}
@@ -409,7 +409,7 @@ export const NvetCareAppSection: React.FC = () => {
           <SectionHeader badge={copy.galleryBadge} title={copy.galleryTitle} text={copy.galleryText} />
           <div className="grid sm:grid-cols-2 gap-6">
             <FadeInSection direction="left">
-              <div className="mx-auto max-w-[380px] overflow-hidden rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+              <div className="mx-auto max-w-[380px] overflow-hidden rounded-2xl border-[1px] border-[#0D1B2A]/[0.08] shadow-[0_1px_3px_rgba(13,27,42,0.04)]">
                 <Image
                   src="/images/nvetcareapp/vet-tracking-full.jpg"
                   alt={copy.mapTrackingFullAlt}
@@ -421,7 +421,7 @@ export const NvetCareAppSection: React.FC = () => {
               </div>
             </FadeInSection>
             <FadeInSection direction="right" delay={0.05}>
-              <div className="mx-auto max-w-[380px] overflow-hidden rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+              <div className="mx-auto max-w-[380px] overflow-hidden rounded-2xl border-[1px] border-[#0D1B2A]/[0.08] shadow-[0_1px_3px_rgba(13,27,42,0.04)]">
                 <Image
                   src="/images/nvetcareapp/home-screen-phone.jpg"
                   alt={copy.homeScreenPhotoAlt}
@@ -436,15 +436,15 @@ export const NvetCareAppSection: React.FC = () => {
         </Container>
       </section>
 
-      <section className="relative bg-[#FAFBFC] border-y border-[#0A1B2E]/[0.05] py-20 sm:py-28">
+      <section className="relative bg-[#FAFBFC] border-y border-[#0D1B2A]/[0.05] py-20 sm:py-28">
         <Container>
           <SectionHeader badge={copy.capsBadge} title={copy.capsTitle} text={copy.capsText} />
           {unit && (
             <FadeInSection>
-              <div className="rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] bg-white p-6 sm:p-7 mb-8 shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+              <div className="rounded-2xl border-[1px] border-[#0D1B2A]/[0.08] bg-white p-6 sm:p-7 mb-8 shadow-[0_1px_3px_rgba(13,27,42,0.04)]">
                 <div className="space-y-2.5">
                   {unit.capabilities.map((capability) => (
-                    <div key={capability.nameEn} className="flex min-h-11 items-center justify-between gap-3 rounded-lg border-[1px] border-[#0A1B2E]/[0.05] px-4 py-3">
+                    <div key={capability.nameEn} className="flex min-h-11 items-center justify-between gap-3 rounded-lg border-[1px] border-[#0D1B2A]/[0.05] px-4 py-3">
                       <span className="text-sm text-[#334352]">{es ? capability.nameEs : capability.nameEn}</span>
                       <StatusPill status={capability.status} />
                     </div>
@@ -453,7 +453,7 @@ export const NvetCareAppSection: React.FC = () => {
               </div>
             </FadeInSection>
           )}
-          <Link href="/ecosystem" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-[#1E9C6C] hover:text-[#0A1B2E] transition-colors">
+          <Link href="/ecosystem" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-[#34B27A] hover:text-[#0D1B2A] transition-colors">
             {copy.capsLink} <ArrowUpRight size={13} />
           </Link>
         </Container>
@@ -465,11 +465,11 @@ export const NvetCareAppSection: React.FC = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {copy.trustItems.map((item, index) => (
               <FadeInSection key={item.title} delay={0.03 + index * 0.04}>
-                <div className="h-full rounded-2xl border-[1px] border-[#0A1B2E]/[0.07] p-6">
+                <div className="h-full rounded-2xl border-[1px] border-[#0D1B2A]/[0.07] p-6">
                   <div className="mb-5">
                     <NodeIcon icon={item.icon} tone={index % 2 === 0 ? 'green' : 'navy'} />
                   </div>
-                  <h3 className="mb-2.5 text-sm font-semibold text-[#0A1B2E]" style={poppinsFont}>{item.title}</h3>
+                  <h3 className="mb-2.5 text-sm font-semibold text-[#0D1B2A]" style={poppinsFont}>{item.title}</h3>
                   <p className="text-xs leading-relaxed text-[#5B6670]">{item.text}</p>
                 </div>
               </FadeInSection>
@@ -502,15 +502,15 @@ export const NvetCareAppSection: React.FC = () => {
                     const Icon = missionIcons[index];
                     return (
                       <div key={label} className="flex items-center gap-2">
-                        <Icon size={15} className="text-[#1E9C6C]" aria-hidden="true" />
+                        <Icon size={15} className="text-[#34B27A]" aria-hidden="true" />
                         <span className="text-xs text-white/80">{label}</span>
                       </div>
                     );
                   })}
                 </div>
                 <div className="flex items-center justify-center gap-3 border-t border-white/10 pt-7">
-                  <Heart size={15} className="shrink-0 text-[#1E9C6C]" aria-hidden="true" />
-                  <p className="text-sm font-medium text-[#1E9C6C]">{copy.missionClosing}</p>
+                  <Heart size={15} className="shrink-0 text-[#34B27A]" aria-hidden="true" />
+                  <p className="text-sm font-medium text-[#34B27A]">{copy.missionClosing}</p>
                 </div>
               </div>
             )}
@@ -518,19 +518,19 @@ export const NvetCareAppSection: React.FC = () => {
         </Container>
       </section>
 
-      <section className="relative bg-[#FAFBFC] border-t border-[#0A1B2E]/[0.05] py-20 sm:py-28">
+      <section className="relative bg-[#FAFBFC] border-t border-[#0D1B2A]/[0.05] py-20 sm:py-28">
         <Container>
           <FadeInSection>
             <NvetPill className="mb-6">{copy.faqBadge}</NvetPill>
-            <h2 className="mb-10 text-3xl font-bold tracking-[-0.025em] text-[#0A1B2E] sm:text-4xl" style={poppinsFont}>{copy.faqTitle}</h2>
+            <h2 className="mb-10 text-3xl font-bold tracking-[-0.025em] text-[#0D1B2A] sm:text-4xl" style={poppinsFont}>{copy.faqTitle}</h2>
           </FadeInSection>
           <div className="grid sm:grid-cols-2 gap-4">
             {copy.faqs.map((faq, index) => (
               <FadeInSection key={faq.q} delay={0.02 + index * 0.03}>
-                <div className="h-full rounded-xl border-[1px] border-[#0A1B2E]/[0.08] bg-white p-6 shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+                <div className="h-full rounded-xl border-[1px] border-[#0D1B2A]/[0.08] bg-white p-6 shadow-[0_1px_3px_rgba(13,27,42,0.04)]">
                   <div className="mb-3 flex items-start gap-2.5">
-                    <MessageCircle size={14} className="mt-0.5 shrink-0 text-[#1E9C6C]" />
-                    <h3 className="text-sm font-semibold text-[#0A1B2E]" style={poppinsFont}>{faq.q}</h3>
+                    <MessageCircle size={14} className="mt-0.5 shrink-0 text-[#34B27A]" />
+                    <h3 className="text-sm font-semibold text-[#0D1B2A]" style={poppinsFont}>{faq.q}</h3>
                   </div>
                   <p className="text-xs leading-relaxed text-[#4A5A68]">{faq.a}</p>
                 </div>
@@ -543,16 +543,16 @@ export const NvetCareAppSection: React.FC = () => {
       <section className="relative bg-white py-20 sm:py-24">
         <Container>
           <FadeInSection>
-            <div className="rounded-2xl border-[1px] border-[#1E9C6C]/15 bg-[#1E9C6C]/[0.04] p-7 sm:p-10 grid md:grid-cols-[1fr_auto] gap-8 items-center">
+            <div className="rounded-2xl border-[1px] border-[#34B27A]/15 bg-[#34B27A]/[0.04] p-7 sm:p-10 grid md:grid-cols-[1fr_auto] gap-8 items-center">
               <div>
-                <h2 className="mb-3 text-2xl sm:text-3xl font-bold text-[#0A1B2E]" style={poppinsFont}>{copy.closingTitle}</h2>
+                <h2 className="mb-3 text-2xl sm:text-3xl font-bold text-[#0D1B2A]" style={poppinsFont}>{copy.closingTitle}</h2>
                 <p className="max-w-2xl text-sm leading-relaxed text-[#4A5A68]">{copy.closingText}</p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Link href="/contact" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#1E9C6C] px-5 py-3 text-xs font-semibold uppercase tracking-[0.1em] text-white shadow-[0_8px_20px_rgba(30,156,108,0.25)] transition-transform hover:-translate-y-0.5 hover:bg-[#178258] whitespace-nowrap">
+                <Link href="/contact" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#34B27A] px-5 py-3 text-xs font-semibold uppercase tracking-[0.1em] text-white shadow-[0_8px_20px_rgba(52,178,122,0.25)] transition-transform hover:-translate-y-0.5 hover:bg-[#289463] whitespace-nowrap">
                   {copy.contactCta} <ArrowUpRight size={13} />
                 </Link>
-                <Link href="/changelog" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-[1px] border-[#1E9C6C]/30 bg-white px-5 py-3 text-xs font-semibold uppercase tracking-[0.1em] text-[#1E9C6C] hover:bg-[#1E9C6C]/5 transition-colors whitespace-nowrap">
+                <Link href="/changelog" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-[1px] border-[#34B27A]/30 bg-white px-5 py-3 text-xs font-semibold uppercase tracking-[0.1em] text-[#34B27A] hover:bg-[#34B27A]/5 transition-colors whitespace-nowrap">
                   {copy.changelogCta}
                 </Link>
               </div>
