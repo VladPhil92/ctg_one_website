@@ -143,6 +143,8 @@ export const NvetCareAppSection: React.FC = () => {
     closingTitle: 'La app todavía no está publicada.', closingText: 'Este subsitio se actualiza en cuanto exista evidencia real de producto, siguiendo la misma regla de evidencia que el resto de CTG One.',
     contactCta: 'Escríbenos', changelogCta: 'Ver changelog',
     conceptTag: 'Concepto de producto',
+    mockupAlt: 'Maqueta de diseño de la pantalla de seguimiento de una visita veterinaria a domicilio, con el estado del servicio y el tiempo estimado de llegada.',
+    ownerPhotoAlt: 'Una persona abraza a su perro en casa.',
   } : {
     badge: 'NVET CARE APP · Mobile app in development',
     eyebrow: 'On-demand home-visit veterinary marketplace in Cartagena',
@@ -182,6 +184,8 @@ export const NvetCareAppSection: React.FC = () => {
     closingTitle: 'The app is not published yet.', closingText: 'This subsite updates as soon as real product evidence exists, following the same evidence rule as the rest of CTG One.',
     contactCta: 'Contact us', changelogCta: 'View changelog',
     conceptTag: 'Product concept',
+    mockupAlt: 'Design mockup of the home-visit tracking screen, showing service status and estimated arrival time.',
+    ownerPhotoAlt: 'A person hugging their dog at home.',
   };
 
   const stepIcons = [MapPin, UserCheck, Car, CalendarCheck];
@@ -244,26 +248,25 @@ export const NvetCareAppSection: React.FC = () => {
               </FadeInSection>
 
               <FadeInSection direction="left" delay={0.08}>
-                <div className="relative mx-auto w-full max-w-[300px]">
-                  <div className="rounded-[2.5rem] border-[1px] border-[#0A1B2E]/10 bg-white p-3 shadow-[0_40px_100px_rgba(10,27,46,0.14)]">
-                    <div className="rounded-[2rem] border-[1px] border-[#0A1B2E]/[0.06] bg-[#FAFBFC] p-5 pt-8">
-                      <div className="mx-auto mb-6 h-1 w-16 rounded-full bg-[#0A1B2E]/10" aria-hidden="true" />
-                      <div className="mb-5 rounded-xl border-[1px] border-[#1E9C6C]/15 bg-[#1E9C6C]/[0.06] p-2.5 text-center">
-                        <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#1E9C6C]">{copy.conceptTag}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        {copy.steps.map((step, index) => {
-                          const Icon = stepIcons[index];
-                          return (
-                            <div key={step.title} className="flex flex-col items-center gap-2 rounded-xl border-[1px] border-[#0A1B2E]/[0.06] bg-white p-3 text-center">
-                              <NodeIcon icon={Icon} size={16} tone={index % 2 === 0 ? 'green' : 'navy'} />
-                              <span className="text-[10px] leading-tight text-[#0A1B2E]">{step.title}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
+                <div className="relative mx-auto w-full max-w-[280px]">
+                  {/* A pattern tile from the brand kit's own graphic-pattern sheet ("Conexión de nodos") — pure abstract art, no text or claims. */}
+                  <Image
+                    src="/images/nvetcareapp/pattern-nodes.png"
+                    alt=""
+                    aria-hidden="true"
+                    width={266}
+                    height={216}
+                    className="absolute -right-5 -top-8 hidden w-28 -rotate-6 rounded-2xl shadow-[0_20px_40px_rgba(10,27,46,0.18)] sm:block"
+                  />
+                  <Image
+                    src={es ? '/images/nvetcareapp/vet-tracking-mockup-es.png' : '/images/nvetcareapp/vet-tracking-mockup-en.png'}
+                    alt={copy.mockupAlt}
+                    width={432}
+                    height={348}
+                    loading="eager"
+                    className="relative h-auto w-full drop-shadow-[0_30px_60px_rgba(10,27,46,0.18)]"
+                  />
+                  <p className="mt-4 text-center text-[9px] uppercase tracking-[0.14em] text-[#8592A0]">{copy.conceptTag}</p>
                 </div>
               </FadeInSection>
             </div>
@@ -302,23 +305,30 @@ export const NvetCareAppSection: React.FC = () => {
           <SectionHeader badge={copy.audienceBadge} title={copy.audienceTitle} text={copy.audienceText} />
           <div className="grid md:grid-cols-2 gap-5">
             {[
-              { icon: PawPrint, title: copy.ownerTitle, items: copy.ownerItems, tone: 'green' as const },
-              { icon: Stethoscope, title: copy.vetTitle, items: copy.vetItems, tone: 'navy' as const },
+              { icon: PawPrint, title: copy.ownerTitle, items: copy.ownerItems, tone: 'green' as const, photo: '/images/nvetcareapp/owner-and-dog.jpg', photoAlt: copy.ownerPhotoAlt },
+              { icon: Stethoscope, title: copy.vetTitle, items: copy.vetItems, tone: 'navy' as const, photo: null, photoAlt: '' },
             ].map((card, index) => (
               <FadeInSection key={card.title} delay={0.03 + index * 0.05}>
-                <div className="h-full rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] bg-white p-7 sm:p-8 shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
-                  <div className="mb-6">
-                    <NodeIcon icon={card.icon} size={19} tone={card.tone} />
+                <div className="h-full overflow-hidden rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] bg-white shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+                  {card.photo && (
+                    <div className="relative h-40 w-full sm:h-48">
+                      <Image src={card.photo} alt={card.photoAlt} fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
+                    </div>
+                  )}
+                  <div className="p-7 sm:p-8">
+                    <div className="mb-6">
+                      <NodeIcon icon={card.icon} size={19} tone={card.tone} />
+                    </div>
+                    <h3 className="mb-5 text-xl font-semibold text-[#0A1B2E]" style={poppinsFont}>{card.title}</h3>
+                    <ul className="space-y-3">
+                      {card.items.map((item) => (
+                        <li key={item} className="flex items-start gap-3 text-sm text-[#4A5A68] leading-relaxed">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF8F2E]" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <h3 className="mb-5 text-xl font-semibold text-[#0A1B2E]" style={poppinsFont}>{card.title}</h3>
-                  <ul className="space-y-3">
-                    {card.items.map((item) => (
-                      <li key={item} className="flex items-start gap-3 text-sm text-[#4A5A68] leading-relaxed">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF8F2E]" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
                 </div>
               </FadeInSection>
             ))}
