@@ -113,6 +113,7 @@ export const ECOSYSTEM_TECHNOLOGY_UNITS: EcosystemTechnologyUnit[] = [
       { nameEs: 'Pagos integrados', nameEn: 'Integrated payments', status: 'ROADMAP' },
     ],
     osModules: ['Identity', 'Data', 'Payments', 'Automation'],
+    href: '/nvetcareapp',
   },
   {
     id: 'dental',
