@@ -147,6 +147,11 @@ export const NvetCareAppSection: React.FC = () => {
     ownerPhotoAlt: 'Una persona abraza a su perro en casa.',
     featureShowcaseAlt: 'Un veterinario atiende a un perro en la sala de una casa, junto a los beneficios del servicio a domicilio y los pasos para reservarlo.',
     missionBannerAlt: 'Una persona abraza a su perro y a su gato, junto al mensaje de misión de Nvet Care.',
+    galleryBadge: 'Más conceptos de producto',
+    galleryTitle: 'Otras pantallas del concepto.',
+    galleryText: 'Ilustraciones adicionales del diseño en curso — mockups, no capturas de un producto ya publicado.',
+    mapTrackingFullAlt: 'Maqueta de diseño de la pantalla de seguimiento con mapa, mostrando la ruta del veterinario hacia la ubicación del cliente.',
+    homeScreenPhotoAlt: 'Una persona sostiene un teléfono mostrando la pantalla de inicio del concepto de app, con servicios y una cita próxima de ejemplo.',
   } : {
     badge: 'NVET CARE APP · Mobile app in development',
     eyebrow: 'On-demand home-visit veterinary marketplace in Cartagena',
@@ -190,6 +195,11 @@ export const NvetCareAppSection: React.FC = () => {
     ownerPhotoAlt: 'A person hugging their dog at home.',
     featureShowcaseAlt: 'A veterinarian tending to a dog in a living room, alongside the benefits of the home-visit service and the steps to book it.',
     missionBannerAlt: 'A person hugging their dog and cat, alongside Nvet Care’s mission statement.',
+    galleryBadge: 'More product concepts',
+    galleryTitle: 'Other screens from the concept.',
+    galleryText: 'Additional illustrations of the design in progress — mockups, not screenshots of an already-published product.',
+    mapTrackingFullAlt: 'Design mockup of the map tracking screen, showing the veterinarian’s route to the client’s location.',
+    homeScreenPhotoAlt: 'A person holding a phone showing the app concept’s home screen, with services and a sample upcoming appointment.',
   };
 
   const stepIcons = [MapPin, UserCheck, Car, CalendarCheck];
@@ -377,6 +387,38 @@ export const NvetCareAppSection: React.FC = () => {
               />
             </div>
           </FadeInSection>
+        </Container>
+      </section>
+
+      <section className="relative bg-white pb-20 sm:pb-28">
+        <Container>
+          <SectionHeader badge={copy.galleryBadge} title={copy.galleryTitle} text={copy.galleryText} />
+          <div className="grid sm:grid-cols-2 gap-6">
+            <FadeInSection direction="left">
+              <div className="mx-auto max-w-[380px] overflow-hidden rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+                <Image
+                  src="/images/nvetcareapp/vet-tracking-full.jpg"
+                  alt={copy.mapTrackingFullAlt}
+                  width={1122}
+                  height={1402}
+                  sizes="(min-width: 640px) 380px, 90vw"
+                  className="h-auto w-full"
+                />
+              </div>
+            </FadeInSection>
+            <FadeInSection direction="right" delay={0.05}>
+              <div className="mx-auto max-w-[380px] overflow-hidden rounded-2xl border-[1px] border-[#0A1B2E]/[0.08] shadow-[0_1px_3px_rgba(10,27,46,0.04)]">
+                <Image
+                  src="/images/nvetcareapp/home-screen-phone.jpg"
+                  alt={copy.homeScreenPhotoAlt}
+                  width={1122}
+                  height={1402}
+                  sizes="(min-width: 640px) 380px, 90vw"
+                  className="h-auto w-full"
+                />
+              </div>
+            </FadeInSection>
+          </div>
         </Container>
       </section>
 
