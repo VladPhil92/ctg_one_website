@@ -259,7 +259,7 @@ export const NvetCareAppSection: React.FC = () => {
                     className="absolute -right-5 -top-8 hidden w-28 -rotate-6 rounded-2xl shadow-[0_20px_40px_rgba(10,27,46,0.18)] sm:block"
                   />
                   <Image
-                    src="/images/nvetcareapp/vet-tracking-mockup.png"
+                    src={es ? '/images/nvetcareapp/vet-tracking-mockup-es.png' : '/images/nvetcareapp/vet-tracking-mockup-en.png'}
                     alt={copy.mockupAlt}
                     width={432}
                     height={348}
