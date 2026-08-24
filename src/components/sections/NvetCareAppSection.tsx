@@ -399,8 +399,8 @@ export const NvetCareAppSection: React.FC = () => {
                 <Image
                   src="/images/nvetcareapp/vet-tracking-full.jpg"
                   alt={copy.mapTrackingFullAlt}
-                  width={1024}
-                  height={1536}
+                  width={1122}
+                  height={1402}
                   sizes="(min-width: 640px) 380px, 90vw"
                   className="h-auto w-full"
                 />
