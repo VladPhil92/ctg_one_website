@@ -117,11 +117,11 @@ In order of increasing risk (read-heavy first, financial writes last):
    status-advance write shipped; prices and clinical notes are a
    separate, not-yet-built slice (see below).
 3. `TiersPage` (tier changes — admin-only write, changes a vet's
-   commission rate).
+   commission rate). **Status: Done** — see below.
 4. `AccountingPage` (transfer verification, dispute resolution — the
    highest-stakes writes; needs explicit test coverage per the same bar
    `CLAUDE.md` sets for the investment ledger, even though this data
-   isn't in this repo's schema).
+   isn't in this repo's schema). **Status: Done** — see below.
 
 Each page gets its own BFF route(s) per `adr/ADR-003`, ported natively,
 not copy-pasted from the Vite version.
@@ -199,6 +199,90 @@ Deferred to a later slice: the vet's own price list (`GET/POST/PUT/DELETE
 /vets/me/prices`) and clinical notes (`POST /appointments/:id/clinical-notes`)
 are meaningfully separate concerns from the appointment lifecycle — kept
 out of this pass per "small, reviewable PRs, not one giant pass."
+
+### `TiersPage`: admin veterinarian tier management
+
+The Vite `TiersPage.tsx` mockup is framed as a vet self-serve plan
+picker ("Activar Elite"), but no such capability exists on the backend —
+there is no `PATCH /vets/me/tier` or equivalent. The only real tier-change
+endpoint is `PATCH /admin/veterinarians/:id/tier` (admin-only,
+`RolesGuard(ADMIN)`, audit-logged as `VET_TIER_CHANGED` with before/after
+values). Built the page the roadmap actually describes — "admin-only
+write, changes a vet's commission rate" — not the non-functional
+self-serve mockup.
+
+New at `/nvetcareapp/dashboard/veterinarios` (linked from the Admin
+metrics panel): lists veterinarians (`GET /admin/veterinarians`, via
+`src/lib/nvetcareapp/vets.ts::fetchNvetVets`) with their current tier,
+verification status, rating, and appointment count, each with a tier
+dropdown + optional reason field wired to
+`PATCH /api/nvetcareapp/admin/veterinarians/:id/tier`
+(`updateNvetVetTier`). The backend's own guard and audit logging are
+authoritative — the BFF route only validates the requested tier against
+an allow-list before forwarding. Per-tier commission percentages
+(`NVET_TIER_COMMISSION_PCT`: FREE 10%, PRO 8%, ELITE 3%) mirror
+`backend/src/payments/service.ts`'s `TIER_COMMISSIONS` — the real source
+of truth used for actual payouts, not exposed by any endpoint, so this
+constant must be kept in sync by hand if it ever changes there.
+
+Verified against the real Railway deployment: a non-admin (VET) account
+hitting `/nvetcareapp/dashboard/veterinarios` sees the graceful
+"no tienes permisos de administrador" message, not a crash or someone
+else's data; the PATCH route round-trips for real — a non-admin caller
+gets the real backend `403` forwarded, and an invalid tier value gets a
+`400` from the BFF's own allow-list before it ever reaches the backend.
+The populated list and an actual tier-change click (Free → Pro,
+screenshotted before/after) were verified against a local stub matching
+the real response/write shape — this environment has no real ADMIN
+account to click through against production data (same gap noted in
+Phase 3).
+
+### `AccountingPage`: transfer verification and dispute resolution
+
+New at `/nvetcareapp/dashboard/contabilidad` (linked from the Admin
+metrics panel, alongside the veterinarians link). Admin-only. Two
+sections:
+- **Transferencias pendientes**: `GET /admin/transfer-tracking`
+  (`src/lib/nvetcareapp/transactions.ts::fetchNvetPendingTransfers`)
+  lists transactions awaiting manual bank-transfer confirmation, each
+  with Confirmar/Rechazar actions
+  (`contabilidad/transfer-actions.tsx`) wired to
+  `POST /payments/admin/transactions/:id/confirm-transfer` (no body)
+  and `POST /payments/admin/transactions/:id/reject-transfer`
+  (`{ reason }`, backend requires ≥10 chars).
+- **Transacciones en disputa**: `GET /admin/transactions?status=DISPUTED`
+  (`fetchNvetDisputedTransactions`) lists disputed transactions, each
+  with a "Resolver disputa" form (`contabilidad/dispute-resolution-form.tsx`)
+  wired to `POST /admin/transactions/:id/resolve-dispute`
+  (`{ resolution: CONFIRM|REFUND|CANCEL, notes }`, backend requires
+  notes 10-1000 chars). The backend does this atomically
+  (`prisma.$transaction`) and audit-logs it at CRITICAL severity
+  (`DISPUTE_RESOLVED`) — this is the single highest-stakes write in the
+  whole Nvet Care surface, and none of that authorization/atomicity/audit
+  logic is reimplemented here; the BFF routes only add allow-list and
+  length validation as defense in depth before forwarding.
+
+The page fetches both sections in parallel (`Promise.all`) and checks
+for a `401` from *either* fetch before rendering — the same bug class
+found by review on the main dashboard (a `401` from a later fetch must
+redirect to sign-in, not render as an empty/error state) was caught and
+fixed here proactively, for both `transfersResult` and `disputesResult`.
+
+Verified against the real Railway deployment: every new BFF route
+correctly rejects an unauthenticated request with `401` before
+contacting the backend; a syntactically valid but unrecognized bearer
+token is forwarded and comes back as the backend's own real `401`; the
+BFF's own validation rejects a too-short reject reason, an invalid
+resolution value, and too-short resolution notes with `400` before ever
+reaching the backend. The populated list, the Confirmar/Rechazar
+actions, and the dispute-resolution form (submitted end-to-end,
+confirmed the resulting status change) were verified against a local
+stub matching the real response/write shapes, screenshotted — this
+environment has no real pending-transfer or disputed-transaction data
+to click through against production (same gap noted for Phase 3/4).
+`npx tsc --noEmit`, the full `npm test` invariant suite (including the
+new `test-nvetcareapp-accounting-invariants.mjs`), and `npm run build`
+all pass.
 
 ## Phase 5 — Real-time chat (open design question)
 
