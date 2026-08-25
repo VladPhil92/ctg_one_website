@@ -110,9 +110,12 @@ self-register as `ADMIN`. See `Nvet-Care-App` PR #15.
 ## Phase 4 — Remaining pages, write operations included
 
 In order of increasing risk (read-heavy first, financial writes last):
-1. `TrackingPage` (appointment status, mostly read).
+1. `TrackingPage` (appointment status, mostly read). **Status: Done**
+   (read-only slice — see below).
 2. `VetPanel` (a vet's own agenda/prices — writes scoped to the
-   authenticated vet only).
+   authenticated vet only). **Status: Partially done** — agenda +
+   status-advance write shipped; prices and clinical notes are a
+   separate, not-yet-built slice (see below).
 3. `TiersPage` (tier changes — admin-only write, changes a vet's
    commission rate).
 4. `AccountingPage` (transfer verification, dispute resolution — the
@@ -122,6 +125,80 @@ In order of increasing risk (read-heavy first, financial writes last):
 
 Each page gets its own BFF route(s) per `adr/ADR-003`, ported natively,
 not copy-pasted from the Vite version.
+
+### Architecture change: `/nvetcareapp/dashboard` is now role-aware
+
+The Vite dashboard is really three separate role views (`admin`, `vet`,
+`tracking` for clients) switched by a sidebar, not one page. Phase 3 only
+implemented the ADMIN view at `/nvetcareapp/dashboard`, so a CLIENT
+hitting that URL got the "no admin permissions" message — wrong once a
+client-facing page exists. Asked the user; confirmed the intended design
+is a single URL that branches by the session's role (not separate routes
+per role), matching the original mockup's single-`App`-that-switches-view
+shape.
+
+`src/app/nvetcareapp/dashboard/page.tsx` now calls `GET /api/auth/me`
+first (via `src/lib/nvetcareapp/user.ts`) to get the role, then renders:
+- `ADMIN` → the Phase 3 metrics panel (unchanged).
+- `CLIENT` → the new `TrackingPage` port: `GET /api/nvetcareapp/appointments`
+  (`src/lib/nvetcareapp/appointments.ts`) lists the caller's own
+  appointments — the backend's `appointments.service.ts::getAppointments()`
+  scopes the query to `clientId` itself, this never re-filters.
+- `VET` → an honest "el panel para veterinarios todavía está en
+  desarrollo" state (Phase 4 item 2, not built yet) — not a fake page,
+  not an error.
+
+Scoped to read-only per the roadmap's own "mostly read" framing for this
+item: `TrackingPage`'s cancel-appointment, verify-transfer, and chat
+actions are real writes (or, for chat, Phase 5's open design question)
+and are explicitly out of this pass.
+
+Verified against the real Railway deployment: a real CLIENT test account
+logs in and sees the correct empty state (`"Todavía no tienes citas
+agendadas"`) for real, and the ADMIN/VET branches were verified against
+a local stub matching each role's real response shape (screenshotted) —
+this environment has no way to create a real appointment (needs a
+matched vet + booking flow) to see the populated list against production
+data.
+
+### `VetPanel`, slice 1: agenda + status-advance write
+
+`GET /appointments` already scopes to the caller's own `vetId` for a VET
+caller (`appointments.service.ts::getAppointments()`), so the existing
+`TrackingPage` fetch/route is reused as-is for the VET branch — no new
+read endpoint needed.
+
+The write: `PATCH /api/nvetcareapp/appointments/:id/status`
+(`src/lib/nvetcareapp/appointments.ts::updateNvetAppointmentStatus`) →
+`PATCH /appointments/:id/status`. The backend's own guard (RolesGuard(VET)
++ an ownership check keyed off the JWT) and its own state-machine
+validation (`validateStatusTransition()`) are the authoritative checks —
+the BFF route only validates the requested status against a known
+allow-list before forwarding (defense in depth, not a replacement), and
+never reads any identity/ownership claim from the request body. The UI
+(`advance-status-button.tsx`) offers exactly one next action per status,
+matching the backend's vet-actionable transitions
+(`PENDING→CONFIRMED→IN_PROGRESS→COMPLETED`); terminal statuses get no
+button.
+
+Verified against the real Railway deployment: registered a fresh VET
+test account, confirmed `GET /api/auth/me` correctly routes it to "Mi
+agenda" (renders the correct empty state — this account has no
+`VetProfile` yet, so `getAppointments()` returns nothing for it, which
+matches expectations), and confirmed the PATCH route round-trips to the
+real backend for real — invalid status → 400 (rejected before forwarding),
+a real appointment ID that doesn't exist → 404 forwarded from the backend
+(not a crash), no session → 401. The populated-agenda view and the actual
+status-advance click (PENDIENTE → CONFIRMADA, button correctly switching
+to "Iniciar" after) were verified against a local stub matching the real
+response/write shape, screenshotted before and after the click — no way
+to create a real appointment in this environment to click through against
+production data.
+
+Deferred to a later slice: the vet's own price list (`GET/POST/PUT/DELETE
+/vets/me/prices`) and clinical notes (`POST /appointments/:id/clinical-notes`)
+are meaningfully separate concerns from the appointment lifecycle — kept
+out of this pass per "small, reviewable PRs, not one giant pass."
 
 ## Phase 5 — Real-time chat (open design question)
 
