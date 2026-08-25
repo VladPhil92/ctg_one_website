@@ -6,6 +6,7 @@ import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
 import { fetchNvetAdminMetrics, type NvetAdminMetrics } from '@/lib/nvetcareapp/admin';
 import { fetchNvetAppointments, type NvetAppointment } from '@/lib/nvetcareapp/appointments';
 import { LogoutButton } from './logout-button';
+import { AdvanceStatusButton } from './advance-status-button';
 
 const poppinsFont: CSSProperties = { fontFamily: 'var(--font-poppins-nvet), Poppins, sans-serif' };
 
@@ -175,6 +176,41 @@ function AppointmentTrackingPanel({ appointments }: { appointments: NvetAppointm
   );
 }
 
+function VetAgendaPanel({ appointments }: { appointments: NvetAppointment[] }) {
+  if (appointments.length === 0) {
+    return <ErrorPanel message="Todavía no tienes citas asignadas." />;
+  }
+
+  return (
+    <div className="space-y-3">
+      {appointments.map((appointment) => (
+        <div key={appointment.id} className="rounded-2xl border-[1px] border-[#0D1B2A]/10 bg-white p-5 shadow-[0_1px_3px_rgba(13,27,42,0.04)]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-[#0D1B2A]">
+                {appointment.client.firstName} {appointment.client.lastName}
+              </p>
+              <p className="text-xs text-[#5B6670]">
+                {appointment.serviceType} · {appointment.pet.name} ({appointment.pet.species})
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ${APPOINTMENT_STATUS_TONE[appointment.status]}`}>
+                {APPOINTMENT_STATUS_LABELS[appointment.status]}
+              </span>
+              <AdvanceStatusButton appointmentId={appointment.id} status={appointment.status} />
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#0D1B2A]/5 pt-3 text-xs text-[#5B6670]">
+            <span>{formatDate(appointment.date)} · {appointment.time}</span>
+            <span>{PAYMENT_METHOD_LABELS[appointment.paymentMethod]} · {formatCOP(appointment.amount)}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default async function NvetDashboardPage() {
   const accessToken = (await cookies()).get(NVET_ACCESS_COOKIE)?.value;
   if (!accessToken) {
@@ -228,11 +264,17 @@ export default async function NvetDashboardPage() {
     );
   }
 
-  // role === 'VET': the vet-facing panel (agenda, prices) is a later phase
-  // (ROADMAP.md Phase 4) — honest "not built yet" state, not a fake page.
+  // role === 'VET': agenda (read) + one-tap status advance (write, scoped
+  // to the vet's own appointments). Prices and clinical notes are a
+  // separate, not-yet-built slice (ROADMAP.md Phase 4 item 2).
+  const result = await fetchNvetAppointments(accessToken);
   return (
-    <DashboardShell title="Panel de Nvet Care" subtitle="Panel para veterinarios.">
-      <ErrorPanel message="El panel para veterinarios todavía está en desarrollo." />
+    <DashboardShell title="Mi agenda" subtitle="Citas asignadas a tu perfil.">
+      {result.ok ? (
+        <VetAgendaPanel appointments={result.appointments} />
+      ) : (
+        <ErrorPanel message="No se pudo cargar tu agenda en este momento." />
+      )}
     </DashboardShell>
   );
 }
