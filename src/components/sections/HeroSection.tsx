@@ -7,6 +7,7 @@ import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Button } from '@/components/ui/Button';
 import { HERO } from '@/data/content';
+import { getCapabilityProof, getPublicProofStatus } from '@/data/technology-proof';
 import { useLanguage } from '@/contexts/LanguageContext';
 import styles from '@/styles/CommandCenter.module.css';
 
@@ -21,6 +22,13 @@ export const HeroSection: React.FC = () => {
   const { locale, t } = useLanguage();
   const es = locale === 'es';
 
+  // Keep canonical technology maturity attached to the hero without making it
+  // the first thing a consumer has to understand. Dedicated status pages remain
+  // the public surface for the detailed proof model.
+  const identityStatus = getPublicProofStatus(getCapabilityProof('identity-auth'));
+  const dataStatus = getPublicProofStatus(getCapabilityProof('data-security'));
+  const aiStatus = getPublicProofStatus(getCapabilityProof('ai-layer'));
+
   const description = es
     ? 'Creamos software y soluciones digitales para nuestros propios negocios, productos y plataformas. Desde cerveza artesanal hasta salud, educación y servicios, usamos tecnología para conectar operaciones y construir mejores experiencias.'
     : 'We build software and digital products for our own businesses, products and platforms. From craft beer to health, education and services, we use technology to connect operations and create better experiences.';
@@ -32,6 +40,9 @@ export const HeroSection: React.FC = () => {
   return (
     <section
       id="home"
+      data-identity-status={identityStatus}
+      data-data-status={dataStatus}
+      data-ai-status={aiStatus}
       className={`${styles.theme} ${styles.heroShell} relative overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-32 md:pt-36 lg:min-h-screen lg:pb-20 lg:pt-36 xl:pt-40`}
     >
       <div className={styles.heroSweep} aria-hidden="true" />
@@ -50,7 +61,7 @@ export const HeroSection: React.FC = () => {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-[#f1c75b] shadow-[0_0_9px_rgba(241,199,91,.6)]" />
                 </span>
                 <span className="text-[11px] font-semibold uppercase tracking-[.15em] text-[#f1c75b] sm:text-xs">
-                  {es ? 'CTG One Technology · Cartagena' : 'CTG One Technology · Cartagena'}
+                  CTG One Technology · Cartagena
                 </span>
               </div>
             </FadeInSection>
