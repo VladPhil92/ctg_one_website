@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { PublicPageShell } from '@/components/PublicPageShell';
-import { ProductsCaseStudiesSection } from '@/components/sections/ProductsCaseStudiesSection';
+import { HomeProductShowcases } from '@/components/sections/HomeProductShowcases';
 
 export default function ProductsPage() {
   return (
     <PublicPageShell>
-      <ProductsCaseStudiesSection />
+      <HomeProductShowcases />
     </PublicPageShell>
   );
 }

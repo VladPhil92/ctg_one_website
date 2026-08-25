@@ -9,36 +9,37 @@ export const CONTACT_PHONE = config.contact.phone;
 export const LOCATION = config.contact.location;
 export const WEBSITE = config.contact.website;
 
-// Full public navigation registry. Footer/search surfaces may expose the complete
-// information architecture; the header intentionally uses the smaller groups
-// below to preserve hierarchy and reduce first-level cognitive load.
 export const NAV_ITEMS = [
   { label: 'Home', href: '/' },
-  { label: 'About', href: '/about' },
-  { label: 'Technology', href: '/services' },
-  { label: 'AI', href: '/ai' },
   { label: 'Products', href: '/products' },
+  { label: 'Nvet Care', href: '/nvetcareapp' },
+  { label: 'About', href: '/about' },
+  { label: 'Craft Beer', href: '/craft-beer' },
   { label: 'Ecosystem', href: '/ecosystem' },
+  { label: 'Technology', href: '/services' },
   { label: 'Investment', href: '/inversion' },
+  { label: 'AI', href: '/ai' },
   { label: 'Rewards', href: '/rewards' },
   { label: 'Token', href: '/token' },
   { label: 'Contact', href: '/contact' },
 ] as const;
 
+// Keep the first level consumer-oriented. Technical and roadmap surfaces live
+// one level deeper under the Explore menu.
 export const PRIMARY_NAV_ITEMS = [
   { label: 'Home', href: '/' },
-  { label: 'About', href: '/about' },
-  { label: 'Technology', href: '/services' },
   { label: 'Products', href: '/products' },
+  { label: 'Nvet Care', href: '/nvetcareapp' },
+  { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ] as const;
 
 export const PLATFORM_NAV_ITEMS = [
+  { label: 'Craft Beer', href: '/craft-beer' },
   { label: 'Ecosystem', href: '/ecosystem' },
-  { label: 'AI', href: '/ai' },
+  { label: 'Technology', href: '/services' },
   { label: 'Investment', href: '/inversion' },
-  { label: 'Rewards', href: '/rewards' },
-  { label: 'Token', href: '/token' },
+  { label: 'AI', href: '/ai' },
 ] as const;
 
 export const ANIMATION = {
@@ -56,8 +57,6 @@ export const BREAKPOINTS = {
   '2xl': 1536,
 };
 
-// Legacy JS color exports retained for non-Tailwind consumers. Keep aligned
-// with globals.css/tailwind.config.ts accessibility tokens.
 export const COLORS = {
   accent: '#c9a962',
   accentLight: '#d4b676',
