@@ -22,13 +22,13 @@ export const HeroSection: React.FC = () => {
   const { locale, t } = useLanguage();
   const es = locale === 'es';
 
-  // Keep canonical technology maturity attached to the hero without making it
-  // the first thing a consumer has to understand. Dedicated status pages remain
-  // the public surface for the detailed proof model.
+  // Canonical maturity remains attached to the Hero contract without forcing
+  // technical status language into the first consumer-facing message.
   const identityStatus = getPublicProofStatus(getCapabilityProof('identity-auth'));
   const dataStatus = getPublicProofStatus(getCapabilityProof('data-security'));
   const aiStatus = getPublicProofStatus(getCapabilityProof('ai-layer'));
 
+  const eyebrow = es ? 'Empresa tecnológica · Cartagena' : 'Technology company · Cartagena';
   const description = es
     ? 'Creamos software y soluciones digitales para nuestros propios negocios, productos y plataformas. Desde cerveza artesanal hasta salud, educación y servicios, usamos tecnología para conectar operaciones y construir mejores experiencias.'
     : 'We build software and digital products for our own businesses, products and platforms. From craft beer to health, education and services, we use technology to connect operations and create better experiences.';
@@ -60,9 +60,7 @@ export const HeroSection: React.FC = () => {
                   <span className="absolute inline-flex h-full w-full rounded-full bg-[#ffd56a]/25" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-[#f1c75b] shadow-[0_0_9px_rgba(241,199,91,.6)]" />
                 </span>
-                <span className="text-[11px] font-semibold uppercase tracking-[.15em] text-[#f1c75b] sm:text-xs">
-                  CTG One Technology · Cartagena
-                </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[.15em] text-[#f1c75b] sm:text-xs">{eyebrow}</span>
               </div>
             </FadeInSection>
 
