@@ -7,6 +7,7 @@ import { fetchNvetAdminMetrics, type NvetAdminMetrics } from '@/lib/nvetcareapp/
 import { fetchNvetAppointments, type NvetAppointment } from '@/lib/nvetcareapp/appointments';
 import { LogoutButton } from './logout-button';
 import { AdvanceStatusButton } from './advance-status-button';
+import { ChatPanel } from './chat-panel';
 
 const poppinsFont: CSSProperties = { fontFamily: 'var(--font-poppins-nvet), Poppins, sans-serif' };
 
@@ -144,7 +145,7 @@ const APPOINTMENT_STATUS_TONE: Record<NvetAppointment['status'], string> = {
   DISPUTED: 'border-[#FF8A3D]/25 bg-[#FF8A3D]/[0.06] text-[#FF8A3D]',
 };
 
-function AppointmentTrackingPanel({ appointments }: { appointments: NvetAppointment[] }) {
+function AppointmentTrackingPanel({ appointments, currentUserId }: { appointments: NvetAppointment[]; currentUserId: string }) {
   if (appointments.length === 0) {
     return <ErrorPanel message="Todavía no tienes citas agendadas." />;
   }
@@ -170,13 +171,14 @@ function AppointmentTrackingPanel({ appointments }: { appointments: NvetAppointm
             <span>{formatDate(appointment.date)} · {appointment.time}</span>
             <span>{PAYMENT_METHOD_LABELS[appointment.paymentMethod]} · {formatCOP(appointment.amount)}</span>
           </div>
+          <ChatPanel appointmentId={appointment.id} currentUserId={currentUserId} />
         </div>
       ))}
     </div>
   );
 }
 
-function VetAgendaPanel({ appointments }: { appointments: NvetAppointment[] }) {
+function VetAgendaPanel({ appointments, currentUserId }: { appointments: NvetAppointment[]; currentUserId: string }) {
   if (appointments.length === 0) {
     return <ErrorPanel message="Todavía no tienes citas asignadas." />;
   }
@@ -205,6 +207,7 @@ function VetAgendaPanel({ appointments }: { appointments: NvetAppointment[] }) {
             <span>{formatDate(appointment.date)} · {appointment.time}</span>
             <span>{PAYMENT_METHOD_LABELS[appointment.paymentMethod]} · {formatCOP(appointment.amount)}</span>
           </div>
+          <ChatPanel appointmentId={appointment.id} currentUserId={currentUserId} />
         </div>
       ))}
     </div>
@@ -278,7 +281,7 @@ export default async function NvetDashboardPage() {
     return (
       <DashboardShell title="Mis citas" subtitle="Seguimiento de tus citas con veterinarios.">
         {result.ok ? (
-          <AppointmentTrackingPanel appointments={result.appointments} />
+          <AppointmentTrackingPanel appointments={result.appointments} currentUserId={userResult.user.id} />
         ) : (
           <ErrorPanel message="No se pudieron obtener tus citas en este momento." />
         )}
@@ -296,7 +299,7 @@ export default async function NvetDashboardPage() {
   return (
     <DashboardShell title="Mi agenda" subtitle="Citas asignadas a tu perfil.">
       {result.ok ? (
-        <VetAgendaPanel appointments={result.appointments} />
+        <VetAgendaPanel appointments={result.appointments} currentUserId={userResult.user.id} />
       ) : (
         <ErrorPanel message="No se pudo cargar tu agenda en este momento." />
       )}

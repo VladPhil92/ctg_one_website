@@ -284,15 +284,66 @@ to click through against production (same gap noted for Phase 3/4).
 new `test-nvetcareapp-accounting-invariants.mjs`), and `npm run build`
 all pass.
 
-## Phase 5 — Real-time chat (open design question)
+## Phase 5 — Real-time chat. **Status: Done** (REST + polling) — see below.
 
 `ChatGateway` (Socket.io) doesn't fit the Route-Handler BFF pattern — a
-serverless-style Next.js API route can't hold a persistent WebSocket.
-Two options, not decided here:
+serverless-style Next.js API route can't hold a persistent WebSocket. This
+phase originally listed two options, neither taken:
 - The browser connects directly to the NestJS WebSocket endpoint with a
   short-lived, narrowly-scoped token minted by a BFF route (keeps the
-  long-lived session cookie server-side only).
-- Defer chat to a later milestone; ship Phases 3-4 without it.
+  long-lived session cookie server-side only). Investigated and **not
+  viable as described**: `WsJwtGuard` verifies the same long-lived access
+  token used for REST calls (`jwtService.verifyAsync(token, { secret:
+  JWT_SECRET })` against `handshake.auth.token`) — there is no existing
+  backend endpoint that mints a separately-scoped, shorter-lived token for
+  socket auth. Building one would mean a coordinated backend change (a new
+  token type + minting endpoint) in a separate repo, plus holding that
+  token in client-side JS memory for the socket handshake — a real scope
+  increase over every other feature in this roadmap, all of which keep the
+  session cookie httpOnly and server-side only.
+- Defer chat to a later milestone.
+
+### What shipped instead: REST + polling
+
+`ChatController` already exposes a full REST API behind the same
+`JwtAuthGuard` + `ChatMembershipGuard` (participant-only, ADMIN always
+allowed) pattern every other BFF route in this roadmap already uses — no
+backend change needed, and the httpOnly session cookie never touches
+client JS. Text messages only for this slice; `sharePrice` (VET-only),
+report, delete, and search are separate, not-yet-built capabilities.
+
+- `src/lib/nvetcareapp/chat.ts` — `fetchNvetChatMessages` (`GET
+  /chat/:appointmentId/messages`), `sendNvetChatMessage` (`POST
+  /chat/:appointmentId/messages`, `{ content }`).
+- `src/app/api/nvetcareapp/chat/[appointmentId]/messages/route.ts` — BFF
+  GET+POST. POST validates `content` length (1-2000 chars, mirrors the
+  backend's `SendMessageDto`) as defense in depth before forwarding; the
+  backend's own `ChatMembershipGuard` and `EmailVerifiedGuard` (on sends)
+  are authoritative.
+- `src/app/nvetcareapp/dashboard/chat-panel.tsx` — an expandable panel
+  (same "click to expand inline" pattern as `transfer-actions.tsx` /
+  `dispute-resolution-form.tsx`) that polls `GET .../messages` every 4s
+  while open, clears the interval on close, and sends through the shared
+  `nvetFetchWithRefresh` helper. Own vs. other messages are distinguished
+  by comparing `sender.id` to the session's own user id (threaded down
+  from `fetchNvetCurrentUser`), not by role, so it works the same for both
+  CLIENT and VET callers.
+- Wired into both `AppointmentTrackingPanel` (CLIENT) and `VetAgendaPanel`
+  (VET) in `dashboard/page.tsx`, one `ChatPanel` per appointment card.
+
+Verified against the real Railway deployment: unauthenticated GET/POST
+both `401` before contacting the backend; the BFF's own validation
+rejects empty and >2000-char content with `400`; a syntactically valid
+but unrecognized bearer token forwards to the real backend and comes back
+as its own real `401`. Against a local stub matching the real
+`ChatController` response shapes (no real appointment with an actual
+client+vet conversation exists in this sandbox): opened the chat panel,
+confirmed the existing conversation renders with correct
+own-message/other-message alignment and sender/time labels, sent a new
+message, and confirmed it appears immediately in the list —
+screenshotted before/after. `npx tsc --noEmit`, the full `npm test`
+invariant suite (including the new
+`test-nvetcareapp-chat-invariants.mjs`), and `npm run build` all pass.
 
 ## Phase 6 — Hardening and rollout
 
