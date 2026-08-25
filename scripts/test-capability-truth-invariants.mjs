@@ -160,7 +160,7 @@ assert.match(
 assert.match(content, /badge: 'CTG Rewards · Roadmap'/, 'CTG Rewards must be visibly classified as roadmap.');
 assert.match(
   content,
-  /CTG Rewards is a roadmap concept[\s\S]*?not represented as a currently active cross-ecosystem rewards program/i,
+  /CTG Rewards is a planned loyalty and referral program[\s\S]*?isn't live yet/i,
   'CTG Rewards must not imply that a shared cross-ecosystem loyalty program is already active.',
 );
 assert.doesNotMatch(content, /title: 'Earn by (?:Engaging|Referring)'/, 'Roadmap Rewards copy must not use active earning language without a verified program.');
@@ -240,6 +240,6 @@ assert.equal(
   'Operating-business counts must remain aligned across public registries.',
 );
 assert.match(translations, /en: 'Operating Businesses', es: 'Negocios operativos'/, 'Operating-business metric must have explicit bilingual terminology.');
-assert.match(translations, /en: 'Software & Digital Infrastructure', es: 'Software e infraestructura digital'/, 'Hero technology badge must have explicit bilingual terminology.');
+assert.match(hero, /'Empresa tecnológica · Cartagena'[\s\S]*?'Technology company · Cartagena'/, 'Hero identity eyebrow must have explicit bilingual terminology.');
 
 console.log('Capability truth invariants: PASS');

@@ -72,9 +72,9 @@ for (const capability of ['identity-auth', 'data-security', 'delivery-platform',
   assert.ok(hero.includes(`id: '${capability}'`), `System Status must retain capability: ${capability}`);
 }
 assert.match(hero, /Container size="large"/, 'Homepage hero must use the wide command-center container.');
-assert.match(hero, /Plataforma de identidad/, 'System Status must retain the identity platform label.');
+assert.match(hero, /Cuentas seguras/, 'System Status must retain the plain-language secure accounts label.');
 assert.match(hero, /Datos y seguridad/, 'System Status must retain data and security.');
-assert.match(hero, /Infraestructura de entrega/, 'System Status must retain delivery infrastructure.');
+assert.match(hero, /Actualización y despliegue/, 'System Status must retain the plain-language updates & deployment label.');
 assert.match(hero, /IA aplicada/, 'System Status must retain applied AI.');
 
 for (const phrase of ['Core online', 'LIVE PRODUCT / CASE-001', 'Physical production layer']) {

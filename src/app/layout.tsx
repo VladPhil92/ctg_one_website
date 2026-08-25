@@ -23,26 +23,28 @@ const dmSans = DM_Sans({
   weight: ['400', '500', '600', '700'],
 });
 
-const verifiedDescription = 'CTG One Technology is the proprietary software, data and digital infrastructure layer of the CTG One business ecosystem. We build and operate applications, transactional platforms, identity, automation and shared technology for real operating companies.';
+const verifiedDescription = 'CTG One Technology is a technology company based in Cartagena, Colombia. We build software and digital products for our own businesses — across hospitality, food and drink, health, real estate and more — and put them to work in real operations.';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://ctgone.com'),
   title: {
-    default: 'CTG One Technology | Software, Data & Digital Infrastructure',
+    default: 'CTG One Technology | Technology for Real Businesses',
     template: '%s | CTG One Technology',
   },
   description: verifiedDescription,
   keywords: [
     'CTG One Technology',
-    'Software Engineering',
+    'technology company',
+    'Cartagena Colombia',
+    'digital products',
+    'software for businesses',
+    'business ecosystem',
+    'CTG Craft Beer',
+    'Nvet Care',
+    'Applied AI',
     'Digital Infrastructure',
-    'Internal Platforms',
-    'Business Operating Systems',
     'PostgreSQL',
     'Supabase',
-    'Automation',
-    'Applied AI',
-    'Cartagena Colombia',
   ],
   authors: [{ name: 'CTG One Technology' }],
   creator: 'CTG One Technology',
@@ -55,13 +57,13 @@ export const metadata: Metadata = {
     alternateLocale: 'es_CO',
     url: 'https://ctgone.com',
     siteName: 'CTG One Technology',
-    title: 'CTG One Technology | Software, Data & Digital Infrastructure',
+    title: 'CTG One Technology | Technology for Real Businesses',
     description: verifiedDescription,
-    images: [{ url: '/images/og-image.png', width: 1200, height: 630, alt: 'CTG One Technology - Software, Data & Digital Infrastructure' }],
+    images: [{ url: '/images/og-image.png', width: 1200, height: 630, alt: 'CTG One Technology - Technology for Real Businesses' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CTG One Technology | Software, Data & Digital Infrastructure',
+    title: 'CTG One Technology | Technology for Real Businesses',
     description: verifiedDescription,
     images: ['/images/og-image.png'],
   },

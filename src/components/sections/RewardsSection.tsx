@@ -25,26 +25,26 @@ export const RewardsSection: React.FC = () => {
         title: 'CTG',
         highlight: 'Recompensas',
         description:
-          'CTG Rewards es un concepto de hoja de ruta para futuras capacidades de lealtad y referidos dentro del ecosistema. No se presenta como un programa transversal activo mientras no exista una implementación verificable con reglas publicadas.',
+          "CTG Rewards es un programa de lealtad y referidos que estamos planeando para nuestros negocios. Todavía no está activo — solo lo mostraremos como disponible cuando un negocio tenga una versión real, funcionando, con reglas publicadas.",
         features: [
           {
             title: 'Reconocimiento por participación',
-            description: 'Mecánicas diseñadas para reconocer interacción con el ecosistema; no constituyen hoy un programa universal activo.',
+            description: 'Formas de reconocer la interacción con nuestros negocios — todavía no es un programa al que puedas unirte.',
             icon: 'award',
           },
           {
             title: 'Reconocimiento por referidos',
-            description: 'Las mecánicas de referidos dependen de implementación real y de reglas publicadas para la unidad de negocio correspondiente.',
+            description: 'Beneficios por referidos, una vez que un negocio tenga una versión real y publicada.',
             icon: 'userPlus',
           },
           {
             title: 'Redención entre unidades',
-            description: 'La redención transversal permanece como objetivo arquitectónico y no se representa como una capacidad activa en producción.',
+            description: 'Usar tus recompensas en distintos negocios de CTG One — una meta futura, todavía no disponible.',
             icon: 'gift',
           },
           {
             title: 'Niveles de reconocimiento',
-            description: 'Los beneficios por niveles permanecen en hoja de ruta salvo que exista una implementación específica con reglas verificables.',
+            description: 'Diferentes niveles de beneficios, una vez que un negocio publique sus propias reglas.',
             icon: 'layers',
           },
         ],

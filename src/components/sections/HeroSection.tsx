@@ -24,9 +24,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import styles from '@/styles/CommandCenter.module.css';
 
 const capabilityRail = [
-  { id: 'identity-auth', icon: Cpu, en: 'Identity platform', es: 'Plataforma de identidad' },
+  { id: 'identity-auth', icon: Cpu, en: 'Secure accounts', es: 'Cuentas seguras' },
   { id: 'data-security', icon: ShieldCheck, en: 'Data & security', es: 'Datos y seguridad' },
-  { id: 'delivery-platform', icon: Network, en: 'Delivery infrastructure', es: 'Infraestructura de entrega' },
+  { id: 'delivery-platform', icon: Network, en: 'Updates & deployment', es: 'Actualización y despliegue' },
   { id: 'ai-layer', icon: Sparkles, en: 'Applied AI', es: 'IA aplicada' },
 ].map((item) => ({ ...item, status: getPublicProofStatus(getCapabilityProof(item.id)) }));
 
@@ -60,8 +60,8 @@ function statusTone(status: PublicProofStatus) {
 export const HeroSection: React.FC = () => {
   const { locale, t } = useLanguage();
   const description = locale === 'es'
-    ? 'CTG One Technology desarrolla software propietario e infraestructura digital para su propio ecosistema empresarial. Nuestra capa productiva actual combina aplicaciones, autenticación, datos, seguridad, CI/CD y plataformas transaccionales; las capacidades avanzadas de IA se encuentran en desarrollo y se publicarán como activas únicamente cuando exista implementación verificable.'
-    : 'CTG One Technology builds proprietary software and digital infrastructure for its own business ecosystem. Our current production layer combines applications, authentication, data, security, CI/CD, and transactional platforms; advanced AI capabilities remain in development and will be presented as live only when implementation is verifiable.';
+    ? 'CTG One Technology desarrolla el software y las herramientas digitales detrás de nuestras propias empresas, en sectores como hospedaje, gastronomía, salud y bienes raíces. Lo creamos, lo ponemos a funcionar en la operación diaria y lo mejoramos a partir de esa experiencia.'
+    : 'CTG One Technology builds the software and digital tools behind our own companies, across sectors like hospitality, food and drink, health and real estate. We build it, put it to work in daily operations, and keep improving it from there.';
 
   return (
     <section
@@ -80,15 +80,9 @@ export const HeroSection: React.FC = () => {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-[#f1c75b] shadow-[0_0_9px_rgba(241,199,91,.6)]" />
                 </span>
                 <span className="min-w-0 text-[11px] font-semibold uppercase tracking-[.15em] text-[#f1c75b] sm:text-xs">
-                  {locale === 'es' ? 'Infraestructura digital de próxima generación' : 'Next-generation digital infrastructure'}
+                  {locale === 'es' ? 'Empresa tecnológica · Cartagena' : 'Technology company · Cartagena'}
                 </span>
               </div>
-            </FadeInSection>
-
-            <FadeInSection delay={0.05}>
-              <p className="mb-4 text-[10px] font-semibold uppercase tracking-[.18em] text-text-dim sm:text-[11px]">
-                {t(HERO.badge)}
-              </p>
             </FadeInSection>
 
             <FadeInSection delay={0.08}>

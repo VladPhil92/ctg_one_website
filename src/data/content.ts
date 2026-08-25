@@ -26,17 +26,14 @@ export const OPERATING_BUSINESS_UNITS = ECOSYSTEM_UNITS.filter((unit) => unit.id
 export const OPERATING_BUSINESS_UNIT_COUNT = OPERATING_BUSINESS_UNITS.length;
 
 export const HERO = {
-  badge: 'Software & Digital Infrastructure',
-  title: 'Technology is infrastructure.',
-  titleHighlight: 'Strategy is architecture.',
-  subtitle: 'We build both for our own ecosystem.',
-  description:
-    'CTG One Technology builds proprietary software, transactional systems and shared digital infrastructure for its own business ecosystem. Advanced AI capabilities are being developed under an explicit governance and evidence model.',
-  ctaPrimary: 'Explore Ecosystem',
-  ctaSecondary: 'Start Conversation',
+  title: 'Technology built for',
+  titleHighlight: 'real businesses.',
+  subtitle: 'Built and tested inside our own companies.',
+  ctaPrimary: 'Meet our businesses',
+  ctaSecondary: 'Talk to us',
   metrics: [
     { value: String(OPERATING_BUSINESS_UNIT_COUNT), label: 'Operating Businesses', icon: 'building' },
-    { value: 'One', label: 'Technology Layer', icon: 'layers' },
+    { value: 'One', label: 'Shared Technology', icon: 'layers' },
     { value: '2024', label: 'Founded', icon: 'calendar' },
     { value: 'Cartagena', label: 'Headquarters', icon: 'location' },
   ],
@@ -45,9 +42,9 @@ export const HERO = {
 export const ABOUT = {
   badge: 'About CTG One',
   title: 'Technology Built for',
-  titleHighlight: 'Our Own Ecosystem',
+  titleHighlight: 'Our Own Businesses',
   description:
-    'Founded in 2024 in Cartagena, Colombia, CTG One Technology develops and operates proprietary software and digital infrastructure applied directly across its own business units. Our companies provide real operating environments where technology is designed, tested, deployed and continuously improved.',
+    'Founded in 2024 in Cartagena, Colombia, CTG One Technology builds and runs the software behind its own companies. Each business gives us a real place to design, test, launch and keep improving what we build.',
   features: [
     {
       title: 'Proprietary Software',
@@ -81,10 +78,10 @@ export const ABOUT = {
 
 export const SERVICES = {
   badge: 'What We Build',
-  title: 'Software &',
-  titleHighlight: 'Digital Infrastructure',
+  title: 'Software for',
+  titleHighlight: 'real operations',
   description:
-    'CTG One builds the technological foundation used across its own business ecosystem. Public capability claims distinguish operational systems from partial implementations, active development and roadmap architecture.',
+    'We build the software and digital tools our businesses run on — connecting operations, organizing information, automating tasks and managing accounts. We only call something available once it actually works.',
   items: [
     {
       title: 'Software Engineering',
@@ -115,10 +112,10 @@ export const SERVICES = {
 
 export const ECOSYSTEM = {
   badge: 'Our Portfolio',
-  title: 'Business',
-  titleHighlight: 'Ecosystem',
+  title: 'Our',
+  titleHighlight: 'businesses',
   description:
-    `${OPERATING_BUSINESS_UNIT_COUNT} operating businesses provide real application environments for CTG One Technology. The technology core is represented separately, and maturity is documented by evidence rather than inferred from ecosystem membership.`,
+    `${OPERATING_BUSINESS_UNIT_COUNT} real businesses, across sectors like hospitality, food and drink, health and real estate. This is where our technology gets used, tested and improved.`,
   units: ECOSYSTEM_UNITS,
 };
 
@@ -127,12 +124,12 @@ export const REWARDS = {
   title: 'CTG',
   titleHighlight: 'Rewards',
   description:
-    'CTG Rewards is a roadmap concept for future loyalty and referral capabilities across the ecosystem. It is not represented as a currently active cross-ecosystem rewards program; individual mechanics may only be described as active where a specific business unit has a verified implementation and published rules.',
+    "CTG Rewards is a planned loyalty and referral program across our businesses. It isn't live yet — a specific business will only call a feature available once it has a real, working version and published rules.",
   features: [
-    { title: 'Engagement Recognition', description: 'Designed recognition mechanics associated with ecosystem engagement; not a universal active earning program.', icon: 'award' },
-    { title: 'Referral Recognition', description: 'Potential referral mechanics remain subject to implementation and the published rules of the applicable business unit.', icon: 'userPlus' },
-    { title: 'Cross-Ecosystem Redemption', description: 'Cross-ecosystem redemption remains an architectural objective and is not represented as active today.', icon: 'gift' },
-    { title: 'Tiered Recognition', description: 'Tiered benefits remain a roadmap capability unless a specific implementation and program rules are published.', icon: 'layers' },
+    { title: 'Engagement Recognition', description: 'Ways to recognize how people engage with our businesses — not a rewards program you can join today.', icon: 'award' },
+    { title: 'Referral Recognition', description: 'Referral perks, once a specific business has a real, published version.', icon: 'userPlus' },
+    { title: 'Cross-Ecosystem Redemption', description: 'Using rewards across different CTG One businesses — a goal for later, not available yet.', icon: 'gift' },
+    { title: 'Tiered Recognition', description: 'Different benefit levels, once a business publishes its own rules for how they work.', icon: 'layers' },
   ],
 };
 
@@ -160,7 +157,7 @@ export const CONTACT = {
   title: 'Technology for',
   titleHighlight: 'Real Operations',
   description:
-    'Explore how CTG One builds and deploys software and digital infrastructure across a diversified portfolio of operating businesses, while advanced AI capabilities progress under a documented maturity model.',
+    'See how CTG One builds and runs technology across our businesses, and where our AI work stands today.',
   email: config.contact.email,
   phone: config.contact.phone,
   location: config.contact.location,
@@ -174,7 +171,7 @@ export const CONTACT = {
 
 export const FOOTER = {
   brand: 'CTG One Technology',
-  tagline: 'Software and digital infrastructure for our own business ecosystem.',
+  tagline: 'Software built for our own businesses.',
   links: {
     company: ['About'],
     solutions: ['Software Engineering', 'Digital Infrastructure', 'Internal Platforms'],
