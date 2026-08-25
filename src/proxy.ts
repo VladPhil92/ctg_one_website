@@ -1,7 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { updateSession } from '@/lib/supabase/middleware';
+import { updateSession, handleNvetSession } from '@/lib/supabase/middleware';
 
 export async function proxy(request: NextRequest) {
+  // Nvet Care's session handling is independent of Supabase (ADR-002) and
+  // must run even when Supabase isn't configured in this environment.
+  const nvetResponse = await handleNvetSession(request);
+  if (nvetResponse) {
+    return nvetResponse;
+  }
+
   // Supabase isn't configured yet in every environment (for example,
   // before environment variables are provisioned). No-op rather than
   // returning 500 for every request.

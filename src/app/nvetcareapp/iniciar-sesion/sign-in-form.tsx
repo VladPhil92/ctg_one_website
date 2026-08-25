@@ -7,7 +7,8 @@ import { PawPrint, Loader2 } from 'lucide-react';
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/nvetcareapp/dashboard';
+  const rawNext = searchParams.get('next');
+  const next = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/nvetcareapp/dashboard';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

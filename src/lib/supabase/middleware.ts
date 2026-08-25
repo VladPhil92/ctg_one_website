@@ -19,6 +19,40 @@ const routeRoles: Array<{ prefix:string; roles:InvestmentRole[] }> = [
   { prefix:'/inversion/admin/orders', roles:['SUPER_ADMIN','FINANCE_ADMIN'] },
 ];
 
+// Nvet Care dashboard: its own session cookie, not Supabase (ADR-002).
+// Runs independently of Supabase configuration so it isn't skipped when
+// Supabase env vars are unset. Excludes /nvetcareapp/iniciar-sesion — a
+// sibling of dashboard/, not nested inside it, so this can't intercept the
+// sign-in page itself and loop. Returns null when the route isn't a Nvet
+// dashboard route, so the caller can fall through to other handling.
+export async function handleNvetSession(request: NextRequest): Promise<NextResponse | null> {
+  const { pathname } = request.nextUrl;
+  if (!pathname.startsWith('/nvetcareapp/dashboard')) {
+    return null;
+  }
+
+  const response = NextResponse.next({ request });
+  const accessToken = request.cookies.get(NVET_ACCESS_COOKIE)?.value;
+  const refreshToken = request.cookies.get(NVET_REFRESH_COOKIE)?.value;
+
+  if (!isExpiredOrUnreadable(accessToken)) {
+    return response;
+  }
+
+  if (refreshToken) {
+    const tokens = await refreshNvetSession(refreshToken);
+    if (tokens) {
+      setNvetSessionCookies(response, tokens);
+      return response;
+    }
+  }
+
+  const url = request.nextUrl.clone();
+  url.pathname = '/nvetcareapp/iniciar-sesion';
+  url.searchParams.set('next', pathname);
+  return NextResponse.redirect(url);
+}
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
@@ -33,32 +67,6 @@ export async function updateSession(request: NextRequest) {
   });
 
   const { pathname } = request.nextUrl;
-
-  // Nvet Care dashboard: its own session cookie, not Supabase (ADR-002).
-  // Excludes /nvetcareapp/iniciar-sesion — a sibling of dashboard/, not
-  // nested inside it, so this branch can't intercept the sign-in page
-  // itself and loop.
-  if (pathname.startsWith('/nvetcareapp/dashboard')) {
-    const accessToken = request.cookies.get(NVET_ACCESS_COOKIE)?.value;
-    const refreshToken = request.cookies.get(NVET_REFRESH_COOKIE)?.value;
-
-    if (!isExpiredOrUnreadable(accessToken)) {
-      return response;
-    }
-
-    if (refreshToken) {
-      const tokens = await refreshNvetSession(refreshToken);
-      if (tokens) {
-        setNvetSessionCookies(response, tokens);
-        return response;
-      }
-    }
-
-    const url = request.nextUrl.clone();
-    url.pathname = '/nvetcareapp/iniciar-sesion';
-    url.searchParams.set('next', pathname);
-    return NextResponse.redirect(url);
-  }
 
   const { data: { user } } = await supabase.auth.getUser();
   const isDashboardRoute = pathname.startsWith('/dashboard');

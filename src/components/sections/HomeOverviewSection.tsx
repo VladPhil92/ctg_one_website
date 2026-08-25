@@ -31,16 +31,16 @@ export const HomeOverviewSection: React.FC = () => {
 
   const intro = locale === 'es'
     ? {
-        eyebrow: 'Arquitectura del ecosistema',
-        title: 'Una sola capa tecnológica.',
-        highlight: 'Múltiples operaciones reales.',
-        description: 'Cada unidad de CTG One funciona como un entorno operativo donde nuestro software e infraestructura se prueban, despliegan y mejoran continuamente; las capacidades emergentes se muestran con su madurez real.',
+        eyebrow: 'Nuestro ecosistema',
+        title: 'Una tecnología,',
+        highlight: 'muchos negocios reales.',
+        description: 'Cada negocio de CTG One usa nuestra tecnología en su operación diaria. Así la probamos, la mejoramos y creamos nuevos productos a partir de esa experiencia.',
       }
     : {
-        eyebrow: 'Ecosystem architecture',
-        title: 'One technology layer.',
-        highlight: 'Multiple real operations.',
-        description: 'Every CTG One unit acts as an operating environment where our software and infrastructure are tested, deployed, and continuously improved; emerging capabilities are shown with their real maturity.',
+        eyebrow: 'Our ecosystem',
+        title: 'One technology,',
+        highlight: 'many real businesses.',
+        description: "Every CTG One business uses our technology in its daily operations. That's how we test it, improve it, and build new products from what we learn.",
       };
 
   return (
