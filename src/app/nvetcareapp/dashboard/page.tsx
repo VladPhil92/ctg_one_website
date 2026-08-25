@@ -240,7 +240,17 @@ export default async function NvetDashboardPage() {
     return (
       <DashboardShell title="Panel de Nvet Care" subtitle="Métricas generales de la operación.">
         {result.ok ? (
-          <AdminMetricsPanel metrics={result.metrics} />
+          <>
+            <div className="mb-4">
+              <a
+                href="/nvetcareapp/dashboard/veterinarios"
+                className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.08em] text-[#34B27A] hover:text-[#289463]"
+              >
+                Gestionar veterinarios →
+              </a>
+            </div>
+            <AdminMetricsPanel metrics={result.metrics} />
+          </>
         ) : (
           <ErrorPanel
             message={
