@@ -46,6 +46,12 @@ type OSModule = {
   status: Status;
 };
 
+type PlainCapability = {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+};
+
 const identityStatus = getCapabilityProof('identity-auth').status;
 const dataSecurityStatus = getCapabilityProof('data-security').status;
 const deliveryStatus = getCapabilityProof('delivery-platform').status;
@@ -72,13 +78,15 @@ export const ServicesSection: React.FC = () => {
 
   const copy = es
     ? {
-        badge: 'Technology · Arquitectura verificable',
-        eyebrow: 'Ingeniería aplicada al ecosistema',
-        title: 'Una capa tecnológica compartida para',
-        highlight: 'múltiples negocios reales.',
+        badge: 'Tecnología de CTG One',
+        eyebrow: 'Cómo trabajamos',
+        title: 'Construimos la tecnología',
+        highlight: 'que usan nuestros propios negocios.',
         description:
-          'CTG One Technology diseña software, datos e infraestructura como una plataforma común para sus propias unidades. La arquitectura pública distingue claramente qué está operativo, qué existe parcialmente y qué forma parte del desarrollo futuro.',
-        layersBadge: 'Technology stack',
+          'Cada negocio del ecosistema comparte la misma base: cuentas de usuario, gestión de información, automatización de tareas y seguridad. Más abajo puedes ver en detalle qué está disponible hoy y qué seguimos construyendo.',
+        visibleBadge: 'Qué hacemos',
+        visibleTitle: 'Así ayuda la tecnología a nuestros negocios.',
+        layersBadge: 'Ver arquitectura técnica',
         layersTitle: 'Capas que convierten operaciones en sistemas.',
         layersDescription:
           'No presentamos una lista decorativa de herramientas. Cada capa representa una responsabilidad técnica dentro de la arquitectura actual o prevista del ecosistema.',
@@ -97,13 +105,15 @@ export const ServicesSection: React.FC = () => {
         maturityText: 'LIVE = implementado · PARTIAL = implementación limitada · IN DEVELOPMENT = construcción activa · ROADMAP = arquitectura prevista',
       }
     : {
-        badge: 'Technology · Verifiable architecture',
-        eyebrow: 'Engineering applied to the ecosystem',
-        title: 'One shared technology layer for',
-        highlight: 'multiple real businesses.',
+        badge: 'CTG One Technology',
+        eyebrow: 'How we work',
+        title: 'We build the technology',
+        highlight: 'that powers our own businesses.',
         description:
-          'CTG One Technology designs software, data, and infrastructure as a common platform for its own business units. The public architecture clearly separates what is operational, partially implemented, actively being built, and planned.',
-        layersBadge: 'Technology stack',
+          'Every business in the ecosystem shares the same foundation: user accounts, information management, task automation, and security. Further down you can see in detail what is available today and what we are still building.',
+        visibleBadge: 'What we do',
+        visibleTitle: 'This is how technology helps our businesses.',
+        layersBadge: 'View technical architecture',
         layersTitle: 'Layers that turn operations into systems.',
         layersDescription:
           'This is not a decorative list of tools. Each layer represents a technical responsibility within the current or planned ecosystem architecture.',
@@ -121,6 +131,24 @@ export const ServicesSection: React.FC = () => {
         maturity: 'Maturity model',
         maturityText: 'LIVE = implemented · PARTIAL = limited implementation · IN DEVELOPMENT = active build · ROADMAP = planned architecture',
       };
+
+  const plainCapabilities: PlainCapability[] = es
+    ? [
+        { icon: Code2, title: 'Creamos software', description: 'Desarrollamos aplicaciones y plataformas.' },
+        { icon: Database, title: 'Organizamos información', description: 'Creamos sistemas que permiten gestionar datos y operaciones.' },
+        { icon: Network, title: 'Conectamos servicios', description: 'Integramos diferentes herramientas y procesos.' },
+        { icon: Workflow, title: 'Automatizamos', description: 'Reducimos tareas manuales.' },
+        { icon: ShieldCheck, title: 'Protegemos', description: 'Implementamos controles de acceso y seguridad.' },
+        { icon: BrainCircuit, title: 'Desarrollamos IA', description: 'Exploramos inteligencia artificial en las áreas donde ya está disponible o en desarrollo activo.' },
+      ]
+    : [
+        { icon: Code2, title: 'We build software', description: 'We develop applications and platforms.' },
+        { icon: Database, title: 'We organize information', description: 'We build systems that manage data and operations.' },
+        { icon: Network, title: 'We connect services', description: 'We integrate different tools and processes.' },
+        { icon: Workflow, title: 'We automate', description: 'We reduce manual work.' },
+        { icon: ShieldCheck, title: 'We protect', description: 'We implement access controls and security.' },
+        { icon: BrainCircuit, title: 'We build AI', description: 'We explore artificial intelligence where it is genuinely available or under active development.' },
+      ];
 
   const layers: TechnologyLayer[] = es
     ? [
@@ -274,6 +302,31 @@ export const ServicesSection: React.FC = () => {
               </div>
             </div>
           </FadeInSection>
+        </Container>
+      </div>
+
+      <div className="relative py-16 sm:py-20">
+        <Container>
+          <FadeInSection>
+            <div className="max-w-3xl mb-10 sm:mb-12">
+              <Badge variant="accent" className="mb-6">{copy.visibleBadge}</Badge>
+              <h2 className="font-outfit font-semibold text-2xl sm:text-3xl md:text-4xl tracking-[-0.03em] text-white">{copy.visibleTitle}</h2>
+            </div>
+          </FadeInSection>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {plainCapabilities.map(({ icon: Icon, title, description }, index) => (
+              <FadeInSection key={title} delay={0.03 + index * 0.03}>
+                <div className="h-full rounded-xl border border-white/[0.055] bg-white/[0.012] p-6">
+                  <span className="mb-5 flex w-10 h-10 rounded-full border border-accent/20 items-center justify-center text-accent">
+                    <Icon size={17} strokeWidth={1.4} />
+                  </span>
+                  <h3 className="text-base font-outfit font-medium text-white mb-2">{title}</h3>
+                  <p className="text-xs sm:text-sm text-text-muted leading-relaxed">{description}</p>
+                </div>
+              </FadeInSection>
+            ))}
+          </div>
         </Container>
       </div>
 
