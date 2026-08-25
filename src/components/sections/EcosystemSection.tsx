@@ -89,8 +89,8 @@ export const EcosystemSection: React.FC = () => {
               </h1>
               <p className="text-sm sm:text-base text-text-muted leading-relaxed max-w-3xl">
                 {es
-                  ? 'CTG One Technology se representa como la capa central. Los negocios del ecosistema muestran dónde existe software real, dónde hay componentes parciales, qué productos están en construcción y qué capacidades permanecen en roadmap.'
-                  : 'CTG One Technology is represented as the core layer. Ecosystem businesses show where real software exists, where capabilities are partial, what is actively being built, and what remains on the roadmap.'}
+                  ? 'El ecosistema CTG One reúne nuestros negocios, marcas, productos y plataformas. CTG One Technology se representa como la capa central: aquí puedes ver, negocio por negocio, dónde existe software real, dónde hay componentes parciales, qué está en construcción y qué sigue en el roadmap.'
+                  : 'The CTG One ecosystem brings together our businesses, brands, products, and platforms. CTG One Technology is represented as the core layer: here you can see, business by business, where real software exists, where components are partial, what is actively being built, and what remains on the roadmap.'}
               </p>
             </div>
           </FadeInSection>
