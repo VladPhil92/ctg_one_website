@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
   const { locale, t } = useLanguage();
 
-  const sectionLabel = locale === 'es' ? 'Infraestructura digital del ecosistema' : 'Digital infrastructure for the ecosystem';
+  const sectionLabel = locale === 'es' ? 'Tecnología compartida del ecosistema' : 'Shared technology across the ecosystem';
   const footerHeading = locale === 'es' ? 'Pie de página' : 'Footer';
   const logoLabel = locale === 'es' ? 'CTG One Technology, ir al inicio' : 'CTG One Technology, go to home';
   const linkClass = 'group inline-flex min-h-11 items-center gap-2 text-sm text-text-muted hover:text-white transition-colors duration-300';
