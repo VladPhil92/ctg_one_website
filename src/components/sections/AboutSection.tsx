@@ -54,16 +54,16 @@ export const AboutSection: React.FC = () => {
     ? {
         badge: 'Nosotros · CTG One Technology',
         eyebrow: 'Tecnología aplicada a operaciones reales',
-        title: 'Construimos la capa tecnológica de',
-        titleHighlight: 'nuestro propio ecosistema.',
+        title: 'Creamos la tecnología detrás de',
+        titleHighlight: 'nuestras propias empresas.',
         intro:
-          'CTG One Technology es una empresa tecnológica con sede en Cartagena que desarrolla software propietario e infraestructura digital para sus propias unidades de negocio. Nuestro modelo conecta ingeniería, datos, seguridad y producto con operaciones reales. Las capacidades avanzadas de inteligencia artificial se encuentran en desarrollo y se presentan con su estado de madurez explícito.',
+          'CTG One Technology es una empresa tecnológica de Cartagena, Colombia. Creamos el software que usan nuestras propias empresas — en hospedaje, gastronomía, salud, bienes raíces y más — y lo probamos primero en nuestra propia operación diaria. Solo decimos que algo está disponible cuando funciona de verdad. Las funciones más avanzadas de inteligencia artificial todavía están en desarrollo.',
         secondary:
-          'Construimos desde dentro de los negocios: identificamos necesidades operativas, desplegamos software en entornos reales y convertimos componentes tecnológicos repetibles en una capa común para todo el ecosistema.',
+          'Construimos desde dentro de los negocios: identificamos necesidades reales, ponemos el software a funcionar en la operación diaria, y convertimos lo que aprendemos en tecnología que pueden usar los demás negocios del ecosistema.',
         stats: [
           [String(OPERATING_BUSINESS_UNIT_COUNT), 'Negocios operativos'],
           ['2024', 'Fundación'],
-          ['1', 'Capa tecnológica común'],
+          ['1', 'Tecnología compartida'],
           ['Cartagena', 'Base operativa'],
         ],
         capabilitiesBadge: 'Capacidades verificables',
@@ -88,16 +88,16 @@ export const AboutSection: React.FC = () => {
     : {
         badge: 'About · CTG One Technology',
         eyebrow: 'Technology applied to real operations',
-        title: 'We build the technology layer for',
-        titleHighlight: 'our own ecosystem.',
+        title: 'We create the technology behind',
+        titleHighlight: 'our own businesses.',
         intro:
-          'CTG One Technology is a Cartagena-based technology company building proprietary software and digital infrastructure for its own business units. Our model connects engineering, data, security, and product with real operations. Advanced artificial-intelligence capabilities remain in development and are presented with an explicit maturity status.',
+          'CTG One Technology is a technology company based in Cartagena, Colombia. We create the software our own businesses use — across hospitality, food and drink, health, real estate and more — and test it first in our own daily operations. We only call something available once it actually works. Our most advanced AI features are still in development.',
         secondary:
-          'We build from inside the businesses: we identify operating needs, deploy software into real environments, and turn repeatable technology components into a shared layer for the entire ecosystem.',
+          'We build from inside the businesses: we identify real needs, put software to work in daily operations, and turn what we learn into technology the rest of the ecosystem can use.',
         stats: [
           [String(OPERATING_BUSINESS_UNIT_COUNT), 'Operating businesses'],
           ['2024', 'Founded'],
-          ['1', 'Shared technology layer'],
+          ['1', 'Shared technology'],
           ['Cartagena', 'Operating base'],
         ],
         capabilitiesBadge: 'Verifiable capabilities',
