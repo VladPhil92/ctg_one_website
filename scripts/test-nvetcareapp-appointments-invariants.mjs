@@ -3,10 +3,11 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [statusRoute, appointmentsRoute, advanceButton] = await Promise.all([
+const [statusRoute, appointmentsRoute, advanceButton, dashboardPage] = await Promise.all([
   read('src/app/api/nvetcareapp/appointments/[id]/status/route.ts'),
   read('src/app/api/nvetcareapp/appointments/route.ts'),
   read('src/app/nvetcareapp/dashboard/advance-status-button.tsx'),
+  read('src/app/nvetcareapp/dashboard/page.tsx'),
 ]);
 
 // The status-update BFF route must require a session cookie before doing
@@ -63,5 +64,23 @@ for (const terminal of ['COMPLETED', 'CANCELLED', 'DISPUTED']) {
     `Advance-status button must not offer any transition out of the terminal status ${terminal}.`,
   );
 }
+
+// A P2 review finding on PR #191: the dashboard checks for a 401 after the
+// initial GET /api/auth/me call, but a token can expire in the narrow
+// window before the second, role-specific fetch (metrics/appointments)
+// completes — that second 401 must also redirect to sign-in, not render
+// as a generic error. Every redirect('/nvetcareapp/iniciar-sesion') call
+// must be paired with its own `status === 401` check immediately before it.
+const redirectCount = (dashboardPage.match(/redirect\('\/nvetcareapp\/iniciar-sesion'\)/g) ?? []).length;
+const status401CheckCount = (dashboardPage.match(/status === 401/g) ?? []).length;
+// One redirect (the very first) is guarded by "no cookie at all", not a
+// 401 response — every other redirect must be paired with its own
+// `status === 401` check immediately before it.
+assert.equal(
+  redirectCount,
+  status401CheckCount + 1,
+  'Every sign-in redirect except the no-cookie guard must be paired with its own 401 check — one for the initial user lookup, and one for each role-specific fetch (ADMIN metrics, CLIENT/VET appointments).',
+);
+assert.ok(status401CheckCount >= 4, 'Dashboard must redirect on 401 after the user lookup and after each of the three role-specific fetches.');
 
 console.log('Nvet Care appointments invariants: PASS');

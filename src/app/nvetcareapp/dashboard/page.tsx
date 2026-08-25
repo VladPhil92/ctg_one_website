@@ -234,6 +234,9 @@ export default async function NvetDashboardPage() {
 
   if (role === 'ADMIN') {
     const result = await fetchNvetAdminMetrics(accessToken);
+    if (!result.ok && result.status === 401) {
+      redirect('/nvetcareapp/iniciar-sesion');
+    }
     return (
       <DashboardShell title="Panel de Nvet Care" subtitle="Métricas generales de la operación.">
         {result.ok ? (
@@ -253,6 +256,9 @@ export default async function NvetDashboardPage() {
 
   if (role === 'CLIENT') {
     const result = await fetchNvetAppointments(accessToken);
+    if (!result.ok && result.status === 401) {
+      redirect('/nvetcareapp/iniciar-sesion');
+    }
     return (
       <DashboardShell title="Mis citas" subtitle="Seguimiento de tus citas con veterinarios.">
         {result.ok ? (
@@ -268,6 +274,9 @@ export default async function NvetDashboardPage() {
   // to the vet's own appointments). Prices and clinical notes are a
   // separate, not-yet-built slice (ROADMAP.md Phase 4 item 2).
   const result = await fetchNvetAppointments(accessToken);
+  if (!result.ok && result.status === 401) {
+    redirect('/nvetcareapp/iniciar-sesion');
+  }
   return (
     <DashboardShell title="Mi agenda" subtitle="Citas asignadas a tu perfil.">
       {result.ok ? (
