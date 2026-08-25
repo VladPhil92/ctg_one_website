@@ -83,7 +83,7 @@ export const ServicesSection: React.FC = () => {
         title: 'Construimos la tecnología',
         highlight: 'que usan nuestros propios negocios.',
         description:
-          'Cada negocio del ecosistema comparte la misma base: cuentas de usuario, gestión de información, automatización de tareas y seguridad. Más abajo puedes ver en detalle qué está disponible hoy y qué seguimos construyendo.',
+          'Diseñamos una base tecnológica común (cuentas de usuario, gestión de información, automatización de tareas y seguridad) y la llevamos a cada negocio del ecosistema a su propio ritmo. Más abajo puedes ver en detalle qué está disponible hoy en cada uno y qué seguimos construyendo.',
         visibleBadge: 'Qué hacemos',
         visibleTitle: 'Así ayuda la tecnología a nuestros negocios.',
         layersBadge: 'Ver arquitectura técnica',
@@ -110,7 +110,7 @@ export const ServicesSection: React.FC = () => {
         title: 'We build the technology',
         highlight: 'that powers our own businesses.',
         description:
-          'Every business in the ecosystem shares the same foundation: user accounts, information management, task automation, and security. Further down you can see in detail what is available today and what we are still building.',
+          'We design one common technology foundation (user accounts, information management, task automation, and security) and bring it to each business in the ecosystem at its own pace. Further down you can see in detail what is available today in each one and what we are still building.',
         visibleBadge: 'What we do',
         visibleTitle: 'This is how technology helps our businesses.',
         layersBadge: 'View technical architecture',
