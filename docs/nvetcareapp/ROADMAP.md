@@ -75,15 +75,37 @@ replaces it wholesale, not extends it.
 
 ## Phase 3 — First vertical slice: AdminDashboard
 
-Lowest-stakes page (read-only metrics) — port it in full, end to end, to
-prove out the page → BFF → NestJS → Prisma → Postgres path before
-touching anything that writes:
-- `GET /api/nvetcareapp/admin/metrics` (mirrors `admin.service.ts::getMetrics()`).
-- `src/app/nvetcareapp/dashboard/page.tsx` rebuilt against this repo's
-  component conventions (`Container`, local `NodeIcon`/`StatusPill` per
-  ADR-004), not the existing Vite page's CSS-in-JS.
-- Headless-browser check (per the site's established verification
-  pattern) against a real logged-in session.
+**Status: Done**, with one gap noted below.
+
+- `src/lib/nvetcareapp/admin.ts` — shared `fetchNvetAdminMetrics()`, typed
+  against `admin.service.ts::getMetrics()`'s exact response shape.
+- `GET /api/nvetcareapp/admin/metrics` Route Handler (ADR-003): reads the
+  session cookie, calls NestJS server-side with the bearer token, forwards
+  its status (401/403/200) — never re-implements the role check itself.
+- `src/app/nvetcareapp/dashboard/page.tsx` rebuilt as a Server Component
+  against this repo's conventions and ADR-004's palette (no port of the
+  Vite page's mock data or CSS-in-JS — it was mocked data to begin with,
+  not wired to `getMetrics()`).
+
+Verified against the real Phase 1 Railway deployment: a fresh non-admin
+account (`role: CLIENT`) hitting `/nvetcareapp/dashboard` gets a real
+`403` from the backend's `RolesGuard`, rendered as a graceful
+"no tienes permisos de administrador" message — end to end, not mocked.
+Unauthenticated access still redirects to sign-in, unaffected.
+
+**Gap**: the ADMIN happy path (real KPI numbers rendering) was verified
+by pointing `CTG_NVETCARE_API_URL` at a local stub server returning
+`getMetrics()`'s exact shape, confirmed by screenshot — not against a
+real ADMIN account on the real deployment, since ADMIN is provisioned
+out-of-band (direct DB) and this environment has no DB write access.
+Whoever provisions the first real ADMIN account should do one real
+click-through of `/nvetcareapp/dashboard` to confirm the live numbers
+render as expected.
+
+While reading `admin.service.ts` for this phase, found and fixed an
+unrelated critical vulnerability: `POST /api/auth/register` accepted a
+client-supplied `role` field with no restriction, so anyone could
+self-register as `ADMIN`. See `Nvet-Care-App` PR #15.
 
 ## Phase 4 — Remaining pages, write operations included
 

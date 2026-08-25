@@ -30,7 +30,7 @@ const [
 // SSR / PKCE lifecycle and redirect confinement.
 assert.ok(registerPage.includes('/auth/callback?next=/dashboard'), 'Signup confirmation must return through the SSR auth callback.');
 assert.ok(callbackRoute.includes('exchangeCodeForSession(code)'), 'Auth callback must exchange the PKCE code for a cookie-backed session.');
-assert.ok(callbackRoute.includes("!value.startsWith('/') || value.startsWith('//')"), 'Auth callback must reject external/protocol-relative redirect targets.');
+assert.ok(callbackRoute.includes('safeRedirectPath'), 'Auth callback must reject external/protocol-relative redirect targets via the shared safeRedirectPath guard.');
 assert.ok(loginPage.includes('/recuperar-contrasena'), 'Login must expose password recovery.');
 assert.ok(recoveryPage.includes('resetPasswordForEmail'), 'Password recovery must request a Supabase reset email.');
 assert.ok(recoveryPage.includes('/auth/callback?next=/restablecer-contrasena'), 'Password recovery must return through the SSR auth callback.');

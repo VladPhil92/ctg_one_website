@@ -3,12 +3,12 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PawPrint, Loader2 } from 'lucide-react';
+import { safeRedirectPath } from '@/lib/security/safe-redirect';
 
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const rawNext = searchParams.get('next');
-  const next = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/nvetcareapp/dashboard';
+  const next = safeRedirectPath(searchParams.get('next'), '/nvetcareapp/dashboard');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
