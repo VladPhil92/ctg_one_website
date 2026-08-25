@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { AuthInput } from '@/components/auth/AuthInput';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authErrorMessage, normalizeEmail } from '@/lib/auth/client-policy';
+import { safeRedirectPath } from '@/lib/security/safe-redirect';
 
 const loginSchema = z.object({
   email: z.string().trim().email(),
@@ -27,8 +28,7 @@ function IniciarSesionForm() {
   const searchParams = useSearchParams();
   const { locale } = useLanguage();
   const es = locale === 'es';
-  const next = searchParams.get('next');
-  const redirectTo = next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+  const redirectTo = safeRedirectPath(searchParams.get('next'), '/dashboard');
   const authError = searchParams.get('error');
   const resetComplete = searchParams.get('password_reset') === 'success';
   const [email, setEmail] = useState('');
