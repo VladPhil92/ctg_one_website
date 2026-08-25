@@ -61,9 +61,9 @@ export const AIPlatformSection: React.FC = () => {
   const knowledgePublicStatus = getPublicProofStatus(knowledgeProof);
 
   const copy = es ? {
-    badge: 'CTG ONE AI · Arquitectura pública', eyebrow: 'Inteligencia integrada a la operación',
-    title: 'La IA no es una función aislada.', highlight: 'Es una capa de inteligencia.',
-    description: 'CTG One está construyendo una arquitectura para conectar datos autorizados, contexto, modelos, agentes y workflows dentro de su propio ecosistema. Esta página separa explícitamente lo que existe, lo que está en desarrollo y lo que permanece en roadmap.',
+    badge: 'IA en CTG One', eyebrow: 'Qué hace por ti hoy',
+    title: 'Usamos inteligencia artificial', highlight: 'donde ya funciona de verdad.',
+    description: 'Hoy usamos IA principalmente para ayudarte a encontrar información dentro de nuestra documentación (CTG Knowledge, todavía en fase piloto). El resto de capacidades — agentes, automatización avanzada, apoyo a decisiones — están en desarrollo. Más abajo puedes ver el detalle técnico y el estado real de cada una.',
     current: 'Estado de plataforma', currentText: 'No existe todavía un runtime general de modelos, RAG o agentes promovido a producción. La arquitectura y la gobernanza están definidas; la capacidad general permanece IN DEVELOPMENT.',
     evidence: 'Evidence before answers', evidenceText: 'Las respuestas factuales deben privilegiar contexto verificable, fuentes rastreables y controles antes que fluidez sin evidencia.',
     architectureBadge: '01 · AI Architecture', architectureTitle: 'Cómo entra la inteligencia al sistema.', architectureText: 'La autorización ocurre antes del modelo. La acción ocurre después de validación, políticas y, cuando corresponde, supervisión humana.',
@@ -78,9 +78,9 @@ export const AIPlatformSection: React.FC = () => {
     osBadge: '09 · CTG One OS', osTitle: 'La inteligencia se apoya en la plataforma compartida.', osText: 'CTG One OS aporta identidad, datos, seguridad, transacciones, documentos e integraciones. CTG One AI añade contexto, modelos, agentes y evaluación sobre límites autorizados.',
     proof: 'Ver estado técnico', labs: 'Explorar Labs', technology: 'Explorar Technology', products: 'Ver productos', demo: 'ARCHITECTURE DEMO · No ejecuta un modelo real',
   } : {
-    badge: 'CTG ONE AI · Public architecture', eyebrow: 'Intelligence embedded into operations',
-    title: 'AI is not an isolated feature.', highlight: 'It is an intelligence layer.',
-    description: 'CTG One is building an architecture that connects authorized data, context, models, agents, and workflows across its own ecosystem. This page explicitly separates what exists, what is in development, and what remains on the roadmap.',
+    badge: 'AI at CTG One', eyebrow: 'What it does for you today',
+    title: 'We use artificial intelligence', highlight: 'where it genuinely works today.',
+    description: 'Today we mainly use AI to help you find information inside our documentation (CTG Knowledge, still in pilot). The rest of our AI capabilities — agents, advanced automation, decision support — are still in development. Further down you can see the technical detail and the real status of each one.',
     current: 'Platform status', currentText: 'There is not yet a general production model, RAG, or agent runtime promoted to LIVE. Architecture and governance are defined; the general capability remains IN DEVELOPMENT.',
     evidence: 'Evidence before answers', evidenceText: 'Factual answers should favor verifiable context, traceable sources, and controls over unsupported fluency.',
     architectureBadge: '01 · AI Architecture', architectureTitle: 'How intelligence enters the system.', architectureText: 'Authorization occurs before the model. Action occurs after validation, policy, and human oversight where required.',
