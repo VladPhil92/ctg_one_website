@@ -345,15 +345,38 @@ screenshotted before/after. `npx tsc --noEmit`, the full `npm test`
 invariant suite (including the new
 `test-nvetcareapp-chat-invariants.mjs`), and `npm run build` all pass.
 
-## Phase 6 — Hardening and rollout
+## Phase 6 — Hardening and rollout. **Status: Done** — see below.
 
 - `npm test` / `npx tsc --noEmit` / `npm run build` clean, same bar as
-  every other change in this repo.
+  every other change in this repo. **Confirmed** on `main` after Phase 5
+  merged (commit `b71fe84`): full invariant suite (including all six
+  Nvet Care scripts) passes, typecheck is clean, production build
+  succeeds with every `/nvetcareapp/**` route registered correctly.
 - Discoverability: whether/how the dashboard is linked from the
-  marketing page or elsewhere — not decided here, mirrors `/inversion`'s
-  ADR-000 deferral of the same question.
+  marketing page or elsewhere. **Resolved as deferred**, not merely left
+  open — this mirrors `/inversion`'s own ADR-000, which explicitly keeps
+  the global Navbar/homepage untouched for the same reason
+  ("discoverability... deferred as a separate decision"). `CLAUDE.md`'s
+  investment-initiative rules independently forbid touching the global
+  Navbar/Footer or marketing pages without a separately authorized,
+  explicitly scoped change — the same discipline applies here. No
+  marketing-site file was touched by any Nvet Care phase; the dashboard
+  stays reachable only by direct URL (`/nvetcareapp`), same as today.
 - Confirm the mobile app's `API_URL` still points at the Phase 1
-  deployment and isn't affected by any of this.
+  deployment and isn't affected by any of this. **Confirmed unaffected**:
+  `Nvet-Care-App/mobile/src/services/api.ts` reads `API_URL` from
+  `process.env.API_URL` at build time (react-native-config), falling
+  back to `http://localhost:3000/api` for local dev — the production
+  URL is injected externally (CI/EAS build config), not committed in
+  the mobile repo, so there is nothing in it for any `ctg_one_website`
+  change to go stale against. No file under `Nvet-Care-App/mobile/` was
+  touched by any phase of this roadmap.
+
+This closes every phase of this roadmap. Remaining work (real-time chat's
+WebSocket alternative, dashboard discoverability, anything under
+"Explicitly out of scope" below) is intentionally deferred, not
+forgotten — pick back up from this document when one of those becomes a
+priority.
 
 ## Explicitly out of scope for this roadmap
 
