@@ -1,19 +1,19 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'CTG One AI | Artificial Intelligence Architecture & Governance',
-  description: 'AI architecture, agents, knowledge systems, governance, evaluation, security, and applied intelligence across the CTG One ecosystem.',
+  title: 'CTG One AI | Artificial Intelligence at CTG One',
+  description: 'How CTG One uses artificial intelligence today — starting with CTG Knowledge, our AI-powered documentation search — and what is still in development.',
   alternates: { canonical: 'https://ctgone.com/ai' },
   openGraph: {
-    title: 'CTG One AI | Artificial Intelligence Architecture & Governance',
-    description: 'Explore how CTG One designs governed AI systems around authorized data, context, models, agents, workflows, evaluation, and human oversight.',
+    title: 'CTG One AI | Artificial Intelligence at CTG One',
+    description: 'See what AI does for you today at CTG One, and the technical architecture behind it.',
     url: 'https://ctgone.com/ai',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CTG One AI | Architecture & Governance',
-    description: 'Governed AI architecture for the CTG One business ecosystem.',
+    title: 'CTG One AI | Artificial Intelligence at CTG One',
+    description: 'How CTG One uses AI today, and what is still in development.',
   },
 };
 
