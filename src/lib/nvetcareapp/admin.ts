@@ -36,13 +36,28 @@ export type NvetAdminMetricsResult =
  * outcome, it does not re-implement the role check.
  */
 export async function fetchNvetAdminMetrics(accessToken: string): Promise<NvetAdminMetricsResult> {
-  const res = await fetch(`${getNvetApiUrl()}/api/admin/metrics`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-    cache: 'no-store',
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${getNvetApiUrl()}/api/admin/metrics`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: 'no-store',
+    });
+  } catch {
+    // Network failure, DNS, timeout, connection reset — fetch() rejects
+    // rather than resolving with a non-OK Response, so this must be
+    // caught explicitly or callers get an unhandled 500 instead of the
+    // graceful "couldn't reach the backend" state.
+    return { ok: false, status: 502 };
+  }
+
   if (!res.ok) {
     return { ok: false, status: res.status };
   }
-  const metrics = (await res.json()) as NvetAdminMetrics;
-  return { ok: true, metrics };
+
+  try {
+    const metrics = (await res.json()) as NvetAdminMetrics;
+    return { ok: true, metrics };
+  } catch {
+    return { ok: false, status: 502 };
+  }
 }
