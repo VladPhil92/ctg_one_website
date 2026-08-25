@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { NvetAppointmentStatus } from '@/lib/nvetcareapp/appointments';
+import { nvetFetchWithRefresh } from './nvet-fetch';
 
 // Mirrors the vet-actionable subset of appointments.service.ts's
 // validateStatusTransition() — the backend is the authoritative check;
@@ -26,7 +27,7 @@ export function AdvanceStatusButton({ appointmentId, status }: { appointmentId: 
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/nvetcareapp/appointments/${appointmentId}/status`, {
+      const res = await nvetFetchWithRefresh(`/api/nvetcareapp/appointments/${appointmentId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: action!.next }),

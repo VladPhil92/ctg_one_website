@@ -33,4 +33,14 @@ for (const [name, source] of [['tier-update route', tierRoute], ['veterinarians 
 assert.match(page, /userResult\.user\.role === 'ADMIN'/, 'Veterinarians page must gate rendering on the session role being ADMIN.');
 assert.match(page, /!isAdmin/, 'Veterinarians page must render a distinct state for a non-admin visitor.');
 
+// The backend paginates GET /admin/veterinarians (limit/offset, hasMore) —
+// the page must forward an offset and expose a way to reach a later page,
+// not just always render page one (Codex review finding on PR #192: every
+// vet past the first page was unreachable from this UI).
+assert.match(listRoute, /searchParams\.get\('offset'\)/, 'Veterinarians list route must read an offset query param.');
+assert.match(listRoute, /Number\.isInteger\(offset\) && offset >= 0|!Number\.isInteger\(offset\) \|\| offset < 0/, 'Veterinarians list route must validate offset as a non-negative integer.');
+assert.match(page, /hasMore/, 'Veterinarians page must check the backend\'s hasMore flag.');
+assert.match(page, /offset:\s*Math\.max\(0, offset - vetsResult\.page\.limit\)|offset - vetsResult\.page\.limit/, 'Veterinarians page must offer a way back to the previous page.');
+assert.match(page, /offset \+ vetsResult\.page\.limit/, 'Veterinarians page must offer a way to reach the next page when hasMore is true.');
+
 console.log('Nvet Care tiers invariants: PASS');

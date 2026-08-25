@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { nvetFetchWithRefresh } from '../nvet-fetch';
 
 export function TransferActions({ transactionId }: { transactionId: string }) {
   const router = useRouter();
@@ -14,7 +15,7 @@ export function TransferActions({ transactionId }: { transactionId: string }) {
     setLoading('confirm');
     setError(null);
     try {
-      const res = await fetch(`/api/nvetcareapp/admin/transactions/${transactionId}/confirm-transfer`, { method: 'POST' });
+      const res = await nvetFetchWithRefresh(`/api/nvetcareapp/admin/transactions/${transactionId}/confirm-transfer`, { method: 'POST' });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         setError(data?.message ?? 'No se pudo confirmar la transferencia.');
@@ -36,7 +37,7 @@ export function TransferActions({ transactionId }: { transactionId: string }) {
     setLoading('reject');
     setError(null);
     try {
-      const res = await fetch(`/api/nvetcareapp/admin/transactions/${transactionId}/reject-transfer`, {
+      const res = await nvetFetchWithRefresh(`/api/nvetcareapp/admin/transactions/${transactionId}/reject-transfer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason }),

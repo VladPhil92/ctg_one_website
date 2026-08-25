@@ -27,7 +27,11 @@ const VERIFICATION_TONE: Record<NvetVerificationStatus, string> = {
   EXPIRED: 'border-[#0D1B2A]/10 bg-[#0D1B2A]/[0.03] text-[#5B6670]',
 };
 
-export default async function VeterinariansPage() {
+export default async function VeterinariansPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ offset?: string }>;
+}) {
   const accessToken = (await cookies()).get(NVET_ACCESS_COOKIE)?.value;
   if (!accessToken) {
     redirect('/nvetcareapp/iniciar-sesion');
@@ -40,7 +44,10 @@ export default async function VeterinariansPage() {
 
   const isAdmin = userResult.ok && userResult.user.role === 'ADMIN';
 
-  const vetsResult = isAdmin ? await fetchNvetVets(accessToken) : null;
+  const rawOffset = Number((await searchParams).offset);
+  const offset = Number.isInteger(rawOffset) && rawOffset > 0 ? rawOffset : 0;
+
+  const vetsResult = isAdmin ? await fetchNvetVets(accessToken, offset) : null;
   if (vetsResult && !vetsResult.ok && vetsResult.status === 401) {
     redirect('/nvetcareapp/iniciar-sesion');
   }
@@ -70,6 +77,7 @@ export default async function VeterinariansPage() {
             <p className="text-sm text-[#0D1B2A]">Todavía no hay veterinarios registrados.</p>
           </div>
         ) : (
+          <>
           <div className="space-y-3">
             {vetsResult.page.results.map((vet) => (
               <div key={vet.id} className="rounded-2xl border-[1px] border-[#0D1B2A]/10 bg-white p-5 shadow-[0_1px_3px_rgba(13,27,42,0.04)]">
@@ -96,6 +104,30 @@ export default async function VeterinariansPage() {
               </div>
             ))}
           </div>
+          <div className="mt-4 flex items-center justify-between text-xs text-[#5B6670]">
+            <span>
+              Mostrando {offset + 1}–{offset + vetsResult.page.results.length} de {vetsResult.page.total}
+            </span>
+            <div className="flex gap-3">
+              {offset > 0 && (
+                <a
+                  href={`/nvetcareapp/dashboard/veterinarios?offset=${Math.max(0, offset - vetsResult.page.limit)}`}
+                  className="font-semibold uppercase tracking-[0.08em] text-[#34B27A] hover:text-[#289463]"
+                >
+                  ← Anteriores
+                </a>
+              )}
+              {vetsResult.page.hasMore && (
+                <a
+                  href={`/nvetcareapp/dashboard/veterinarios?offset=${offset + vetsResult.page.limit}`}
+                  className="font-semibold uppercase tracking-[0.08em] text-[#34B27A] hover:text-[#289463]"
+                >
+                  Siguientes →
+                </a>
+              )}
+            </div>
+          </div>
+          </>
         )}
       </div>
     </main>

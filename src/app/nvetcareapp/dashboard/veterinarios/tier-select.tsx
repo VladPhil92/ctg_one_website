@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { NvetVetTier } from '@/lib/nvetcareapp/vets';
+import { nvetFetchWithRefresh } from '../nvet-fetch';
 
 const TIER_OPTIONS: NvetVetTier[] = ['FREE', 'PRO', 'ELITE'];
 const TIER_LABELS: Record<NvetVetTier, string> = { FREE: 'Free', PRO: 'Pro', ELITE: 'Elite' };
@@ -20,7 +21,7 @@ export function TierSelect({ vetId, currentTier }: { vetId: string; currentTier:
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/nvetcareapp/admin/veterinarians/${vetId}/tier`, {
+      const res = await nvetFetchWithRefresh(`/api/nvetcareapp/admin/veterinarians/${vetId}/tier`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tier, reason: reason || undefined }),

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { NvetDisputeResolution } from '@/lib/nvetcareapp/transactions';
+import { nvetFetchWithRefresh } from '../nvet-fetch';
 
 const RESOLUTION_LABELS: Record<NvetDisputeResolution, string> = {
   CONFIRM: 'Confirmar cobro (completar cita)',
@@ -26,7 +27,7 @@ export function DisputeResolutionForm({ transactionId }: { transactionId: string
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/nvetcareapp/admin/transactions/${transactionId}/resolve-dispute`, {
+      const res = await nvetFetchWithRefresh(`/api/nvetcareapp/admin/transactions/${transactionId}/resolve-dispute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resolution, notes }),

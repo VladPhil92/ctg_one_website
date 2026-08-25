@@ -38,10 +38,12 @@ export type NvetVetsResult =
   | { ok: true; page: NvetVetsPage }
   | { ok: false; status: number };
 
-export async function fetchNvetVets(accessToken: string): Promise<NvetVetsResult> {
+const PAGE_SIZE = 20;
+
+export async function fetchNvetVets(accessToken: string, offset = 0): Promise<NvetVetsResult> {
   let res: Response;
   try {
-    res = await fetch(`${getNvetApiUrl()}/api/admin/veterinarians`, {
+    res = await fetch(`${getNvetApiUrl()}/api/admin/veterinarians?limit=${PAGE_SIZE}&offset=${offset}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: 'no-store',
     });
