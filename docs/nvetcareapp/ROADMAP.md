@@ -8,6 +8,8 @@ though this repo's `CLAUDE.md` only names it for `/inversion`).
 
 ## Phase 0 — Palette correction (independent, do first)
 
+**Status: Done.**
+
 Fix the three drifted hex values in the already-shipped
 `NvetCareAppSection.tsx` (see `adr/ADR-004`): `#1E9C6C → #34B27A`,
 `#FF8F2E → #FF8A3D`, `#0A1B2E → #0D1B2A`. No dependency on anything
@@ -15,14 +17,25 @@ else in this roadmap — can land as its own one-file PR immediately.
 
 ## Phase 1 — Get the backend actually running somewhere
 
-Nothing in `Nvet-Care-App` is deployed today. Before any dashboard page
-can call it, decide and stand up:
+**Status: Done.** Deployed to Railway; `CTG_NVETCARE_API_URL` is
+`https://backend-production-a476.up.railway.app`. `GET /api/health/ready`
+confirmed responding with the database check `up` and the schema pushed
+to a real Postgres instance via `prisma db push` (this repo has no
+committed Prisma migration history, only `manual/*.sql` patch files
+already reflected in `schema.prisma` — `db push` is the correct sync
+command here, not `migrate deploy`).
+
+Original brief, for reference — what this phase had to decide and stand
+up before any dashboard page could call the backend:
 - Hosting for the NestJS API (Railway, per its own `README.md`, or
-  another provider — **open decision, not made by this plan**).
-- A real PostgreSQL instance and `DATABASE_URL`, with
-  `npx prisma migrate deploy` run against it.
+  another provider — **open decision, not made by this plan**). Went
+  with Railway.
+- A real PostgreSQL instance and `DATABASE_URL`, with the schema
+  applied (`npx prisma migrate deploy` was the original plan; see the
+  status note above on why `db push` was used instead).
 - A real Redis instance (or accept the in-memory fallback the code
-  already supports, with its documented multi-instance caveat).
+  already supports, with its documented multi-instance caveat). Went
+  with Railway's Redis add-on.
 - Real secrets for every `REPLACE_ME_*` value in `.env.example`
   (JWT secrets, 2FA encryption key, session salt) — generated with the
   repo's own `scripts/generate-secrets.mjs`, never reused from
@@ -34,6 +47,19 @@ This phase produces one artifact this plan needs: a real base URL to put
 in `CTG_NVETCARE_API_URL`.
 
 ## Phase 2 — The auth bridge (ADR-002)
+
+**Status: Done.** Verified against the Phase 1 Railway deployment: a real
+login round-trip (`POST /api/nvetcareapp/auth/login` against a registered
+test account), a silent refresh via the middleware's expiry-triggered
+branch (confirmed it actually calls `POST /auth/refresh` and rotates the
+session cookies, not just that the cookie was merely present), and that
+missing/unreadable-token requests redirect to
+`/nvetcareapp/iniciar-sesion` instead of rendering the dashboard shell.
+Checked end to end with a headless browser (real form fill-in, submit,
+landing on the dashboard, sign-out) — zero console errors. A minimal
+placeholder dashboard page (`src/app/nvetcareapp/dashboard/page.tsx`)
+exists only to make this phase's login round-trip testable; Phase 3
+replaces it wholesale, not extends it.
 
 - `POST /api/nvetcareapp/auth/login`, `POST /api/nvetcareapp/auth/refresh`,
   `POST /api/nvetcareapp/auth/logout` Route Handlers that proxy to the
