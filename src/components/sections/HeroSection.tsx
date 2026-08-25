@@ -106,7 +106,7 @@ export const HeroSection: React.FC = () => {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <a href="/craft-beer" className="group relative min-h-[420px] overflow-hidden rounded-[28px] border border-[#d6ae56]/20 bg-[#090805] shadow-[0_30px_80px_rgba(0,0,0,.35)]">
-                  <Image src="/images/inversion/ctg-craft-beer-hefeweizen.webp" alt={es ? 'Botella Hefeweizen de CTG Craft Beer' : 'CTG Craft Beer Hefeweizen bottle'} fill unoptimized sizes="(min-width: 640px) 320px, 90vw" className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.035]" />
+                  <Image src="/images/inversion/ctg-craft-beer-hefeweizen.webp" alt={es ? 'Botella Hefeweizen de CTG Craft Beer' : 'CTG Craft Beer Hefeweizen bottle'} fill unoptimized sizes="(min-width: 640px) 320px, 90vw" className="object-cover object-center transition-transform duration-700 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 p-6">
                     <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#f1c75b]/25 bg-black/40 text-[#f1c75b]"><Beer size={18} /></div>
@@ -117,7 +117,7 @@ export const HeroSection: React.FC = () => {
 
                 <a href="/nvetcareapp" className="group relative min-h-[420px] overflow-hidden rounded-[28px] border border-[#34B27A]/20 bg-white shadow-[0_30px_80px_rgba(0,0,0,.28)]">
                   <div className="absolute inset-0 bg-gradient-to-b from-[#f8fffb] via-white to-[#edf8f2]" />
-                  <Image src={es ? '/images/nvetcareapp/vet-tracking-mockup-es.png' : '/images/nvetcareapp/vet-tracking-mockup-en.png'} alt={es ? 'Concepto de la aplicación Nvet Care mostrando seguimiento de una visita veterinaria' : 'Nvet Care app concept showing veterinary visit tracking'} fill sizes="(min-width: 640px) 320px, 90vw" className="object-contain p-8 transition-transform duration-700 group-hover:scale-[1.025]" />
+                  <Image src={es ? '/images/nvetcareapp/vet-tracking-mockup-es.png' : '/images/nvetcareapp/vet-tracking-mockup-en.png'} alt={es ? 'Concepto de la aplicación Nvet Care mostrando seguimiento de una visita veterinaria' : 'Nvet Care app concept showing veterinary visit tracking'} fill sizes="(min-width: 640px) 320px, 90vw" className="object-contain p-8 transition-transform duration-700 group-hover:scale-105" />
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/90 to-transparent p-6 pt-16">
                     <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#34B27A]/20 bg-white text-[#34B27A]"><PawPrint size={18} /></div>
                     <div className="text-[10px] uppercase tracking-[0.15em] text-[#34B27A]">{nvetLabel}</div>
