@@ -21,8 +21,8 @@ export async function generateMetadata({ params }: ProcessPageProps): Promise<Me
   }
 
   return {
-    title: `${process.labelEs} | Ecosistema | CTG One Technology`,
-    description: process.descriptionEs,
+    title: `${process.labelEn} | Ecosystem`,
+    description: process.descriptionEn,
     alternates: {
       canonical: `/ecosystem/process/${process.slug}`,
     },
