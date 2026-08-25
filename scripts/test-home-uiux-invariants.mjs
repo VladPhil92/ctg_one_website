@@ -23,6 +23,7 @@ const [
   nextConfig,
   sitemap,
   privacyLayout,
+  productShowcases,
 ] = await Promise.all([
   read('src/app/globals.css'),
   read('tailwind.config.ts'),
@@ -44,9 +45,10 @@ const [
   read('next.config.js'),
   read('src/app/sitemap.ts'),
   read('src/app/privacy/layout.tsx'),
+  read('src/components/sections/HomeProductShowcases.tsx'),
 ]);
 
-// A11Y-01 — audited normal-text tokens must not regress to #5A5A5A / 2.96:1.
+// A11Y-01 — audited normal-text tokens must not regress.
 assert.match(globals, /--text-dim:\s*#9a9a9a/i, 'Global dim text token must retain an AA-safe value on the dark canvas.');
 assert.match(globals, /--text-muted:\s*#b0b0b0/i, 'Muted reading text must keep additional contrast margin.');
 assert.match(tailwind, /'text-dim':\s*'#9a9a9a'/i, 'Tailwind text-dim must match the accessible CSS token.');
@@ -77,7 +79,7 @@ assert.match(skipLink, /AFTER_PRIMARY_NAVIGATION_ID\s*=\s*'after-primary-navigat
 assert.match(navbar, /id=\{AFTER_PRIMARY_NAVIGATION_ID\}[\s\S]*?tabIndex=\{-1\}/, 'Navbar must render a programmatically focusable sentinel immediately after primary navigation.');
 assert.doesNotMatch(navbar, /id=\{AFTER_PRIMARY_NAVIGATION_ID\}[^>]*aria-hidden/, 'Skip destination must remain exposed to assistive technology.');
 assert.match(navbar, /contentStartLabel[\s\S]*?Inicio del contenido[\s\S]*?Start of content/, 'Skip destination must announce localized content-start context.');
-assert.match(home, /id="main-content"[\s\S]*?tabIndex=\{-1\}/, 'Home main landmark must remain programmatically focusable for direct fragment/accessibility use.');
+assert.match(home, /id="main-content"[\s\S]*?tabIndex=\{-1\}/, 'Home main landmark must remain programmatically focusable.');
 assert.match(globals, /outline:\s*2px solid var\(--accent\)/, 'Interactive focus ring must remain 2px.');
 assert.match(globals, /outline-offset:\s*2px/, 'Focus ring must retain separation from the focused control.');
 
@@ -86,27 +88,29 @@ assert.doesNotMatch(adminKnowledge, /<Navbar\s*\/>|<Footer\s*\/>/, 'Admin Knowle
 assert.doesNotMatch(adminKnowledge, /<main\b/, 'Admin Knowledge must not nest a second main landmark inside AdminLayout.');
 assert.match(adminKnowledge, /<section aria-labelledby="knowledge-admin-title"/, 'Admin Knowledge content must expose a labeled native section inside the admin main landmark.');
 
-// CONT-01 / CONT-03 / UX-06 — explicit bilingual high-traffic copy and descriptive links.
+// CONT-01 / CONT-03 — explicit bilingual high-traffic copy and descriptive links.
 for (const text of [
+  'Explorar nuestros negocios',
+  'Conocer nuestra tecnología',
   'Conocer CTG One',
-  'Ver qué construimos',
-  'Explorar el portafolio',
-  'Ver CTG Recompensas',
-  'Ver estrategia Web3',
-  'Hablar con el equipo',
+  'Contactar a CTG One',
 ]) assert.ok(overviewData.includes(text), `Home bilingual registry must retain descriptive CTA: ${text}`);
-assert.match(overview, /HOME_OVERVIEW_ITEMS/, 'Home cards must use the typed bilingual registry instead of brittle whole-sentence fallback.');
+assert.match(overview, /HOME_OVERVIEW_ITEMS/, 'Home cards must use the typed bilingual registry.');
 assert.doesNotMatch(overview, /See more|Ver más/, 'Home card links must remain destination-specific.');
-assert.match(overview, /aria-label=\{accessibleLabel\}/, 'Home card destinations must expose descriptive accessible names.');
+assert.match(overview, /aria-label=\{/, 'Home card destinations must expose descriptive accessible names.');
 assert.match(navbar, /openMenuLabel[\s\S]*?Abrir menú/, 'Menu accessible text must be localized in Spanish.');
 assert.match(navbar, /closeMenuLabel[\s\S]*?Cerrar menú/, 'Close-menu accessible text must be localized in Spanish.');
 assert.doesNotMatch(navbar, /aria-label="(?:Open menu|Close menu|Primary navigation|Mobile navigation)"/, 'Navbar accessible labels must not be hard-coded to English.');
 
-// UX-02 / UX-05 — focused information architecture and one clear primary CTA per decision cluster.
+// UX-02 / UX-05 — product-first information architecture and clear choices.
 assert.match(navbar, /PRIMARY_NAV_ITEMS/, 'Header must consume the focused primary navigation registry.');
-assert.match(navbar, /PLATFORM_NAV_ITEMS/, 'Secondary product surfaces must remain grouped under Platforms.');
-assert.match(navbar, /aria-haspopup="menu"/, 'Platforms grouping must expose accessible menu semantics.');
-assert.match(spotlight, /variant="primary"[\s\S]*?variant="ghost"/, 'Investment spotlight must keep one primary CTA and a subordinate ghost CTA.');
+assert.match(navbar, /PLATFORM_NAV_ITEMS/, 'Secondary surfaces must remain grouped under the Explore menu.');
+assert.match(navbar, /aria-haspopup="menu"/, 'Explore grouping must expose accessible menu semantics.');
+assert.match(productShowcases, /href="\/craft-beer"/, 'Craft Beer must have a direct public product path.');
+assert.match(productShowcases, /href="\/inversion"/, 'Investment must remain a distinct path from beer purchasing.');
+assert.match(productShowcases, /href="\/nvetcareapp"/, 'Nvet Care must have a direct public product path.');
+assert.match(productShowcases, /Nvet Care · En desarrollo/, 'Nvet Care must communicate its development status in plain language.');
+assert.match(spotlight, /variant="primary"[\s\S]*?variant="ghost"/, 'Investment spotlight must keep one primary CTA and a subordinate ghost CTA on its own surface.');
 assert.doesNotMatch(spotlight, /ctgone\.com\/inversion/, 'Investment spotlight must not duplicate its primary CTA with a raw-path link.');
 
 // UX-03 — fonts are self-managed by Next and the first paint is explicitly dark.
@@ -116,21 +120,27 @@ assert.ok((layout.match(/preload:\s*true/g) ?? []).length >= 2, 'Both primary fo
 assert.match(layout, /style=\{\{ backgroundColor: '#050505'/, 'Root document must paint the dark canvas before hydration.');
 assert.doesNotMatch(layout, /fonts\.googleapis\.com|fonts\.gstatic\.com/, 'Root layout must not add a second external font delivery path.');
 
-// UX-04 — mobile hero content precedes the diagram with real responsive sizing, not transform scaling.
-assert.match(hero, /className="order-1 max-w-2xl"/, 'Mobile hero message must render before the diagram.');
-assert.match(hero, /className="order-2 flex/, 'Mobile ecosystem diagram must follow the message.');
-assert.doesNotMatch(hero, /scale-\[/, 'Hero must not create mobile whitespace by transform-scaling a fixed-size diagram.');
-assert.match(network, /aspect-square w-full/, 'Ecosystem diagram must own a responsive intrinsic layout box.');
+// UX-04 — mobile hero is content-first and product visuals remain responsive.
+assert.match(hero, /href="\/products"/, 'Hero must lead consumers to public products.');
+assert.match(hero, /href="\/ecosystem"/, 'Hero must retain a direct path to real businesses.');
+assert.match(hero, /href="\/craft-beer"/, 'Hero product composition must expose Craft Beer.');
+assert.match(hero, /href="\/nvetcareapp"/, 'Hero product composition must expose Nvet Care.');
+assert.doesNotMatch(hero, /scale-\[/, 'Hero must not create mobile whitespace by transform-scaling a fixed-size composition.');
+assert.match(network, /aspect-square w-full/, 'Ecosystem diagram must retain its responsive intrinsic layout for its dedicated surfaces.');
 
-// A11Y-06 — footer landmark hierarchy must not jump directly from page H2 to H4.
+// A11Y-06 — footer landmark hierarchy.
 assert.match(footer, /<h2 className="sr-only">/, 'Footer region must have an explicit H2 landmark heading.');
 assert.match(footer, /<h3 className=/, 'Footer columns must sit under the footer H2 as H3 headings.');
 assert.doesNotMatch(footer, /<h4/, 'Footer must not reintroduce H4 column headings.');
+assert.match(footer, /href: '\/nvetcareapp'/, 'Footer must expose Nvet Care publicly.');
+assert.match(footer, /href: '\/craft-beer'/, 'Footer must expose CTG Craft Beer publicly.');
 
 // CONT-02 — improve route consistency without breaking established product contracts.
 assert.match(nextConfig, /source:\s*'\/privacidad'[\s\S]*?destination:\s*'\/privacy'[\s\S]*?permanent:\s*true/, 'Legacy privacy URL must redirect permanently to the canonical English route.');
 assert.match(nextConfig, /source:\s*'\/investment'[\s\S]*?destination:\s*'\/inversion'/, 'English investment alias must preserve the established /inversion product namespace.');
 assert.match(sitemap, /path:\s*'\/privacy'/, 'Sitemap must publish the canonical privacy route.');
+assert.match(sitemap, /path:\s*'\/craft-beer'/, 'Sitemap must publish the Craft Beer hub.');
+assert.match(sitemap, /path:\s*'\/nvetcareapp'/, 'Sitemap must publish Nvet Care.');
 assert.doesNotMatch(sitemap, /path:\s*'\/privacidad'/, 'Legacy privacy route must not remain in the public sitemap.');
 assert.match(privacyLayout, /canonical:\s*'https:\/\/ctgone\.com\/privacy'/, 'Privacy route must self-canonicalize.');
 

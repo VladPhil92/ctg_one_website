@@ -4,7 +4,8 @@ import React from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { HeroSection } from '@/components/sections/HeroSection';
-import { InvestmentSpotlightSection } from '@/components/sections/InvestmentSpotlightSection';
+import { HomeIntroSection } from '@/components/sections/HomeIntroSection';
+import { HomeProductShowcases } from '@/components/sections/HomeProductShowcases';
 import { HomeOverviewSection } from '@/components/sections/HomeOverviewSection';
 import { AccountCtaSection } from '@/components/sections/AccountCtaSection';
 
@@ -19,7 +20,8 @@ export default function Home() {
         style={{ backgroundColor: 'var(--bg-primary)' }}
       >
         <HeroSection />
-        <InvestmentSpotlightSection />
+        <HomeIntroSection />
+        <HomeProductShowcases />
         <HomeOverviewSection />
         <AccountCtaSection />
       </main>

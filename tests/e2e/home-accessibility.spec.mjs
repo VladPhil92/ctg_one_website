@@ -7,17 +7,6 @@ async function preferSpanish(page) {
   });
 }
 
-const ECOSYSTEM_LABELS_ES = [
-  'Estrategia de IA',
-  'Comercio',
-  'Hospitalidad',
-  'Educación',
-  'Salud',
-  'Legal',
-  'Cerveza',
-  'Fintech',
-];
-
 const RESPONSIVE_VIEWPORTS = [
   { width: 1920, height: 1080 },
   { width: 1600, height: 1000 },
@@ -43,30 +32,43 @@ async function expectImmutableBrandName(page) {
 }
 
 test.describe('CTG One home UI/UX accessibility contract', () => {
-  test('Spanish home renders explicit localized card copy without English fallback', async ({ page }) => {
+  test('Spanish home renders explicit product-first localized copy without English fallback', async ({ page }) => {
     await preferSpanish(page);
     await page.goto('/');
 
     await expectImmutableBrandName(page);
-    await expect(page.getByText('Fundada en 2024 en Cartagena, Colombia', { exact: false })).toBeVisible();
-    await expect(page.getByText('CTG One Technology crea y opera el software', { exact: false })).toBeVisible();
-    await expect(page.getByText(/\d+ negocios reales, en sectores como hospedaje, gastronomía, salud y bienes raíces/i)).toBeVisible();
-    await expect(page.getByText('Conoce cómo CTG One crea y opera tecnología en sus negocios', { exact: false })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Tecnología creada para');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('negocios reales.');
+    await expect(page.getByText('Una empresa tecnológica construida alrededor de operaciones reales.', { exact: true })).toBeVisible();
+    await expect(page.getByText('CTG One desarrolla tecnología propia y la aplica en empresas de diferentes sectores.', { exact: false })).toBeVisible();
+    await expect(page.getByText('Tecnología que puedes ver en acción.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Cerveza artesanal. Producción real.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Nvet Care · En desarrollo', { exact: true })).toBeVisible();
+    await expect(page.getByText('Tu veterinario de confianza, a un toque de distancia.', { exact: true })).toBeVisible();
 
-    await expect(page.getByText('Founded in 2024 in Cartagena, Colombia', { exact: false })).toHaveCount(0);
-    await expect(page.getByText('CTG One builds the technological foundation', { exact: false })).toHaveCount(0);
+    for (const englishFallback of [
+      'A technology company built around real operations.',
+      'Technology you can see in action.',
+      'Craft beer. Real production.',
+      'Nvet Care · In development',
+      'Your trusted veterinarian, one tap away.',
+    ]) {
+      await expect(page.getByText(englishFallback, { exact: true })).toHaveCount(0);
+    }
     await expect(page.getByText('See more', { exact: true })).toHaveCount(0);
     await expect(page.getByText('Ver más', { exact: true })).toHaveCount(0);
 
     for (const label of [
+      'Conoce nuestros productos',
+      'Explora nuestros negocios',
+      'Conocer CTG Craft Beer',
+      'Invertir en producción',
+      'Conocer Nvet Care',
+      'Conocer nuestra tecnología',
       'Conocer CTG One',
-      'Ver qué construimos',
-      'Explorar el portafolio',
-      'Ver CTG Recompensas',
-      'Ver estrategia Web3',
-      'Hablar con el equipo',
+      'Contactar a CTG One',
     ]) {
-      await expect(page.getByText(label, { exact: true })).toBeVisible();
+      await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
     }
 
     for (const removedOrnamentalLabel of [
@@ -123,7 +125,7 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     }
   });
 
-  test('reduced motion keeps every reveal section visible and removes diagram motion', async ({ page }) => {
+  test('reduced motion keeps every reveal section visible', async ({ page }) => {
     await preferSpanish(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
@@ -141,20 +143,20 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
       expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(state.transform);
     }
 
-    await expect(page.locator('[data-ecosystem-diagram] animateMotion')).toHaveCount(0);
-    await expect(page.locator('[data-ecosystem-diagram] animateTransform')).toHaveCount(0);
+    await expect(page.locator('animateMotion')).toHaveCount(0);
+    await expect(page.locator('animateTransform')).toHaveCount(0);
   });
 
-  test('390px mobile layout puts the message before the diagram and keeps touch targets at 44px', async ({ page }) => {
+  test('390px mobile layout puts the message before product visuals and keeps touch targets at 44px', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await preferSpanish(page);
     await page.goto('/');
 
     const headingBox = await page.getByRole('heading', { level: 1 }).boundingBox();
-    const diagramBox = await page.locator('[data-ecosystem-diagram]').boundingBox();
+    const productVisualBox = await page.locator('section#home a[href="/craft-beer"]').boundingBox();
     expect(headingBox).not.toBeNull();
-    expect(diagramBox).not.toBeNull();
-    expect(headingBox.y).toBeLessThan(diagramBox.y);
+    expect(productVisualBox).not.toBeNull();
+    expect(headingBox.y).toBeLessThan(productVisualBox.y);
 
     const menuButton = page.getByRole('button', { name: 'Abrir menú' });
     const menuButtonBox = await menuButton.boundingBox();
@@ -182,7 +184,7 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     expect(undersizedTargets).toEqual([]);
   });
 
-  test('command center preserves all eight ecosystem nodes without horizontal overflow across target breakpoints', async ({ page }) => {
+  test('product-first home remains discoverable and overflow-safe across target breakpoints', async ({ page }) => {
     await preferSpanish(page);
 
     for (const viewport of RESPONSIVE_VIEWPORTS) {
@@ -190,7 +192,8 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
       await page.goto('/');
 
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      await expect(page.locator('[data-ecosystem-diagram]')).toBeVisible();
+      await expect(page.locator('section#home a[href="/craft-beer"]')).toBeVisible();
+      await expect(page.locator('section#home a[href="/nvetcareapp"]')).toBeVisible();
 
       const layout = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
@@ -200,10 +203,6 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
       }));
       expect(layout.scrollWidth, `${viewport.width}px document overflow`).toBeLessThanOrEqual(layout.clientWidth + 1);
       expect(layout.bodyScrollWidth, `${viewport.width}px body overflow`).toBeLessThanOrEqual(layout.innerWidth + 1);
-
-      for (const label of ECOSYSTEM_LABELS_ES) {
-        await expect(page.locator('[data-ecosystem-diagram] text', { hasText: label }), `${viewport.width}px missing node ${label}`).toHaveCount(1);
-      }
     }
   });
 

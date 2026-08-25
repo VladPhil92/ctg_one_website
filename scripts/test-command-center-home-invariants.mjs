@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [network, navbar, hero, footer, brandLogo, languageContext, translations, processes, processPage] = await Promise.all([
+const [network, navbar, hero, footer, brandLogo, languageContext, translations, processes, processPage, productShowcases] = await Promise.all([
   read('src/components/BlockchainNetwork.tsx'),
   read('src/components/Navbar.tsx'),
   read('src/components/sections/HeroSection.tsx'),
@@ -13,13 +13,14 @@ const [network, navbar, hero, footer, brandLogo, languageContext, translations, 
   read('src/i18n/commandCenterTranslations.ts'),
   read('src/data/ecosystem-processes.ts'),
   read('src/app/ecosystem/process/[slug]/page.tsx'),
+  read('src/components/sections/HomeProductShowcases.tsx'),
 ]);
 
 const nodeIds = [...network.matchAll(/\{ id: '([^']+)', en:/g)].map((match) => match[1]);
 assert.deepEqual(
   nodeIds,
   ['ai', 'commerce', 'hospitality', 'education', 'health', 'legal', 'beer', 'fintech'],
-  'Homepage ecosystem core must retain exactly the eight approved process nodes in canonical orbital order.',
+  'Ecosystem core must retain exactly the eight approved process nodes in canonical orbital order.',
 );
 
 for (const label of [
@@ -41,11 +42,11 @@ for (const slug of ['ai', 'commerce', 'hospitality', 'education', 'health', 'leg
   assert.ok(network.includes(`href: '/ecosystem/process/${slug}'`), `Node ${slug} must link to its process subpage.`);
   assert.ok(processes.includes(`slug: '${slug}'`), `Process registry must contain ${slug}.`);
 }
-assert.match(processes, /slug: 'beer'[\s\S]*?primaryHref: '\/inversion'/, 'Beer process must route explicitly to CTG Craft Beer Investment.');
+assert.match(processes, /slug: 'beer'[\s\S]*?primaryHref: '\/inversion'/, 'Beer process must retain its established investment destination.');
 assert.match(processPage, /generateStaticParams/, 'Ecosystem process subpages must be generated from the canonical process registry.');
 assert.match(processPage, /getEcosystemProcess/, 'Dynamic process routes must fail closed through the canonical registry.');
 
-assert.match(network, /data-core-energy="radial-emission"/, 'CTG nucleus must expose the radial energy field.');
+assert.match(network, /data-core-energy="radial-emission"/, 'CTG nucleus must expose the radial energy field on dedicated ecosystem surfaces.');
 assert.match(network, /styles\.ecosystemEnergyOutbound/, 'Energy must travel from the CTG nucleus to the outer nodes.');
 assert.match(network, /styles\.ecosystemEnergyReturn/, 'Energy must recirculate from outer nodes to the CTG nucleus.');
 assert.match(network, /styles\.ecosystemNodeReceive/, 'Outer nodes must visibly react to arriving energy.');
@@ -68,17 +69,24 @@ for (const source of [navbar, footer, brandLogo]) {
   assert.doesNotMatch(source, /CTGLOGO\.jpeg/, 'Legacy cropped JPEG logo must never be rendered by the CTG One brand lockup.');
 }
 
-for (const capability of ['identity-auth', 'data-security', 'delivery-platform', 'ai-layer']) {
-  assert.ok(hero.includes(`id: '${capability}'`), `System Status must retain capability: ${capability}`);
+// Product-first hero: consumer meaning leads, canonical proof remains attached.
+for (const capability of ['identity-auth', 'data-security', 'ai-layer']) {
+  assert.ok(hero.includes(`getCapabilityProof('${capability}')`), `Hero must keep canonical proof status attached for ${capability}.`);
 }
+assert.match(hero, /getPublicProofStatus/, 'Hero must derive maturity values from the canonical proof registry.');
 assert.match(hero, /Container size="large"/, 'Homepage hero must use the wide command-center container.');
-assert.match(hero, /Cuentas seguras/, 'System Status must retain the plain-language secure accounts label.');
-assert.match(hero, /Datos y seguridad/, 'System Status must retain data and security.');
-assert.match(hero, /Actualización y despliegue/, 'System Status must retain the plain-language updates & deployment label.');
-assert.match(hero, /IA aplicada/, 'System Status must retain applied AI.');
+assert.match(hero, /Tecnología creada para/, 'Hero must state the consumer-facing technology proposition in Spanish.');
+assert.match(hero, /negocios reales\./, 'Hero must connect technology to real businesses.');
+assert.match(hero, /href="\/craft-beer"/, 'Hero must surface CTG Craft Beer directly.');
+assert.match(hero, /href="\/nvetcareapp"/, 'Hero must surface Nvet Care directly.');
+assert.doesNotMatch(hero, /Cuentas seguras|Actualización y despliegue|IA aplicada/, 'Technical capability labels must not dominate the consumer hero.');
+
+assert.match(productShowcases, /Cerveza artesanal\. Producción real\./, 'Craft Beer showcase must lead with the physical product and production reality.');
+assert.match(productShowcases, /href="\/inversion"/, 'Craft Beer showcase must keep investment as a separate user journey.');
+assert.match(productShowcases, /Nvet Care · En desarrollo/, 'Nvet Care showcase must state its real development status.');
 
 for (const phrase of ['Core online', 'LIVE PRODUCT / CASE-001', 'Physical production layer']) {
-  assert.ok(translations.includes(phrase), `Command-center microcopy must remain registered for ES/EN translation: ${phrase}`);
+  assert.ok(translations.includes(phrase), `Command-center microcopy must remain registered for legacy/deeper surfaces: ${phrase}`);
 }
 
-console.log('Homepage command-center design invariants: PASS');
+console.log('Homepage command-center and product-first design invariants: PASS');
