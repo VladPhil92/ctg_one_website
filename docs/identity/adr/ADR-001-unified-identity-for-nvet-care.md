@@ -245,11 +245,29 @@ untouched by this ADR.
 
 ### Rollout
 
-No feature flag needed — the accepted scope (see Status above) is
-additive by construction: a new button on `/nvetcareapp/iniciar-sesion`
-that either works or doesn't, with zero effect on anyone not using it.
-`/nvetcareapp/iniciar-sesion`'s existing form and `POST /auth/login`
-are not touched, gated, or scheduled for deprecation.
+No feature flag needed for the BFF button itself — the accepted scope
+(see Status above) is additive by construction: a new button on
+`/nvetcareapp/iniciar-sesion` that either works or doesn't, with zero
+effect on anyone not using it. `/nvetcareapp/iniciar-sesion`'s existing
+form and `POST /auth/login` are not touched, gated, or scheduled for
+deprecation.
+
+**The backend endpoint itself needs a separate gate, though** (raised
+in review of the Phase 0 docs — see `CTG_ONE_IDENTITY.md`'s phase
+table note). `Nvet-Care-App`'s `main` auto-deploys to production
+(Railway), so merging Phase 2/3 puts `POST /auth/ctg-identity-exchange`
+live on the internet — reachable by anyone holding *any* valid
+Supabase access token — before Phase 4 ships the BFF button that's
+supposed to be the only caller. Once Phase 3 adds provisioning, that
+window lets an uninvited caller create real `CLIENT` rows ahead of the
+advertised launch, with no way to shut it off short of a revert.
+Phase 2 must therefore add a backend-side kill switch — an
+`NVET_CTG_IDENTITY_EXCHANGE_ENABLED` env var, default unset/`false` —
+checked first in the endpoint handler; while unset it returns `404`
+regardless of token validity. Phase 4's deploy flips it to `true`
+alongside shipping the button. This is a deploy-time gate, not the
+user-facing feature flag the paragraph above correctly says isn't
+needed.
 
 ### Questions this ADR resolves under the accepted scope
 
