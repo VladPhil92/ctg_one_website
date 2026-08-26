@@ -19,8 +19,12 @@ backend: the `POST /auth/ctg-identity-exchange` endpoint itself
 (Phases 2-3) requires the deploy-time `NVET_CTG_IDENTITY_EXCHANGE_ENABLED`
 kill switch described in the phase table below — see the gate note and
 `ADR-001`'s Rollout section.
-No code, schema, or configuration has been changed yet — that starts at
-Phase 1.
+
+**Update (2026-08-26): all four accepted-scope phases are merged** — see
+the "PR" column in the phase table below. `NVET_CTG_IDENTITY_EXCHANGE_ENABLED`
+has been set to `true` in `Nvet-Care-App`'s production environment. See
+"Current status" below for a P0 production incident this rollout
+surfaced, not yet resolved as of this writing.
 
 ## The pattern, already proven once
 
@@ -131,13 +135,13 @@ day one.
 Each phase is its own PR. Phases 5-7 are **not scheduled** — see
 "Deferred indefinitely" below.
 
-| Phase | Deliverable | Repo(s) | Touches production? |
-|---|---|---|---|
-| 0 | This document + `ADR-001` + `THREAT_MODEL.md` | `ctg_one_website` | No |
-| 1 | Additive migration: `User.ctgUserId` (nullable, unique), `User.passwordHash` nullable + null-safety audit of every path that assumes it | `Nvet-Care-App` | No (schema only, unused column) |
-| 2 | JWKS verification service + `POST /auth/ctg-identity-exchange` + tests (valid/expired/wrong-issuer/wrong-audience/replay/disabled-profile). Ships behind `NVET_CTG_IDENTITY_EXCHANGE_ENABLED` (default off) — see gate note below. | `Nvet-Care-App` | No new UI, but the endpoint deploys live to production (Railway auto-deploy) — gated off by default |
-| 3 | Provisioning-on-first-visit (transactional, race-safe) — new `CLIENT` accounts only; an email collision with an existing password-holding account returns a message pointing to the existing login, not a link attempt | `Nvet-Care-App` | No new UI; still behind the same gate — provisioning is real once the gate is on, so it stays off through this phase |
-| 4 | Next.js BFF integration: adds "Continuar con mi cuenta CTG One" as a second button on `/nvetcareapp/iniciar-sesion`, alongside the untouched existing form. No user-facing feature flag needed — purely additive. Also the phase that flips `NVET_CTG_IDENTITY_EXCHANGE_ENABLED` to `true`. | `ctg_one_website` + `Nvet-Care-App` (env flip) | Yes — this is the actual ship. Existing users unaffected. |
+| Phase | Deliverable | Repo(s) | Touches production? | Status |
+|---|---|---|---|---|
+| 0 | This document + `ADR-001` + `THREAT_MODEL.md` | `ctg_one_website` | No | Merged — #205, #206, #208 |
+| 1 | Additive migration: `User.ctgUserId` (nullable, unique), `User.passwordHash` nullable + null-safety audit of every path that assumes it | `Nvet-Care-App` | No (schema only, unused column) | Merged — #22 |
+| 2 | JWKS verification service + `POST /auth/ctg-identity-exchange` + tests (valid/expired/wrong-issuer/wrong-audience/replay/disabled-profile). Ships behind `NVET_CTG_IDENTITY_EXCHANGE_ENABLED` (default off) — see gate note below. | `Nvet-Care-App` | No new UI, but the endpoint deploys live to production (Railway auto-deploy) — gated off by default | Merged — #23 |
+| 3 | Provisioning-on-first-visit (transactional, race-safe) — new `CLIENT` accounts only; an email collision with an existing password-holding account returns a message pointing to the existing login, not a link attempt | `Nvet-Care-App` | No new UI; still behind the same gate — provisioning is real once the gate is on, so it stays off through this phase | Merged — #24 |
+| 4 | Next.js BFF integration: adds "Continuar con mi cuenta CTG One" as a second button on `/nvetcareapp/iniciar-sesion`, alongside the untouched existing form. No user-facing feature flag needed — purely additive. Also the phase that flips `NVET_CTG_IDENTITY_EXCHANGE_ENABLED` to `true`. | `ctg_one_website` + `Nvet-Care-App` (env flip) | Yes — this is the actual ship. Existing users unaffected. | Merged — #209. Env flip done in Railway; see "Current status" below for what's still blocking a working end-to-end flow. |
 
 **Backend gate note (added after Phase 0 review):** `Nvet-Care-App`'s
 `main` auto-deploys to production, so Phase 2 puts a real, live
@@ -158,6 +162,36 @@ what turns it on — see `ADR-001`'s Rollout section.
 | 5 | Explicit, authenticated account-linking flow for an existing Nvet user with a matching email | Highest-risk item in the whole design (see `THREAT_MODEL.md`); not worth building until there's a real population needing it |
 | 6 | Legacy `/nvetcareapp/iniciar-sesion` form or `/auth/login` marked deprecated | Nothing in the accepted scope requires this — Nvet Care keeps working standalone, indefinitely, by design |
 | 7 | Any rollout flag flip changing default behavior for existing users | No cutover moment exists in the accepted scope — there's nothing to flip |
+
+## Current status (2026-08-26, post-Phase 4)
+
+All four accepted-scope phases are merged (see the phase table above) and
+`NVET_CTG_IDENTITY_EXCHANGE_ENABLED` has been set to `true` in
+`Nvet-Care-App`'s production environment. The initiative's code is
+complete.
+
+**It is not yet working end-to-end, and this is not a design gap in this
+initiative** — it's a deployment-process gap that predates it, that
+enabling the gate exposed:
+
+`Nvet-Care-App`'s `main` auto-deploys to production on every push. Phase 1's
+schema change (`ctgUserId`, nullable `passwordHash`) and Phase 3's new
+`AuditAction` enum value shipped to the compiled Prisma Client in
+production the moment those PRs merged — but nobody ran `prisma db push`
+against the real database to match. The result: **every query on `User`
+without an explicit `select` fails**, including normal password login
+(`POST /auth/login` currently returns `500 PrismaError` instead of
+authenticating). This has been broken since Phase 3 merged, not just since
+the gate flip — the flip only made it visible, by being the first thing
+anyone tested live against production afterward.
+
+The fix is additive and already fully designed (it's exactly the deferred
+migration step every phase's PR flagged) — `npx prisma db push` from
+`Nvet-Care-App/backend` against the production `DATABASE_URL`. See
+`Nvet-Care-App`'s `docs/RELEASE_ROADMAP.md` ("Identidad unificada CTG One")
+for the up-to-date incident status and exact remediation steps. Until it
+runs, treat both the new CTG button and — more urgently — **ordinary Nvet
+Care login as broken in production.**
 
 ## What this initiative explicitly does not do
 
