@@ -6,6 +6,7 @@ import { ArrowUpRight, Beer, PawPrint, TrendingUp } from 'lucide-react';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { useLanguage } from '@/contexts/LanguageContext';
+import nvetHomeBannerSrc from '@/data/nvet-home-banner';
 
 const LinkButton = ({ href, children, accent = 'gold' }: { href: string; children: React.ReactNode; accent?: 'gold' | 'green' | 'outline' }) => {
   const classes = accent === 'green'
@@ -77,9 +78,15 @@ export const HomeProductShowcases: React.FC = () => {
         <FadeInSection delay={0.08}>
           <article className="overflow-hidden rounded-[30px] border border-[#0D1B2A]/10 bg-white text-[#0D1B2A]">
             <div className="grid min-h-[590px] lg:grid-cols-[1.02fr_0.98fr]">
-              <div className="relative order-2 min-h-[430px] bg-gradient-to-br from-[#f4fbf7] via-white to-[#eef6f2] lg:order-1 lg:min-h-full">
-                <Image src={es ? '/images/nvetcareapp/vet-tracking-mockup-es.png' : '/images/nvetcareapp/vet-tracking-mockup-en.png'} alt={es ? 'Concepto de Nvet Care mostrando seguimiento del veterinario' : 'Nvet Care concept showing veterinarian tracking'} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-contain p-8 sm:p-12 lg:p-16" />
-                <Image src="/images/nvetcareapp/pattern-nodes.png" alt="" aria-hidden="true" width={220} height={178} className="absolute bottom-8 left-8 hidden w-32 rounded-2xl opacity-60 sm:block" />
+              <div className="relative order-2 aspect-[3/2] overflow-hidden bg-[#061a2a] lg:order-1 lg:aspect-auto lg:min-h-full">
+                <Image
+                  src={nvetHomeBannerSrc}
+                  alt={es ? 'Campaña de Nvet Care: cuidamos hoy para un mañana mejor juntos' : 'Nvet Care campaign: caring today for a better tomorrow together'}
+                  fill
+                  unoptimized
+                  sizes="(min-width: 1024px) 51vw, 100vw"
+                  className="object-contain"
+                />
               </div>
               <div className="order-1 flex flex-col justify-center p-7 sm:p-10 md:p-12 lg:order-2 lg:p-14">
                 <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#34B27A]/20 bg-[#34B27A]/[0.06] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#34B27A]">
