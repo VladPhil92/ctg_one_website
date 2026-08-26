@@ -175,15 +175,16 @@ initiative** — it's a deployment-process gap that predates it, that
 enabling the gate exposed:
 
 `Nvet-Care-App`'s `main` auto-deploys to production on every push. Phase 1's
-schema change (`ctgUserId`, nullable `passwordHash`) and Phase 3's new
-`AuditAction` enum value shipped to the compiled Prisma Client in
-production the moment those PRs merged — but nobody ran `prisma db push`
-against the real database to match. The result: **every query on `User`
-without an explicit `select` fails**, including normal password login
-(`POST /auth/login` currently returns `500 PrismaError` instead of
-authenticating). This has been broken since Phase 3 merged, not just since
-the gate flip — the flip only made it visible, by being the first thing
-anyone tested live against production afterward.
+schema change (`ctgUserId`, nullable `passwordHash`) shipped to the compiled
+Prisma Client in production the moment that PR merged — but nobody ran
+`prisma db push` against the real database to match. The result: **every
+query on `User` without an explicit `select` fails**, including normal
+password login (`POST /auth/login` currently returns `500 PrismaError`
+instead of authenticating). This has been broken since Phase 1 merged, not
+since Phase 3 or the gate flip — Phase 3 only added an `AuditAction` enum
+value, unrelated to `User` queries. The gate flip was simply the first thing
+anyone tested live against production afterward, so it's when the incident
+was noticed, not when it started.
 
 The fix is additive and already fully designed (it's exactly the deferred
 migration step every phase's PR flagged) — `npx prisma db push` from
