@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PawPrint, Loader2 } from 'lucide-react';
 import { safeRedirectPath } from '@/lib/security/safe-redirect';
+import { ContinueWithCtgButton } from './continue-with-ctg-button';
 
 export function SignInForm() {
   const router = useRouter();
@@ -61,6 +62,8 @@ export function SignInForm() {
         <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-sm">
           <h1 className="text-xl font-semibold text-[#0D1B2A] mb-1">Iniciar sesión</h1>
           <p className="text-sm text-[#4A5A68] mb-6">Panel para veterinarios y administradores.</p>
+
+          <ContinueWithCtgButton next={next} />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
