@@ -130,9 +130,21 @@ Each phase is its own PR. Phases 5-7 are **not scheduled** — see
 |---|---|---|---|
 | 0 | This document + `ADR-001` + `THREAT_MODEL.md` | `ctg_one_website` | No |
 | 1 | Additive migration: `User.ctgUserId` (nullable, unique), `User.passwordHash` nullable + null-safety audit of every path that assumes it | `Nvet-Care-App` | No (schema only, unused column) |
-| 2 | JWKS verification service + `POST /auth/ctg-identity-exchange` + tests (valid/expired/wrong-issuer/wrong-audience/replay/disabled-profile) | `Nvet-Care-App` | No (new endpoint, not wired to any UI yet) |
-| 3 | Provisioning-on-first-visit (transactional, race-safe) — new `CLIENT` accounts only; an email collision with an existing password-holding account returns a message pointing to the existing login, not a link attempt | `Nvet-Care-App` | No (still not called from the BFF) |
-| 4 | Next.js BFF integration: adds "Continuar con mi cuenta CTG One" as a second button on `/nvetcareapp/iniciar-sesion`, alongside the untouched existing form. No feature flag needed — purely additive. | `ctg_one_website` | Yes — this is the actual ship. Existing users unaffected. |
+| 2 | JWKS verification service + `POST /auth/ctg-identity-exchange` + tests (valid/expired/wrong-issuer/wrong-audience/replay/disabled-profile). Ships behind `NVET_CTG_IDENTITY_EXCHANGE_ENABLED` (default off) — see gate note below. | `Nvet-Care-App` | No new UI, but the endpoint deploys live to production (Railway auto-deploy) — gated off by default |
+| 3 | Provisioning-on-first-visit (transactional, race-safe) — new `CLIENT` accounts only; an email collision with an existing password-holding account returns a message pointing to the existing login, not a link attempt | `Nvet-Care-App` | No new UI; still behind the same gate — provisioning is real once the gate is on, so it stays off through this phase |
+| 4 | Next.js BFF integration: adds "Continuar con mi cuenta CTG One" as a second button on `/nvetcareapp/iniciar-sesion`, alongside the untouched existing form. No user-facing feature flag needed — purely additive. Also the phase that flips `NVET_CTG_IDENTITY_EXCHANGE_ENABLED` to `true`. | `ctg_one_website` + `Nvet-Care-App` (env flip) | Yes — this is the actual ship. Existing users unaffected. |
+
+**Backend gate note (added after Phase 0 review):** `Nvet-Care-App`'s
+`main` auto-deploys to production, so Phase 2 puts a real, live
+`POST /auth/ctg-identity-exchange` on the internet the moment it
+merges — reachable by anyone with *any* valid Supabase access token,
+regardless of whether the BFF button exists yet. Once Phase 3 adds
+provisioning, an unwitnessed caller could create real `CLIENT` rows
+before Phase 4's advertised launch, with no quick way to turn it off.
+`NVET_CTG_IDENTITY_EXCHANGE_ENABLED` (default unset/off) closes that
+window: Phase 2's handler checks it first and returns `404` while
+unset, Phase 3 ships fully wired but still off, and Phase 4's deploy is
+what turns it on — see `ADR-001`'s Rollout section.
 
 ### Deferred indefinitely (not scheduled — revisit only once real overlap justifies the cost)
 

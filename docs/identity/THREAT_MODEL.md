@@ -108,6 +108,17 @@ so it needs the same "aggressive rate limiting on sensitive auth
 endpoints" the existing `README`/controller comments already call for
 on `register`/`login`/`forgot-password`. Apply the same policy here.
 
+**Deployed-but-not-yet-launched exposure.** `Nvet-Care-App`'s `main`
+auto-deploys to production, so this endpoint is live on the internet as
+soon as Phase 2 merges — independent of whether `ctg_one_website`'s
+Phase 4 BFF button has shipped yet. Rate limiting alone doesn't close
+this: a low-and-slow caller with a valid Supabase token could still
+provision `CLIENT` rows ahead of the advertised launch once Phase 3
+adds provisioning. Mitigated with a deploy-time kill switch,
+`NVET_CTG_IDENTITY_EXCHANGE_ENABLED` (default off, flipped on by
+Phase 4's deploy) — see `ADR-001`'s Rollout section and
+`CTG_ONE_IDENTITY.md`'s phase table note.
+
 **Disabled/deactivated account.** If a linked Nvet `User.isActive` is
 `false`, the exchange must reject exactly like `JwtStrategy` already
 does for a normal session (`ForbiddenException('Account deactivated')`)
