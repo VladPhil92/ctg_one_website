@@ -2,13 +2,14 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Beer, Building2, CalendarDays, Layers3, MapPin, PawPrint } from 'lucide-react';
+import { Beer, Building2, CalendarDays, Layers3, MapPin } from 'lucide-react';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Button } from '@/components/ui/Button';
 import { HERO } from '@/data/content';
 import { getCapabilityProof, getPublicProofStatus } from '@/data/technology-proof';
 import { useLanguage } from '@/contexts/LanguageContext';
+import nvetHomeBannerSrc from '@/data/nvet-home-banner';
 import styles from '@/styles/CommandCenter.module.css';
 
 const METRIC_ICONS = {
@@ -35,7 +36,6 @@ export const HeroSection: React.FC = () => {
 
   const productLabel = es ? 'Productos reales' : 'Real products';
   const craftLabel = es ? 'Cerveza artesanal' : 'Craft beer';
-  const nvetLabel = es ? 'App veterinaria' : 'Veterinary app';
 
   return (
     <section
@@ -115,14 +115,15 @@ export const HeroSection: React.FC = () => {
                   </div>
                 </a>
 
-                <a href="/nvetcareapp" className="group relative min-h-[420px] overflow-hidden rounded-[28px] border border-[#34B27A]/20 bg-white shadow-[0_30px_80px_rgba(0,0,0,.28)]">
-                  <div className="absolute inset-0 bg-gradient-to-b from-[#f8fffb] via-white to-[#edf8f2]" />
-                  <Image src={es ? '/images/nvetcareapp/vet-tracking-mockup-es.png' : '/images/nvetcareapp/vet-tracking-mockup-en.png'} alt={es ? 'Concepto de la aplicación Nvet Care mostrando seguimiento de una visita veterinaria' : 'Nvet Care app concept showing veterinary visit tracking'} fill sizes="(min-width: 640px) 320px, 90vw" className="object-contain p-8 transition-transform duration-700 group-hover:scale-105" />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/90 to-transparent p-6 pt-16">
-                    <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#34B27A]/20 bg-white text-[#34B27A]"><PawPrint size={18} /></div>
-                    <div className="text-[10px] uppercase tracking-[0.15em] text-[#34B27A]">{nvetLabel}</div>
-                    <div className="mt-1 text-xl font-semibold text-[#0D1B2A]">Nvet Care</div>
-                  </div>
+                <a href="/nvetcareapp" className="group relative aspect-[3/2] min-h-0 overflow-hidden rounded-[28px] border border-[#34B27A]/20 bg-[#061a2a] shadow-[0_30px_80px_rgba(0,0,0,.28)] sm:aspect-auto sm:min-h-[420px]">
+                  <Image
+                    src={es ? nvetHomeBannerSrc : '/images/nvetcareapp/vet-tracking-mockup-en.png'}
+                    alt={es ? 'Concepto de la aplicación Nvet Care en campaña: cuidamos hoy para un mañana mejor juntos' : 'Nvet Care app concept showing veterinary visit tracking'}
+                    fill
+                    unoptimized
+                    sizes="(min-width: 640px) 320px, 90vw"
+                    className="object-contain"
+                  />
                 </a>
               </div>
             </div>
