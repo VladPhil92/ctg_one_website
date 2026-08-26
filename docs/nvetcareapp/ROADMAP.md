@@ -384,7 +384,9 @@ invariant suite (including the new
   change to go stale against. No file under `Nvet-Care-App/mobile/` was
   touched by any phase of this roadmap.
 
-This closes every phase of this roadmap. Remaining work (real-time chat's
+This closes every phase of this roadmap. Remaining work (`VetPanel`'s price
+list and clinical notes from Phase 4 — see item 2 above, explicitly
+scoped out as "a separate, not-yet-built slice" — real-time chat's
 WebSocket alternative, dashboard discoverability, anything under
 "Explicitly out of scope" below) is intentionally deferred, not
 forgotten — pick back up from this document when one of those becomes a
