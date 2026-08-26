@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
+import './nvetcareapp.css';
 
 // Nvet Care's own type system (per its brand kit) is Poppins end to end
 // (H1-H3 and body copy). Scoped to this route only via a CSS variable on a
@@ -35,5 +36,5 @@ export const metadata: Metadata = {
 };
 
 export default function NvetCareAppLayout({ children }: { children: React.ReactNode }) {
-  return <div className={poppins.variable}>{children}</div>;
+  return <div className={`${poppins.variable} nvet-care-page`}>{children}</div>;
 }

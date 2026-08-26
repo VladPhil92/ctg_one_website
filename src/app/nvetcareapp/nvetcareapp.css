@@ -1,0 +1,43 @@
+.nvet-care-page img[src*="owner-and-dog.jpg"] {
+  position: static !important;
+  inset: auto !important;
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100%;
+  object-fit: contain !important;
+  object-position: center;
+}
+
+.nvet-care-page div:has(> img[src*="owner-and-dog.jpg"]) {
+  height: auto !important;
+  min-height: 0 !important;
+  background: #f7f9fa;
+}
+
+/*
+ * The transparent hero mockup asset is cropped inside the source PNG.
+ * Reuse the complete tracking concept already shipped with Nvet Care so
+ * the full phone/screen remains visible at every responsive breakpoint.
+ */
+.nvet-care-page img[src*="vet-tracking-mockup-"] {
+  content: url('/images/nvetcareapp/vet-tracking-full.jpg');
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100%;
+  object-fit: contain !important;
+  object-position: center;
+}
+
+.nvet-care-page div:has(> img[src*="vet-tracking-mockup-"]) {
+  width: 100% !important;
+  max-width: 380px !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 639px) {
+  .nvet-care-page div:has(> img[src*="vet-tracking-mockup-"]) {
+    max-width: min(100%, 360px) !important;
+  }
+}
