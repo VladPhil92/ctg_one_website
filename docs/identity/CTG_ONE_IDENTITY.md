@@ -9,11 +9,16 @@ phased plan. Threats are covered separately in `THREAT_MODEL.md`.
 **Status:** Accepted with narrowed scope (product owner, 2026-08-26) —
 see `ADR-001` §Status. Ships as **"Continuar con mi cuenta CTG One,"** an
 additional, optional login button on `/nvetcareapp/iniciar-sesion` —
-not a forced migration. No existing Nvet user is affected, no feature
-flag is needed, and Phases 5-7 below (account linking, legacy-login
-deprecation, rollout cutover) are deferred indefinitely — revisit only
-once there's a real, measured population of users with both a
-`ctgone.com` account and an independent Nvet password already set.
+not a forced migration. No existing Nvet user is affected, no
+user-facing feature flag is needed for that button, and Phases 5-7
+below (account linking, legacy-login deprecation, rollout cutover) are
+deferred indefinitely — revisit only once there's a real, measured
+population of users with both a `ctgone.com` account and an
+independent Nvet password already set. This does **not** extend to the
+backend: the `POST /auth/ctg-identity-exchange` endpoint itself
+(Phases 2-3) requires the deploy-time `NVET_CTG_IDENTITY_EXCHANGE_ENABLED`
+kill switch described in the phase table below — see the gate note and
+`ADR-001`'s Rollout section.
 No code, schema, or configuration has been changed yet — that starts at
 Phase 1.
 
