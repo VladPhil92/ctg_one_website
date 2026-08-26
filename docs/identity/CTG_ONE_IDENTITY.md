@@ -6,10 +6,16 @@ initiative. The decision record is
 that first for the reasoning; this document is the target-state map and
 phased plan. Threats are covered separately in `THREAT_MODEL.md`.
 
-**Status:** Phase 0 (audit + design) complete as of this document.
-No code, schema, or configuration has been changed by this initiative.
-Every phase below requires its own PR and explicit sign-off before the
-next begins, per `ADR-001`.
+**Status:** Accepted with narrowed scope (product owner, 2026-08-26) —
+see `ADR-001` §Status. Ships as **"Continuar con mi cuenta CTG One,"** an
+additional, optional login button on `/nvetcareapp/iniciar-sesion` —
+not a forced migration. No existing Nvet user is affected, no feature
+flag is needed, and Phases 5-7 below (account linking, legacy-login
+deprecation, rollout cutover) are deferred indefinitely — revisit only
+once there's a real, measured population of users with both a
+`ctgone.com` account and an independent Nvet password already set.
+No code, schema, or configuration has been changed yet — that starts at
+Phase 1.
 
 ## The pattern, already proven once
 
@@ -115,18 +121,26 @@ No cookie-only design decision anywhere in this plan blocks native
 clients — the exchange endpoint is a plain, stateless HTTP call from
 day one.
 
-## Phased implementation (each phase = its own PR, per ADR-001 §Rollout)
+## Phased implementation — accepted scope (Phases 0-4 only)
+
+Each phase is its own PR. Phases 5-7 are **not scheduled** — see
+"Deferred indefinitely" below.
 
 | Phase | Deliverable | Repo(s) | Touches production? |
 |---|---|---|---|
 | 0 | This document + `ADR-001` + `THREAT_MODEL.md` | `ctg_one_website` | No |
 | 1 | Additive migration: `User.ctgUserId` (nullable, unique), `User.passwordHash` nullable + null-safety audit of every path that assumes it | `Nvet-Care-App` | No (schema only, unused column) |
 | 2 | JWKS verification service + `POST /auth/ctg-identity-exchange` + tests (valid/expired/wrong-issuer/wrong-audience/replay/disabled-profile) | `Nvet-Care-App` | No (new endpoint, not wired to any UI yet) |
-| 3 | Provisioning-on-first-visit (transactional, race-safe) | `Nvet-Care-App` | No (still not called from the BFF) |
-| 4 | Next.js BFF integration behind `NVET_UNIFIED_IDENTITY_ENABLED=false` by default | `ctg_one_website` | No (flagged off) |
-| 5 | Explicit, authenticated account-linking flow (never auto-link by email) | Both | No (flagged off) |
-| 6 | Legacy `/nvetcareapp/iniciar-sesion` + `/auth/login` marked deprecated (not removed) once flag is validated on in staging/canary | Both | Flag flip only, reversible |
-| 7 | Production rollout: flag on, monitored, immediate rollback path documented in `docs/identity/IDENTITY_ROLLBACK.md` (to be written alongside Phase 7, not now) | Both | Yes, gated and reversible |
+| 3 | Provisioning-on-first-visit (transactional, race-safe) — new `CLIENT` accounts only; an email collision with an existing password-holding account returns a message pointing to the existing login, not a link attempt | `Nvet-Care-App` | No (still not called from the BFF) |
+| 4 | Next.js BFF integration: adds "Continuar con mi cuenta CTG One" as a second button on `/nvetcareapp/iniciar-sesion`, alongside the untouched existing form. No feature flag needed — purely additive. | `ctg_one_website` | Yes — this is the actual ship. Existing users unaffected. |
+
+### Deferred indefinitely (not scheduled — revisit only once real overlap justifies the cost)
+
+| Phase | Deliverable | Why deferred |
+|---|---|---|
+| 5 | Explicit, authenticated account-linking flow for an existing Nvet user with a matching email | Highest-risk item in the whole design (see `THREAT_MODEL.md`); not worth building until there's a real population needing it |
+| 6 | Legacy `/nvetcareapp/iniciar-sesion` form or `/auth/login` marked deprecated | Nothing in the accepted scope requires this — Nvet Care keeps working standalone, indefinitely, by design |
+| 7 | Any rollout flag flip changing default behavior for existing users | No cutover moment exists in the accepted scope — there's nothing to flip |
 
 ## What this initiative explicitly does not do
 
@@ -139,6 +153,6 @@ day one.
 - Does not remove `VetProfile`'s licensing/verification workflow or
   `UserSession`'s refresh-token theft detection — both stay exactly
   where they are (see `ADR-001` §Reconciling with ADR-002).
-- Does not delete or disable legacy Nvet login before the new path is
-  proven — the feature flag exists specifically so this is never an
-  all-or-nothing cutover.
+- Does not delete, disable, or deprecate the existing email/password
+  login form or `/auth/register` — not scheduled, not planned, since
+  the accepted scope is purely additive with no cutover moment.

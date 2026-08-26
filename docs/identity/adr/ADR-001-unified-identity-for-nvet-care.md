@@ -1,12 +1,49 @@
 # ADR-001: CTG One Unified Identity — Nvet Care Integration
 
 ## Status
-Proposed — Phase 0 output. This ADR reopens and partially revises
-`docs/nvetcareapp/adr/ADR-002-authentication-strategy.md`; it should not
-be treated as decided until a product owner has read the "Reconciling
-with ADR-002" section below and confirmed the narrower scope it
-recommends. No code, schema, or config in either repo has been changed
-by this ADR.
+**Accepted, with the scope narrowed further than the original proposal**
+(product owner, 2026-08-26). This ADR reopens and partially revises
+`docs/nvetcareapp/adr/ADR-002-authentication-strategy.md`. No code,
+schema, or config in either repo has been changed by this ADR — that
+starts at Phase 1.
+
+**The accepted scope is "Sign in with CTG One" as an additional,
+optional login method — not a forced migration.** Rationale, in plain
+terms: today, almost nobody is simultaneously a `ctgone.com` user and a
+Nvet Care user — Nvet Care is still early, and `ctgone.com`'s accounts
+are mostly investment-KYC participants. Forcing a full identity merge
+(mandatory account linking, deprecating legacy login, migrating
+existing Nvet users) pays a real engineering and security cost — see
+`THREAT_MODEL.md`'s account-linking/takeover section — to solve a
+problem that barely exists yet at this stage. A visitor who lands on
+Nvet Care directly (the common case — most people arrive searching for
+a vet, not from `ctgone.com`) also shouldn't be asked to understand a
+"CTG One" umbrella brand just to book an appointment.
+
+What ships instead: `/nvetcareapp/iniciar-sesion` gets a **second,
+additional** button — "Continuar con mi cuenta CTG One" — next to the
+existing email/password form, not replacing it. Someone who already has
+a `ctgone.com` session gets a Nvet account with one click (no form to
+fill). Someone who doesn't, or who prefers not to, uses the existing
+flow exactly as it works today. **No existing Nvet user is required to
+do anything.**
+
+Deferred **indefinitely**, not scheduled — revisit only once there's a
+real, measured population of users who have both a `ctgone.com` account
+and an independent Nvet account with a password already set (the actual
+condition that would make forced linking or legacy-login deprecation
+worth their cost):
+- Explicit account-linking flow for an *existing* Nvet user with a
+  matching email (originally Phase 5) — until it ships, that edge case
+  simply doesn't resolve: clicking "Continuar con mi cuenta CTG One"
+  when a Nvet account with the same email already has a password
+  returns a clear message pointing back to the existing login, not an
+  auto-link and not a dead end.
+- Deprecating `/auth/login` or the existing email/password form
+  (originally Phase 6).
+- Any production rollout flag flip that changes *default* behavior for
+  existing users (originally Phase 7) — this feature is additive from
+  day one, so there is no cutover moment to gate.
 
 ## Context
 
@@ -208,32 +245,29 @@ untouched by this ADR.
 
 ### Rollout
 
-Feature flag `NVET_UNIFIED_IDENTITY_ENABLED` on both sides. While
-`false`, `/nvetcareapp/iniciar-sesion` and `POST /auth/login` keep
-working exactly as today — nothing about this ADR requires removing
-the legacy path before the new one is validated. Legacy login is marked
-deprecated (not deleted) only after the flag is on in production and
-stable, per the megaprompt's own Phase 6 gate.
+No feature flag needed — the accepted scope (see Status above) is
+additive by construction: a new button on `/nvetcareapp/iniciar-sesion`
+that either works or doesn't, with zero effect on anyone not using it.
+`/nvetcareapp/iniciar-sesion`'s existing form and `POST /auth/login`
+are not touched, gated, or scheduled for deprecation.
 
-### Open questions this ADR deliberately does not resolve
+### Questions this ADR resolves under the accepted scope
 
-1. Does a first-time CTG→Nvet `CLIENT` provisioning need any additional
-   verification step, or is a valid Supabase session sufficient on its
-   own? (Recommendation: sufficient, matching Investment's
-   `investment_participant_profiles` lazy-creation precedent — but this
-   is a product call, not an engineering one.)
-2. For a Nvet user who links their existing account to a CTG identity
-   and already has `twoFactorEnabled = true`: keep challenging 2FA on
-   every exchange (recommended — it's already free, since the exchange
-   endpoint can call the same branch `login()` uses), or treat the
-   Supabase session as sufficient going forward? Needs a product
-   decision before Phase 2.
-3. Whether Nvet should ever allow account creation *without* a CTG One
-   account at all (e.g., a future Nvet-only mobile install with no
-   `ctgone.com` relationship) — the megaprompt doesn't rule this out,
-   and Option B doesn't block it (legacy `/auth/register` keeps
-   working while flagged deprecated), but it's worth an explicit
-   product decision rather than defaulting silently either way.
+1. Does first-time CTG→Nvet `CLIENT` provisioning need any additional
+   verification step? **No** — a valid Supabase session is sufficient,
+   matching Investment's `investment_participant_profiles`
+   lazy-creation precedent. There is no forced-migration population to
+   protect against, since nothing is forced.
+2. Does Nvet still allow account creation without a CTG One account?
+   **Yes, unconditionally** — the existing `/auth/register` form is
+   untouched and not deprecated under the accepted scope. This was the
+   deciding consideration, not a side effect.
+3. 2FA for a user who happens to have both a password-based Nvet
+   account and later clicks "Continuar con mi cuenta CTG One" with the
+   same email: **out of scope for now** — that's exactly the
+   account-linking case deferred above. Until linking ships, that
+   click simply doesn't succeed for an account that already has a
+   password; nothing about their existing 2FA is touched.
 
 ## Consequences
 
