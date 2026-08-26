@@ -6,6 +6,18 @@ should ship as its own small, reviewable PR (per `CLAUDE.md`'s "small,
 reviewable PRs, not one giant pass" — applied here by extension even
 though this repo's `CLAUDE.md` only names it for `/inversion`).
 
+**Product decision (owner, 2026-08-26): `ctgone.com/nvetcareapp` is the
+sole web platform for Nvet Care.** The `Nvet-Care-App` repo's standalone
+`dashboard/` package (Vite + React, a separately-built admin UI covering
+the same ground — vets, transactions, disputes, transfers, accounting,
+chat) is deprecated as a product surface; its Vercel deploy workflow was
+removed there rather than fixed. This roadmap's dashboard is the
+canonical one going forward. The future Android/iOS apps
+(`Nvet-Care-App/mobile/`) must sync against the same
+`Nvet-Care-App/backend/` this dashboard already consumes — not a
+separate API or data model. See `Nvet-Care-App/docs/RELEASE_ROADMAP.md`
+§ "Plataformas y arquitectura de producto" for the full rationale.
+
 ## Phase 0 — Palette correction (independent, do first)
 
 **Status: Done.**
