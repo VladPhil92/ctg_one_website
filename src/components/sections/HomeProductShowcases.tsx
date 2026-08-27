@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { ArrowUpRight, Beer, PawPrint, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, Beer, Coins, PawPrint, TrendingUp } from 'lucide-react';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -100,6 +100,39 @@ export const HomeProductShowcases: React.FC = () => {
                 </p>
                 <div className="mt-8">
                   <LinkButton href="/nvetcareapp" accent="green">{es ? 'Conocer Nvet Care' : 'Explore Nvet Care'}</LinkButton>
+                </div>
+              </div>
+            </div>
+          </article>
+        </FadeInSection>
+
+        <FadeInSection delay={0.14}>
+          <article className="relative mt-6 overflow-hidden rounded-[30px] border border-[#d6ae56]/20 bg-[#090805]">
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_80%_20%,rgba(214,174,86,.09),transparent_38%)]" aria-hidden="true" />
+            <div className="relative grid min-h-[520px] lg:grid-cols-[0.92fr_1.08fr]">
+              <div className="flex flex-col justify-center p-7 sm:p-10 md:p-12 lg:p-14">
+                <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#d6ae56]/20 bg-[#d6ae56]/[0.04] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#f1c75b]">
+                  <Coins size={14} /> {es ? 'CTGO · En consolidación' : 'CTGO · Under consolidation'}
+                </div>
+                <h3 className="max-w-xl font-outfit text-4xl font-semibold leading-[1.02] tracking-[-0.04em] text-white sm:text-5xl">
+                  {es ? 'Un token real, en proceso de consolidación.' : 'A real token, under consolidation.'}
+                </h3>
+                <p className="mt-6 max-w-xl text-sm leading-relaxed text-text-muted sm:text-base">
+                  {es ? 'CTGO ya fue desplegado en Polygon. Antes de cualquier apertura pública, estamos fortaleciendo su liquidez y completando su verificación y auditoría de seguridad.' : 'CTGO has already been deployed on Polygon. Before any public rollout, we are strengthening its liquidity and completing verification and a security audit.'}
+                </p>
+                <div className="mt-8">
+                  <LinkButton href="/ctgotoken" accent="outline">{es ? 'Conocer CTGO' : 'Explore CTGO'}</LinkButton>
+                </div>
+              </div>
+              <div className="relative min-h-[360px] lg:min-h-full">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#090805] via-transparent to-transparent z-10 hidden lg:block" />
+                <div className="absolute inset-0 grid grid-cols-2 gap-2 p-6 sm:p-8">
+                  <div className="relative overflow-hidden rounded-2xl border border-white/[0.06]">
+                    <Image src="/images/token/file_000000009950720ea0fa3d0139de0cdb.png" alt={es ? 'Concepto visual de CTGO' : 'CTGO concept visual'} fill unoptimized sizes="(min-width: 1024px) 25vw, 45vw" className="object-cover" />
+                  </div>
+                  <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] translate-y-8">
+                    <Image src="/images/token/file_00000000818471f58dcdf9a124fb690f.png" alt={es ? 'Concepto visual de CTGO' : 'CTGO concept visual'} fill unoptimized sizes="(min-width: 1024px) 25vw, 45vw" className="object-cover" />
+                  </div>
                 </div>
               </div>
             </div>
