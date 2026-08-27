@@ -1,0 +1,26 @@
+.tokenPage :global(#ctgotoken) [class*="max-w-[650px]"] > [class*="aspect-square"] {
+  position: relative;
+  background-image: url('/images/token/ctgo-master-token.webp');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 24px 56px rgba(212, 162, 89, 0.18));
+  transform: scale(1.04);
+  transform-origin: center;
+}
+
+.tokenPage :global(#ctgotoken) [class*="max-w-[650px]"] > [class*="aspect-square"] > * {
+  display: none !important;
+}
+
+@media (max-width: 1023px) {
+  .tokenPage :global(#ctgotoken) [class*="max-w-[650px]"] > [class*="aspect-square"] {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tokenPage :global(#ctgotoken) [class*="max-w-[650px]"] > [class*="aspect-square"] {
+    transform: none;
+  }
+}
