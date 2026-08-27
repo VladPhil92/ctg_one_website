@@ -40,6 +40,7 @@ export const PLATFORM_NAV_ITEMS = [
   { label: 'Technology', href: '/services' },
   { label: 'Investment', href: '/inversion' },
   { label: 'AI', href: '/ai' },
+  { label: 'CTGO Token', href: '/ctgotoken' },
 ] as const;
 
 export const ANIMATION = {
