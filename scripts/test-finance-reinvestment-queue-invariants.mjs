@@ -25,7 +25,7 @@ assert.doesNotMatch(migration, /insert into public\.investment_ledger_entries/i)
 assert.match(component, /get_finance_reinvestment_queue_snapshot/);
 assert.match(component, /approve_reinvestment_request/);
 assert.match(component, /reject_reinvestment_request/);
-assert.doesNotMatch(component, /approve_reinvestment\'/);
+assert.doesNotMatch(component, /approve_reinvestment'/);
 assert.match(component, /legacyCaseIntentMissing/);
 assert.match(component, /participantKycStatus !== 'VERIFIED'/);
 assert.match(component, /targetLotStatus !== 'FUNDING_OPEN'/);
