@@ -1,6 +1,7 @@
 'use client';
 
 import React, { type ReactNode } from 'react';
+import Link from 'next/link';
 import { ArrowLeft, Radar } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Container } from '@/components/ui';
@@ -23,10 +24,10 @@ export function AccountSurface({ code, eyebrow, title, description, icon, childr
 
       <main className="relative pt-24 pb-20">
         <Container size="small">
-          <a href="/dashboard" className="accountBack">
+          <Link href="/dashboard" className="accountBack">
             <ArrowLeft size={14} aria-hidden="true" />
             Volver al Personal OS
-          </a>
+          </Link>
 
           <section className="accountHero">
             <div className="accountHeroSignal" aria-hidden="true"><span /><span /><span /></div>

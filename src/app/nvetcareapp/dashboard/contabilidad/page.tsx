@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
@@ -68,7 +69,7 @@ export default async function AccountingPage() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <a href="/nvetcareapp/dashboard" className="mb-2 inline-block text-xs text-[#5B6670] hover:text-[#0D1B2A]">← Panel</a>
+            <Link href="/nvetcareapp/dashboard" className="mb-2 inline-block text-xs text-[#5B6670] hover:text-[#0D1B2A]">← Panel</Link>
             <h1 className="text-xl font-semibold text-[#0D1B2A]" style={poppinsFont}>Contabilidad</h1>
             <p className="text-sm text-[#5B6670]">Transferencias pendientes y disputas.</p>
           </div>
