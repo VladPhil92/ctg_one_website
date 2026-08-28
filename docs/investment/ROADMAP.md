@@ -18,8 +18,9 @@ back into long paragraphs here — the PR history is the detailed record;
 this file's job is to say what's left and why.
 
 Originating audit: 2026-08-22. Last updated: 2026-08-28 (post-merge
-release-gate re-audit after PR #220; current audited `main` SHA
-`119d8053fa1170a9ec140883acc14cb807379fd1`).
+release-gate re-audit after PR #220; audited pre-PR `main` baseline
+`119d8053fa1170a9ec140883acc14cb807379fd1` — evidence for that parent SHA
+must not be accepted after this documentation change reaches `main`).
 
 ## Completado
 
@@ -72,7 +73,7 @@ real. Los gates actuales se siguen en el issue #219.
 ### Bloqueado por uso real del producto — la herramienta ya existe, falta el evento que capturar
 
 - **Evidencia operativa real** (Phase 19 pipeline, `npm run investment:evidence:*`): built and tested against synthetic fixtures only. The 2026-08-28 read-only production audit found 1 lot in `FUNDING_PENDING`, 2 VERIFIED investment participant profiles, and no orders, allocations, serialized bottles, sales, settlements, reinvestments/withdrawals, or ledger entries. A real reconciled closed-beta lot cycle must exist before production-redacted evidence can be captured; synthetic fixtures never qualify.
-- **Canario de producción aceptado** (Phase 18/21, `verify-investment-production-readiness.mjs`): the canary implementation has successfully exercised earlier production deployments, so it is no longer accurate to say it has never run post-deploy. For the current `main` release gate, however, an accepted successful artifact pinned to the exact deployed commit is still required. After #220, the release-gate target is `119d8053fa1170a9ec140883acc14cb807379fd1`; as of this 2026-08-28 re-audit, no successful scheduled production canary artifact pinned to that exact SHA has been observed. `INVESTMENT_PRODUCTION_READINESS_CANARY` therefore correctly remains `null`. Any later `main` commit supersedes this SHA and must be re-pinned before acceptance.
+- **Canario de producción aceptado** (Phase 18/21, `verify-investment-production-readiness.mjs`): the canary implementation has successfully exercised earlier production deployments, so it is no longer accurate to say it has never run post-deploy. For the current release gate, an accepted successful artifact must be pinned to the exact `main` SHA that is actually deployed **after this PR merges**. The audited pre-PR baseline `119d8053fa1170a9ec140883acc14cb807379fd1` is context only and becomes ineligible once the documentation change lands. As of this 2026-08-28 re-audit, no successful scheduled production canary artifact has been reviewed and accepted for the eventual post-merge `main` SHA, so `INVESTMENT_PRODUCTION_READINESS_CANARY` correctly remains `null`. The acceptance procedure must resolve the deployed `main` SHA at review time and require exact agreement between that SHA, the canary artifact and the release matrix; any later `main` commit supersedes previously observed evidence.
 
 ### Requiere autorización explícita — no se ha pedido, no se ha hecho
 
