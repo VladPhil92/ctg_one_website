@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Test, typecheck and build
+    name: Application quality gates
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -259,3 +259,26 @@ jobs:
       - name: Stop isolated local Supabase stack
         if: always()
         run: supabase stop --no-backup
+
+  required-gate:
+    name: Test, typecheck and build
+    runs-on: ubuntu-latest
+    needs: [validate, golden-path-database, critical-authenticated-e2e]
+    if: ${{ always() }}
+    steps:
+      - name: Require complete CI success
+        env:
+          APPLICATION_RESULT: ${{ needs.validate.result }}
+          GOLDEN_PATH_RESULT: ${{ needs.golden-path-database.result }}
+          AUTHENTICATED_E2E_RESULT: ${{ needs.critical-authenticated-e2e.result }}
+        run: |
+          set -euo pipefail
+          printf 'application=%s\ngolden_path=%s\nauthenticated_e2e=%s\n' \
+            "$APPLICATION_RESULT" "$GOLDEN_PATH_RESULT" "$AUTHENTICATED_E2E_RESULT"
+          if [ "$APPLICATION_RESULT" != "success" ] \
+            || [ "$GOLDEN_PATH_RESULT" != "success" ] \
+            || [ "$AUTHENTICATED_E2E_RESULT" != "success" ]; then
+            echo "::error::Required CI gate failed because at least one critical job did not succeed."
+            exit 1
+          fi
+          echo "All critical CI jobs passed; required main-branch gate is satisfied."
