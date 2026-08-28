@@ -62,12 +62,26 @@ export const HomeProductShowcases: React.FC = () => {
               </div>
               <div className="relative min-h-[430px] lg:min-h-full">
                 <div className="absolute inset-0 bg-gradient-to-r from-[#090805] via-transparent to-transparent z-10 hidden lg:block" />
-                <div className="absolute inset-0 grid grid-cols-2 gap-2 p-6 sm:p-8">
-                  <div className="relative overflow-hidden rounded-2xl border border-white/[0.06]">
-                    <Image src="/images/inversion/ctg-craft-beer-irish-red-ale.webp" alt={es ? 'Botella Irish Red Ale de CTG Craft Beer' : 'CTG Craft Beer Irish Red Ale bottle'} fill unoptimized sizes="(min-width: 1024px) 25vw, 45vw" className="object-cover" />
+                <div className="absolute inset-0 grid grid-cols-2 gap-4 p-6 sm:gap-5 sm:p-8">
+                  <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-white/[0.06] bg-[#050403]">
+                    <Image
+                      src="/images/inversion/ctg-craft-beer-irish-red-ale.webp"
+                      alt={es ? 'Botella Irish Red Ale de CTG Craft Beer' : 'CTG Craft Beer Irish Red Ale bottle'}
+                      fill
+                      unoptimized
+                      sizes="(min-width: 1024px) 25vw, 45vw"
+                      className="object-contain object-center p-2 sm:p-3 md:p-4"
+                    />
                   </div>
-                  <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] translate-y-8">
-                    <Image src="/images/inversion/ctg-craft-beer-porter.webp" alt={es ? 'Botella Porter de CTG Craft Beer' : 'CTG Craft Beer Porter bottle'} fill unoptimized sizes="(min-width: 1024px) 25vw, 45vw" className="object-cover" />
+                  <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-white/[0.06] bg-[#050403]">
+                    <Image
+                      src="/images/inversion/ctg-craft-beer-porter.webp"
+                      alt={es ? 'Botella Porter de CTG Craft Beer' : 'CTG Craft Beer Porter bottle'}
+                      fill
+                      unoptimized
+                      sizes="(min-width: 1024px) 25vw, 45vw"
+                      className="object-contain object-center p-2 sm:p-3 md:p-4"
+                    />
                   </div>
                 </div>
               </div>
@@ -85,7 +99,7 @@ export const HomeProductShowcases: React.FC = () => {
                   fill
                   unoptimized
                   sizes="(min-width: 1024px) 51vw, 100vw"
-                  className="object-contain"
+                  className="object-contain object-center p-3 sm:p-5 lg:p-7"
                 />
               </div>
               <div className="order-1 flex flex-col justify-center p-7 sm:p-10 md:p-12 lg:order-2 lg:p-14">
