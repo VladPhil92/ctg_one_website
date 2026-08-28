@@ -37,8 +37,8 @@ Marketing copy must never collapse these states into a single implied production
 | Security | LIVE | RLS, server-side authorization patterns, validation, baseline HTTP headers |
 | Automation | PARTIAL | Database triggers, server-side workflows, state transitions |
 | Integrations | PARTIAL | Integration surfaces exist but no unified integration gateway is established |
-| AI Runtime | IN DEVELOPMENT | No general production agent/RAG runtime verified yet |
-| Observability | ROADMAP | Advanced metrics, tracing, alerting, and centralized error monitoring not yet consolidated |
+| AI Runtime | IN DEVELOPMENT | CTG Knowledge RAG pilot and shared model gateway exist; no general production agent runtime or provider failover is verified |
+| Observability | PARTIAL | Health/schema probes, versioned structured logs, request IDs, W3C trace context and safe error fingerprints exist on critical server paths; centralized metrics/alerting remains incomplete |
 | Web3 / CTGO | ROADMAP | Web3 dependencies exist, but production on-chain evidence has not been verified |
 
 ## Technology layers
@@ -86,16 +86,31 @@ This is not yet a generalized workflow engine or event-driven orchestration plat
 
 ### Intelligence Layer — IN DEVELOPMENT
 
-Target capabilities include:
+Current evidence includes CTG Knowledge's authenticated source-grounded RAG pilot, deterministic citation validation, evaluation tooling and a shared server-only model gateway with bounded provider resilience and telemetry.
 
-- AI agents;
-- RAG;
-- contextual assistance;
+Target capabilities still include:
+
+- narrow AI agents with explicit tools and permissions;
+- broader contextual assistance;
 - classification and extraction;
 - decision support;
-- evaluation and human-in-the-loop controls.
+- evaluation and human-in-the-loop controls;
+- multi-provider/fallback policy where justified.
 
-These capabilities must remain labeled IN DEVELOPMENT until provider integrations, runtime architecture, evaluation, governance, and production evidence exist.
+These capabilities must remain truthfully maturity-labeled until runtime architecture, evaluation, governance, and production evidence support promotion.
+
+### Observability Layer — PARTIAL
+
+Current shared evidence includes:
+
+- `/api/health` and database-schema compatibility probing;
+- structured JSON logs with recursive secret redaction;
+- versioned telemetry schema;
+- validated request/correlation IDs;
+- W3C `traceparent` parsing and propagation on critical health/knowledge paths;
+- safe error classification and opaque fingerprints without raw exception-message logging on adopted paths.
+
+Centralized telemetry storage, time-series metrics, broad distributed tracing, SLOs and alert routing remain future work. See `docs/architecture/OBSERVABILITY.md`.
 
 ### Infrastructure Layer — LIVE
 
@@ -108,7 +123,7 @@ pull request
   ↓
 GitHub Actions
   ↓
-typecheck + Next.js build
+tests + audit + lint + typecheck + build + browser journeys + clean PostgreSQL contracts
   ↓
 merge to main
   ↓
@@ -169,22 +184,21 @@ The architecture should be used as a reference case for future bounded contexts,
 
 ### P1
 
-- formalize shared identity boundaries;
-- map shared data versus bounded-context data;
-- add automated testing for critical flows;
-- introduce centralized error monitoring;
-- document production recovery procedures.
+- expand W3C trace context and safe error envelopes across critical mutation APIs;
+- define service-level indicators for authentication, Investment checkout/payment and CTG Knowledge;
+- select a centralized telemetry/error-monitoring sink with explicit privacy and retention controls;
+- keep production recovery procedures evidence-backed rather than documentation-only.
 
 ### P2
 
 - define a shared integration layer;
-- build one narrow production AI use case with evaluation;
+- advance one narrow AI use case through authorized evaluation and operating evidence;
 - establish event/audit conventions across bounded contexts;
 - publish technology case studies with verifiable architecture.
 
 ### P3
 
 - evaluate event-driven architecture where justified;
-- consolidate operational analytics;
+- consolidate operational analytics and SLO/error-budget reporting;
 - create reusable developer platform components;
 - promote mature shared modules from PARTIAL to LIVE only after production evidence exists.
