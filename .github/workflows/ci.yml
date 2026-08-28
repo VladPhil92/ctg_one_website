@@ -61,6 +61,9 @@ jobs:
       - name: Production dependency audit
         run: npm run audit:critical
 
+      - name: Lint
+        run: npm run lint
+
       - name: Typecheck
         run: npx tsc --noEmit
 
