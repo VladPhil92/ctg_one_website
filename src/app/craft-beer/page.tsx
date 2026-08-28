@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { ArrowUpRight, ShoppingBag, TrendingUp } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -40,9 +41,9 @@ export default function CraftBeerPage() {
                   <a href="#cervezas" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#d6ae56] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black hover:bg-[#f1c75b]">
                     <ShoppingBag size={14} /> {es ? 'Conocer nuestras cervezas' : 'Explore our beer'} <ArrowUpRight size={14} />
                   </a>
-                  <a href="/inversion" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.14] bg-white/[0.03] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-white hover:border-[#d6ae56]/40">
+                  <Link href="/inversion" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.14] bg-white/[0.03] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-white hover:border-[#d6ae56]/40">
                     <TrendingUp size={14} /> {es ? 'Invertir en producción' : 'Invest in production'} <ArrowUpRight size={14} />
-                  </a>
+                  </Link>
                 </div>
               </FadeInSection>
 
@@ -73,12 +74,12 @@ export default function CraftBeerPage() {
                 <h3 className="font-outfit text-2xl font-semibold">{es ? 'Comprar cerveza' : 'Shop beer'}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-white/60">{es ? 'Estamos preparando la experiencia de tienda dentro de este hub. Hasta que el checkout esté realmente operativo, no mostraremos una compra como disponible.' : 'We are preparing the store experience inside this hub. Until checkout is truly operational, we will not present purchasing as available.'}</p>
               </div>
-              <a href="/inversion" className="group rounded-2xl border border-[#d6ae56]/20 bg-[#d6ae56]/[0.04] p-7 transition-colors hover:bg-[#d6ae56]/[0.07] sm:p-8">
+              <Link href="/inversion" className="group rounded-2xl border border-[#d6ae56]/20 bg-[#d6ae56]/[0.04] p-7 transition-colors hover:bg-[#d6ae56]/[0.07] sm:p-8">
                 <TrendingUp className="mb-5 text-[#f1c75b]" size={22} />
                 <h3 className="font-outfit text-2xl font-semibold">CTG Craft Beer {es ? 'Inversión' : 'Investment'}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-white/60">{es ? 'Participa en lotes específicos de producción y consulta su avance según las condiciones publicadas para cada lote.' : 'Participate in specific production batches and follow their progress under the published terms for each batch.'}</p>
                 <span className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-[#f1c75b]">{es ? 'Conocer inversión' : 'Explore investment'} <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5" /></span>
-              </a>
+              </Link>
             </div>
           </Container>
         </section>
