@@ -6,6 +6,7 @@ import { Beer, Building2, CalendarDays, Layers3, MapPin } from 'lucide-react';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Button } from '@/components/ui/Button';
+import { BlockchainNetwork } from '@/components/BlockchainNetwork';
 import { HERO } from '@/data/content';
 import { getCapabilityProof, getPublicProofStatus } from '@/data/technology-proof';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -130,8 +131,19 @@ export const HeroSection: React.FC = () => {
           </FadeInSection>
         </div>
 
+        <FadeInSection delay={0.22} className="mt-16 lg:mt-20">
+          <div className="mx-auto flex max-w-[720px] flex-col items-center text-center">
+            <span className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-text-dim">
+              {es ? 'Ecosistema CTG One' : 'CTG One ecosystem'}
+            </span>
+            <div className={`${styles.networkField} w-full max-w-[560px]`}>
+              <BlockchainNetwork size="lg" interactive />
+            </div>
+          </div>
+        </FadeInSection>
+
         <FadeInSection delay={0.24}>
-          <div className={`${styles.commandPanel} mt-12`}>
+          <div className={`${styles.commandPanel} mt-8 lg:mt-10`}>
             <div className="grid grid-cols-2 lg:grid-cols-4">
               {HERO.metrics.map((metric, index) => {
                 const Icon = METRIC_ICONS[metric.icon as keyof typeof METRIC_ICONS] ?? Layers3;
