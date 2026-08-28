@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Container, Badge } from '@/components/ui';
 import { InvestmentSimulatorClient } from '@/components/inversion/InvestmentSimulatorClient';
 import {
@@ -32,8 +33,8 @@ export default async function SimuladorPage() {
 
         <p className="text-[11px] text-text-dim leading-relaxed mt-10">
           {investmentConfig.riskDisclosureText}{' '}
-          Consulta <a href="/inversion/riesgos" className="text-accent hover:underline">riesgos</a>{' '}
-          y <a href="/inversion/legal" className="text-accent hover:underline">condiciones legales</a>.
+          Consulta <Link href="/inversion/riesgos" className="text-accent hover:underline">riesgos</Link>{' '}
+          y <Link href="/inversion/legal" className="text-accent hover:underline">condiciones legales</Link>.
         </p>
       </Container>
     </section>

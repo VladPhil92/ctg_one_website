@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { investmentConfig } from '@/lib/investment/config';
 
@@ -25,11 +26,11 @@ export const InvestmentFooter: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-6 text-[11px] uppercase tracking-[0.15em] text-text-dim">
-          <a href="/inversion/riesgos" className="hover:text-text-muted transition-colors">
+          <Link href="/inversion/riesgos" className="hover:text-text-muted transition-colors">
             {isEs ? 'Riesgos' : 'Risks'}
-          </a>
-          <a href="/inversion/legal" className="hover:text-text-muted transition-colors">Legal</a>
-          <a href="/" className="hover:text-text-muted transition-colors">ctgone.com</a>
+          </Link>
+          <Link href="/inversion/legal" className="hover:text-text-muted transition-colors">Legal</Link>
+          <Link href="/" className="hover:text-text-muted transition-colors">ctgone.com</Link>
         </div>
       </div>
       <p className="max-w-6xl mx-auto mt-8 text-[11px] text-text-dim leading-relaxed">
