@@ -65,7 +65,7 @@ for (const { path, minPolicies, allows, scope } of migrations) {
 
   const unhoisted = predicates.filter((predicate) =>
     [...predicate.matchAll(new RegExp(`${PERMISSION_FN}\\(`, 'g'))]
-      .some((call) => !/\( SELECT $/.test(predicate.slice(0, call.index))),
+      .some((call) => !predicate.slice(0, call.index).endsWith('( SELECT ')),
   );
   assert.deepEqual(
     unhoisted,
