@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 const [
   intakeMigration,
   identitySyncMigration,
+  rpcExposureMigration,
   participantPage,
   adminPage,
   investmentPage,
@@ -10,6 +11,7 @@ const [
 ] = await Promise.all([
   readFile('supabase/migrations/0064_kyc_transactional_resilience.sql', 'utf8'),
   readFile('supabase/migrations/0072_unify_investment_kyc_source_of_truth.sql', 'utf8'),
+  readFile('supabase/migrations/0074_revoke_anonymous_sensitive_rpc_execution.sql', 'utf8'),
   readFile('src/app/dashboard/kyc/page.tsx', 'utf8'),
   readFile('src/app/admin/kyc/page.tsx', 'utf8'),
   readFile('src/app/inversion/app/page.tsx', 'utf8'),
@@ -45,6 +47,25 @@ for (const forbidden of [
 
 for (const rpc of ['begin_kyc_submission', 'register_kyc_document', 'finalize_kyc_submission']) {
   if (!participantPage.includes(`rpc('${rpc}'`)) throw new Error(`Participant KYC page missing ${rpc} RPC`);
+}
+
+for (const signature of [
+  'public.begin_kyc_submission()',
+  'public.register_kyc_document(uuid, text, text)',
+  'public.finalize_kyc_submission(uuid)',
+]) {
+  if (!rpcExposureMigration.includes(`revoke all on function ${signature}`)) {
+    throw new Error(`Sensitive KYC RPC is not explicitly revoked from anonymous/public execution: ${signature}`);
+  }
+  if (!rpcExposureMigration.includes(`grant execute on function ${signature}`)) {
+    throw new Error(`Sensitive KYC RPC no longer has an explicit authenticated execution grant: ${signature}`);
+  }
+}
+if (!rpcExposureMigration.includes('from public, anon')) {
+  throw new Error('Sensitive KYC RPC hardening must explicitly revoke both PUBLIC and anon privileges.');
+}
+if (!rpcExposureMigration.includes('to authenticated, service_role')) {
+  throw new Error('Sensitive KYC RPC hardening must explicitly preserve authenticated/server execution.');
 }
 
 if (!participantPage.includes('`${userId}/${submissionId}/${documentType}`')) {
@@ -99,4 +120,4 @@ if (investmentPage.includes('KYC específico de inversión')) {
   throw new Error('Investment dashboard still references a contradictory investment-specific KYC.');
 }
 
-console.log('KYC transactional resilience and CTG One identity invariants: PASS');
+console.log('KYC transactional resilience, identity source-of-truth and RPC exposure invariants: PASS');
