@@ -2,9 +2,9 @@
 
 ## Status
 
-Phase 4 architecture definition. The AI layer is **IN DEVELOPMENT**.
+The shared AI layer remains **IN DEVELOPMENT**. CTG Knowledge is the current bounded **PARTIAL / BETA** pilot.
 
-No production model runtime, agent framework, embeddings pipeline, vector retrieval system, or RAG implementation was verified in the repository at the start of this phase. This document therefore defines the target architecture and promotion criteria without presenting roadmap functionality as live.
+The repository now contains a real authenticated RAG pilot, provider integration, evaluation tooling and a shared model-gateway foundation. These are meaningful implementation milestones, but they do not establish a general-purpose production agent platform.
 
 ## Objective
 
@@ -12,7 +12,7 @@ CTG One should build AI as a governed shared capability inside CTG One OS, not a
 
 Target flow:
 
-`AUTHORIZED DATA -> CONTEXT -> MODEL -> AGENT -> WORKFLOW -> BUSINESS OPERATION`
+`AUTHORIZED DATA -> CONTEXT -> MODEL GATEWAY -> MODEL -> AGENT -> WORKFLOW -> BUSINESS OPERATION`
 
 Every transition must be bounded by authorization, validation, traceability, evaluation, and fallback behavior.
 
@@ -29,32 +29,37 @@ Responsibilities:
 - prevent cross-unit data leakage;
 - document retention and deletion expectations.
 
-### 2. Context Layer — IN DEVELOPMENT
+### 2. Context Layer — PARTIAL
 
-Target responsibilities:
+Current evidence includes the CTG Knowledge curated-document pipeline, pgvector retrieval, business-unit filtering, source metadata and deterministic citation validation.
+
+Target responsibilities remain:
 
 - retrieve only authorized context;
 - attach source references where possible;
 - preserve domain boundaries;
-- support future semantic retrieval/RAG;
+- support semantic retrieval/RAG;
 - record enough provenance to audit why a response was generated.
 
-RAG must not be described as LIVE until retrieval, indexing/embedding strategy, authorization, evaluation, and production deployment are implemented.
+CTG Knowledge may remain labeled PARTIAL/BETA while controlled evaluation and operating evidence are incomplete.
 
-### 3. Model Gateway — ROADMAP
+### 3. Model Gateway — PARTIAL
 
-A future shared gateway should abstract:
+`src/lib/ai/model-gateway.ts` is now the shared server-only boundary used by CTG Knowledge rather than allowing the product route to depend directly on a provider module.
 
-- provider;
-- model family/version;
-- inference parameters;
-- policy configuration;
-- timeout/retry behavior;
-- token and cost accounting;
-- model allowlists by use case;
-- fallback selection.
+Current capabilities:
 
-Business code should avoid hard-coding a single provider throughout the application.
+- explicit provider allowlist and fail-closed unsupported-provider behavior;
+- versioned AI runtime configuration;
+- shared embedding and grounded-response interfaces;
+- bounded provider timeout;
+- bounded transient-error retry policy;
+- model identity, provider request ID, latency, attempt-count and token-usage telemetry;
+- server-only credential boundary.
+
+The current provider adapter is OpenAI. Multi-provider routing, automatic failover and durable cost accounting are not implemented, so the gateway remains PARTIAL rather than LIVE.
+
+See `docs/ai/MODEL_GATEWAY.md`.
 
 ### 4. Agent Runtime — IN DEVELOPMENT
 
@@ -68,15 +73,32 @@ An agent is not simply a chatbot. A production agent must have:
 - human escalation paths;
 - audit events for consequential actions.
 
-The first production agents should be narrow rather than autonomous general-purpose agents.
+The first production agents should be narrow rather than autonomous general-purpose agents. CTG Knowledge is retrieval assistance and does not have autonomous business-action privileges.
 
 ### 5. Workflow Orchestration — PARTIAL
 
-The current platform already contains deterministic server-side flows, database triggers, validation, state transitions, and protected actions. These are the appropriate foundation for future AI-assisted workflows.
+The current platform already contains deterministic server-side flows, database triggers, domain-event outbox conventions, validation, state transitions and protected actions. These are the appropriate foundation for future AI-assisted workflows.
 
 AI output must feed deterministic application logic rather than bypass it.
 
-### 6. Evaluation & Observability — ROADMAP
+### 6. Evaluation & Observability — PARTIAL
+
+Current evidence includes:
+
+- deterministic grounding/citation integrity checks;
+- reproducible evaluation harnesses;
+- versioned evaluation corpus and controlled capture workflow;
+- request correlation on CTG Knowledge queries;
+- provider/model/config-version telemetry;
+- provider latency, retry count and token-usage capture.
+
+Still missing for a mature shared AI platform:
+
+- centralized traces/metrics/error-monitoring backend;
+- durable provider usage/cost ledger;
+- production alert thresholds;
+- human-reviewed authorized evaluation evidence sufficient for LIVE promotion;
+- model/provider regression evidence across multiple runtime configurations.
 
 Before any AI capability becomes LIVE, CTG One should measure:
 
@@ -88,7 +110,7 @@ Before any AI capability becomes LIVE, CTG One should measure:
 - provider/model errors;
 - token consumption and cost;
 - human override rates;
-- regression across model/prompt changes.
+- regression across model/prompt/config changes.
 
 ## Initial use-case order
 
@@ -102,7 +124,7 @@ Recommended progression:
 
 ## Production promotion criteria
 
-An AI capability may move from `IN DEVELOPMENT` to `LIVE` only when all of the following exist:
+An AI capability may move to `LIVE` only when all of the following exist:
 
 - production code and configured provider/model;
 - approved data boundary;
@@ -115,13 +137,13 @@ An AI capability may move from `IN DEVELOPMENT` to `LIVE` only when all of the f
 - human accountability for consequential outputs;
 - documented limitations.
 
-## Non-goals for Phase 4
+## Non-goals
 
-Phase 4 does not:
+The AI architecture does not:
 
-- select or lock CTG One into a specific model provider;
 - expose API keys;
 - add a chatbot merely to claim AI capability;
 - implement autonomous financial actions;
 - allow AI to bypass RLS or server-side authorization;
-- claim RAG or agents are already live.
+- claim the shared agent runtime is already LIVE;
+- treat one configured model provider as proof of provider-agnostic production failover.
