@@ -174,7 +174,7 @@ export default function DepositosPage() {
       )}
 
       {submitted && (
-        <div className="accountNotice success" role="status" aria-live="polite">
+        <div className="accountNotice success" aria-live="polite">
           <CheckCircle2 size={17} />
           <div>
             <strong>Solicitud enviada</strong>
