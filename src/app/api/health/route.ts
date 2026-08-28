@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/observability/logger';
 import { getDeploymentMetadata } from '@/lib/observability/deployment';
-import { getRequestObservabilityContext } from '@/lib/observability/request-context';
+import {
+  formatTraceparent,
+  getRequestObservabilityContext,
+} from '@/lib/observability/request-context';
 import {
   EXPECTED_DATABASE_MIGRATION_COUNT,
   EXPECTED_DATABASE_MIGRATION_NAME,
@@ -70,6 +73,7 @@ export async function GET(request: Request) {
       headers: {
         'Cache-Control': 'no-store, max-age=0',
         'X-Request-ID': requestContext.request_id,
+        traceparent: formatTraceparent(requestContext),
       },
     }
   );
