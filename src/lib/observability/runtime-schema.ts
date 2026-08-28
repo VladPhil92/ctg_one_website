@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/server';
 import {
+  EXPECTED_DATABASE_MIGRATION,
   EXPECTED_DATABASE_MIGRATION_COUNT,
   EXPECTED_DATABASE_MIGRATION_NAME,
 } from './schema-version';
@@ -20,6 +21,23 @@ export type RuntimeSchemaCompatibility = {
   observedMigrationCount: number | null;
   observedLatestMigrationName: string | null;
 };
+
+function normalizeRuntimeMigrationName(name: string | null): string | null {
+  if (!name) return null;
+
+  // Legacy NNNN_name.sql migrations are recorded remotely as `name`, while
+  // timestamp-era YYYYMMDDHHMMSS_NNNN_name.sql migrations are recorded by
+  // Supabase as `NNNN_name`. Strip the prefix only when it matches the exact
+  // logical migration expected by this application release. A mismatched
+  // prefix is preserved so the compatibility comparison remains fail-closed.
+  const timestampEraMatch = /^(\d{4})_(.+)$/.exec(name);
+  if (!timestampEraMatch) return name;
+
+  const [, logicalVersion, semanticName] = timestampEraMatch;
+  if (logicalVersion !== EXPECTED_DATABASE_MIGRATION) return name;
+
+  return semanticName;
+}
 
 export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCompatibility> {
   const configured = Boolean(
@@ -54,7 +72,7 @@ export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCo
 
     const row = ((Array.isArray(data) ? data[0] : data) ?? null) as RuntimeSchemaCompatibilityRow | null;
     const observedMigrationCount = row?.migration_count == null ? null : Number(row.migration_count);
-    const observedLatestMigrationName = row?.latest_name ?? null;
+    const observedLatestMigrationName = normalizeRuntimeMigrationName(row?.latest_name ?? null);
 
     return {
       compatible: Boolean(
