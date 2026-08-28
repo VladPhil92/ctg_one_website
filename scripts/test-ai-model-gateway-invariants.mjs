@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 
 const gateway = readFileSync('src/lib/ai/model-gateway.ts', 'utf8');
 const openai = readFileSync('src/lib/ai/openai.ts', 'utf8');
-const route = readFileSync('src/app/api/knowledge/query/route.ts', 'utf8');
+const queryRoute = readFileSync('src/app/api/knowledge/query/route.ts', 'utf8');
+const ingestRoute = readFileSync('src/app/api/knowledge/admin/ingest/route.ts', 'utf8');
 const envExample = readFileSync('.env.local.example', 'utf8');
 
 assert.match(gateway, /CTG_AI_PROVIDER/, 'AI provider selection must be centralized in the model gateway.');
@@ -35,19 +36,36 @@ assert.match(openai, /outputTokens/, 'Output-token usage must be captured.');
 assert.match(openai, /totalTokens/, 'Total-token usage must be captured.');
 assert.match(openai, /store: false/, 'Knowledge response generation must remain provider-storage disabled.');
 
-assert.match(
-  route,
-  /from '@\/lib\/ai\/model-gateway'/,
-  'Knowledge query execution must depend on the shared model gateway rather than a provider module.',
-);
-assert.match(
-  route,
-  /getRequestObservabilityContext\(request\)/,
-  'Knowledge queries must participate in request correlation.',
-);
-assert.match(route, /embedding: embedding\.telemetry/, 'Embedding telemetry must be logged without source content.');
-assert.match(route, /generation: generation\.telemetry/, 'Generation telemetry must be logged without answer text.');
-assert.match(route, /'X-Request-ID': requestId/, 'Knowledge responses must return the correlated request ID.');
+for (const [name, route] of [
+  ['query', queryRoute],
+  ['ingest', ingestRoute],
+]) {
+  assert.match(
+    route,
+    /from '@\/lib\/ai\/model-gateway'/,
+    `Knowledge ${name} execution must depend on the shared model gateway rather than a provider module.`,
+  );
+  assert.doesNotMatch(
+    route,
+    /from '@\/lib\/ai\/openai'/,
+    `Knowledge ${name} route must not bypass the shared model gateway.`,
+  );
+  assert.match(
+    route,
+    /getRequestObservabilityContext\(request\)/,
+    `Knowledge ${name} requests must participate in request correlation.`,
+  );
+  assert.match(
+    route,
+    /'X-Request-ID': requestId/,
+    `Knowledge ${name} responses must return the correlated request ID.`,
+  );
+}
+
+assert.match(queryRoute, /embedding: embedding\.telemetry/, 'Query embedding telemetry must be logged without source content.');
+assert.match(queryRoute, /generation: generation\.telemetry/, 'Generation telemetry must be logged without answer text.');
+assert.match(ingestRoute, /embedding: embeddingResult\.telemetry/, 'Ingestion embedding telemetry must be logged without document content.');
+assert.match(ingestRoute, /embedding_model: knowledgeAIConfig\.embeddingModel/, 'Persisted embedding model identity must come from the gateway configuration.');
 
 assert.match(envExample, /CTG_AI_PROVIDER=openai/, 'The model gateway provider must be documented for operators.');
 assert.match(envExample, /OPENAI_REQUEST_TIMEOUT_MS=15000/, 'The bounded timeout default must be documented.');
