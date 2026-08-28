@@ -49,27 +49,37 @@ export const Card: React.FC<CardProps> = ({
     },
   };
 
+  const classes = `
+    rounded-lg
+    transition-all duration-500 ease-elegant
+    ${paddingClasses[padding]}
+    ${hover ? 'hover:border-[rgba(255,255,255,0.06)]' : ''}
+    ${onClick ? 'cursor-pointer' : ''}
+    ${className}
+  `.trim();
+
+  if (onClick) {
+    return (
+      <div
+        onClick={onClick}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onClick();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        className={classes}
+        style={variantStyles[variant]}
+      >
+        {children}
+      </div>
+    );
+  }
+
   return (
-    <div
-      onClick={onClick}
-      onKeyDown={onClick ? (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onClick();
-        }
-      } : undefined}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      className={`
-        rounded-lg
-        transition-all duration-500 ease-elegant
-        ${paddingClasses[padding]}
-        ${hover ? 'hover:border-[rgba(255,255,255,0.06)]' : ''}
-        ${onClick ? 'cursor-pointer' : ''}
-        ${className}
-      `.trim()}
-      style={variantStyles[variant]}
-    >
+    <div className={classes} style={variantStyles[variant]}>
       {children}
     </div>
   );
