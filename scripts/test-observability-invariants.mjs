@@ -53,12 +53,20 @@ assert.ok(
 );
 
 assert.ok(
-  runtimeSchema.includes("name.replace(/^\\d{4}_/, '')"),
-  'Runtime schema compatibility must normalize the logical NNNN_ prefix emitted by timestamp-era Supabase migrations.',
+  runtimeSchema.includes('EXPECTED_DATABASE_MIGRATION,'),
+  'Runtime schema compatibility must import the exact logical migration expected by the release.',
+);
+assert.ok(
+  runtimeSchema.includes('const timestampEraMatch = /^(\\d{4})_(.+)$/.exec(name)'),
+  'Runtime schema compatibility must parse the logical NNNN_ prefix emitted by timestamp-era migrations.',
+);
+assert.ok(
+  runtimeSchema.includes('logicalVersion !== EXPECTED_DATABASE_MIGRATION'),
+  'Runtime schema compatibility must reject a timestamp-era logical version that differs from the release expectation.',
 );
 assert.ok(
   runtimeSchema.includes('observedLatestMigrationName === EXPECTED_DATABASE_MIGRATION_NAME'),
-  'Runtime schema compatibility must compare the normalized migration name against the release expectation.',
+  'Runtime schema compatibility must compare the validated semantic migration name against the release expectation.',
 );
 
 console.log('Observability invariants: PASS');
