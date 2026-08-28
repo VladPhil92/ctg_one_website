@@ -9,9 +9,8 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   const groupLabel = locale === 'es' ? 'Seleccionar idioma' : 'Select language';
 
   return (
-    <div
-      className="inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.025] p-0.5"
-      role="group"
+    <fieldset
+      className="m-0 inline-flex min-h-11 min-w-0 items-center rounded-full border border-white/10 bg-white/[0.025] p-0.5"
       aria-label={groupLabel}
       data-no-translate
     >
@@ -37,6 +36,6 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }
