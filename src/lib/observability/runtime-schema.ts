@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/server';
 import {
+  EXPECTED_DATABASE_MIGRATION,
   EXPECTED_DATABASE_MIGRATION_COUNT,
   EXPECTED_DATABASE_MIGRATION_NAME,
 } from './schema-version';
@@ -26,9 +27,16 @@ function normalizeRuntimeMigrationName(name: string | null): string | null {
 
   // Legacy NNNN_name.sql migrations are recorded remotely as `name`, while
   // timestamp-era YYYYMMDDHHMMSS_NNNN_name.sql migrations are recorded by
-  // Supabase as `NNNN_name`. Runtime compatibility is intentionally based on
-  // the logical migration identity, not on the filename/version convention.
-  return name.replace(/^\d{4}_/, '');
+  // Supabase as `NNNN_name`. Strip the prefix only when it matches the exact
+  // logical migration expected by this application release. A mismatched
+  // prefix is preserved so the compatibility comparison remains fail-closed.
+  const timestampEraMatch = /^(\d{4})_(.+)$/.exec(name);
+  if (!timestampEraMatch) return name;
+
+  const [, logicalVersion, semanticName] = timestampEraMatch;
+  if (logicalVersion !== EXPECTED_DATABASE_MIGRATION) return name;
+
+  return semanticName;
 }
 
 export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCompatibility> {
