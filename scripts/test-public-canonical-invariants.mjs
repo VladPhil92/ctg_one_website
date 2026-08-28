@@ -24,7 +24,7 @@ for (const routePath of sitemapPaths.filter((route) => route !== '/')) {
 
   const sources = await Promise.all(available.map((candidate) => read(candidate)));
   const expected = `canonical: 'https://ctgone.com${routePath}'`;
-  const expectedDoubleQuote = `canonical: \"https://ctgone.com${routePath}\"`;
+  const expectedDoubleQuote = `canonical: "https://ctgone.com${routePath}"`;
   assert.ok(
     sources.some((source) => source.includes(expected) || source.includes(expectedDoubleQuote)),
     `Public sitemap route ${routePath} must override inherited metadata with its own canonical URL.`,
