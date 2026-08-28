@@ -13,18 +13,77 @@ const files = (await readdir(migrationsDir))
 
 assert.ok(files.length > 0, 'At least one Supabase migration is required.');
 
-const migrations = files.map((name) => {
-  const match = /^(\d{4})_([a-z0-9_]+)\.sql$/.exec(name);
-  assert.ok(match, `Invalid migration filename: ${name}. Expected NNNN_snake_case.sql.`);
-  return { version: match[1], name: match[2], file: name };
+const migrations = files.map((file) => {
+  const legacyMatch = /^(\d{4})_([a-z0-9_]+)\.sql$/.exec(file);
+  if (legacyMatch) {
+    return {
+      logicalVersion: legacyMatch[1],
+      remoteVersion: legacyMatch[1],
+      name: legacyMatch[2],
+      file,
+      format: 'legacy',
+    };
+  }
+
+  const timestampMatch = /^(\d{14})_(\d{4})_([a-z0-9_]+)\.sql$/.exec(file);
+  assert.ok(
+    timestampMatch,
+    `Invalid migration filename: ${file}. Expected legacy NNNN_snake_case.sql or YYYYMMDDHHMMSS_NNNN_snake_case.sql.`
+  );
+
+  return {
+    logicalVersion: timestampMatch[2],
+    remoteVersion: timestampMatch[1],
+    name: timestampMatch[3],
+    file,
+    format: 'timestamp',
+  };
 });
 
-const versions = migrations.map(({ version }) => version);
-assert.equal(new Set(versions).size, versions.length, 'Duplicate Supabase migration versions are not allowed.');
+migrations.sort((left, right) => Number(left.logicalVersion) - Number(right.logicalVersion));
 
-for (let index = 0; index < versions.length; index += 1) {
+const logicalVersions = migrations.map(({ logicalVersion }) => logicalVersion);
+const remoteVersions = migrations.map(({ remoteVersion }) => remoteVersion);
+
+assert.equal(
+  new Set(logicalVersions).size,
+  logicalVersions.length,
+  'Duplicate logical Supabase migration versions are not allowed.'
+);
+assert.equal(
+  new Set(remoteVersions).size,
+  remoteVersions.length,
+  'Duplicate remote Supabase migration versions are not allowed.'
+);
+
+for (let index = 0; index < logicalVersions.length; index += 1) {
   const expected = String(index + 1).padStart(4, '0');
-  assert.equal(versions[index], expected, `Migration sequence drift: expected ${expected}, found ${versions[index]}.`);
+  assert.equal(
+    logicalVersions[index],
+    expected,
+    `Migration sequence drift: expected logical ${expected}, found ${logicalVersions[index]}.`
+  );
+}
+
+const firstTimestampIndex = migrations.findIndex(({ format }) => format === 'timestamp');
+if (firstTimestampIndex >= 0) {
+  for (let index = firstTimestampIndex; index < migrations.length; index += 1) {
+    assert.equal(
+      migrations[index].format,
+      'timestamp',
+      `Migration ${migrations[index].file} reverts to the legacy filename format after timestamp versioning began.`
+    );
+  }
+
+  const timestampVersions = migrations
+    .slice(firstTimestampIndex)
+    .map(({ remoteVersion }) => BigInt(remoteVersion));
+  for (let index = 1; index < timestampVersions.length; index += 1) {
+    assert.ok(
+      timestampVersions[index] > timestampVersions[index - 1],
+      'Timestamped Supabase migration versions must increase with logical migration order.'
+    );
+  }
 }
 
 const schemaVersionSource = await readFile(
@@ -45,8 +104,8 @@ assert.ok(latest, 'Latest migration must be available.');
 
 assert.equal(
   expectedMigrationMatch[1],
-  latest.version,
-  `Runtime expected migration (${expectedMigrationMatch[1]}) must equal repository latest migration (${latest.version}).`
+  latest.logicalVersion,
+  `Runtime expected logical migration (${expectedMigrationMatch[1]}) must equal repository latest logical migration (${latest.logicalVersion}).`
 );
 
 assert.equal(
@@ -61,4 +120,6 @@ assert.equal(
   `Runtime expected migration count (${expectedMigrationCountMatch[1]}) must equal repository migration count (${migrations.length}).`
 );
 
-console.log(`Migration integrity: PASS (${versions[0]}..${latest.version}, ${migrations.length} files, latest=${latest.name})`);
+console.log(
+  `Migration integrity: PASS (${logicalVersions[0]}..${latest.logicalVersion}, ${migrations.length} files, latest=${latest.name}, remote=${latest.remoteVersion})`
+);
