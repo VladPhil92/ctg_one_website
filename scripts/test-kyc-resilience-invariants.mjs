@@ -80,11 +80,11 @@ if (identitySyncMigration.match(/drop\s+(table|column)/i) || identitySyncMigrati
 if (!investmentProfileHook.includes("const { data, error: rpcError } = await supabase.rpc('ensure_investment_participant_profile')")) {
   throw new Error('Investment profile hook does not explicitly capture participant-profile RPC failures.');
 }
-if (!investmentProfileHook.includes("error: profileError") && investmentPage.includes("error: profileError")) {
-  // The page consumes the hook error; this branch only guards accidental source drift.
-}
 if (!investmentProfileHook.includes('return { profile, isLoading, error, refresh: load }')) {
   throw new Error('Investment profile hook does not expose synchronization errors to the UI.');
+}
+if (!investmentPage.includes('error: profileError') || !investmentPage.includes('refresh: refreshProfile')) {
+  throw new Error('Investment dashboard does not consume the KYC synchronization error/retry contract.');
 }
 if (!investmentPage.includes('Identidad CTG One')) {
   throw new Error('Investment dashboard does not identify CTG One as the KYC identity surface.');
