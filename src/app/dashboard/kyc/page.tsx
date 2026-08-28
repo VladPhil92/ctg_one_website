@@ -206,7 +206,7 @@ function StatusNotice({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`accountNotice ${tone}`} role="status" aria-live="polite">
+    <div className={`accountNotice ${tone}`} aria-live="polite">
       {icon}
       <div>
         <strong>{title}</strong>
