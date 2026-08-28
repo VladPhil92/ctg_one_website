@@ -4,6 +4,8 @@ type LogLevel = 'info' | 'warn' | 'error';
 
 export type LogContext = Record<string, unknown>;
 
+const OBSERVABILITY_SCHEMA_VERSION = 'ctg.one.telemetry.v2';
+
 const SENSITIVE_KEYS = [
   'password',
   'token',
@@ -40,6 +42,7 @@ function redactContext(context: LogContext): LogContext {
 function emit(level: LogLevel, event: string, context: LogContext = {}) {
   const deployment = getDeploymentMetadata();
   const payload = {
+    telemetry_schema: OBSERVABILITY_SCHEMA_VERSION,
     timestamp: new Date().toISOString(),
     level,
     event,
@@ -64,3 +67,5 @@ export const logger = {
   warn: (event: string, context?: LogContext) => emit('warn', event, context),
   error: (event: string, context?: LogContext) => emit('error', event, context),
 };
+
+export const observabilitySchemaVersion = OBSERVABILITY_SCHEMA_VERSION;
