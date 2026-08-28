@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
@@ -83,7 +84,7 @@ export default function RecuperarContrasenaPage() {
         <p className="text-sm leading-relaxed text-text-muted">
           {copy.sentPrefix} <strong className="break-all text-white">{sentEmail}</strong>, {copy.sentSuffix}
         </p>
-        <a href="/iniciar-sesion" className="mt-6 inline-flex min-h-11 items-center text-sm text-accent hover:underline">{copy.back}</a>
+        <Link href="/iniciar-sesion" className="mt-6 inline-flex min-h-11 items-center text-sm text-accent hover:underline">{copy.back}</Link>
       </div>
     );
   }
@@ -98,7 +99,7 @@ export default function RecuperarContrasenaPage() {
         {copy.submit}
       </Button>
       <p className="mt-6 text-center text-xs text-text-dim">
-        <a href="/iniciar-sesion" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.back}</a>
+        <Link href="/iniciar-sesion" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.back}</Link>
       </p>
     </form>
   );
