@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -12,7 +13,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       <header className="relative z-10 flex items-center justify-between gap-4 px-5 py-5 sm:px-8 sm:py-6">
-        <a
+        <Link
           href="/"
           aria-label="CTG One Technology"
           className="inline-flex min-h-11 items-center gap-3 rounded-full pr-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
@@ -21,7 +22,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <Image src="/images/logo/CTGLOGO.jpeg" alt="" fill className="object-cover" priority />
           </span>
           <span className="hidden font-outfit text-sm font-semibold tracking-wide text-white sm:inline">CTG One</span>
-        </a>
+        </Link>
         <LanguageSwitcher compact />
       </header>
 
