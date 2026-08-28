@@ -86,6 +86,13 @@ test.describe('CTG One public command-center design system', () => {
     await expect(porterPhoto).toBeVisible();
     await expect(nvetMockup).toBeVisible();
 
+    await irishRedPhoto.scrollIntoViewIfNeeded();
+    await porterPhoto.scrollIntoViewIfNeeded();
+    await nvetMockup.scrollIntoViewIfNeeded();
+    await expect.poll(() => irishRedPhoto.evaluate((node) => node.complete && node.naturalWidth > 0)).toBe(true);
+    await expect.poll(() => porterPhoto.evaluate((node) => node.complete && node.naturalWidth > 0)).toBe(true);
+    await expect.poll(() => nvetMockup.evaluate((node) => node.complete && node.naturalWidth > 0)).toBe(true);
+
     const irishState = await irishRedPhoto.evaluate((node) => ({
       naturalWidth: node.naturalWidth,
       naturalHeight: node.naturalHeight,
