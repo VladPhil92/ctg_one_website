@@ -64,9 +64,15 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
   {
     id: 'observability-baseline',
     area: 'Reliability',
-    capability: 'Health and structured logging baseline',
+    capability: 'Correlated health, structured telemetry and safe error intelligence',
     status: 'PARTIAL',
-    evidence: ['/api/health', 'Structured JSON logger', 'Sensitive-field redaction', 'Schema compatibility probe', 'Request correlation on critical health and knowledge paths'],
+    evidence: [
+      '/api/health and runtime schema compatibility probe',
+      'Versioned structured JSON telemetry schema with recursive sensitive-field redaction',
+      'Validated request IDs plus W3C traceparent trace/span propagation on critical health and knowledge paths',
+      'Safe error classification, retryability metadata and opaque fingerprints without raw exception-message logging on adopted paths',
+      'Centralized metrics, alert routing and broad distributed tracing remain incomplete',
+    ],
     publicPath: '/technology/status',
   },
   {
@@ -99,10 +105,11 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
       'Server-side model gateway routes embeddings and grounded responses through an allowlisted provider boundary',
       'Current OpenAI adapter enforces bounded timeout/retry behavior and provider storage disabled for generated responses',
       'Provider/model/config version, latency, attempts, request ID and token usage are emitted as structured telemetry without logging prompt/source/answer content',
+      'Knowledge query and ingestion carry correlated W3C trace context and safe error fingerprints',
       'Citation metadata returned independently of generated text',
       'Deterministic post-generation citation integrity gate fails closed on missing or fabricated source references',
       'Reproducible evaluation harness implemented; authorized semantic and operating evidence still required for LIVE promotion',
-      'Versioned first-party public evaluation corpus and dataset are Git-blob pinned with fail-closed drift validation',
+      'Versioned first-party public evaluation corpus and dataset are Git-blob pinned with fail-closed provenance and drift validation',
       'Controlled isolated-environment seeding, run capture, human-review, and finalization tooling implemented; first authorized human-reviewed run still pending',
     ],
     publicPath: '/ai',
@@ -150,4 +157,5 @@ export const TECHNICAL_CHANGELOG = [
   { phase: '20', title: 'Investment release gate matrix', detail: 'Added a SUPER_ADMIN release-readiness read model that consolidates technical proof, Render/schema state, reviewed operating evidence, pending business decisions and fail-closed exposure controls while prohibiting automatic LIVE promotion.' },
   { phase: '21', title: 'Production readiness evidence capture', detail: 'Extended the existing post-deploy canary with versioned, SHA-bound, public-safe PASS/FAIL artifacts and a shared validation contract reused by release governance; artifact generation never auto-accepts release evidence or changes PARTIAL/BETA maturity.' },
   { phase: '22', title: 'AI model gateway hardening', detail: 'Introduced a shared server-only model gateway for CTG Knowledge with explicit provider allowlisting, versioned runtime configuration, bounded timeout/retry policy, request correlation and structured provider/model/token telemetry while keeping the AI layer IN DEVELOPMENT and CTG Knowledge BETA.' },
+  { phase: '23', title: 'Observability trace and error intelligence', detail: 'Added W3C trace-context propagation, a versioned structured telemetry schema and safe classified error fingerprints on critical health and knowledge paths while keeping centralized metrics, alerting and full distributed tracing explicitly PARTIAL.' },
 ] as const;
