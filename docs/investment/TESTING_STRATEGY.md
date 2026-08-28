@@ -4,11 +4,16 @@ Status: **IMPLEMENTED**
 
 ## Current repo baseline
 
-A real automated suite exists and is a required CI gate
-(`.github/workflows/ci.yml`, job "Test, typecheck and build"). The list
-below is illustrative — `package.json`'s `test` script is authoritative for
-exactly which invariant scripts run; do not let this file drift into a second
-manual registry of that list.
+A real automated suite exists and is enforced by CI (`.github/workflows/ci.yml`).
+The GitHub ruleset-required status context `Test, typecheck and build` is the
+**final aggregate gate**: it cannot succeed unless the application quality
+job, the clean-database Golden Path job, and the critical authenticated browser
+journey all succeed. This prevents a PR from becoming merge-eligible while a
+financial/schema or authenticated KYC contract is still failing.
+
+The list below is illustrative — `package.json`'s `test` script is authoritative
+for exactly which invariant scripts run; do not let this file drift into a
+second manual registry of that list.
 
 ```bash
 npm test                          # ~50 Node invariant scripts (no framework — plain assertions)
@@ -96,15 +101,31 @@ Real, committed, and run in CI (`playwright.config.mjs`, `es-CO` locale,
 `brand-name.spec.mjs`, and `investment-economics.spec.mjs` for the
 Investment-specific browser journey.
 
+## Merge-enforcement graph
+
+Every PR to `main` runs three critical jobs:
+
+1. `Application quality gates` — invariants, dependency audit, lint,
+   TypeScript, production build and baseline browser E2E;
+2. `Golden Path clean database contract` — reconstructs the schema from an
+   empty PostgreSQL instance and exercises financial/security/operations
+   contracts;
+3. `Critical authenticated browser journey` — isolated local Supabase plus
+   the authenticated KYC resilience browser flow.
+
+The final job named `Test, typecheck and build` depends on all three and fails
+closed unless every upstream result is `success`. The active GitHub ruleset
+requires that exact context, so merge eligibility is tied to the complete
+critical graph rather than to only one early job.
+
 ## Zero-regression requirement for every PR touching this initiative
 
-Before merging: the full `npm test` + dependency audit + lint + typecheck +
-build + Playwright gate above must be green — CI enforces this on every PR
-against `main` (`.github/workflows/ci.yml`), not just a manual pass. Lint
-warnings are review-visible debt; lint errors are merge-blocking. "The
-investment app works but the homepage broke" is never an acceptable outcome;
-the E2E specs above cover the existing protected/public routes precisely so
-that stays true automatically rather than by memory.
+Before merging, the complete aggregate gate must be green — not merely the
+application job. Lint warnings are review-visible debt; lint errors are
+merge-blocking. "The investment app works but the homepage broke" and "the
+application build passed but the clean financial database contract failed"
+are both unacceptable states; the aggregate gate keeps either state from
+qualifying for merge.
 
 ## Adding tests for new investment work
 

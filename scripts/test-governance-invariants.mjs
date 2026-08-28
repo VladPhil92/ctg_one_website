@@ -22,6 +22,15 @@ assert.ok(ci.includes('merged_at != null and .base.ref == "main"'), 'PR-only gat
 assert.ok(ci.includes('pull-requests: read'), 'CI token must have only the pull-request read permission needed by the governance gate.');
 assert.ok(render.includes('autoDeployTrigger: checksPass'), 'Render must deploy only after repository checks pass.');
 
+assert.ok(ci.includes('validate:\n    name: Application quality gates'), 'The application/browser validation job must not masquerade as the final required branch gate.');
+assert.ok(ci.includes('required-gate:\n    name: Test, typecheck and build'), 'CI must preserve the GitHub ruleset required status-check context as a final aggregate gate.');
+assert.ok(ci.includes('needs: [validate, golden-path-database, critical-authenticated-e2e]'), 'The required branch gate must depend on application, clean-database Golden Path, and authenticated KYC jobs.');
+assert.ok(ci.includes('if: ${{ always() }}'), 'The aggregate required gate must evaluate even when an upstream critical job fails or is cancelled.');
+assert.ok(ci.includes('APPLICATION_RESULT: ${{ needs.validate.result }}'), 'Aggregate gate must inspect the application job result.');
+assert.ok(ci.includes('GOLDEN_PATH_RESULT: ${{ needs.golden-path-database.result }}'), 'Aggregate gate must inspect the clean-database Golden Path result.');
+assert.ok(ci.includes('AUTHENTICATED_E2E_RESULT: ${{ needs.critical-authenticated-e2e.result }}'), 'Aggregate gate must inspect the authenticated browser journey result.');
+assert.ok(ci.includes('Required CI gate failed because at least one critical job did not succeed.'), 'Aggregate gate must fail closed when any critical CI job is not successful.');
+
 assert.ok(deployment.includes('RENDER_GIT_COMMIT'), 'Deployment metadata must use Render authoritative commit SHA.');
 assert.ok(deployment.includes('RENDER_GIT_BRANCH'), 'Deployment metadata must expose the deployed branch.');
 assert.ok(deployment.includes('RENDER_GIT_REPO_SLUG'), 'Deployment metadata must expose the deployed repository.');
@@ -34,11 +43,12 @@ assert.ok(infrastructureHealth.includes("id: 'deployment-identity'"), 'Admin Sys
 assert.ok(packageJson.scripts?.test?.includes('test-migration-integrity.mjs'), 'Migration integrity test must remain part of npm test.');
 assert.ok(packageJson.scripts?.test?.includes('test-governance-invariants.mjs'), 'Governance invariants must remain part of npm test.');
 
-// Browser E2E is part of the same required CI job that protects main.
+// Browser E2E remains part of the application-quality job, and the ruleset-required
+// aggregate gate above cannot pass until this job plus DB and authenticated E2E pass.
 assert.ok(ci.includes('@playwright/test@1.62.0'), 'CI must pin the Playwright test runtime to an explicit version.');
 assert.ok(ci.includes('Verify runner Chrome availability'), 'CI must verify the hosted runner browser before E2E.');
 assert.ok(ci.includes('google-chrome --version'), 'CI must fail closed if the hosted runner does not provide Google Chrome.');
-assert.ok(ci.includes('Run browser E2E tests'), 'The protected CI job must execute browser E2E tests.');
+assert.ok(ci.includes('Run browser E2E tests'), 'The protected CI graph must execute browser E2E tests.');
 assert.ok(ci.includes('playwright test --project=chromium'), 'CI must run the Chromium project explicitly.');
 assert.ok(playwrightConfig.includes("channel: 'chrome'"), 'CI Playwright must use the Chrome channel already provisioned on the hosted runner.');
 assert.ok(playwrightConfig.includes("testDir: './tests/e2e'"), 'Playwright must keep browser tests isolated under tests/e2e.');
