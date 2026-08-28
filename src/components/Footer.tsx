@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Container } from '@/components/ui';
 import { BrandLogo } from '@/components/BrandLogo';
 import { FOOTER, CONTACT } from '@/data/content';
@@ -40,10 +41,10 @@ export const Footer: React.FC = () => {
     <ul className="space-y-1">
       {links.map((link) => (
         <li key={link.href}>
-          <a href={link.href} className={linkClass}>
+          <Link href={link.href} className={linkClass}>
             <span>{t(link.label)}</span>
             <ArrowUpRight size={12} className="opacity-0 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100" aria-hidden="true" />
-          </a>
+          </Link>
         </li>
       ))}
     </ul>
@@ -60,7 +61,7 @@ export const Footer: React.FC = () => {
       <Container size="large" className="relative z-10">
         <div className="flex flex-col justify-between gap-8 border-b border-white/[0.07] pb-10 sm:pb-12 lg:flex-row lg:items-end">
           <div className="max-w-xl">
-            <a href="/" aria-label={logoLabel} className="group mb-7 inline-flex min-h-12 items-center"><BrandLogo className="transition-transform duration-300 group-hover:-translate-y-px" /></a>
+            <Link href="/" aria-label={logoLabel} className="group mb-7 inline-flex min-h-12 items-center"><BrandLogo className="transition-transform duration-300 group-hover:-translate-y-px" /></Link>
             <div className="mb-4 flex items-center gap-2.5"><CircuitBoard size={15} className="text-[#f1c75b]" strokeWidth={1.4} aria-hidden="true" /><span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-dim sm:text-xs">{sectionLabel}</span></div>
             <p className="max-w-lg text-sm leading-relaxed text-text-muted sm:text-base">{t(FOOTER.tagline)}</p>
           </div>
@@ -83,9 +84,9 @@ export const Footer: React.FC = () => {
           <div>
             <div className="mb-4 flex min-h-8 items-center gap-2.5"><span className="h-px w-5 bg-[#248cff]/40" aria-hidden="true" /><h3 className={`${headingClass} text-text-dim`}>Legal</h3></div>
             <ul className="space-y-1">
-              <li><a href="/privacy" className={linkClass}><span>{t('Privacy Policy')}</span></a></li>
-              <li><a href="/inversion/legal" className={linkClass}><span>{locale === 'es' ? 'Información legal de inversión' : 'Investment legal information'}</span></a></li>
-              <li><a href="/inversion/riesgos" className={linkClass}><span>{locale === 'es' ? 'Riesgos de inversión' : 'Investment risks'}</span></a></li>
+              <li><Link href="/privacy" className={linkClass}><span>{t('Privacy Policy')}</span></Link></li>
+              <li><Link href="/inversion/legal" className={linkClass}><span>{locale === 'es' ? 'Información legal de inversión' : 'Investment legal information'}</span></Link></li>
+              <li><Link href="/inversion/riesgos" className={linkClass}><span>{locale === 'es' ? 'Riesgos de inversión' : 'Investment risks'}</span></Link></li>
             </ul>
           </div>
         </div>
@@ -93,7 +94,7 @@ export const Footer: React.FC = () => {
         <div className="flex flex-col gap-4 border-t border-white/[0.07] pt-6 sm:pt-7 md:flex-row md:items-center md:justify-between">
           <p className="text-xs uppercase tracking-[0.08em] text-text-dim">© {currentYear} CTG One Technology</p>
           <span className="text-xs uppercase tracking-[0.12em] text-text-dim">Cartagena · Colombia</span>
-          <a href="/contact" className="group inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-text-dim hover:text-[#f1c75b]">{t('Contact')}<ArrowUpRight size={12} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" /></a>
+          <Link href="/contact" className="group inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-text-dim hover:text-[#f1c75b]">{t('Contact')}<ArrowUpRight size={12} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" /></Link>
         </div>
       </Container>
     </footer>

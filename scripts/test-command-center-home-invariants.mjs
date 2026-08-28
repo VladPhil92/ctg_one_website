@@ -50,7 +50,7 @@ assert.match(network, /data-core-energy="radial-emission"/, 'CTG nucleus must ex
 assert.match(network, /styles\.ecosystemEnergyOutbound/, 'Energy must travel from the CTG nucleus to the outer nodes.');
 assert.match(network, /styles\.ecosystemEnergyReturn/, 'Energy must recirculate from outer nodes to the CTG nucleus.');
 assert.match(network, /styles\.ecosystemNodeReceive/, 'Outer nodes must visibly react to arriving energy.');
-assert.match(network, /role="navigation"/, 'Interactive ecosystem graphic must expose navigation semantics.');
+assert.ok(/<nav\b/.test(network) || /role="navigation"/.test(network), 'Interactive ecosystem graphic must expose navigation semantics.');
 assert.match(network, /data-ecosystem-process-link=/, 'Each orbital node must expose a process-navigation contract.');
 
 assert.match(network, /href="\/images\/logo\/ctg-one-coin-icon\.png"/, 'Ecosystem core must use the approved compact CTG One mark.');

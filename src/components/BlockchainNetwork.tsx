@@ -83,9 +83,8 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
     : 'CTG One technology ecosystem navigation';
 
   return (
-    <div
+    <nav
       className={`relative flex aspect-square w-full items-center justify-center ${sizeClass}`}
-      role="navigation"
       aria-label={accessibleLabel}
       data-ecosystem-diagram
     >
@@ -374,7 +373,7 @@ export const BlockchainNetwork: React.FC<BlockchainNetworkProps> = memo(function
           />
         </g>
       </svg>
-    </div>
+    </nav>
   );
 });
 
