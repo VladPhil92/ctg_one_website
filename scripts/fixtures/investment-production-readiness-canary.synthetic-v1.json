@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0071",
-  "expectedMigrationName": "accounts_rls_permission_hoisting",
-  "expectedMigrationCount": 71,
+  "expectedMigration": "0074",
+  "expectedMigrationName": "revoke_anonymous_sensitive_rpc_execution",
+  "expectedMigrationCount": 74,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

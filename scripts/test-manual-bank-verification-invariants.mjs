@@ -5,6 +5,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const migration = await read('supabase/migrations/0037_manual_bancolombia_bank_verification.sql');
 const trustBoundary = await read('supabase/migrations/0038_payment_proof_server_trust_boundary.sql');
 const referenceNormalization = await read('supabase/migrations/0039_manual_bank_reference_normalization.sql');
+const storageBoundary = await read('supabase/migrations/0073_harden_investment_payment_proof_storage.sql');
 const checkout = await read('src/components/inversion/InvestmentCheckoutClient.tsx');
 const checkoutRepository = await read('src/modules/investment/checkout/browser-repository.ts');
 const uploadRoute = await read('src/app/api/investment/orders/[orderId]/payment-proof/route.ts');
@@ -32,6 +33,14 @@ assert.ok(trustBoundary.includes('p_participant_user_id') && trustBoundary.inclu
 assert.ok(referenceNormalization.includes("upper(regexp_replace(coalesce(p_bank_reference,''), '[^A-Za-z0-9]', '', 'g'))"), 'Finance-entered Bancolombia references must be canonicalized before storage.');
 assert.ok(referenceNormalization.includes('drop index if exists public.investment_orders_manual_bank_reference_unique') && referenceNormalization.includes('upper(regexp_replace(bank_verified_reference'), 'Bank reference uniqueness must be enforced on the same normalized representation.');
 assert.ok(referenceNormalization.includes("'reference_normalization','UPPER_ALPHANUMERIC'"), 'Audit genealogy must record the bank-reference normalization policy.');
+
+assert.ok(storageBoundary.includes("where id = 'payment-proofs'"), 'Payment-proof hardening must target the dedicated bucket.');
+assert.ok(storageBoundary.includes('public = false'), 'Payment-proof bucket must remain private.');
+assert.ok(storageBoundary.includes('file_size_limit = 8388608'), 'Storage must enforce the same 8 MB proof limit as the server route.');
+assert.ok(storageBoundary.includes("'image/jpeg'") && storageBoundary.includes("'application/pdf'"), 'Storage must allow only the reviewed proof MIME types.');
+assert.ok(storageBoundary.includes('drop policy if exists payment_proofs_storage_insert'), 'Authenticated browsers must not retain direct payment-proof INSERT access.');
+assert.ok(storageBoundary.includes("public.has_investment_permission('finance.manage')"), 'Private proof review must require finance.manage rather than generic admin status.');
+assert.ok(!storageBoundary.includes('for insert\nto authenticated'), 'Payment-proof hardening must not recreate direct authenticated INSERT access.');
 
 assert.ok(uploadRoute.includes("createHash('sha256')"), 'Payment proof digest must be computed server-side.');
 assert.ok(uploadRoute.includes("MAX_FILE_BYTES = 8 * 1024 * 1024"), 'Proof uploads must retain the 8 MB limit.');
@@ -63,6 +72,6 @@ assert.ok(paymentConfig.includes('/api/investment/payment-qr'), 'Investment paym
 assert.ok(!paymentConfig.includes('NEXT_PUBLIC_INVESTMENT_BANCOLOMBIA_QR_URL'), 'Approved QR must not depend on a mutable external runtime image URL.');
 assert.ok(paymentConfig.includes("bankName: 'Bancolombia'") && paymentConfig.includes("accountType: 'Cuenta de Ahorros'"), 'Investment QR configuration must describe the agreed Bancolombia savings rail.');
 const expectedVersion = Number(schemaVersion.match(/'(\d{4})'/)?.[1] ?? '0');
-assert.ok(expectedVersion >= 39, 'Runtime expected migration must not regress below manual Bancolombia verification 0039.');
+assert.ok(expectedVersion >= 73, 'Runtime expected migration must include KYC and payment-proof storage hardening through 0073.');
 
 console.log('Manual Bancolombia bank verification invariants: PASS');

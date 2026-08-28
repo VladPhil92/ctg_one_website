@@ -51,7 +51,12 @@ function orderStatusDescription(status: InvestmentOrderStatus): string {
 export default function InvestmentAppPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const { profile, isLoading: profileLoading } = useInvestmentProfile();
+  const {
+    profile,
+    isLoading: profileLoading,
+    error: profileError,
+    refresh: refreshProfile,
+  } = useInvestmentProfile();
   const { orders, isLoading: ordersLoading } = useInvestmentOrders();
   const { summary, isLoading: summaryLoading, refresh: refreshSummary } = useInvestmentSummary();
 
@@ -72,8 +77,9 @@ export default function InvestmentAppPage() {
   if (!isAuthenticated) return null;
 
   const activeLots = new Set(orders.filter((order) => order.status === 'ALLOCATED').map((order) => order.lot_id)).size;
-  const kycStatus = profile?.kyc_status ?? 'NOT_STARTED';
+  const kycStatus = profile?.kyc_status ?? null;
   const kycVerified = kycStatus === 'VERIFIED';
+  const identityUnavailable = !profileLoading && Boolean(profileError || !kycStatus);
 
   return (
     <div className="investment-console min-h-screen bg-[#050505] text-white overflow-hidden">
@@ -94,20 +100,34 @@ export default function InvestmentAppPage() {
             </div>
           </div>
 
-          <div className={`rounded-2xl border p-4 sm:p-5 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${kycVerified ? 'border-emerald-400/15 bg-emerald-400/[.025]' : 'border-accent/15 bg-accent/[.035]'}`}>
+          <div className={`rounded-2xl border p-4 sm:p-5 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${kycVerified ? 'border-emerald-400/15 bg-emerald-400/[.025]' : identityUnavailable ? 'border-red-400/20 bg-red-400/[.035]' : 'border-accent/15 bg-accent/[.035]'}`}>
             <div className="flex items-start gap-3">
               <div className="radar-node shrink-0"><ShieldCheck size={16} /></div>
               <div>
-                <p className="micro-label">Identidad de inversión</p>
-                <p className="text-sm text-white mt-1">KYC: {profileLoading ? 'Sincronizando…' : KYC_LABELS[kycStatus]}</p>
+                <p className="micro-label">Identidad CTG One</p>
+                <p className="text-sm text-white mt-1">
+                  KYC: {profileLoading ? 'Sincronizando…' : identityUnavailable ? 'No disponible' : KYC_LABELS[kycStatus as InvestmentKycStatus]}
+                </p>
                 <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                  {kycVerified
-                    ? 'Tu identidad de inversión está verificada para los flujos que requieren KYC.'
-                    : 'La creación y activación de una participación puede requerir completar o resolver el KYC específico de inversión.'}
+                  {identityUnavailable
+                    ? profileError ?? 'No pudimos obtener el estado de identidad. Intenta sincronizar nuevamente.'
+                    : kycVerified
+                      ? 'Tu identidad CTG One está verificada y habilita los flujos de inversión que requieren KYC.'
+                      : 'CTG Craft Beer Inversión utiliza la misma verificación de identidad de tu cuenta CTG One; no necesitas realizar un segundo KYC.'}
                 </p>
               </div>
             </div>
-            {!profileLoading && !kycVerified && <Button href="/dashboard/kyc" variant="secondary" size="sm">Revisar KYC</Button>}
+            {!profileLoading && identityUnavailable ? (
+              <button
+                type="button"
+                onClick={() => void refreshProfile()}
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/15 px-4 text-[10px] font-semibold uppercase tracking-[.12em] text-white transition hover:border-accent/40 hover:text-accent"
+              >
+                Reintentar sincronización
+              </button>
+            ) : !profileLoading && !kycVerified ? (
+              <Button href="/dashboard/kyc" variant="secondary" size="sm">Revisar KYC</Button>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">

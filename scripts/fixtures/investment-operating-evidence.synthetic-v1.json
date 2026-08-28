@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0071",
-    "schemaMigrationName": "accounts_rls_permission_hoisting",
-    "schemaMigrationCount": 71,
+    "schemaMigration": "0074",
+    "schemaMigrationName": "revoke_anonymous_sensitive_rpc_execution",
+    "schemaMigrationCount": 74,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
