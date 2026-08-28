@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Container, Badge, Card } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
@@ -150,8 +151,8 @@ export default async function LotDetailPage({ params }: { params: LotRouteParams
 
               <p className="text-[11px] text-text-dim leading-relaxed mt-6">
                 Participar no te convierte en accionista de Cervecería Cartagena S.A.S. Consulta{' '}
-                <a href="/inversion/riesgos" className="text-accent hover:underline">riesgos</a> y{' '}
-                <a href="/inversion/legal" className="text-accent hover:underline">condiciones legales</a>.
+                <Link href="/inversion/riesgos" className="text-accent hover:underline">riesgos</Link> y{' '}
+                <Link href="/inversion/legal" className="text-accent hover:underline">condiciones legales</Link>.
               </p>
             </Card>
           </div>
