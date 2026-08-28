@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
@@ -160,7 +161,7 @@ export default function RegistroPage() {
 
       <p className="mt-6 text-center text-xs text-text-dim">
         {copy.existing}{' '}
-        <a href="/iniciar-sesion" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.signIn}</a>
+        <Link href="/iniciar-sesion" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.signIn}</Link>
       </p>
     </form>
   );
