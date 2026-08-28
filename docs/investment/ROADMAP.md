@@ -18,7 +18,8 @@ back into long paragraphs here — the PR history is the detailed record;
 this file's job is to say what's left and why.
 
 Originating audit: 2026-08-22. Last updated: 2026-08-28 (post-merge
-production-readiness re-audit after PR #218).
+release-gate re-audit after PR #220; current audited `main` SHA
+`119d8053fa1170a9ec140883acc14cb807379fd1`).
 
 ## Completado
 
@@ -27,7 +28,7 @@ Everything below shipped, passed its applicable CI gate, and is merged to
 current documentation PR.
 
 - **KYC source of truth unified + production hardening** (#218) — `profiles.kyc_status` is authoritative and the investment profile is a synchronized projection; `0072_unify_investment_kyc_source_of_truth`, `0073_harden_investment_payment_proof_storage`, and `0074_revoke_anonymous_sensitive_rpc_execution` are merged. Exact `main` CI for merge commit `ee75ad52a9004dcce48a80225d46584951f3ac0a` passed the full test/audit/typecheck/build/browser E2E, clean PostgreSQL contract, and authenticated KYC journey. A read-only production audit confirmed all 74 repository migrations are applied, including 0072–0074.
-- **Lot state-machine documentation realigned** (#220) — the previous prose still described the machine as unimplemented and documented a caller-supplied `actor_id`. The current documentation now reflects the DB-enforced `transition_lot_status(uuid,text,text,uuid)` contract, `auth.uid()` attribution, stage guards, and the separate `finalize_settlement(uuid)` transition into `SETTLED`. This item is documentation-only and is complete only when #220 merges.
+- **Lot state-machine documentation realigned** (#220) — the previous prose still described the machine as unimplemented and documented a caller-supplied `actor_id`. PR #220 is merged in the current `main` history; the documentation now reflects the DB-enforced `transition_lot_status(uuid,text,text,uuid)` contract, `auth.uid()` attribution, stage guards, and the separate `finalize_settlement(uuid)` transition into `SETTLED`.
 - **Phase 21 canary evidence** (#166) — versioned, SHA-bound production-readiness artifacts; release governance unaffected.
 - **`TESTING_STRATEGY.md` rewritten** (#168) — described a pre-test-suite repo; now documents the real ~50 invariant scripts + 7 Playwright specs.
 - **`DOMAIN_MODEL.md` rewritten** (#168) — described an unimplemented "target model"; now documents the real `investment_*` domain and its RPCs.
@@ -71,7 +72,7 @@ real. Los gates actuales se siguen en el issue #219.
 ### Bloqueado por uso real del producto — la herramienta ya existe, falta el evento que capturar
 
 - **Evidencia operativa real** (Phase 19 pipeline, `npm run investment:evidence:*`): built and tested against synthetic fixtures only. The 2026-08-28 read-only production audit found 1 lot in `FUNDING_PENDING`, 2 VERIFIED investment participant profiles, and no orders, allocations, serialized bottles, sales, settlements, reinvestments/withdrawals, or ledger entries. A real reconciled closed-beta lot cycle must exist before production-redacted evidence can be captured; synthetic fixtures never qualify.
-- **Canario de producción aceptado** (Phase 18/21, `verify-investment-production-readiness.mjs`): the canary implementation has successfully exercised earlier production deployments, so it is no longer accurate to say it has never run post-deploy. For the current `main` release gate, however, an accepted successful artifact pinned to the exact deployed commit is still required. After #218, that target is `ee75ad52a9004dcce48a80225d46584951f3ac0a`; as of the 2026-08-28 re-audit, GitHub had not yet emitted the scheduled canary run for that SHA. `INVESTMENT_PRODUCTION_READINESS_CANARY` therefore correctly remains `null`.
+- **Canario de producción aceptado** (Phase 18/21, `verify-investment-production-readiness.mjs`): the canary implementation has successfully exercised earlier production deployments, so it is no longer accurate to say it has never run post-deploy. For the current `main` release gate, however, an accepted successful artifact pinned to the exact deployed commit is still required. After #220, the release-gate target is `119d8053fa1170a9ec140883acc14cb807379fd1`; as of this 2026-08-28 re-audit, no successful scheduled production canary artifact pinned to that exact SHA has been observed. `INVESTMENT_PRODUCTION_READINESS_CANARY` therefore correctly remains `null`. Any later `main` commit supersedes this SHA and must be re-pinned before acceptance.
 
 ### Requiere autorización explícita — no se ha pedido, no se ha hecho
 
