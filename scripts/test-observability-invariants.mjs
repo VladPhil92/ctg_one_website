@@ -6,6 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const logger = await read('src/lib/observability/logger.ts');
 const requestContext = await read('src/lib/observability/request-context.ts');
 const healthRoute = await read('src/app/api/health/route.ts');
+const runtimeSchema = await read('src/lib/observability/runtime-schema.ts');
 
 for (const field of [
   'deployment_provider',
@@ -49,6 +50,15 @@ assert.ok(
 assert.ok(
   !healthRoute.includes('SUPABASE_SERVICE_ROLE_KEY'),
   'Public health route must not inspect or expose the Supabase service-role secret.',
+);
+
+assert.ok(
+  runtimeSchema.includes("name.replace(/^\\d{4}_/, '')"),
+  'Runtime schema compatibility must normalize the logical NNNN_ prefix emitted by timestamp-era Supabase migrations.',
+);
+assert.ok(
+  runtimeSchema.includes('observedLatestMigrationName === EXPECTED_DATABASE_MIGRATION_NAME'),
+  'Runtime schema compatibility must compare the normalized migration name against the release expectation.',
 );
 
 console.log('Observability invariants: PASS');
