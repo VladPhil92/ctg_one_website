@@ -13,7 +13,7 @@ manual registry of that list.
 ```bash
 npm test                          # ~50 Node invariant scripts (no framework — plain assertions)
 npm run audit:critical            # production dependency audit, high severity threshold
-npm run lint                      # pinned Oxlint; JS/TS/TSX + React/JSX-a11y/Next.js, warnings fail CI
+npm run lint                      # pinned Oxlint; JS/TS/TSX + React/JSX-a11y/Next.js; errors fail CI
 npx tsc --noEmit                  # TypeScript
 npm run build                     # Next.js production build + prerender
 npx playwright test --project=chromium   # browser E2E, tests/e2e/*.spec.mjs
@@ -26,10 +26,14 @@ against it (`scripts/test-golden-path-contract.mjs`,
 the schema and RPCs are reconstructible, not just that today's database
 happens to work.
 
-`npm run lint` is a separate fail-closed quality gate. It runs pinned Oxlint
-against `src`, `scripts`, and `tests`, enables the React, JSX accessibility
-and Next.js rule plugins, and treats warnings as CI failures. It complements
-rather than replaces TypeScript, build validation or browser E2E.
+`npm run lint` is a separate repository-wide quality gate. It runs pinned
+Oxlint against `src`, `scripts`, and `tests`, enables the React, JSX
+accessibility and Next.js rule plugins, and fails CI on lint errors. Warnings
+remain visible in CI output and are tracked as explicit technical debt rather
+than hidden with ignore patterns or mass-suppressed. This lets the repository
+adopt linting without turning pre-existing warnings across unrelated products
+into an unsafe cross-cutting refactor. It complements rather than replaces
+TypeScript, build validation or browser E2E.
 
 ## What the invariant scripts actually cover
 
@@ -96,7 +100,8 @@ Investment-specific browser journey.
 
 Before merging: the full `npm test` + dependency audit + lint + typecheck +
 build + Playwright gate above must be green — CI enforces this on every PR
-against `main` (`.github/workflows/ci.yml`), not just a manual pass. "The
+against `main` (`.github/workflows/ci.yml`), not just a manual pass. Lint
+warnings are review-visible debt; lint errors are merge-blocking. "The
 investment app works but the homepage broke" is never an acceptable outcome;
 the E2E specs above cover the existing protected/public routes precisely so
 that stays true automatically rather than by memory.
