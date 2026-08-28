@@ -9,6 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "lint": "npx --yes oxlint@1.80.0 --deny-warnings --react-plugin --jsx-a11y-plugin --nextjs-plugin src scripts tests",
     "events:materialize": "node scripts/materialize-domain-events.mjs",
     "knowledge:evaluate": "node scripts/evaluate-knowledge-run.mjs",
     "knowledge:evaluation:prepare-corpus": "node scripts/prepare-knowledge-evaluation-corpus.mjs",
