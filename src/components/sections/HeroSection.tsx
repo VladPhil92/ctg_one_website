@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
-import { Beer, Building2, CalendarDays, Layers3, MapPin } from 'lucide-react';
+import { Building2, CalendarDays, Layers3, MapPin } from 'lucide-react';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Button } from '@/components/ui/Button';
@@ -10,7 +9,6 @@ import { BlockchainNetwork } from '@/components/BlockchainNetwork';
 import { HERO } from '@/data/content';
 import { getCapabilityProof, getPublicProofStatus } from '@/data/technology-proof';
 import { useLanguage } from '@/contexts/LanguageContext';
-import nvetHomeBannerSrc from '@/data/nvet-home-banner';
 import styles from '@/styles/CommandCenter.module.css';
 
 const METRIC_ICONS = {
@@ -35,9 +33,6 @@ export const HeroSection: React.FC = () => {
     ? 'Creamos software y soluciones digitales para nuestros propios negocios, productos y plataformas. Desde cerveza artesanal hasta salud, educación y servicios, usamos tecnología para conectar operaciones y construir mejores experiencias.'
     : 'We build software and digital products for our own businesses, products and platforms. From craft beer to health, education and services, we use technology to connect operations and create better experiences.';
 
-  const productLabel = es ? 'Productos reales' : 'Real products';
-  const craftLabel = es ? 'Cerveza artesanal' : 'Craft beer';
-
   return (
     <section
       id="home"
@@ -53,8 +48,8 @@ export const HeroSection: React.FC = () => {
       </div>
 
       <Container size="large" className="relative z-10">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 xl:gap-16">
-          <div className="max-w-2xl">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8 xl:grid-cols-[0.84fr_1.16fr] xl:gap-12 2xl:gap-16">
+          <div className="order-1 max-w-2xl">
             <FadeInSection delay={0.02}>
               <div className={`${styles.eyebrow} mb-6 max-w-full`}>
                 <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
@@ -99,51 +94,28 @@ export const HeroSection: React.FC = () => {
             </FadeInSection>
           </div>
 
-          <FadeInSection delay={0.1} direction="right">
-            <div className="relative mx-auto w-full max-w-[720px]">
-              <div className="mb-4 flex items-center justify-between px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-text-dim">
-                <span>{productLabel}</span>
-                <span className="text-[#d6ae56]">CTG ONE</span>
+          <div className="order-2 flex min-w-0 justify-center lg:justify-end">
+            <FadeInSection delay={0.1} direction="right" className="flex w-full justify-center lg:justify-end">
+              <div className="w-full max-w-[720px]">
+                <div className="mb-1 flex items-center justify-between px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-text-dim">
+                  <span>{es ? 'Arquitectura del ecosistema' : 'Ecosystem architecture'}</span>
+                  <span className="text-[#d6ae56]">CTG ONE CORE</span>
+                </div>
+                <div className={`${styles.networkField} w-full max-w-[680px] xl:max-w-[760px]`}>
+                  <BlockchainNetwork size="lg" interactive />
+                </div>
+                <p className="mx-auto -mt-2 max-w-[560px] text-center text-[11px] leading-relaxed text-text-dim sm:text-xs">
+                  {es
+                    ? 'Selecciona un nodo para abrir la categoría correspondiente y explorar su proceso dentro del ecosistema.'
+                    : 'Select a node to open its category and explore the corresponding process in the ecosystem.'}
+                </p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <a href="/craft-beer" className="group relative min-h-[420px] overflow-hidden rounded-[28px] border border-[#d6ae56]/20 bg-[#090805] shadow-[0_30px_80px_rgba(0,0,0,.35)]">
-                  <Image src="/images/inversion/ctg-craft-beer-hefeweizen.webp" alt={es ? 'Botella Hefeweizen de CTG Craft Beer' : 'CTG Craft Beer Hefeweizen bottle'} fill unoptimized sizes="(min-width: 640px) 320px, 90vw" className="object-cover object-center transition-transform duration-700 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-6">
-                    <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#f1c75b]/25 bg-black/40 text-[#f1c75b]"><Beer size={18} /></div>
-                    <div className="text-[10px] uppercase tracking-[0.15em] text-[#f1c75b]">{craftLabel}</div>
-                    <div className="mt-1 text-xl font-semibold text-white">CTG Craft Beer</div>
-                  </div>
-                </a>
-
-                <a href="/nvetcareapp" className="group relative aspect-[3/2] min-h-0 overflow-hidden rounded-[28px] border border-[#34B27A]/20 bg-[#061a2a] shadow-[0_30px_80px_rgba(0,0,0,.28)] sm:aspect-auto sm:min-h-[420px]">
-                  <Image
-                    src={es ? nvetHomeBannerSrc : '/images/nvetcareapp/vet-tracking-mockup-en.png'}
-                    alt={es ? 'Concepto de la aplicación Nvet Care en campaña: cuidamos hoy para un mañana mejor juntos' : 'Nvet Care app concept showing veterinary visit tracking'}
-                    fill
-                    unoptimized
-                    sizes="(min-width: 640px) 320px, 90vw"
-                    className="object-contain"
-                  />
-                </a>
-              </div>
-            </div>
-          </FadeInSection>
+            </FadeInSection>
+          </div>
         </div>
 
-        <FadeInSection delay={0.22} className="mt-16 lg:mt-20">
-          <div className="mx-auto flex max-w-[720px] flex-col items-center text-center">
-            <span className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-text-dim">
-              {es ? 'Ecosistema CTG One' : 'CTG One ecosystem'}
-            </span>
-            <div className={`${styles.networkField} w-full max-w-[560px]`}>
-              <BlockchainNetwork size="lg" interactive />
-            </div>
-          </div>
-        </FadeInSection>
-
         <FadeInSection delay={0.24}>
-          <div className={`${styles.commandPanel} mt-8 lg:mt-10`}>
+          <div className={`${styles.commandPanel} mt-10 lg:mt-6 xl:mt-8`}>
             <div className="grid grid-cols-2 lg:grid-cols-4">
               {HERO.metrics.map((metric, index) => {
                 const Icon = METRIC_ICONS[metric.icon as keyof typeof METRIC_ICONS] ?? Layers3;
