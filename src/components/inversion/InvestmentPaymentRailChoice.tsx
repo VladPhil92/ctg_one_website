@@ -25,7 +25,7 @@ export function InvestmentPaymentRailChoice({
   if (!INVESTMENT_CRYPTO_CONFIGURED) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-2 mb-5" role="group" aria-label="Medio de pago">
+    <fieldset className="m-0 grid min-w-0 grid-cols-2 gap-2 mb-5 p-0" aria-label="Medio de pago">
       <RailButton
         active={rail === 'bank_transfer'}
         disabled={disabled}
@@ -40,7 +40,7 @@ export function InvestmentPaymentRailChoice({
         icon={<Coins size={14} />}
         label="Cripto"
       />
-    </div>
+    </fieldset>
   );
 }
 
