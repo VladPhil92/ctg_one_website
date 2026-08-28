@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
@@ -57,7 +58,7 @@ export default async function VeterinariansPage({
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <a href="/nvetcareapp/dashboard" className="mb-2 inline-block text-xs text-[#5B6670] hover:text-[#0D1B2A]">← Panel</a>
+            <Link href="/nvetcareapp/dashboard" className="mb-2 inline-block text-xs text-[#5B6670] hover:text-[#0D1B2A]">← Panel</Link>
             <h1 className="text-xl font-semibold text-[#0D1B2A]" style={poppinsFont}>Veterinarios</h1>
             <p className="text-sm text-[#5B6670]">Niveles y comisiones por veterinario.</p>
           </div>
@@ -110,20 +111,20 @@ export default async function VeterinariansPage({
             </span>
             <div className="flex gap-3">
               {offset > 0 && (
-                <a
+                <Link
                   href={`/nvetcareapp/dashboard/veterinarios?offset=${Math.max(0, offset - vetsResult.page.limit)}`}
                   className="font-semibold uppercase tracking-[0.08em] text-[#34B27A] hover:text-[#289463]"
                 >
                   ← Anteriores
-                </a>
+                </Link>
               )}
               {vetsResult.page.hasMore && (
-                <a
+                <Link
                   href={`/nvetcareapp/dashboard/veterinarios?offset=${offset + vetsResult.page.limit}`}
                   className="font-semibold uppercase tracking-[0.08em] text-[#34B27A] hover:text-[#289463]"
                 >
                   Siguientes →
-                </a>
+                </Link>
               )}
             </div>
           </div>
