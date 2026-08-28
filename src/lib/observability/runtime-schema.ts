@@ -21,6 +21,16 @@ export type RuntimeSchemaCompatibility = {
   observedLatestMigrationName: string | null;
 };
 
+function normalizeRuntimeMigrationName(name: string | null): string | null {
+  if (!name) return null;
+
+  // Legacy NNNN_name.sql migrations are recorded remotely as `name`, while
+  // timestamp-era YYYYMMDDHHMMSS_NNNN_name.sql migrations are recorded by
+  // Supabase as `NNNN_name`. Runtime compatibility is intentionally based on
+  // the logical migration identity, not on the filename/version convention.
+  return name.replace(/^\d{4}_/, '');
+}
+
 export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCompatibility> {
   const configured = Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -54,7 +64,7 @@ export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCo
 
     const row = ((Array.isArray(data) ? data[0] : data) ?? null) as RuntimeSchemaCompatibilityRow | null;
     const observedMigrationCount = row?.migration_count == null ? null : Number(row.migration_count);
-    const observedLatestMigrationName = row?.latest_name ?? null;
+    const observedLatestMigrationName = normalizeRuntimeMigrationName(row?.latest_name ?? null);
 
     return {
       compatible: Boolean(
