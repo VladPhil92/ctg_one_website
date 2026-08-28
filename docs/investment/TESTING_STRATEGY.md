@@ -12,9 +12,10 @@ manual registry of that list.
 
 ```bash
 npm test                          # ~50 Node invariant scripts (no framework — plain assertions)
+npm run audit:critical            # production dependency audit, high severity threshold
+npm run lint                      # pinned Oxlint; JS/TS/TSX + React/JSX-a11y/Next.js, warnings fail CI
 npx tsc --noEmit                  # TypeScript
 npm run build                     # Next.js production build + prerender
-npm run audit:critical            # npm audit --omit=dev --audit-level=high
 npx playwright test --project=chromium   # browser E2E, tests/e2e/*.spec.mjs
 ```
 
@@ -24,6 +25,11 @@ against it (`scripts/test-golden-path-contract.mjs`,
 `scripts/investment-operational-golden-journey.sql`) — this is what proves
 the schema and RPCs are reconstructible, not just that today's database
 happens to work.
+
+`npm run lint` is a separate fail-closed quality gate. It runs pinned Oxlint
+against `src`, `scripts`, and `tests`, enables the React, JSX accessibility
+and Next.js rule plugins, and treats warnings as CI failures. It complements
+rather than replaces TypeScript, build validation or browser E2E.
 
 ## What the invariant scripts actually cover
 
@@ -88,12 +94,12 @@ Investment-specific browser journey.
 
 ## Zero-regression requirement for every PR touching this initiative
 
-Before merging: the full `npm test` + typecheck + build + Playwright gate
-above must be green — CI enforces this on every PR against `main`
-(`.github/workflows/ci.yml`), not just a manual pass. "The investment app
-works but the homepage broke" is never an acceptable outcome; the E2E specs
-above cover the existing protected/public routes precisely so that stays
-true automatically rather than by memory.
+Before merging: the full `npm test` + dependency audit + lint + typecheck +
+build + Playwright gate above must be green — CI enforces this on every PR
+against `main` (`.github/workflows/ci.yml`), not just a manual pass. "The
+investment app works but the homepage broke" is never an acceptable outcome;
+the E2E specs above cover the existing protected/public routes precisely so
+that stays true automatically rather than by memory.
 
 ## Adding tests for new investment work
 
