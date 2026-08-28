@@ -8,7 +8,7 @@ import { Container } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ArrowUpRight, Beaker, Bot, Braces, DatabaseZap, FlaskConical, GitBranch, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, Bot, Braces, DatabaseZap, FlaskConical, GitBranch, ShieldCheck } from 'lucide-react';
 
 const tracks = [
   { icon: Bot, title: 'AI Systems', status: 'IN DEVELOPMENT', es: 'Agentes delimitados, RAG, evaluación, human-in-the-loop y automatización asistida.', en: 'Bounded agents, RAG, evaluation, human-in-the-loop, and assisted automation.' },
