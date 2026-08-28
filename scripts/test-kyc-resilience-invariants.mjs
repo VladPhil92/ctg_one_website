@@ -10,8 +10,8 @@ const [
   investmentProfileHook,
 ] = await Promise.all([
   readFile('supabase/migrations/0064_kyc_transactional_resilience.sql', 'utf8'),
-  readFile('supabase/migrations/0072_unify_investment_kyc_source_of_truth.sql', 'utf8'),
-  readFile('supabase/migrations/0074_revoke_anonymous_sensitive_rpc_execution.sql', 'utf8'),
+  readFile('supabase/migrations/20260828110921_0072_unify_investment_kyc_source_of_truth.sql', 'utf8'),
+  readFile('supabase/migrations/20260828112817_0074_revoke_anonymous_sensitive_rpc_execution.sql', 'utf8'),
   readFile('src/app/dashboard/kyc/page.tsx', 'utf8'),
   readFile('src/app/admin/kyc/page.tsx', 'utf8'),
   readFile('src/app/inversion/app/page.tsx', 'utf8'),

@@ -19,10 +19,11 @@ Describe the change and the user/business impact.
 
 If this PR adds a migration:
 
-- [ ] Filename follows `NNNN_snake_case.sql`
-- [ ] Version is contiguous with the previous migration
-- [ ] `EXPECTED_DATABASE_MIGRATION` matches the new latest migration
-- [ ] Existing applied migration files were not edited or renumbered
+- [ ] New migration filename follows `YYYYMMDDHHMMSS_NNNN_snake_case.sql` (legacy `0001`–`0071` filenames remain grandfathered)
+- [ ] Logical `NNNN` version is contiguous with the previous migration
+- [ ] Timestamp version is unique and later than the previous timestamped migration
+- [ ] `EXPECTED_DATABASE_MIGRATION` matches the latest logical `NNNN` migration
+- [ ] Existing applied migration SQL content was not edited; any history-only rename is backed by explicit remote migration-history evidence
 - [ ] Post-deploy System Health must report Git ↔ Supabase migration alignment as healthy
 
 ## Deployment verification

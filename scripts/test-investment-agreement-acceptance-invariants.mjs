@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const [migration, rpcExposureMigration, checkoutRepository, checkout, schemaVersion] = await Promise.all([
   readFile('supabase/migrations/0068_investment_agreement_acceptance.sql', 'utf8'),
-  readFile('supabase/migrations/0074_revoke_anonymous_sensitive_rpc_execution.sql', 'utf8'),
+  readFile('supabase/migrations/20260828112817_0074_revoke_anonymous_sensitive_rpc_execution.sql', 'utf8'),
   readFile('src/modules/investment/checkout/browser-repository.ts', 'utf8'),
   readFile('src/components/inversion/InvestmentCheckoutClient.tsx', 'utf8'),
   readFile('src/lib/observability/schema-version.ts', 'utf8'),
