@@ -64,30 +64,63 @@ test.describe('CTG One public command-center design system', () => {
     }
   });
 
-  test('home exposes real Craft Beer and Nvet Care product visuals with source fidelity', async ({ page }) => {
+  test('home exposes the interactive ecosystem hero and keeps real Craft Beer and Nvet Care media in the product showcases', async ({ page }) => {
     await preferSpanish(page);
     const response = await page.goto('/');
     expect(response?.status()).toBeLessThan(400);
 
-    const beerLink = page.locator('section#home a[href="/craft-beer"]');
-    const nvetLink = page.locator('section#home a[href="/nvetcareapp"]');
+    const ecosystem = page.locator('section#home [data-ecosystem-diagram]');
+    await expect(ecosystem).toBeVisible();
+    await expect(ecosystem.getByRole('link')).toHaveCount(8);
+    await expect(ecosystem.getByRole('link', { name: 'Abrir proceso de Cerveza' })).toHaveAttribute('href', '/ecosystem/process/beer');
+
+    const beerLink = page.getByRole('link', { name: 'Conocer CTG Craft Beer' });
+    const nvetLink = page.getByRole('link', { name: 'Conocer Nvet Care' });
     await expect(beerLink).toBeVisible();
     await expect(nvetLink).toBeVisible();
 
-    const beerPhoto = beerLink.getByRole('img', { name: 'Botella Hefeweizen de CTG Craft Beer' });
-    const nvetMockup = nvetLink.getByRole('img', { name: /Concepto de la aplicación Nvet Care/i });
-    await expect(beerPhoto).toBeVisible();
+    const irishRedPhoto = page.getByRole('img', { name: 'Botella Irish Red Ale de CTG Craft Beer' });
+    const porterPhoto = page.getByRole('img', { name: 'Botella Porter de CTG Craft Beer' });
+    const nvetMockup = page.getByRole('img', { name: /Campaña de Nvet Care/i });
+    await expect(irishRedPhoto).toBeVisible();
+    await expect(porterPhoto).toBeVisible();
     await expect(nvetMockup).toBeVisible();
 
-    const photoState = await beerPhoto.evaluate((node) => ({
+    await irishRedPhoto.scrollIntoViewIfNeeded();
+    await porterPhoto.scrollIntoViewIfNeeded();
+    await nvetMockup.scrollIntoViewIfNeeded();
+    await expect.poll(() => irishRedPhoto.evaluate((node) => node.complete && node.naturalWidth > 0)).toBe(true);
+    await expect.poll(() => porterPhoto.evaluate((node) => node.complete && node.naturalWidth > 0)).toBe(true);
+    await expect.poll(() => nvetMockup.evaluate((node) => node.complete && node.naturalWidth > 0)).toBe(true);
+
+    const irishState = await irishRedPhoto.evaluate((node) => ({
       naturalWidth: node.naturalWidth,
       naturalHeight: node.naturalHeight,
       src: node.currentSrc,
     }));
-    expect(photoState.naturalWidth).toBe(320);
-    expect(photoState.naturalHeight).toBe(480);
-    expect(photoState.src).toContain('/images/inversion/ctg-craft-beer-hefeweizen.webp');
-    expect(photoState.src).not.toContain('/_next/image');
+    expect(irishState.naturalWidth).toBeGreaterThan(0);
+    expect(irishState.naturalHeight).toBeGreaterThan(0);
+    expect(irishState.src).toContain('/images/inversion/ctg-craft-beer-irish-red-ale.webp');
+    expect(irishState.src).not.toContain('/_next/image');
+
+    const porterState = await porterPhoto.evaluate((node) => ({
+      naturalWidth: node.naturalWidth,
+      naturalHeight: node.naturalHeight,
+      src: node.currentSrc,
+    }));
+    expect(porterState.naturalWidth).toBeGreaterThan(0);
+    expect(porterState.naturalHeight).toBeGreaterThan(0);
+    expect(porterState.src).toContain('/images/inversion/ctg-craft-beer-porter.webp');
+    expect(porterState.src).not.toContain('/_next/image');
+
+    const nvetState = await nvetMockup.evaluate((node) => ({
+      naturalWidth: node.naturalWidth,
+      naturalHeight: node.naturalHeight,
+      src: node.currentSrc,
+    }));
+    expect(nvetState.naturalWidth).toBeGreaterThan(0);
+    expect(nvetState.naturalHeight).toBeGreaterThan(0);
+    expect(nvetState.src).toContain('data:image/webp;base64,');
 
     await expect(page.getByText('Cerveza artesanal. Producción real.', { exact: true })).toBeVisible();
     await expect(page.getByText('Nvet Care · En desarrollo', { exact: true })).toBeVisible();

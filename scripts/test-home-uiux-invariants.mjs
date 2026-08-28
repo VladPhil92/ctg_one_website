@@ -120,13 +120,15 @@ assert.ok((layout.match(/preload:\s*true/g) ?? []).length >= 2, 'Both primary fo
 assert.match(layout, /style=\{\{ backgroundColor: '#050505'/, 'Root document must paint the dark canvas before hydration.');
 assert.doesNotMatch(layout, /fonts\.googleapis\.com|fonts\.gstatic\.com/, 'Root layout must not add a second external font delivery path.');
 
-// UX-04 — mobile hero is content-first and product visuals remain responsive.
+// UX-04 — mobile hero is content-first; the interactive ecosystem architecture is the primary visual.
 assert.match(hero, /href="\/products"/, 'Hero must lead consumers to public products.');
 assert.match(hero, /href="\/ecosystem"/, 'Hero must retain a direct path to real businesses.');
-assert.match(hero, /href="\/craft-beer"/, 'Hero product composition must expose Craft Beer.');
-assert.match(hero, /href="\/nvetcareapp"/, 'Hero product composition must expose Nvet Care.');
+assert.match(hero, /<BlockchainNetwork size="lg" interactive\s*\/>/, 'Hero must expose the interactive CTG ecosystem network as its primary visual.');
+assert.match(hero, /Arquitectura del ecosistema/, 'Hero must explain the ecosystem architecture in Spanish.');
+assert.doesNotMatch(hero, /href="\/craft-beer"/, 'Hero must not duplicate the Craft Beer product card already present in the product showcase.');
+assert.doesNotMatch(hero, /href="\/nvetcareapp"/, 'Hero must not duplicate the Nvet Care product card already present in the product showcase.');
 assert.doesNotMatch(hero, /scale-\[/, 'Hero must not create mobile whitespace by transform-scaling a fixed-size composition.');
-assert.match(network, /aspect-square w-full/, 'Ecosystem diagram must retain its responsive intrinsic layout for its dedicated surfaces.');
+assert.match(network, /aspect-square w-full/, 'Ecosystem diagram must retain its responsive intrinsic layout in the hero and dedicated surfaces.');
 
 // A11Y-06 — footer landmark hierarchy.
 assert.match(footer, /<h2 className="sr-only">/, 'Footer region must have an explicit H2 landmark heading.');

@@ -147,16 +147,16 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     await expect(page.locator('animateTransform')).toHaveCount(0);
   });
 
-  test('390px mobile layout puts the message before product visuals and keeps touch targets at 44px', async ({ page }) => {
+  test('390px mobile layout puts the message before the ecosystem visual and keeps touch targets at 44px', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await preferSpanish(page);
     await page.goto('/');
 
     const headingBox = await page.getByRole('heading', { level: 1 }).boundingBox();
-    const productVisualBox = await page.locator('section#home a[href="/craft-beer"]').boundingBox();
+    const ecosystemVisualBox = await page.locator('section#home [data-ecosystem-diagram]').boundingBox();
     expect(headingBox).not.toBeNull();
-    expect(productVisualBox).not.toBeNull();
-    expect(headingBox.y).toBeLessThan(productVisualBox.y);
+    expect(ecosystemVisualBox).not.toBeNull();
+    expect(headingBox.y).toBeLessThan(ecosystemVisualBox.y);
 
     const menuButton = page.getByRole('button', { name: 'Abrir menú' });
     const menuButtonBox = await menuButton.boundingBox();
@@ -184,7 +184,7 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     expect(undersizedTargets).toEqual([]);
   });
 
-  test('product-first home remains discoverable and overflow-safe across target breakpoints', async ({ page }) => {
+  test('ecosystem-first home and product showcases remain discoverable and overflow-safe across target breakpoints', async ({ page }) => {
     await preferSpanish(page);
 
     for (const viewport of RESPONSIVE_VIEWPORTS) {
@@ -192,8 +192,9 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
       await page.goto('/');
 
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      await expect(page.locator('section#home a[href="/craft-beer"]')).toBeVisible();
-      await expect(page.locator('section#home a[href="/nvetcareapp"]')).toBeVisible();
+      await expect(page.locator('section#home [data-ecosystem-diagram]')).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Conocer CTG Craft Beer' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Conocer Nvet Care' })).toBeVisible();
 
       const layout = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,

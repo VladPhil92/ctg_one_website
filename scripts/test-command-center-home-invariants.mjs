@@ -69,7 +69,7 @@ for (const source of [navbar, footer, brandLogo]) {
   assert.doesNotMatch(source, /CTGLOGO\.jpeg/, 'Legacy cropped JPEG logo must never be rendered by the CTG One brand lockup.');
 }
 
-// Product-first hero: consumer meaning leads, canonical proof remains attached.
+// Consumer proposition leads; the ecosystem network is the primary visual and canonical proof remains attached.
 for (const capability of ['identity-auth', 'data-security', 'ai-layer']) {
   assert.ok(hero.includes(`getCapabilityProof('${capability}')`), `Hero must keep canonical proof status attached for ${capability}.`);
 }
@@ -77,16 +77,20 @@ assert.match(hero, /getPublicProofStatus/, 'Hero must derive maturity values fro
 assert.match(hero, /Container size="large"/, 'Homepage hero must use the wide command-center container.');
 assert.match(hero, /Tecnología creada para/, 'Hero must state the consumer-facing technology proposition in Spanish.');
 assert.match(hero, /negocios reales\./, 'Hero must connect technology to real businesses.');
-assert.match(hero, /href="\/craft-beer"/, 'Hero must surface CTG Craft Beer directly.');
-assert.match(hero, /href="\/nvetcareapp"/, 'Hero must surface Nvet Care directly.');
+assert.match(hero, /<BlockchainNetwork size="lg" interactive\s*\/>/, 'Hero must render the interactive ecosystem network in its primary visual column.');
+assert.match(hero, /CTG ONE CORE/, 'Hero network must identify the central CTG One core.');
+assert.doesNotMatch(hero, /href="\/craft-beer"/, 'Craft Beer product media belongs to the dedicated product showcase, not the ecosystem hero visual.');
+assert.doesNotMatch(hero, /href="\/nvetcareapp"/, 'Nvet Care product media belongs to the dedicated product showcase, not the ecosystem hero visual.');
 assert.doesNotMatch(hero, /Cuentas seguras|Actualización y despliegue|IA aplicada/, 'Technical capability labels must not dominate the consumer hero.');
 
+assert.match(productShowcases, /href="\/craft-beer"/, 'Craft Beer must remain directly accessible from the dedicated product showcase.');
 assert.match(productShowcases, /Cerveza artesanal\. Producción real\./, 'Craft Beer showcase must lead with the physical product and production reality.');
 assert.match(productShowcases, /href="\/inversion"/, 'Craft Beer showcase must keep investment as a separate user journey.');
+assert.match(productShowcases, /href="\/nvetcareapp"/, 'Nvet Care must remain directly accessible from the dedicated product showcase.');
 assert.match(productShowcases, /Nvet Care · En desarrollo/, 'Nvet Care showcase must state its real development status.');
 
 for (const phrase of ['Core online', 'LIVE PRODUCT / CASE-001', 'Physical production layer']) {
   assert.ok(translations.includes(phrase), `Command-center microcopy must remain registered for legacy/deeper surfaces: ${phrase}`);
 }
 
-console.log('Homepage command-center and product-first design invariants: PASS');
+console.log('Homepage command-center and ecosystem-first design invariants: PASS');
