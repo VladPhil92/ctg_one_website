@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Suspense, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
@@ -111,9 +112,9 @@ function IniciarSesionForm() {
       <p className="mb-8 text-sm text-text-muted">{copy.subtitle}</p>
 
       {resetComplete && (
-        <p role="status" className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--success)' }}>
+        <output className="mb-4 block text-sm leading-relaxed" style={{ color: 'var(--success)' }}>
           {copy.resetComplete}
-        </p>
+        </output>
       )}
 
       <AuthInput label={copy.email} type="email" value={email} onChange={setEmail} autoComplete="email" inputMode="email" required />
@@ -127,7 +128,7 @@ function IniciarSesionForm() {
       />
 
       <div className="-mt-2 mb-5 text-right">
-        <a href="/recuperar-contrasena" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline">{copy.forgot}</a>
+        <Link href="/recuperar-contrasena" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline">{copy.forgot}</Link>
       </div>
 
       {error && (
@@ -140,7 +141,7 @@ function IniciarSesionForm() {
 
       <p className="mt-6 text-center text-xs text-text-dim">
         {copy.noAccount}{' '}
-        <a href="/registro" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.create}</a>
+        <Link href="/registro" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.create}</Link>
       </p>
     </form>
   );

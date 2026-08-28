@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
@@ -131,10 +132,10 @@ export default function RestablecerContrasenaPage() {
       <Button type="submit" loading={isSubmitting} disabled={!ready} variant="primary" size="md" fullWidth>
         {copy.submit}
       </Button>
-      {!ready && !error && <p role="status" className="mt-4 text-center text-xs text-text-dim">{copy.validating}</p>}
+      {!ready && !error && <output className="mt-4 block text-center text-xs text-text-dim">{copy.validating}</output>}
       {!ready && error && (
         <p className="mt-4 text-center text-xs text-text-dim">
-          <a href="/recuperar-contrasena" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.newLink}</a>
+          <Link href="/recuperar-contrasena" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.newLink}</Link>
         </p>
       )}
     </form>
