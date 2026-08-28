@@ -25,7 +25,7 @@ function fakeResponse(status) {
 // request once and returns the retry's response.
 {
   const calls = [];
-  globalThis.fetch = async (input, init) => {
+  globalThis.fetch = async (input, _init) => {
     calls.push(input);
     if (input === '/api/nvetcareapp/auth/refresh') return fakeResponse(200);
     return calls.filter((c) => c === input).length === 1 ? fakeResponse(401) : fakeResponse(200);
