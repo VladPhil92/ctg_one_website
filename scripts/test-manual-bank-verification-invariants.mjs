@@ -5,7 +5,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const migration = await read('supabase/migrations/0037_manual_bancolombia_bank_verification.sql');
 const trustBoundary = await read('supabase/migrations/0038_payment_proof_server_trust_boundary.sql');
 const referenceNormalization = await read('supabase/migrations/0039_manual_bank_reference_normalization.sql');
-const storageBoundary = await read('supabase/migrations/0073_harden_investment_payment_proof_storage.sql');
+const storageBoundary = await read('supabase/migrations/20260828112310_0073_harden_investment_payment_proof_storage.sql');
 const checkout = await read('src/components/inversion/InvestmentCheckoutClient.tsx');
 const checkoutRepository = await read('src/modules/investment/checkout/browser-repository.ts');
 const uploadRoute = await read('src/app/api/investment/orders/[orderId]/payment-proof/route.ts');
