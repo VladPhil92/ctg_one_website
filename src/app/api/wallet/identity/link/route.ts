@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { consumeAuthenticatedRateLimit } from '@/lib/security/api-rate-limit';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
 import {
   PrivyIdentityTokenError,
@@ -18,6 +17,12 @@ type LegacyMigrationEvidence = {
   provider_user_id: string;
   expected_address_normalized: string;
   status: 'pending' | 'consumed' | 'rejected';
+};
+
+type RateLimitRow = {
+  allowed: boolean;
+  remaining: number;
+  retry_after_seconds: number;
 };
 
 function noStoreJson(body: unknown, init: ResponseInit = {}) {
@@ -67,19 +72,26 @@ export async function POST(request: Request) {
     return noStoreJson({ error: 'UNAUTHENTICATED' }, { status: 401 });
   }
 
-  let decision;
-  try {
-    decision = await consumeAuthenticatedRateLimit(supabase, 'wallet.identity-link');
-  } catch {
+  const serviceRole = createAdminClient();
+  const { data: rateData, error: rateError } = await serviceRole.rpc(
+    'consume_wallet_identity_link_rate_limit',
+    { p_user_id: user.id },
+  );
+  if (rateError) {
     return noStoreJson({ error: 'RATE_LIMIT_UNAVAILABLE' }, { status: 503 });
   }
 
-  if (!decision.allowed) {
+  const rateRow = (Array.isArray(rateData) ? rateData[0] : rateData) as RateLimitRow | null;
+  if (!rateRow) {
+    return noStoreJson({ error: 'RATE_LIMIT_UNAVAILABLE' }, { status: 503 });
+  }
+  if (rateRow.allowed !== true) {
+    const retryAfterSeconds = Math.max(1, Number(rateRow.retry_after_seconds ?? 1));
     return noStoreJson(
-      { error: 'RATE_LIMITED', retryAfterSeconds: decision.retryAfterSeconds },
+      { error: 'RATE_LIMITED', retryAfterSeconds },
       {
         status: 429,
-        headers: { 'Retry-After': String(decision.retryAfterSeconds) },
+        headers: { 'Retry-After': String(retryAfterSeconds) },
       },
     );
   }
@@ -100,11 +112,8 @@ export async function POST(request: Request) {
     return noStoreJson({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
-  let serviceRole: ReturnType<typeof createAdminClient> | null = null;
   let legacyEvidence: LegacyMigrationEvidence | null = null;
-
   if (body.linkMode === 'legacy_preserve') {
-    serviceRole = createAdminClient();
     const { data, error } = await serviceRole
       .from('wallet_legacy_migration_evidence')
       .select('provider_user_id,expected_address_normalized,status')
@@ -141,7 +150,6 @@ export async function POST(request: Request) {
     return noStoreJson({ error: 'LEGACY_PROVIDER_IDENTITY_MISMATCH' }, { status: 409 });
   }
 
-  serviceRole ??= createAdminClient();
   const { data, error } = await serviceRole.rpc('link_verified_wallet_identity', {
     p_user_id: user.id,
     p_provider_user_id: verifiedIdentity.privyUserId,
