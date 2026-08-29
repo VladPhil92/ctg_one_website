@@ -50,7 +50,7 @@ do $$
 begin
   if has_function_privilege(
     'authenticated',
-    'public.link_verified_wallet_identity(uuid,text,text,text,text)',
+    'public.link_verified_wallet_identity(uuid,text,text,text)',
     'EXECUTE'
   ) then
     raise exception 'authenticated browser role must not execute link_verified_wallet_identity';
@@ -58,7 +58,7 @@ begin
 
   if not has_function_privilege(
     'service_role',
-    'public.link_verified_wallet_identity(uuid,text,text,text,text)',
+    'public.link_verified_wallet_identity(uuid,text,text,text)',
     'EXECUTE'
   ) then
     raise exception 'service_role must execute link_verified_wallet_identity';
@@ -69,6 +69,13 @@ begin
      or has_table_privilege('authenticated', 'public.wallet_external_accounts', 'INSERT')
      or has_table_privilege('authenticated', 'public.wallet_external_accounts', 'UPDATE') then
     raise exception 'authenticated role gained a direct wallet identity mutation privilege';
+  end if;
+
+  if has_table_privilege('authenticated', 'public.wallet_legacy_migration_evidence', 'SELECT')
+     or has_table_privilege('authenticated', 'public.wallet_legacy_migration_evidence', 'INSERT')
+     or has_table_privilege('authenticated', 'public.wallet_legacy_migration_evidence', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.wallet_legacy_migration_evidence', 'DELETE') then
+    raise exception 'authenticated role gained access to trusted legacy migration evidence';
   end if;
 
   if has_table_privilege('authenticated', 'public.wallet_identity_audit_log', 'INSERT')
@@ -91,8 +98,7 @@ begin
     v_user_a,
     'did:privy:ctg-wallet-a',
     v_address_a,
-    'new',
-    null
+    'new'
   );
 
   if v_first->>'userId' <> v_user_a::text
@@ -107,8 +113,7 @@ begin
     v_user_a,
     'did:privy:ctg-wallet-a',
     '0x' || upper(substr(v_address_a, 3)),
-    'new',
-    null
+    'new'
   );
 
   if not (v_second->>'idempotent')::boolean
@@ -127,8 +132,7 @@ begin
       v_user_b,
       'did:privy:ctg-wallet-a',
       v_address_b,
-      'new',
-      null
+      'new'
     );
     raise exception 'TEST_EXPECTED_PROVIDER_CONFLICT';
   exception when others then
@@ -145,8 +149,7 @@ begin
       v_user_b,
       'did:privy:ctg-wallet-b',
       v_address_a,
-      'new',
-      null
+      'new'
     );
     raise exception 'TEST_EXPECTED_ADDRESS_CONFLICT';
   exception when others then
@@ -163,8 +166,7 @@ begin
       v_user_a,
       'did:privy:ctg-wallet-a',
       v_address_b,
-      'new',
-      null
+      'new'
     );
     raise exception 'TEST_EXPECTED_PRIMARY_REPLACEMENT_BLOCK';
   exception when others then
@@ -176,13 +178,47 @@ begin
     end if;
   end;
 
+  -- Legacy provenance is inserted by trusted/operator tooling, not supplied by
+  -- the browser. Its digest represents the deterministic source export.
+  insert into public.wallet_legacy_migration_evidence(
+    user_id,
+    provider,
+    provider_user_id,
+    expected_address,
+    source_digest_sha256,
+    evidence_captured_at
+  ) values (
+    v_user_b,
+    'privy',
+    'did:privy:ctg-wallet-b',
+    v_address_b,
+    repeat('a', 64),
+    now()
+  );
+
   begin
     perform public.link_verified_wallet_identity(
       v_user_b,
       'did:privy:ctg-wallet-b',
       v_address_b,
-      'legacy_preserve',
-      v_address_a
+      'new'
+    );
+    raise exception 'TEST_EXPECTED_LEGACY_REQUIRED';
+  exception when others then
+    if sqlerrm = 'TEST_EXPECTED_LEGACY_REQUIRED' then
+      raise;
+    end if;
+    if position('LEGACY_MIGRATION_REQUIRED' in sqlerrm) = 0 then
+      raise exception 'unexpected legacy-required error: %', sqlerrm;
+    end if;
+  end;
+
+  begin
+    perform public.link_verified_wallet_identity(
+      v_user_b,
+      'did:privy:ctg-wallet-b',
+      v_address_a,
+      'legacy_preserve'
     );
     raise exception 'TEST_EXPECTED_LEGACY_MISMATCH';
   exception when others then
@@ -194,20 +230,56 @@ begin
     end if;
   end;
 
+  begin
+    perform public.link_verified_wallet_identity(
+      v_user_b,
+      'did:privy:wrong-wallet-b',
+      v_address_b,
+      'legacy_preserve'
+    );
+    raise exception 'TEST_EXPECTED_LEGACY_PROVIDER_MISMATCH';
+  exception when others then
+    if sqlerrm = 'TEST_EXPECTED_LEGACY_PROVIDER_MISMATCH' then
+      raise;
+    end if;
+    if position('LEGACY_PROVIDER_IDENTITY_MISMATCH' in sqlerrm) = 0 then
+      raise exception 'unexpected legacy provider mismatch error: %', sqlerrm;
+    end if;
+  end;
+
+  v_first := public.link_verified_wallet_identity(
+    v_user_b,
+    'did:privy:ctg-wallet-b',
+    '0x' || upper(substr(v_address_b, 3)),
+    'legacy_preserve'
+  );
+
+  if (v_first->>'legacyPreserved')::boolean is not true
+     or v_first->>'address' <> lower(v_address_b)
+     or (v_first->>'idempotent')::boolean then
+    raise exception 'legacy wallet was not preserved deterministically: %', v_first;
+  end if;
+
+  if (select status from public.wallet_legacy_migration_evidence where user_id = v_user_b) <> 'consumed'
+     or (select consumed_at is not null from public.wallet_legacy_migration_evidence where user_id = v_user_b) is not true then
+    raise exception 'successful legacy migration did not consume authoritative evidence';
+  end if;
+
   v_second := public.link_verified_wallet_identity(
     v_user_b,
     'did:privy:ctg-wallet-b',
     v_address_b,
-    'legacy_preserve',
-    '0x' || upper(substr(v_address_b, 3))
+    'legacy_preserve'
   );
 
-  if not (v_second->>'legacyPreserved')::boolean
-     or v_second->>'address' <> lower(v_address_b) then
-    raise exception 'legacy wallet was not preserved deterministically: %', v_second;
+  if not (v_second->>'idempotent')::boolean
+     or v_second->>'identityLinkId' <> v_first->>'identityLinkId'
+     or v_second->>'externalAccountId' <> v_first->>'externalAccountId' then
+    raise exception 'consumed legacy evidence did not permit a safe idempotent retry';
   end if;
 
-  if (select count(*) from public.wallet_identity_audit_log where actor_user_id = v_user_a) <> 2 then
+  if (select count(*) from public.wallet_identity_audit_log where actor_user_id = v_user_a) <> 2
+     or (select count(*) from public.wallet_identity_audit_log where actor_user_id = v_user_b) <> 2 then
     raise exception 'verified + idempotent identity attempts must both be auditable';
   end if;
 end $$;
