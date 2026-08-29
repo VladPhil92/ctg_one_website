@@ -25,6 +25,7 @@ create table public.wallet_identity_links (
   updated_at timestamptz not null default now(),
   constraint wallet_identity_links_user_provider_unique unique (user_id, provider),
   constraint wallet_identity_links_provider_user_unique unique (provider, provider_user_id),
+  constraint wallet_identity_links_id_user_unique unique (id, user_id),
   constraint wallet_identity_links_status_timestamps_check check (
     (status = 'pending' and verified_at is null and revoked_at is null)
     or (status = 'verified' and verified_at is not null and revoked_at is null)
@@ -61,7 +62,7 @@ grant select on public.wallet_identity_links to authenticated;
 create table public.wallet_external_accounts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  identity_link_id uuid references public.wallet_identity_links(id) on delete restrict,
+  identity_link_id uuid,
   provider text not null check (provider in ('privy','external')),
   chain_family text not null check (chain_family in ('evm','bitcoin')),
   account_kind text not null check (account_kind in ('embedded','external','watch_only')),
@@ -80,6 +81,10 @@ create table public.wallet_external_accounts (
   revoked_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  constraint wallet_external_accounts_identity_link_user_fk
+    foreign key (identity_link_id, user_id)
+    references public.wallet_identity_links(id, user_id)
+    on delete restrict,
   constraint wallet_external_accounts_evm_address_check check (
     chain_family <> 'evm' or trim(address) ~* '^0x[0-9a-f]{40}$'
   ),
