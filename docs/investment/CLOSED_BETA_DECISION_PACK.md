@@ -24,7 +24,8 @@ The recommended baseline follows these constraints:
 6. no profit is distributable before the applicable capital-recovery waterfall has been applied;
 7. every lot-level cent distributed across allocations must conserve the source total exactly;
 8. cent rounding mode and tie-breaking must be explicit and engine-independent;
-9. unresolved legal classification must not be inferred by software.
+9. allocation type must be explicit so CTG-internal economics can never create a participant credit without a participant recipient;
+10. unresolved legal classification must not be inferred by software.
 
 ## BR-001 — Cost scope
 
@@ -72,11 +73,29 @@ Capital recovery is **economic recovery from realized lot proceeds, not a guaran
 
 All monetary outputs are integer COP cents and derive from authoritative realized entries under the lot's pinned formula version. For the closed-beta version, every settlement allocation in one lot must use the same formula version and therefore the same participant profit-share percentage `S`.
 
-### Deterministic lot-to-allocation attribution
+### Valid allocation types
 
-Let `U_a` be the allocation's eligible case-equivalent units and `U_total = sum(U_a)` across every allocation participating in the lot settlement, including explicitly recorded CTG-internal allocations where applicable. Settlement is not eligible unless the allocation set reconciles to the lot's eligible funded quantity.
+For this closed-beta formula version, every allocation must be exactly one of:
 
-Any non-negative lot-level cent amount `X` that must be attributed across allocations — including recognized revenue `R`, applicable taxes `T`, `NON_CAPITAL_DEDUCTION` costs `D`, and approved participant-borne losses `L` — uses the same largest-remainder allocator:
+```text
+PARTICIPANT_BACKED:
+  is_ctg_internal = false
+  participant_user_id IS NOT NULL
+
+CTG_INTERNAL:
+  is_ctg_internal = true
+  participant_user_id IS NULL
+```
+
+Any other combination is invalid and settlement must fail closed.
+
+Only `PARTICIPANT_BACKED` allocations can create participant capital recovery, participant profit, a participant settlement credit, reinvestment capacity or withdrawal capacity. `CTG_INTERNAL` allocations retain their economics for lot reconciliation but never create a participant credit.
+
+### Deterministic source attribution and lot-level reconciliation
+
+Let `U_a` be the allocation's eligible case-equivalent units and `U_total = sum(U_a)` across every valid allocation participating in the lot settlement. Settlement is not eligible unless the allocation set reconciles to the lot's eligible funded quantity.
+
+Any non-negative lot-level cent amount `X` that must be attributed for audit genealogy — including recognized revenue `R`, applicable taxes `T`, `NON_CAPITAL_DEDUCTION` costs `D`, and approved participant-borne losses `L` — uses the same largest-remainder allocator:
 
 ```text
 ExactX_a    = X × U_a / U_total
@@ -91,9 +110,7 @@ X_a = BaseX_a
       allocation_id ASC
 ```
 
-This allocator is run independently for each source category (`R`, `T`, `D`, `L`) so source genealogy is retained rather than netting categories before attribution.
-
-Required input conservation identities:
+This allocator is run independently for each source category (`R`, `T`, `D`, `L`) so source genealogy is retained. Required source conservation identities are:
 
 ```text
 sum(R_a) = R
@@ -102,81 +119,161 @@ sum(D_a) = D
 sum(L_a) = L
 ```
 
-No implementation may use floating-point binary arithmetic for these settlement allocations. Exact decimal/integer arithmetic must be used.
+**The independently attributed source categories are audit genealogy only; they are not independently clipped with `max(0, ...)` to create settlement money.** Doing that can manufacture distributable cents when different source-category remainder assignments offset differently across allocations.
 
-Definitions after attribution:
+The economic amount available to the lot is therefore reconciled **once at lot level**:
 
 ```text
-R_a = attributable eligible recognized revenue
-T_a = attributable applicable taxes
-D_a = attributable NON_CAPITAL_DEDUCTION amounts
-L_a = attributable participant-borne loss deductions approved under BR-003
+LotAvailable = max(0, R - T - D - L)
+```
+
+`LotAvailable` is then distributed across all valid allocations with the same largest-remainder allocator, using `U_a / U_total`:
+
+```text
+ExactAvailable_a    = LotAvailable × U_a / U_total
+BaseAvailable_a     = floor(ExactAvailable_a)
+FractionAvailable_a = ExactAvailable_a - BaseAvailable_a
+
+RemainderAvailable = LotAvailable - sum(BaseAvailable_a)
+
+AvailableForCapitalAndProfit_a = BaseAvailable_a
+  + 1 cent for the first RemainderAvailable allocations ordered by:
+      FractionAvailable_a DESC,
+      allocation_id ASC
+```
+
+Required economic conservation identity:
+
+```text
+sum(AvailableForCapitalAndProfit_a) = LotAvailable
+```
+
+For this closed-beta version, the approved settlement model is pooled lot economics shared by eligible case-equivalent units. Allocation-specific monetary overrides that would deviate from this pooled attribution are not permitted; if such a case is required, settlement must fail closed until a new formula/contract version explicitly defines it.
+
+No implementation may use floating-point binary arithmetic for settlement allocation. Exact decimal/integer arithmetic must be used.
+
+### Capital-recovery waterfall
+
+Definitions:
+
+```text
+A_a = AvailableForCapitalAndProfit_a
 K_a = eligible deployed capital for the allocation
 S   = participant profit-share percentage from the lot's pinned formula version
 ```
 
-Capital-recovery waterfall:
+For every valid allocation:
 
 ```text
-AvailableForCapitalAndProfit_a = max(0, R_a - T_a - D_a - L_a)
-
-EligibleCapitalRecovery_a = min(K_a, AvailableForCapitalAndProfit_a)
+EligibleCapitalRecovery_a = min(K_a, A_a)
 
 UnrecoveredCapital_a = K_a - EligibleCapitalRecovery_a
 
-ProfitBase_a = max(
-  0,
-  AvailableForCapitalAndProfit_a - EligibleCapitalRecovery_a
-)
+ProfitBase_a = A_a - EligibleCapitalRecovery_a
 ```
 
-### Deterministic profit-share cent reconciliation
+Because `A_a` is non-negative and capital recovery cannot exceed it, `ProfitBase_a` is also non-negative.
 
-Independent per-allocation rounding is forbidden because it can distort the pinned aggregate profit split. Participant profit is first computed as a lot-level pool and then distributed with largest remainder.
+Recipient classification is explicit:
 
-The closed-beta rounding mode is explicitly **half-up for non-negative values**, expressed without an engine-specific `round()` function:
+```text
+if allocation is PARTICIPANT_BACKED:
+  ParticipantCapitalRecovery_a = EligibleCapitalRecovery_a
+  CTGCapitalRecovery_a         = 0
+
+if allocation is CTG_INTERNAL:
+  ParticipantCapitalRecovery_a = 0
+  CTGCapitalRecovery_a         = EligibleCapitalRecovery_a
+```
+
+Required capital/economic conservation identities:
+
+```text
+sum(EligibleCapitalRecovery_a + ProfitBase_a) = LotAvailable
+sum(ParticipantCapitalRecovery_a + CTGCapitalRecovery_a)
+  = sum(EligibleCapitalRecovery_a)
+```
+
+### Deterministic participant profit-share cent reconciliation
+
+Independent per-allocation rounding is forbidden because it can distort the pinned aggregate profit split. The participant profit pool is computed **only over `PARTICIPANT_BACKED` allocations**. CTG-internal allocations are excluded from participant-profit rounding and their full `ProfitBase_a` belongs to CTG economics.
+
+The closed-beta rounding mode is explicitly **half-up for non-negative values**, expressed without an engine-specific `round()` function.
+
+For each `PARTICIPANT_BACKED` allocation:
 
 ```text
 ExactParticipantProfit_a = ProfitBase_a × S
 BaseParticipantProfit_a  = floor(ExactParticipantProfit_a)
 FractionProfit_a          = ExactParticipantProfit_a - BaseParticipantProfit_a
+```
 
-ParticipantProfitPool = floor((sum(ProfitBase_a) × S) + 0.5)
+Then:
+
+```text
+ExternalProfitBase =
+  sum(ProfitBase_a for PARTICIPANT_BACKED allocations)
+
+ParticipantProfitPool = floor((ExternalProfitBase × S) + 0.5)
 
 RemainderProfitCents =
-  ParticipantProfitPool - sum(BaseParticipantProfit_a)
+  ParticipantProfitPool
+  - sum(BaseParticipantProfit_a for PARTICIPANT_BACKED allocations)
 
 ParticipantProfit_a = BaseParticipantProfit_a
-  + 1 cent for the first RemainderProfitCents allocations ordered by:
+  + 1 cent for the first RemainderProfitCents PARTICIPANT_BACKED allocations ordered by:
       FractionProfit_a DESC,
       allocation_id ASC
+```
 
+For `PARTICIPANT_BACKED` allocations:
+
+```text
 CTGProfit_a = ProfitBase_a - ParticipantProfit_a
 
 ParticipantSettlement_a =
-  EligibleCapitalRecovery_a + ParticipantProfit_a
+  ParticipantCapitalRecovery_a + ParticipantProfit_a
 ```
 
-Required conservation identities:
+For `CTG_INTERNAL` allocations:
 
 ```text
-sum(ParticipantProfit_a) = ParticipantProfitPool
-sum(ParticipantProfit_a + CTGProfit_a) = sum(ProfitBase_a)
+ParticipantProfit_a     = 0
+ParticipantSettlement_a = 0
+CTGProfit_a              = ProfitBase_a
+```
+
+Required profit/economic conservation identities:
+
+```text
+sum(ParticipantProfit_a over all allocations) = ParticipantProfitPool
+
+sum(ParticipantProfit_a + CTGProfit_a over all allocations)
+  = sum(ProfitBase_a over all allocations)
+
+sum(
+  ParticipantCapitalRecovery_a
+  + CTGCapitalRecovery_a
+  + ParticipantProfit_a
+  + CTGProfit_a
+) = LotAvailable
 ```
 
 Required interpretation:
 
-- `FINANCED_CAPITAL_COST` is **not** deducted again in `D_a`; doing so would double-count the same cost.
-- Profit is zero until the allocation's recoverable capital has been exhausted by the waterfall.
+- `FINANCED_CAPITAL_COST` is **not** deducted again in `D`; doing so would double-count the same cost.
+- The lot cannot distribute more economic value than `LotAvailable` even when source-category remainder assignments differ.
+- Profit is zero for an allocation until its recoverable capital has been exhausted by the waterfall.
 - `EligibleCapitalRecovery_a` can be less than `K_a` when realized economics are insufficient.
 - `UnrecoveredCapital_a` is an economic loss/shortfall, not a debt owed by the participant and not an automatic debt owed by CTG.
 - No negative settlement credit, negative participant wallet, or automatic capital call is created.
+- A CTG-internal allocation can never receive a participant credit merely because of a cent-rounding tie.
 - Largest-remainder ties are deterministic by `allocation_id ASC` after the fractional remainder.
 - No UI, agreement or report may describe principal or return as guaranteed.
 
 ### Current runtime gap that must be closed before approval becomes operational
 
-The existing settlement implementation predates this final business decision and must not be treated as authoritative for a loss/shortfall case. Before the first real settlement, runtime logic and tests must be changed so `capital_recovery_cents` is calculated by the approved waterfall rather than assumed to equal committed capital, source-category attribution conserves every lot-level cent, negative economics cannot create an implicit or unreconciled money obligation, and participant-profit cents conserve the lot-level pool under the pinned half-up/largest-remainder rules.
+The existing settlement implementation predates this final business decision and must not be treated as authoritative for a loss/shortfall case. Before the first real settlement, runtime logic and tests must be changed so `capital_recovery_cents` is calculated by the approved waterfall rather than assumed to equal committed capital, `LotAvailable` is reconciled before per-allocation clipping, CTG-internal rows cannot create participant credits, source-category attribution conserves audit genealogy, negative economics cannot create an implicit or unreconciled money obligation, and participant-profit cents conserve the external profit pool under the pinned half-up/largest-remainder rules.
 
 ### Approval required
 
@@ -188,22 +285,23 @@ The existing settlement implementation predates this final business decision and
 
 ### Recommended closed-beta rule
 
-A documented lot loss affects a participant only when all of the following are true:
+A documented lot loss affects settlement only when all of the following are true:
 
-1. the loss is attributable to the specific lot/allocation;
+1. the loss is attributable to the specific lot;
 2. the loss is supported by an auditable inventory/financial event and evidence;
-3. the approved formula/contract classifies it as participant-borne; and
+3. the approved formula/contract classifies it as participant-borne within the pooled closed-beta lot economics; and
 4. it has not already been recognized through a lower realized disposition value or another deduction.
 
 Safeguards:
 
 - losses are append-only events; historical values are not rewritten;
-- participant downside is capped at `K_a` for the allocation unless a separate signed agreement expressly says otherwise;
+- participant downside is capped at `K_a` for each participant-backed allocation unless a separate signed agreement expressly says otherwise;
 - no automatic capital call or negative wallet balance;
 - damaged, expired, stolen, recalled or returned inventory retains reason/evidence and genealogy;
 - fraud, willful misconduct, gross negligence, or an expressly CTG-borne event must not be silently passed through to participants;
-- insurance, supplier recovery, salvage proceeds or later reversals are subsequent auditable entries and reduce the economic shortfall when contractually attributable;
-- a single loss cannot reduce settlement twice through both inventory value and a duplicate financial deduction.
+- insurance, supplier recovery, salvage proceeds or later reversals are subsequent auditable entries and reduce the lot-level economic shortfall when contractually attributable;
+- a single loss cannot reduce settlement twice through both inventory value and a duplicate financial deduction;
+- an allocation-specific loss treatment that deviates from the pooled case-equivalent model requires a new explicitly approved formula/contract version and cannot be improvised during settlement.
 
 ### Approval required
 
@@ -267,11 +365,11 @@ The write-off rule is deliberately deterministic for the closed-beta version so 
 Approval of the prose alone is insufficient. Before a real settlement is allowed, the approved rules must be propagated into:
 
 - `BUSINESS_MODEL.md` as authoritative business rules;
-- `FINANCIAL_MODEL.md` with source-category attribution, the exact capital waterfall, half-up/largest-remainder cent reconciliation and double-count prevention;
+- `FINANCIAL_MODEL.md` with source-category audit attribution, reconciled `LotAvailable`, the exact capital waterfall, participant-vs-internal recipient rules, half-up/largest-remainder cent reconciliation and double-count prevention;
 - `LOT_STATE_MACHINE.md` / inventory rules for long-stop and terminal disposition;
 - the versioned agreement/legal configuration;
 - PostgreSQL settlement logic and schema fields needed to pin the long-stop/extension/formula facts;
-- Golden Path financial tests covering attribution-cent edge cases, full recovery, partial recovery, zero recovery, positive profit, half-cent rounding, loss, unsold write-off and no-negative-wallet cases;
+- Golden Path financial tests covering source-attribution cent edges, clipped-deficit reconciliation, internal allocation recipient isolation, full recovery, partial recovery, zero recovery, positive profit, half-cent rounding, loss, unsold write-off and no-negative-wallet cases;
 - operator/release evidence tooling.
 
 Until this propagation is merged, tested, deployed and verified, existing real-money settlement must remain operationally blocked.
@@ -299,7 +397,7 @@ The closed-beta cycle is complete only when the redacted evidence pipeline can d
 - external funding equals allocated capital;
 - production and serialized inventory reconcile;
 - documented sales/returns/dispositions reconcile to physical units;
-- realized financial entries reconcile to the deterministic settlement waterfall;
+- realized financial entries reconcile to `LotAvailable` and the deterministic settlement waterfall;
 - settlement is finalized under a pinned formula/contract version;
 - at least one subsequent approved reinvestment or confirmed withdrawal is recorded;
 - human review marks every production-evidence control true.
