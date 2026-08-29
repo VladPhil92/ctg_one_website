@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { createPublicKey, verify as verifySignature, type KeyObject } from 'node:crypto';
+import type { JsonWebKey as NodeJsonWebKey } from 'node:crypto';
 
 const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 const MAX_CLOCK_SKEW_SECONDS = 60;
@@ -69,7 +70,7 @@ function getVerificationKey(): KeyObject {
 
   try {
     if (rawKey.startsWith('{')) {
-      const jwk = JSON.parse(rawKey) as JsonWebKey;
+      const jwk = JSON.parse(rawKey) as NodeJsonWebKey;
       return createPublicKey({ key: jwk, format: 'jwk' });
     }
 
