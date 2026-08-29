@@ -45,25 +45,40 @@ A database dump alone is not a complete platform backup because Storage files ar
 
 The workflow requires the operator to type `RUN_READ_ONLY_RECOVERY_DRILL` and uses these GitHub Actions secrets:
 
-- `RECOVERY_PRODUCTION_DATABASE_URL` — a production PostgreSQL direct/session connection suitable for PostgreSQL 17 `pg_dump`;
+- `RECOVERY_PRODUCTION_DATABASE_URL` — a production PostgreSQL direct/session connection suitable for Supabase CLI logical backup operations;
 - `RECOVERY_PRODUCTION_SUPABASE_URL` — the production project URL;
 - `RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY` — a server-only key authorized to read private Storage objects.
 
 The workflow performs the following bounded sequence:
 
 1. capture only redacted source counts and migration identity;
-2. create a PostgreSQL 17 custom-format logical dump in the ephemeral runner;
-3. restore that dump into a dedicated local `recovery_drill` database;
-4. compare critical source/restored counts and migration identity;
-5. run the Golden Path, HTTP-security, `SECURITY DEFINER`, outbox, Document/Notification OS and Operations Intelligence PostgreSQL contracts against the restored database;
-6. download the **actual bytes** of every source Storage object within configured object/byte limits;
-7. restore those bytes only into a loopback Supabase target, then re-download and compare SHA-256 hashes;
-8. retain only a redacted evidence JSON/Markdown artifact containing counts, checksums, schema identity and measured drill timing;
-9. destroy the raw database dump and Storage object bytes even when a prior step fails.
+2. create Supabase-aware filtered production schema and data backups with `supabase db dump`, avoiding replay of provider-managed internal DDL;
+3. verify that the exact checked-out release has reconstructed a clean isolated local Supabase schema through the repository migration chain;
+4. import the production data backup into that ephemeral local Supabase PostgreSQL target using the provider-documented trigger-disabled restore pattern;
+5. compare critical source/restored counts and migration identity;
+6. run the Golden Path, HTTP-security, `SECURITY DEFINER`, outbox, Document/Notification OS and Operations Intelligence PostgreSQL contracts against the restored database;
+7. download the **actual bytes** of every source Storage object within configured object/byte limits;
+8. restore those bytes only into the loopback Supabase target, then re-download and compare SHA-256 hashes;
+9. retain only a redacted evidence JSON/Markdown artifact containing database backup digests, counts, checksums, schema identity and measured drill timing;
+10. destroy the raw database backup files and Storage object bytes even when a prior step fails.
 
-The Storage script refuses hosted restore targets by design. A recovery rehearsal must never write test/restored objects into production or another hosted project accidentally.
+The local Supabase stack itself is the isolated recovery target. It is ephemeral to the GitHub runner and must never be replaced with a hosted target. The Storage script separately refuses hosted restore targets by design.
 
-Raw production dumps, object paths and Storage bytes must not be uploaded as GitHub Actions artifacts. Only the redacted recovery evidence may be retained.
+Raw production database backup files, object paths and Storage bytes must not be uploaded as GitHub Actions artifacts. Only the redacted recovery evidence may be retained.
+
+### Why raw `pg_dump` is not used for the drill
+
+A managed Supabase database contains provider-owned schemas such as Realtime, Auth, Storage and extension-managed objects. An unfiltered raw `pg_dump` includes internal DDL that is not intended to be replayed as the project `postgres` role into a newly initialized Supabase target and can fail on privileged function settings or other provider-managed objects.
+
+The supported recovery strategy is therefore:
+
+- reconstruct the exact application schema from the reviewed Git migration chain;
+- capture a Supabase-filtered schema backup for the recovery set;
+- capture production data with `supabase db dump --data-only --use-copy`;
+- restore that data into the isolated local Supabase stack;
+- restore actual Storage bytes separately and verify checksums.
+
+This deliberately separates application/schema reconstruction from provider-managed infrastructure initialization while still proving recovery of production-derived data.
 
 ## Free-plan production strategy
 
@@ -72,14 +87,14 @@ Until the project is upgraded to a plan with managed backups, use an off-site lo
 Recommended implementation:
 
 - create a dedicated least-privilege operational credential for backup execution;
-- run `supabase db dump` or `pg_dump` on a defined schedule;
-- encrypt the resulting dump before off-site storage;
+- use `supabase db dump` on a defined schedule so Supabase-managed schemas and reserved roles are filtered with provider-aware semantics;
+- create both schema and data backup files and encrypt them before off-site storage;
 - retain multiple restore points;
-- separately mirror Supabase Storage objects using the Storage S3-compatible interface or supported CLI tooling;
+- separately mirror Supabase Storage objects using the Storage S3-compatible interface or supported API/CLI tooling;
 - store database backups and Storage backups outside the production Supabase project;
 - record backup timestamp, Git SHA and expected schema version in a manifest.
 
-Do not store production database dumps as public GitHub artifacts or commit them to this repository.
+Do not use an unfiltered raw `pg_dump` as the default Supabase project backup path. Do not store production database dumps as public GitHub artifacts or commit them to this repository.
 
 ## Managed-backup upgrade path
 
@@ -95,16 +110,17 @@ Use a local Supabase environment or a disposable non-production project.
 
 ### Database restore rehearsal
 
-1. Select a backup artifact and its manifest.
-2. Verify checksum and decrypt the backup in a controlled environment.
-3. Provision an empty compatible PostgreSQL/Supabase target.
-4. Restore the dump using the matching PostgreSQL tooling.
-5. Apply any repository migrations newer than the backup manifest, in order.
-6. Run the repository Golden Path database contract.
-7. Compare critical row counts and domain totals against the backup manifest or source snapshot.
-8. Verify authentication-linked foreign keys are intact.
-9. Verify ledger tables remain append-only and settlement uniqueness constraints exist.
-10. Record actual recovery duration and resulting RPO/RTO.
+1. Select the schema/data backup set and its manifest.
+2. Verify checksums and decrypt the backups in a controlled environment.
+3. Provision a clean compatible Supabase target and reconstruct the expected application schema from the exact reviewed migration chain.
+4. Verify the target contains no unexpected Auth, Storage or business data before production-data import.
+5. Import the Supabase-filtered production data using the documented trigger-disabled restore pattern.
+6. Apply any repository migrations newer than the backup manifest, in order, only when rehearsing recovery to a newer release.
+7. Run the repository Golden Path database contract.
+8. Compare critical row counts and domain totals against the backup manifest or source snapshot.
+9. Verify authentication-linked foreign keys are intact.
+10. Verify ledger tables remain append-only and settlement uniqueness constraints exist.
+11. Record actual recovery duration and resulting RPO/RTO.
 
 ### Storage restore rehearsal
 
@@ -158,7 +174,9 @@ For every rehearsal record:
 - date/time;
 - operator;
 - backup timestamp;
-- backup checksum;
+- database schema backup checksum;
+- database data backup checksum;
+- combined recovery-set checksum;
 - Git SHA;
 - expected schema version;
 - target environment;
