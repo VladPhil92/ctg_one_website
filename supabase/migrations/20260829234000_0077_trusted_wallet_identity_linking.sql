@@ -130,6 +130,49 @@ alter table public.wallet_legacy_migration_evidence enable row level security;
 revoke all on public.wallet_legacy_migration_evidence from public, anon, authenticated;
 grant select, insert, update on public.wallet_legacy_migration_evidence to service_role;
 
+create or replace function public._guard_wallet_legacy_migration_evidence_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.id is distinct from old.id
+     or new.user_id is distinct from old.user_id
+     or new.provider is distinct from old.provider
+     or new.provider_user_id is distinct from old.provider_user_id
+     or new.chain_family is distinct from old.chain_family
+     or new.expected_address is distinct from old.expected_address
+     or new.source_digest_sha256 is distinct from old.source_digest_sha256
+     or new.evidence_captured_at is distinct from old.evidence_captured_at
+     or new.created_at is distinct from old.created_at then
+    raise exception 'legacy wallet migration provenance is immutable';
+  end if;
+
+  if old.status = 'pending' then
+    if new.status not in ('pending','consumed','rejected') then
+      raise exception 'invalid legacy migration evidence status transition';
+    end if;
+  elsif new.status is distinct from old.status then
+    raise exception 'terminal legacy migration evidence status cannot change';
+  end if;
+
+  if old.status <> 'pending' and new.consumed_at is distinct from old.consumed_at then
+    raise exception 'terminal legacy migration consumption timestamp is immutable';
+  end if;
+
+  new.updated_at := clock_timestamp();
+  return new;
+end;
+$$;
+
+revoke all on function public._guard_wallet_legacy_migration_evidence_update()
+  from public, anon, authenticated;
+
+create trigger wallet_legacy_migration_evidence_guard
+before update on public.wallet_legacy_migration_evidence
+for each row execute function public._guard_wallet_legacy_migration_evidence_update();
+
 -- ---------------------------------------------------------------------------
 -- Append-only identity-link audit trail.
 -- ---------------------------------------------------------------------------
