@@ -22,8 +22,9 @@ The recommended baseline follows these constraints:
 4. a participant must never acquire an unbounded negative balance or automatic capital-call obligation;
 5. no cost may be deducted twice — especially a cost already represented by deployed participant capital;
 6. no profit is distributable before the applicable capital-recovery waterfall has been applied;
-7. cent rounding must conserve the lot-level profit pool exactly;
-8. unresolved legal classification must not be inferred by software.
+7. every lot-level cent distributed across allocations must conserve the source total exactly;
+8. cent rounding mode and tie-breaking must be explicit and engine-independent;
+9. unresolved legal classification must not be inferred by software.
 
 ## BR-001 — Cost scope
 
@@ -69,9 +70,41 @@ The same economic cost may never appear in both classes.
 
 Capital recovery is **economic recovery from realized lot proceeds, not a guaranteed repayment obligation**.
 
-For each allocation `a`, all monetary outputs are integer COP cents and are derived from authoritative realized entries under the lot's pinned formula version. For the closed-beta version, every allocation in one lot must use the same formula version and therefore the same participant profit-share percentage `S`.
+All monetary outputs are integer COP cents and derive from authoritative realized entries under the lot's pinned formula version. For the closed-beta version, every settlement allocation in one lot must use the same formula version and therefore the same participant profit-share percentage `S`.
 
-Definitions:
+### Deterministic lot-to-allocation attribution
+
+Let `U_a` be the allocation's eligible case-equivalent units and `U_total = sum(U_a)` across every allocation participating in the lot settlement, including explicitly recorded CTG-internal allocations where applicable. Settlement is not eligible unless the allocation set reconciles to the lot's eligible funded quantity.
+
+Any non-negative lot-level cent amount `X` that must be attributed across allocations — including recognized revenue `R`, applicable taxes `T`, `NON_CAPITAL_DEDUCTION` costs `D`, and approved participant-borne losses `L` — uses the same largest-remainder allocator:
+
+```text
+ExactX_a    = X × U_a / U_total
+BaseX_a     = floor(ExactX_a)
+FractionX_a = ExactX_a - BaseX_a
+
+RemainderX = X - sum(BaseX_a)
+
+X_a = BaseX_a
+  + 1 cent for the first RemainderX allocations ordered by:
+      FractionX_a DESC,
+      allocation_id ASC
+```
+
+This allocator is run independently for each source category (`R`, `T`, `D`, `L`) so source genealogy is retained rather than netting categories before attribution.
+
+Required input conservation identities:
+
+```text
+sum(R_a) = R
+sum(T_a) = T
+sum(D_a) = D
+sum(L_a) = L
+```
+
+No implementation may use floating-point binary arithmetic for these settlement allocations. Exact decimal/integer arithmetic must be used.
+
+Definitions after attribution:
 
 ```text
 R_a = attributable eligible recognized revenue
@@ -97,20 +130,25 @@ ProfitBase_a = max(
 )
 ```
 
-Profit-share cent reconciliation uses a largest-remainder allocation so independent per-allocation rounding can never distort the pinned lot-level split:
+### Deterministic profit-share cent reconciliation
+
+Independent per-allocation rounding is forbidden because it can distort the pinned aggregate profit split. Participant profit is first computed as a lot-level pool and then distributed with largest remainder.
+
+The closed-beta rounding mode is explicitly **half-up for non-negative values**, expressed without an engine-specific `round()` function:
 
 ```text
 ExactParticipantProfit_a = ProfitBase_a × S
 BaseParticipantProfit_a  = floor(ExactParticipantProfit_a)
-Fraction_a               = ExactParticipantProfit_a - BaseParticipantProfit_a
+FractionProfit_a          = ExactParticipantProfit_a - BaseParticipantProfit_a
 
-ParticipantProfitPool = round(sum(ProfitBase_a) × S)
-RemainderCents =
+ParticipantProfitPool = floor((sum(ProfitBase_a) × S) + 0.5)
+
+RemainderProfitCents =
   ParticipantProfitPool - sum(BaseParticipantProfit_a)
 
 ParticipantProfit_a = BaseParticipantProfit_a
-  + 1 cent for the first RemainderCents allocations ordered by:
-      Fraction_a DESC,
+  + 1 cent for the first RemainderProfitCents allocations ordered by:
+      FractionProfit_a DESC,
       allocation_id ASC
 
 CTGProfit_a = ProfitBase_a - ParticipantProfit_a
@@ -133,12 +171,12 @@ Required interpretation:
 - `EligibleCapitalRecovery_a` can be less than `K_a` when realized economics are insufficient.
 - `UnrecoveredCapital_a` is an economic loss/shortfall, not a debt owed by the participant and not an automatic debt owed by CTG.
 - No negative settlement credit, negative participant wallet, or automatic capital call is created.
-- Largest-remainder tie-breaking is deterministic by allocation ID after fractional remainder.
+- Largest-remainder ties are deterministic by `allocation_id ASC` after the fractional remainder.
 - No UI, agreement or report may describe principal or return as guaranteed.
 
 ### Current runtime gap that must be closed before approval becomes operational
 
-The existing settlement implementation predates this final business decision and must not be treated as authoritative for a loss/shortfall case. Before the first real settlement, runtime logic and tests must be changed so `capital_recovery_cents` is calculated by the approved waterfall rather than assumed to equal committed capital, negative economics cannot create an implicit or unreconciled money obligation, and profit-share cents conserve the lot-level pool exactly.
+The existing settlement implementation predates this final business decision and must not be treated as authoritative for a loss/shortfall case. Before the first real settlement, runtime logic and tests must be changed so `capital_recovery_cents` is calculated by the approved waterfall rather than assumed to equal committed capital, source-category attribution conserves every lot-level cent, negative economics cannot create an implicit or unreconciled money obligation, and participant-profit cents conserve the lot-level pool under the pinned half-up/largest-remainder rules.
 
 ### Approval required
 
@@ -229,11 +267,11 @@ The write-off rule is deliberately deterministic for the closed-beta version so 
 Approval of the prose alone is insufficient. Before a real settlement is allowed, the approved rules must be propagated into:
 
 - `BUSINESS_MODEL.md` as authoritative business rules;
-- `FINANCIAL_MODEL.md` with the exact waterfall, largest-remainder cent reconciliation and double-count prevention;
+- `FINANCIAL_MODEL.md` with source-category attribution, the exact capital waterfall, half-up/largest-remainder cent reconciliation and double-count prevention;
 - `LOT_STATE_MACHINE.md` / inventory rules for long-stop and terminal disposition;
 - the versioned agreement/legal configuration;
 - PostgreSQL settlement logic and schema fields needed to pin the long-stop/extension/formula facts;
-- Golden Path financial tests covering full recovery, partial recovery, zero recovery, positive profit, cent-rounding edge cases, loss, unsold write-off and no-negative-wallet cases;
+- Golden Path financial tests covering attribution-cent edge cases, full recovery, partial recovery, zero recovery, positive profit, half-cent rounding, loss, unsold write-off and no-negative-wallet cases;
 - operator/release evidence tooling.
 
 Until this propagation is merged, tested, deployed and verified, existing real-money settlement must remain operationally blocked.
