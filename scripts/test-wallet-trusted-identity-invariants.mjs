@@ -85,12 +85,16 @@ for (const fragment of forbiddenMigration) {
 }
 
 requireFragments(verifier, 'Privy identity-token verifier', [
+  "const PRIVY_USER_ID_RE = /^did:privy:",
   "header.alg !== 'ES256'",
   "iss !== 'privy.io'",
   'aud !== expectedAppId',
   "dsaEncoding: 'ieee-p1363'",
-  "account.type !== 'custom_auth'",
-  "customUserId === params.canonicalCtgUserId",
+  'const customAuthAccounts = accounts',
+  ".filter((account) => account.type === 'custom_auth')",
+  "readString(account, 'custom_user_id', 'customUserId')",
+  'customAuthAccounts.length !== 1',
+  'customAuthAccounts[0] !== params.canonicalCtgUserId',
   "account.type === 'wallet'",
   "account.chainType === 'ethereum'",
   "account.walletClientType === 'privy'",
