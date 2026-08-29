@@ -36,27 +36,41 @@ requireFragments(migration, 'trusted identity migration', [
   "when 'wallet.identity-link' then",
   'v_limit := 6;',
   'v_window_seconds := 600;',
+  'create table public.wallet_legacy_migration_evidence',
+  'expected_address_normalized text generated always as (lower(trim(expected_address))) stored',
+  'source_digest_sha256 text not null',
+  'alter table public.wallet_legacy_migration_evidence enable row level security',
+  'revoke all on public.wallet_legacy_migration_evidence from public, anon, authenticated',
   'create table public.wallet_identity_audit_log',
   'alter table public.wallet_identity_audit_log enable row level security',
   'wallet_identity_audit_log_immutable',
   "raise exception 'wallet identity audit history is append-only'",
   'create or replace function public.link_verified_wallet_identity(',
   'security definer',
+  "raise exception 'LEGACY_MIGRATION_EVIDENCE_REQUIRED'",
+  "raise exception 'LEGACY_MIGRATION_REQUIRED'",
+  "raise exception 'LEGACY_PROVIDER_IDENTITY_MISMATCH'",
   "raise exception 'LEGACY_WALLET_MISMATCH'",
+  'from public.wallet_legacy_migration_evidence',
   "pg_advisory_xact_lock(hashtextextended('wallet-link:user:'",
   "pg_advisory_xact_lock(hashtextextended('wallet-link:provider:privy:'",
   "pg_advisory_xact_lock(hashtextextended('wallet-link:evm:'",
   "raise exception 'Privy identity is already linked to another CTG user'",
   "raise exception 'EVM wallet is already linked to another CTG user'",
   "raise exception 'canonical CTG user already has a different active primary EVM wallet'",
-  'revoke all on function public.link_verified_wallet_identity(uuid,text,text,text,text)',
+  "set status = 'consumed', consumed_at = v_now",
+  'revoke all on function public.link_verified_wallet_identity(uuid,text,text,text)',
   'from public, anon, authenticated;',
-  'grant execute on function public.link_verified_wallet_identity(uuid,text,text,text,text)',
+  'grant execute on function public.link_verified_wallet_identity(uuid,text,text,text)',
   'to service_role;',
 ]);
 
 const forbiddenMigration = [
-  'grant execute on function public.link_verified_wallet_identity(uuid,text,text,text,text) to authenticated',
+  'grant execute on function public.link_verified_wallet_identity(uuid,text,text,text) to authenticated',
+  'grant select on public.wallet_legacy_migration_evidence to authenticated',
+  'grant insert on public.wallet_legacy_migration_evidence to authenticated',
+  'grant update on public.wallet_legacy_migration_evidence to authenticated',
+  'grant delete on public.wallet_legacy_migration_evidence to authenticated',
   'grant insert on public.wallet_identity_audit_log to authenticated',
   'grant update on public.wallet_identity_audit_log to authenticated',
   'grant delete on public.wallet_identity_audit_log to authenticated',
@@ -86,26 +100,37 @@ requireFragments(route, 'trusted identity-link route', [
   "supabase.auth.getUser()",
   "consumeAuthenticatedRateLimit(supabase, 'wallet.identity-link')",
   "request.headers.get('privy-id-token')",
+  "body.linkMode === 'legacy_preserve'",
+  ".from('wallet_legacy_migration_evidence')",
+  ".select('provider_user_id,expected_address_normalized,status')",
+  'expectedLegacyAddress: legacyEvidence?.expected_address_normalized ?? null',
+  'legacyEvidence.provider_user_id !== verifiedIdentity.privyUserId',
   'verifyPrivyIdentityToken({',
   'canonicalCtgUserId: user.id',
   'createAdminClient()',
   "serviceRole.rpc('link_verified_wallet_identity'",
   'p_provider_user_id: verifiedIdentity.privyUserId',
   'p_evm_address: verifiedIdentity.embeddedEvmAddress',
+  'p_link_mode: body.linkMode',
   'MAX_REQUEST_BYTES',
   "headers.set('Cache-Control', 'no-store')",
 ]);
 
-if (/walletAddress\s*:/i.test(route) || /evmAddress\s*:/i.test(route)) {
-  throw new Error('identity-link request body must not accept a browser-asserted wallet address');
+if (
+  /walletAddress\s*:/i.test(route) ||
+  /evmAddress\s*:/i.test(route) ||
+  route.includes('expectedLegacyWalletAddress')
+) {
+  throw new Error('identity-link request body must not accept browser-asserted wallet or legacy provenance');
 }
 
 const authIndex = route.indexOf('supabase.auth.getUser()');
 const adminIndex = route.indexOf('createAdminClient()');
+const evidenceIndex = route.indexOf(".from('wallet_legacy_migration_evidence')");
 const verifyIndex = route.indexOf('verifyPrivyIdentityToken({');
 const rpcIndex = route.indexOf("serviceRole.rpc('link_verified_wallet_identity'");
-if (!(authIndex >= 0 && verifyIndex > authIndex && adminIndex > verifyIndex && rpcIndex > adminIndex)) {
-  throw new Error('trusted identity-link route must authenticate and cryptographically verify before service-role mutation');
+if (!(authIndex >= 0 && adminIndex > authIndex && evidenceIndex > adminIndex && verifyIndex > evidenceIndex && rpcIndex > verifyIndex)) {
+  throw new Error('legacy linking must authenticate, load trusted provenance, verify Privy, then mutate with service role');
 }
 
 requireFragments(rateLimit, 'API rate-limit contract', [
