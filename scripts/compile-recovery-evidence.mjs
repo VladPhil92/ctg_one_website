@@ -4,7 +4,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 const sourcePath = process.env.RECOVERY_SOURCE_DB_EVIDENCE ?? '.recovery-work/source-db.json';
 const restoredPath = process.env.RECOVERY_RESTORED_DB_EVIDENCE ?? '.recovery-work/restored-db.json';
 const storagePath = process.env.RECOVERY_STORAGE_EVIDENCE_PATH ?? '.recovery-work/storage-evidence.json';
-const dumpPath = process.env.RECOVERY_DATABASE_DUMP ?? '.recovery-work/production.dump';
+const schemaDumpPath = process.env.RECOVERY_DATABASE_SCHEMA_DUMP ?? '.recovery-work/production-schema.sql';
+const dataDumpPath = process.env.RECOVERY_DATABASE_DATA_DUMP ?? '.recovery-work/production-data.sql';
 const outputJson = process.env.RECOVERY_EVIDENCE_JSON ?? '.recovery-work/evidence/recovery-drill.json';
 const outputMarkdown = process.env.RECOVERY_EVIDENCE_MARKDOWN ?? '.recovery-work/evidence/recovery-drill.md';
 const startedAt = new Date(process.env.RECOVERY_DRILL_STARTED_AT ?? '');
@@ -18,11 +19,12 @@ if (Number.isNaN(startedAt.getTime())) throw new Error('RECOVERY_DRILL_STARTED_A
 if (!gitSha || !/^[0-9a-f]{40}$/i.test(gitSha)) throw new Error('Recovery evidence requires an exact checked-out Git SHA.');
 
 const parseJson = async (file) => JSON.parse(await readFile(file, 'utf8'));
-const [source, restored, storage, dump] = await Promise.all([
+const [source, restored, storage, schemaDump, dataDump] = await Promise.all([
   parseJson(sourcePath),
   parseJson(restoredPath),
   parseJson(storagePath),
-  readFile(dumpPath),
+  readFile(schemaDumpPath),
+  readFile(dataDumpPath),
 ]);
 
 const countKeys = [
@@ -60,7 +62,11 @@ const snapshotAt = new Date(source.snapshotAt);
 if (Number.isNaN(snapshotAt.getTime())) throw new Error('Source database evidence is missing a valid snapshotAt timestamp.');
 const rtoSeconds = Math.max(0, Math.round((completedAt.getTime() - startedAt.getTime()) / 1000));
 const observedBackupAgeSeconds = Math.max(0, Math.round((completedAt.getTime() - snapshotAt.getTime()) / 1000));
-const dumpSha256 = createHash('sha256').update(dump).digest('hex');
+const schemaDumpSha256 = createHash('sha256').update(schemaDump).digest('hex');
+const dataDumpSha256 = createHash('sha256').update(dataDump).digest('hex');
+const recoverySetSha256 = createHash('sha256')
+  .update(`schema:${schemaDumpSha256}\ndata:${dataDumpSha256}\n`)
+  .digest('hex');
 
 const evidence = {
   result: 'PASS',
@@ -79,8 +85,12 @@ const evidence = {
     migrationCount: Number(source.migrationCount),
   },
   database: {
-    dumpSha256,
-    restoredTo: 'ephemeral-local-postgres',
+    backupFormat: 'supabase-filtered-schema-plus-data',
+    restoreStrategy: 'exact-release migration reconstruction plus production data import into an ephemeral local Supabase stack',
+    schemaDumpSha256,
+    dataDumpSha256,
+    recoverySetSha256,
+    restoredTo: 'ephemeral-local-supabase-postgres',
     countsMatched: true,
     goldenPath: 'PASS',
     kycTransactionalResilience: 'PASS',
@@ -102,7 +112,7 @@ const evidence = {
   },
 };
 
-const markdown = `# Recovery drill evidence\n\n- Result: **PASS**\n- Repository: \`${repository ?? 'unknown'}\`\n- Git ref: \`${gitRef ?? 'unknown'}\`\n- Git SHA: \`${gitSha}\`\n- GitHub Actions run: \`${runId ?? 'unknown'}\` attempt \`${runAttempt ?? 'unknown'}\`\n- Source snapshot: ${evidence.sourceSnapshotAt}\n- Completed: ${evidence.completedAt}\n- Latest migration: \`${evidence.sourceSchema.latestMigration}\` (${evidence.sourceSchema.migrationCount} migrations)\n- Database dump SHA-256: \`${dumpSha256}\`\n- Database critical counts matched: **yes**\n- Golden Path on restored database: **PASS**\n- KYC transactional resilience contract: **PASS**\n- Storage buckets restored: ${evidence.storage.bucketCount}\n- Storage objects restored and checksum-verified: ${evidence.storage.objectCount}\n- Storage bytes verified: ${evidence.storage.bytes}\n- Measured drill duration: ${rtoSeconds}s\n- Observed backup age at completion: ${observedBackupAgeSeconds}s\n\nOnly redacted operational evidence is retained. The database dump and Storage object bytes remain ephemeral runner data and are deleted at job completion.\n`;
+const markdown = `# Recovery drill evidence\n\n- Result: **PASS**\n- Repository: \`${repository ?? 'unknown'}\`\n- Git ref: \`${gitRef ?? 'unknown'}\`\n- Git SHA: \`${gitSha}\`\n- GitHub Actions run: \`${runId ?? 'unknown'}\` attempt \`${runAttempt ?? 'unknown'}\`\n- Source snapshot: ${evidence.sourceSnapshotAt}\n- Completed: ${evidence.completedAt}\n- Latest migration: \`${evidence.sourceSchema.latestMigration}\` (${evidence.sourceSchema.migrationCount} migrations)\n- Database schema backup SHA-256: \`${schemaDumpSha256}\`\n- Database data backup SHA-256: \`${dataDumpSha256}\`\n- Database recovery-set SHA-256: \`${recoverySetSha256}\`\n- Database restore strategy: Supabase-filtered production backup + exact-release schema reconstruction\n- Database critical counts matched: **yes**\n- Golden Path on restored database: **PASS**\n- KYC transactional resilience contract: **PASS**\n- Storage buckets restored: ${evidence.storage.bucketCount}\n- Storage objects restored and checksum-verified: ${evidence.storage.objectCount}\n- Storage bytes verified: ${evidence.storage.bytes}\n- Measured drill duration: ${rtoSeconds}s\n- Observed backup age at completion: ${observedBackupAgeSeconds}s\n\nOnly redacted operational evidence is retained. The database backup files and Storage object bytes remain ephemeral runner data and are deleted at job completion.\n`;
 
 await writeFile(outputJson, JSON.stringify(evidence, null, 2));
 await writeFile(outputMarkdown, markdown);
