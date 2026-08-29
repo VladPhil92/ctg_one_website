@@ -72,16 +72,53 @@ assert.doesNotMatch(
   'Recovery drill must not use a database-only local target because Storage byte restoration requires the local Storage API.',
 );
 assert.match(workflow, /supabase status -o env/, 'Recovery drill must resolve credentials from the running local stack.');
-assert.match(workflow, /pg_dump --format=custom/, 'Recovery drill must create a real PostgreSQL backup artifact.');
-assert.match(workflow, /pg_restore --exit-on-error/, 'Recovery drill must restore the database backup into the isolated target.');
-assert.match(workflow, /recovery_drill/, 'Database restore target must be a dedicated recovery database.');
+assert.match(
+  workflow,
+  /supabase db dump[\s\S]*--db-url "\$SOURCE_DATABASE_URL"/,
+  'Production database backup must use Supabase-aware dump filtering rather than an unfiltered raw pg_dump.',
+);
+assert.match(
+  workflow,
+  /--file "\$RECOVERY_DATABASE_SCHEMA_DUMP"/,
+  'Recovery set must contain a Supabase-filtered production schema backup.',
+);
+assert.match(
+  workflow,
+  /--file "\$RECOVERY_DATABASE_DATA_DUMP"[\s\S]*--data-only[\s\S]*--use-copy/,
+  'Recovery set must contain a production data backup suitable for supported Supabase restore semantics.',
+);
+assert.doesNotMatch(
+  workflow,
+  /\bpg_dump\b/,
+  'Recovery workflow must not call raw pg_dump because Supabase-managed internal DDL can fail during restore.',
+);
+assert.doesNotMatch(
+  workflow,
+  /\bpg_restore\b/,
+  'Recovery workflow must not replay an unfiltered custom archive into a local Supabase target.',
+);
+assert.match(
+  workflow,
+  /RECOVERY_TARGET_DATABASE_URL:\s*postgresql:\/\/postgres:postgres@127\.0\.0\.1:54322\/postgres/,
+  'Database recovery target must remain the ephemeral loopback Supabase Postgres instance.',
+);
+assert.match(
+  workflow,
+  /Verify isolated local database is clean before restore/,
+  'Recovery drill must fail closed if the local target contains unexpected business/Auth data before import.',
+);
+assert.match(
+  workflow,
+  /SET session_replication_role = replica/,
+  'Production data restore must disable triggers using the provider-documented restore pattern.',
+);
 assert.match(workflow, /recovery-storage-drill\.mjs/, 'Recovery drill must restore actual Storage bytes, not metadata only.');
 assert.match(workflow, /golden-path-transactional-smoke\.sql/, 'Recovered database must execute the transactional Golden Path.');
 assert.match(workflow, /Upload redacted recovery evidence only/, 'Only redacted evidence may leave the ephemeral runner.');
 assert.doesNotMatch(
   workflow,
-  /path:\s*[^\n]*(production\.dump|\.recovery-work\/storage(?:\/|\b))/,
-  'Raw database dumps or Storage object bytes must never be uploaded as workflow artifacts.',
+  /path:\s*[^\n]*(production-(?:schema|data)\.sql|\.recovery-work\/storage(?:\/|\b))/,
+  'Raw database backups or Storage object bytes must never be uploaded as workflow artifacts.',
 );
 assert.match(workflow, /rm -rf \.recovery-work/, 'Recovery material must be destroyed even when the job fails.');
 
@@ -93,6 +130,9 @@ assert.doesNotMatch(storageDrill, /console\.log\([^\n]*(objectPath|sourceKey|tar
 
 assert.match(evidenceCompiler, /RECOVERY_CHECKED_OUT_SHA/, 'Recovery evidence must prefer the independently verified checked-out SHA.');
 assert.match(evidenceCompiler, /\^\[0-9a-f\]\{40\}\$/i, 'Recovery evidence must require a full exact Git SHA.');
+assert.match(evidenceCompiler, /schemaDumpSha256/, 'Recovery evidence must hash the filtered production schema backup.');
+assert.match(evidenceCompiler, /dataDumpSha256/, 'Recovery evidence must hash the production data backup.');
+assert.match(evidenceCompiler, /recoverySetSha256/, 'Recovery evidence must bind schema and data backup hashes into one recovery-set digest.');
 assert.match(evidenceCompiler, /countsMatched:\s*true/, 'Recovery evidence must require source/restored database count equality.');
 assert.match(evidenceCompiler, /checksumsMatched:\s*true/, 'Recovery evidence must require restored Storage checksum equality.');
 assert.match(evidenceCompiler, /measuredDrillRtoSeconds/, 'Recovery evidence must record measured drill duration.');
