@@ -24,11 +24,20 @@ for (const forbiddenTrigger of ['push', 'pull_request', 'schedule', 'workflow_ru
 assert.match(workflow, /RUN_READ_ONLY_RECOVERY_DRILL/, 'Recovery drill must require an explicit human confirmation phrase.');
 for (const secret of [
   'RECOVERY_PRODUCTION_DATABASE_URL',
-  'RECOVERY_PRODUCTION_SUPABASE_URL',
   'RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY',
 ]) {
   assert.match(workflow, new RegExp(`secrets\\.${secret}`), `Recovery workflow must obtain ${secret} only from GitHub Secrets.`);
 }
+assert.match(
+  workflow,
+  /SOURCE_SUPABASE_URL:\s*https:\/\/mdscwjvlihdiflcvghhk\.supabase\.co/,
+  'Production Supabase API origin is public configuration and must be pinned to the reviewed production project.',
+);
+assert.doesNotMatch(
+  workflow,
+  /secrets\.RECOVERY_PRODUCTION_SUPABASE_URL/,
+  'Production Supabase API origin must not depend on a mutable/malformed secret because the URL is public configuration.',
+);
 
 assert.match(
   workflow,
