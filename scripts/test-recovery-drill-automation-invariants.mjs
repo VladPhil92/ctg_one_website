@@ -26,6 +26,41 @@ for (const secret of [
 ]) {
   assert.match(workflow, new RegExp(`secrets\\.${secret}`), `Recovery workflow must obtain ${secret} only from GitHub Secrets.`);
 }
+
+assert.match(
+  workflow,
+  /if:\s*github\.ref\s*==\s*['"]refs\/heads\/main['"]/,
+  'Production recovery must be dispatchable only from the protected main branch.',
+);
+assert.match(
+  workflow,
+  /ref:\s*\$\{\{\s*github\.sha\s*\}\}/,
+  'Recovery checkout must pin the exact SHA captured by workflow_dispatch instead of following a moving branch head.',
+);
+assert.doesNotMatch(
+  workflow,
+  /with:\s*\n\s*ref:\s*main(?:\s|$)/,
+  'Recovery checkout must not follow a mutable main ref after dispatch.',
+);
+assert.match(workflow, /git rev-parse HEAD/, 'Recovery drill must independently resolve the checked-out commit.');
+assert.match(
+  workflow,
+  /checked_out_sha[^\n]*!=[^\n]*GITHUB_SHA/,
+  'Recovery drill must fail closed when the checked-out commit differs from the dispatched SHA.',
+);
+assert.match(
+  workflow,
+  /RECOVERY_CHECKED_OUT_SHA=/,
+  'Verified checked-out SHA must be exported for redacted recovery evidence provenance.',
+);
+const checkoutIndex = workflow.indexOf('uses: actions/checkout@v4');
+const workspaceIndex = workflow.indexOf('mkdir -p .recovery-work/evidence .recovery-work/storage');
+assert.ok(checkoutIndex >= 0, 'Recovery workflow must check out the repository.');
+assert.ok(
+  workspaceIndex > checkoutIndex,
+  'Recovery workspace must be created after checkout so actions/checkout cleanup cannot delete it.',
+);
+
 assert.match(
   workflow,
   /run:\s*supabase start(?:\s|$)/m,
@@ -56,6 +91,8 @@ assert.match(storageDrill, /sha256/, 'Storage recovery must checksum object byte
 assert.match(storageDrill, /sourceObjectCount/, 'Storage recovery evidence must include source object count.');
 assert.doesNotMatch(storageDrill, /console\.log\([^\n]*(objectPath|sourceKey|targetKey)/, 'Storage drill must not log object paths or secret keys.');
 
+assert.match(evidenceCompiler, /RECOVERY_CHECKED_OUT_SHA/, 'Recovery evidence must prefer the independently verified checked-out SHA.');
+assert.match(evidenceCompiler, /\^\[0-9a-f\]\{40\}\$/i, 'Recovery evidence must require a full exact Git SHA.');
 assert.match(evidenceCompiler, /countsMatched:\s*true/, 'Recovery evidence must require source/restored database count equality.');
 assert.match(evidenceCompiler, /checksumsMatched:\s*true/, 'Recovery evidence must require restored Storage checksum equality.');
 assert.match(evidenceCompiler, /measuredDrillRtoSeconds/, 'Recovery evidence must record measured drill duration.');
