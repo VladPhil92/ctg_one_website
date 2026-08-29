@@ -12,23 +12,13 @@ const MAX_REQUEST_BYTES = 4 * 1024;
 
 const requestSchema = z.object({
   linkMode: z.enum(['new', 'legacy_preserve']),
-  expectedLegacyWalletAddress: z.string().trim().regex(/^0x[0-9a-fA-F]{40}$/).nullable().optional(),
-}).strict().superRefine((value, context) => {
-  if (value.linkMode === 'legacy_preserve' && !value.expectedLegacyWalletAddress) {
-    context.addIssue({
-      code: 'custom',
-      path: ['expectedLegacyWalletAddress'],
-      message: 'legacy_preserve requires the expected legacy wallet address',
-    });
-  }
-  if (value.linkMode === 'new' && value.expectedLegacyWalletAddress) {
-    context.addIssue({
-      code: 'custom',
-      path: ['expectedLegacyWalletAddress'],
-      message: 'new links must not supply a legacy wallet address',
-    });
-  }
-});
+}).strict();
+
+type LegacyMigrationEvidence = {
+  provider_user_id: string;
+  expected_address_normalized: string;
+  status: 'pending' | 'consumed' | 'rejected';
+};
 
 function noStoreJson(body: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
@@ -110,31 +100,62 @@ export async function POST(request: Request) {
     return noStoreJson({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
+  let serviceRole: ReturnType<typeof createAdminClient> | null = null;
+  let legacyEvidence: LegacyMigrationEvidence | null = null;
+
+  if (body.linkMode === 'legacy_preserve') {
+    serviceRole = createAdminClient();
+    const { data, error } = await serviceRole
+      .from('wallet_legacy_migration_evidence')
+      .select('provider_user_id,expected_address_normalized,status')
+      .eq('user_id', user.id)
+      .eq('provider', 'privy')
+      .maybeSingle();
+
+    if (error) {
+      return noStoreJson({ error: 'LEGACY_MIGRATION_EVIDENCE_UNAVAILABLE' }, { status: 503 });
+    }
+
+    legacyEvidence = data as LegacyMigrationEvidence | null;
+    if (!legacyEvidence || legacyEvidence.status === 'rejected') {
+      return noStoreJson({ error: 'LEGACY_MIGRATION_EVIDENCE_REQUIRED' }, { status: 409 });
+    }
+  }
+
   let verifiedIdentity;
   try {
     verifiedIdentity = verifyPrivyIdentityToken({
       token: identityToken,
       canonicalCtgUserId: user.id,
-      expectedLegacyAddress: body.expectedLegacyWalletAddress ?? null,
+      expectedLegacyAddress: legacyEvidence?.expected_address_normalized ?? null,
     });
   } catch (error) {
     if (error instanceof PrivyIdentityTokenError) return privyErrorResponse(error);
     return noStoreJson({ error: 'INVALID_PRIVY_IDENTITY_TOKEN' }, { status: 401 });
   }
 
-  const serviceRole = createAdminClient();
+  if (
+    legacyEvidence &&
+    legacyEvidence.provider_user_id !== verifiedIdentity.privyUserId
+  ) {
+    return noStoreJson({ error: 'LEGACY_PROVIDER_IDENTITY_MISMATCH' }, { status: 409 });
+  }
+
+  serviceRole ??= createAdminClient();
   const { data, error } = await serviceRole.rpc('link_verified_wallet_identity', {
     p_user_id: user.id,
     p_provider_user_id: verifiedIdentity.privyUserId,
     p_evm_address: verifiedIdentity.embeddedEvmAddress,
     p_link_mode: body.linkMode,
-    p_expected_legacy_address: body.expectedLegacyWalletAddress ?? null,
   });
 
   if (error) {
     const message = error.message ?? '';
     if (
       message.includes('LEGACY_WALLET_MISMATCH') ||
+      message.includes('LEGACY_PROVIDER_IDENTITY_MISMATCH') ||
+      message.includes('LEGACY_MIGRATION_EVIDENCE_REQUIRED') ||
+      message.includes('LEGACY_MIGRATION_REQUIRED') ||
       message.includes('already linked') ||
       message.includes('already has a different active primary') ||
       message.includes('conflicts with verified Privy identity') ||
