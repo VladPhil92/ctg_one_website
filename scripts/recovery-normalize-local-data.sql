@@ -2,10 +2,15 @@
 
 -- Recovery-only destructive normalization for the ephemeral local Supabase target.
 --
--- The release migration chain intentionally materializes bootstrap/reference data
--- (for example beer styles, notification templates and private Storage buckets).
--- A production --data-only dump contains the authoritative current rows again,
--- so importing it on top of those bootstrap rows can violate UNIQUE constraints.
+-- The release migration chain intentionally materializes bootstrap/reference rows
+-- in public application tables (for example beer styles and notification
+-- templates). A production --data-only dump contains the authoritative current
+-- rows again, so importing it on top of those bootstrap rows can violate UNIQUE
+-- constraints or preserve stale configuration.
+--
+-- Storage is deliberately outside this SQL perimeter. Supabase protects direct
+-- DML against storage schema tables; bucket configuration and object bytes are
+-- aligned later through the loopback Storage API by recovery-storage-drill.mjs.
 --
 -- This script is deliberately unusable unless the workflow first sets the custom
 -- session guard below. The workflow also verifies the exact loopback connection
@@ -52,20 +57,6 @@ begin
 
   execute 'truncate table ' || v_tables || ' restart identity';
 
-  -- 0001_init materializes these two private buckets during schema replay. Their
-  -- production definitions are authoritative. Objects must already be absent at
-  -- this stage; actual Storage bytes are restored and checksum-verified later via
-  -- the loopback Storage API.
-  if exists (
-    select 1 from storage.objects
-    where bucket_id in ('kyc-documents', 'payment-proofs')
-  ) then
-    raise exception 'recovery normalization refused: migration-created Storage buckets unexpectedly contain objects';
-  end if;
-
-  delete from storage.buckets
-  where id in ('kyc-documents', 'payment-proofs');
-
   -- Fail closed if any non-extension application table retained rows. This turns
   -- the normalization step into a verified boundary rather than an assumed one.
   for v_table in
@@ -91,12 +82,5 @@ begin
         v_table.schema_name, v_table.table_name, v_rows;
     end if;
   end loop;
-
-  if exists (
-    select 1 from storage.buckets
-    where id in ('kyc-documents', 'payment-proofs')
-  ) then
-    raise exception 'recovery normalization failed: migration-created Storage bucket rows remain';
-  end if;
 end
 $recovery$;
