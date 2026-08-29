@@ -27,21 +27,43 @@ const [source, restored, storage, schemaDump, dataDump] = await Promise.all([
   readFile(dataDumpPath),
 ]);
 
-const countKeys = [
+// Storage metadata is intentionally reconciled through the Storage API byte drill,
+// not the database-data comparison. The remaining keys are database-authoritative
+// facts that must match before any recovered environment could be accepted.
+const databaseCountKeys = [
   'authUsers',
   'profiles',
-  'storageObjectMetadata',
+  'wallets',
+  'transactions',
+  'kycSubmissions',
+  'kycDocuments',
+  'adminAuditEntries',
+  'investmentParticipantProfiles',
+  'investmentFormulaVersions',
+  'investmentBeerStyles',
   'investmentLots',
   'investmentOrders',
+  'investmentFundingAllocations',
+  'investmentPaymentReceipts',
   'investmentLedgerEntries',
   'investmentSettlements',
   'investmentSales',
   'investmentBottleUnits',
+  'investmentWithdrawalRequests',
+  'investmentReinvestmentRequests',
+  'investmentPayouts',
+  'investmentPayoutEvents',
+  'investmentAuditEntries',
+  'domainEvents',
+  'notificationTemplates',
+  'notificationDeliveries',
+  'notificationDeliveryAttempts',
+  'documentJobs',
   'migrationCount',
 ];
 
 const mismatches = [];
-for (const key of countKeys) {
+for (const key of databaseCountKeys) {
   if (Number(source[key]) !== Number(restored[key])) {
     mismatches.push(`${key}: source=${String(source[key])}, restored=${String(restored[key])}`);
   }
@@ -86,7 +108,7 @@ const evidence = {
   },
   database: {
     backupFormat: 'supabase-filtered-schema-plus-data',
-    restoreStrategy: 'exact-release migration reconstruction plus production data import into an ephemeral local Supabase stack',
+    restoreStrategy: 'exact-release migration reconstruction, local baseline normalization, then production data import into an ephemeral Supabase stack',
     schemaDumpSha256,
     dataDumpSha256,
     recoverySetSha256,
@@ -94,12 +116,13 @@ const evidence = {
     countsMatched: true,
     goldenPath: 'PASS',
     kycTransactionalResilience: 'PASS',
-    criticalCounts: Object.fromEntries(countKeys.map((key) => [key, Number(source[key])])),
+    criticalCounts: Object.fromEntries(databaseCountKeys.map((key) => [key, Number(source[key])])),
   },
   storage: {
     restoredTo: storage.target,
     bucketCount: Number(storage.sourceBucketCount),
     objectCount: Number(storage.sourceObjectCount),
+    sourceMetadataRows: Number(source.storageObjectMetadata),
     bytes: Number(storage.sourceBytes),
     aggregateDigest: storage.aggregateDigest,
     buckets: storage.buckets,
@@ -112,7 +135,7 @@ const evidence = {
   },
 };
 
-const markdown = `# Recovery drill evidence\n\n- Result: **PASS**\n- Repository: \`${repository ?? 'unknown'}\`\n- Git ref: \`${gitRef ?? 'unknown'}\`\n- Git SHA: \`${gitSha}\`\n- GitHub Actions run: \`${runId ?? 'unknown'}\` attempt \`${runAttempt ?? 'unknown'}\`\n- Source snapshot: ${evidence.sourceSnapshotAt}\n- Completed: ${evidence.completedAt}\n- Latest migration: \`${evidence.sourceSchema.latestMigration}\` (${evidence.sourceSchema.migrationCount} migrations)\n- Database schema backup SHA-256: \`${schemaDumpSha256}\`\n- Database data backup SHA-256: \`${dataDumpSha256}\`\n- Database recovery-set SHA-256: \`${recoverySetSha256}\`\n- Database restore strategy: Supabase-filtered production backup + exact-release schema reconstruction\n- Database critical counts matched: **yes**\n- Golden Path on restored database: **PASS**\n- KYC transactional resilience contract: **PASS**\n- Storage buckets restored: ${evidence.storage.bucketCount}\n- Storage objects restored and checksum-verified: ${evidence.storage.objectCount}\n- Storage bytes verified: ${evidence.storage.bytes}\n- Measured drill duration: ${rtoSeconds}s\n- Observed backup age at completion: ${observedBackupAgeSeconds}s\n\nOnly redacted operational evidence is retained. The database backup files and Storage object bytes remain ephemeral runner data and are deleted at job completion.\n`;
+const markdown = `# Recovery drill evidence\n\n- Result: **PASS**\n- Repository: \`${repository ?? 'unknown'}\`\n- Git ref: \`${gitRef ?? 'unknown'}\`\n- Git SHA: \`${gitSha}\`\n- GitHub Actions run: \`${runId ?? 'unknown'}\` attempt \`${runAttempt ?? 'unknown'}\`\n- Source snapshot: ${evidence.sourceSnapshotAt}\n- Completed: ${evidence.completedAt}\n- Latest migration: \`${evidence.sourceSchema.latestMigration}\` (${evidence.sourceSchema.migrationCount} migrations)\n- Database schema backup SHA-256: \`${schemaDumpSha256}\`\n- Database data backup SHA-256: \`${dataDumpSha256}\`\n- Database recovery-set SHA-256: \`${recoverySetSha256}\`\n- Database restore strategy: Supabase-filtered production backup + exact-release schema reconstruction + local baseline normalization\n- Database critical counts matched: **yes**\n- Golden Path on restored database: **PASS**\n- KYC transactional resilience contract: **PASS**\n- Storage buckets restored: ${evidence.storage.bucketCount}\n- Storage objects restored and checksum-verified: ${evidence.storage.objectCount}\n- Storage bytes verified: ${evidence.storage.bytes}\n- Measured drill duration: ${rtoSeconds}s\n- Observed backup age at completion: ${observedBackupAgeSeconds}s\n\nOnly redacted operational evidence is retained. The database backup files and Storage object bytes remain ephemeral runner data and are deleted at job completion.\n`;
 
 await writeFile(outputJson, JSON.stringify(evidence, null, 2));
 await writeFile(outputMarkdown, markdown);
