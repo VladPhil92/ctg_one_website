@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { consumeAuthenticatedRateLimit } from '@/lib/security/api-rate-limit';
-import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import {
   PrivyIdentityTokenError,
   verifyPrivyIdentityToken,
 } from '@/lib/wallet/privy-identity-token';
+
+const MAX_REQUEST_BYTES = 4 * 1024;
 
 const requestSchema = z.object({
   linkMode: z.enum(['new', 'legacy_preserve']),
@@ -31,6 +33,7 @@ const requestSchema = z.object({
 function noStoreJson(body: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
   headers.set('Cache-Control', 'no-store');
+  headers.set('X-Content-Type-Options', 'nosniff');
   return NextResponse.json(body, { ...init, headers });
 }
 
@@ -59,6 +62,15 @@ function privyErrorResponse(error: PrivyIdentityTokenError) {
 }
 
 export async function POST(request: Request) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return noStoreJson({ error: 'WALLET_IDENTITY_NOT_CONFIGURED' }, { status: 503 });
+  }
+
+  const contentLength = Number(request.headers.get('content-length') ?? '0');
+  if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) {
+    return noStoreJson({ error: 'REQUEST_TOO_LARGE' }, { status: 413 });
+  }
+
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
@@ -89,7 +101,11 @@ export async function POST(request: Request) {
 
   let body: z.infer<typeof requestSchema>;
   try {
-    body = requestSchema.parse(await request.json());
+    const rawBody = await request.text();
+    if (Buffer.byteLength(rawBody, 'utf8') > MAX_REQUEST_BYTES) {
+      return noStoreJson({ error: 'REQUEST_TOO_LARGE' }, { status: 413 });
+    }
+    body = requestSchema.parse(JSON.parse(rawBody));
   } catch {
     return noStoreJson({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
@@ -106,7 +122,7 @@ export async function POST(request: Request) {
     return noStoreJson({ error: 'INVALID_PRIVY_IDENTITY_TOKEN' }, { status: 401 });
   }
 
-  const serviceRole = createServiceRoleClient();
+  const serviceRole = createAdminClient();
   const { data, error } = await serviceRole.rpc('link_verified_wallet_identity', {
     p_user_id: user.id,
     p_provider_user_id: verifiedIdentity.privyUserId,
