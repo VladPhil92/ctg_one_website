@@ -3,9 +3,8 @@
 -- The browser cannot write wallet_identity_links/wallet_external_accounts.
 -- A server route first verifies the Supabase session and a signed Privy identity
 -- token, then calls link_verified_wallet_identity() through the service role.
--- This function is therefore the atomic database boundary for an already-
--- verified relationship; it never creates a Privy wallet or trusts browser
--- claims about identity ownership.
+-- Legacy-wallet provenance is loaded from a server-only migration-evidence row;
+-- a browser assertion can never mark an arbitrary current wallet as legacy.
 
 -- ---------------------------------------------------------------------------
 -- Rate limiting: add a bounded identity-link scope.
@@ -100,6 +99,45 @@ revoke all on function public.consume_api_rate_limit(text) from public, anon;
 grant execute on function public.consume_api_rate_limit(text) to authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
+-- Trusted legacy-migration provenance.
+--
+-- Rows are created/maintained only by trusted operator or service-role tooling
+-- from a deterministic legacy export. No browser role receives any privilege.
+-- ---------------------------------------------------------------------------
+create table public.wallet_legacy_migration_evidence (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete restrict,
+  provider text not null check (provider = 'privy'),
+  provider_user_id text not null check (length(trim(provider_user_id)) between 3 and 255),
+  chain_family text not null default 'evm' check (chain_family = 'evm'),
+  expected_address text not null check (trim(expected_address) ~* '^0x[0-9a-f]{40}$'),
+  expected_address_normalized text generated always as (lower(trim(expected_address))) stored,
+  source_digest_sha256 text not null check (lower(source_digest_sha256) ~ '^[0-9a-f]{64}$'),
+  evidence_captured_at timestamptz not null,
+  status text not null default 'pending' check (status in ('pending','consumed','rejected')),
+  consumed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint wallet_legacy_migration_evidence_user_provider_unique unique (user_id, provider),
+  constraint wallet_legacy_migration_evidence_provider_user_unique unique (provider, provider_user_id),
+  constraint wallet_legacy_migration_evidence_address_unique unique (chain_family, expected_address_normalized),
+  constraint wallet_legacy_migration_evidence_status_check check (
+    (status = 'pending' and consumed_at is null)
+    or (status = 'consumed' and consumed_at is not null)
+    or (status = 'rejected' and consumed_at is null)
+  )
+);
+
+comment on table public.wallet_legacy_migration_evidence is
+  'Server-only provenance for a pre-unification Privy identity and EVM wallet. The expected address comes from deterministic legacy evidence, never from the browser.';
+
+create index wallet_legacy_migration_evidence_status_idx
+  on public.wallet_legacy_migration_evidence(status, evidence_captured_at);
+
+alter table public.wallet_legacy_migration_evidence enable row level security;
+revoke all on public.wallet_legacy_migration_evidence from public, anon, authenticated;
+
+-- ---------------------------------------------------------------------------
 -- Append-only identity-link audit trail.
 -- ---------------------------------------------------------------------------
 create table public.wallet_identity_audit_log (
@@ -126,7 +164,7 @@ create policy wallet_identity_audit_log_read_own_or_admin
   on public.wallet_identity_audit_log
   for select
   to authenticated
-  using (actor_user_id = auth.uid() or public.is_admin());
+  using (actor_user_id = auth.uid() or (select public.is_admin()));
 
 revoke all on public.wallet_identity_audit_log from public, anon, authenticated;
 grant select on public.wallet_identity_audit_log to authenticated;
@@ -157,8 +195,7 @@ create or replace function public.link_verified_wallet_identity(
   p_user_id uuid,
   p_provider_user_id text,
   p_evm_address text,
-  p_link_mode text,
-  p_expected_legacy_address text default null
+  p_link_mode text
 )
 returns jsonb
 language plpgsql
@@ -168,12 +205,14 @@ as $$
 declare
   v_provider_user_id text := nullif(trim(p_provider_user_id), '');
   v_address text := lower(nullif(trim(p_evm_address), ''));
-  v_expected_legacy text := lower(nullif(trim(p_expected_legacy_address), ''));
+  v_legacy_evidence public.wallet_legacy_migration_evidence;
   v_link public.wallet_identity_links;
   v_provider_link public.wallet_identity_links;
   v_account public.wallet_external_accounts;
   v_conflicting_account public.wallet_external_accounts;
   v_primary_account public.wallet_external_accounts;
+  v_link_preexisting boolean := false;
+  v_account_preexisting boolean := false;
   v_is_idempotent boolean := false;
   v_now timestamptz := clock_timestamp();
 begin
@@ -193,24 +232,35 @@ begin
   if p_link_mode not in ('new','legacy_preserve') then
     raise exception 'invalid wallet identity link mode';
   end if;
-  if v_expected_legacy is not null and v_expected_legacy !~ '^0x[0-9a-f]{40}$' then
-    raise exception 'valid expected legacy EVM address is required';
-  end if;
-  if p_link_mode = 'legacy_preserve' and v_expected_legacy is null then
-    raise exception 'legacy_preserve requires the expected legacy wallet address';
-  end if;
-  if p_link_mode = 'new' and v_expected_legacy is not null then
-    raise exception 'new identity link must not supply a legacy wallet address';
-  end if;
-  if v_expected_legacy is not null and v_expected_legacy <> v_address then
-    raise exception 'LEGACY_WALLET_MISMATCH';
-  end if;
 
   -- Serialize competing claims in a deterministic order. These locks protect
-  -- both idempotent retries and races involving the same provider identity/address.
+  -- idempotent retries and races involving the same user/provider/address.
   perform pg_advisory_xact_lock(hashtextextended('wallet-link:user:' || p_user_id::text, 0));
   perform pg_advisory_xact_lock(hashtextextended('wallet-link:provider:privy:' || v_provider_user_id, 0));
   perform pg_advisory_xact_lock(hashtextextended('wallet-link:evm:' || v_address, 0));
+
+  select * into v_legacy_evidence
+  from public.wallet_legacy_migration_evidence
+  where user_id = p_user_id and provider = 'privy'
+  for update;
+
+  if p_link_mode = 'legacy_preserve' then
+    if v_legacy_evidence.id is null then
+      raise exception 'LEGACY_MIGRATION_EVIDENCE_REQUIRED';
+    end if;
+    if v_legacy_evidence.status = 'rejected' then
+      raise exception 'legacy migration evidence requires operator review';
+    end if;
+    if v_legacy_evidence.provider_user_id <> v_provider_user_id then
+      raise exception 'LEGACY_PROVIDER_IDENTITY_MISMATCH';
+    end if;
+    if v_legacy_evidence.expected_address_normalized <> v_address then
+      raise exception 'LEGACY_WALLET_MISMATCH';
+    end if;
+  elsif v_legacy_evidence.id is not null and v_legacy_evidence.status = 'pending' then
+    -- A known legacy user cannot bypass preservation by asking for a fresh link.
+    raise exception 'LEGACY_MIGRATION_REQUIRED';
+  end if;
 
   select * into v_link
   from public.wallet_identity_links
@@ -227,6 +277,7 @@ begin
   end if;
 
   if v_link.id is not null then
+    v_link_preexisting := true;
     if v_link.status = 'revoked' then
       raise exception 'revoked wallet identity links require operator review';
     end if;
@@ -236,8 +287,6 @@ begin
     if v_link.link_mode <> p_link_mode then
       raise exception 'wallet identity link mode cannot change implicitly';
     end if;
-
-    v_is_idempotent := v_link.status = 'verified';
 
     update public.wallet_identity_links
     set status = 'verified',
@@ -268,6 +317,7 @@ begin
   end if;
 
   if v_conflicting_account.id is not null then
+    v_account_preexisting := true;
     if v_conflicting_account.status = 'revoked' then
       raise exception 'revoked external wallet accounts require operator review';
     end if;
@@ -311,6 +361,15 @@ begin
     returning * into v_account;
   end if;
 
+  v_is_idempotent := v_link_preexisting and v_account_preexisting;
+
+  if p_link_mode = 'legacy_preserve' and v_legacy_evidence.status = 'pending' then
+    update public.wallet_legacy_migration_evidence
+    set status = 'consumed', consumed_at = v_now, updated_at = v_now
+    where id = v_legacy_evidence.id
+    returning * into v_legacy_evidence;
+  end if;
+
   insert into public.wallet_identity_audit_log(
     actor_user_id, action, identity_link_id, external_account_id,
     provider, provider_user_id, address_normalized, details
@@ -325,6 +384,8 @@ begin
     jsonb_build_object(
       'link_mode', p_link_mode,
       'legacy_preserved', p_link_mode = 'legacy_preserve',
+      'legacy_evidence_id', case when p_link_mode = 'legacy_preserve' then v_legacy_evidence.id else null end,
+      'legacy_source_digest_sha256', case when p_link_mode = 'legacy_preserve' then v_legacy_evidence.source_digest_sha256 else null end,
       'trusted_boundary', 'SERVER_VERIFIED_PRIVY_IDENTITY_TOKEN'
     )
   );
@@ -343,7 +404,7 @@ begin
 end;
 $$;
 
-revoke all on function public.link_verified_wallet_identity(uuid,text,text,text,text)
+revoke all on function public.link_verified_wallet_identity(uuid,text,text,text)
   from public, anon, authenticated;
-grant execute on function public.link_verified_wallet_identity(uuid,text,text,text,text)
+grant execute on function public.link_verified_wallet_identity(uuid,text,text,text)
   to service_role;
