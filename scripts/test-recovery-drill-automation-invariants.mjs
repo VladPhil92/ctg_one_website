@@ -168,15 +168,10 @@ assert.match(
   /truncate table[\s\S]*restart identity/i,
   'Normalizer must clear migration-materialized application rows in an FK-aware table set.',
 );
-assert.match(
+assert.doesNotMatch(
   normalizer,
-  /storage\.objects[\s\S]*kyc-documents[\s\S]*payment-proofs/,
-  'Normalizer must refuse to remove migration-created Storage buckets when they unexpectedly contain objects.',
-);
-assert.match(
-  normalizer,
-  /delete from storage\.buckets/,
-  'Normalizer must remove migration-created bucket configuration so production Storage configuration remains authoritative.',
+  /\b(?:insert|update|delete|truncate)\b[^;]*\bstorage\./i,
+  'SQL normalization must never mutate Supabase Storage tables directly; Storage changes belong to the Storage API contract.',
 );
 assert.doesNotMatch(
   normalizer,
@@ -203,6 +198,7 @@ assert.match(
 assert.match(workflow, /recovery-storage-drill\.mjs/, 'Recovery drill must restore actual Storage bytes, not metadata only.');
 assert.match(workflow, /golden-path-transactional-smoke\.sql/, 'Recovered database must execute the transactional Golden Path.');
 assert.match(workflow, /Upload redacted recovery evidence only/, 'Only redacted evidence may leave the ephemeral runner.');
+assert.match(workflow, /uses:\s*actions\/upload-artifact@v7/, 'Recovery evidence upload must use the current artifact action runtime.');
 assert.doesNotMatch(
   workflow,
   /path:\s*[^\n]*(production-(?:schema|data)\.sql|\.recovery-work\/storage(?:\/|\b))/,
@@ -212,6 +208,9 @@ assert.match(workflow, /rm -rf \.recovery-work/, 'Recovery material must be dest
 
 assert.match(storageDrill, /127\.0\.0\.1.*localhost.*::1/s, 'Storage restore must enforce a loopback-only target.');
 assert.match(storageDrill, /Hosted targets are refused by design/, 'Storage drill must fail closed for hosted restore targets.');
+assert.match(storageDrill, /target\.storage\.deleteBucket/, 'Target-only local buckets must be removed through the supported Storage API, never direct SQL.');
+assert.match(storageDrill, /unexpectedObjects\.length !== 0/, 'Storage drill must refuse to remove a target-only bucket that unexpectedly contains objects.');
+assert.match(storageDrill, /alignedBucketIds[\s\S]*expectedBucketIds/, 'Storage recovery must verify the final local bucket set matches production.');
 assert.match(storageDrill, /sha256/, 'Storage recovery must checksum object bytes.');
 assert.match(storageDrill, /sourceObjectCount/, 'Storage recovery evidence must include source object count.');
 assert.doesNotMatch(storageDrill, /console\.log\([^\n]*(objectPath|sourceKey|targetKey)/, 'Storage drill must not log object paths or secret keys.');
