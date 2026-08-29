@@ -13,6 +13,7 @@ BEGIN
   IF to_regprocedure('public.finalize_settlement(uuid)') IS NULL THEN missing := array_append(missing, 'finalize_settlement'); END IF;
   IF to_regprocedure('public.request_withdrawal(bigint)') IS NULL THEN missing := array_append(missing, 'request_withdrawal'); END IF;
   IF to_regprocedure('public.request_reinvestment(uuid,uuid,bigint)') IS NULL THEN missing := array_append(missing, 'request_reinvestment'); END IF;
+  IF to_regprocedure('public.guard_negative_investment_settlement_pending_business_rule()') IS NULL THEN missing := array_append(missing, 'guard_negative_investment_settlement_pending_business_rule'); END IF;
 
   IF cardinality(missing) > 0 THEN
     RAISE EXCEPTION 'Golden Path functions missing after clean migration apply: %', array_to_string(missing, ', ');
@@ -41,6 +42,16 @@ BEGIN
     WHERE conname='investment_settlements_one_per_lot'
   ) THEN
     RAISE EXCEPTION 'one-settlement-per-lot constraint missing';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_trigger
+    WHERE tgname = 'investment_settlement_negative_economics_fail_closed'
+      AND tgrelid = 'public.investment_settlements'::regclass
+      AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'negative-economics settlement fail-closed trigger missing';
   END IF;
 END $$;
 
@@ -81,6 +92,14 @@ BEGIN
     'EXECUTE'
   ) THEN
     RAISE EXCEPTION 'authenticated must retain transport-aware beer-style economics RPC';
+  END IF;
+
+  IF has_function_privilege(
+    'authenticated',
+    'public.guard_negative_investment_settlement_pending_business_rule()',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'authenticated must not directly execute settlement safety trigger function';
   END IF;
 END $$;
 
