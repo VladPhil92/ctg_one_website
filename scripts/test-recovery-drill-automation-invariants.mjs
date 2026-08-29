@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (file) => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
-const [workflow, storageDrill, evidenceCompiler, runbook] = await Promise.all([
+const [workflow, normalizer, snapshot, storageDrill, evidenceCompiler, runbook] = await Promise.all([
   read('.github/workflows/recovery-drill.yml'),
+  read('scripts/recovery-normalize-local-data.sql'),
+  read('scripts/recovery-database-snapshot.sql'),
   read('scripts/recovery-storage-drill.mjs'),
   read('scripts/compile-recovery-evidence.mjs'),
   read('docs/infrastructure/BACKUP_RESTORE.md'),
@@ -42,6 +44,8 @@ assert.doesNotMatch(
   /with:\s*\n\s*ref:\s*main(?:\s|$)/,
   'Recovery checkout must not follow a mutable main ref after dispatch.',
 );
+assert.match(workflow, /uses:\s*actions\/checkout@v7/, 'Recovery workflow must use the current Node 24 checkout action runtime.');
+assert.match(workflow, /uses:\s*actions\/setup-node@v7/, 'Recovery workflow must use the current Node 24 setup-node action runtime.');
 assert.match(workflow, /git rev-parse HEAD/, 'Recovery drill must independently resolve the checked-out commit.');
 assert.match(
   workflow,
@@ -53,7 +57,7 @@ assert.match(
   /RECOVERY_CHECKED_OUT_SHA=/,
   'Verified checked-out SHA must be exported for redacted recovery evidence provenance.',
 );
-const checkoutIndex = workflow.indexOf('uses: actions/checkout@v4');
+const checkoutIndex = workflow.indexOf('uses: actions/checkout@v7');
 const workspaceIndex = workflow.indexOf('mkdir -p .recovery-work/evidence .recovery-work/storage');
 assert.ok(checkoutIndex >= 0, 'Recovery workflow must check out the repository.');
 assert.ok(
@@ -87,31 +91,115 @@ assert.match(
   /--file "\$RECOVERY_DATABASE_DATA_DUMP"[\s\S]*--data-only[\s\S]*--use-copy/,
   'Recovery set must contain a production data backup suitable for supported Supabase restore semantics.',
 );
+assert.doesNotMatch(workflow, /\bpg_dump\b/, 'Recovery workflow must not call raw pg_dump.');
+assert.doesNotMatch(workflow, /\bpg_restore\b/, 'Recovery workflow must not replay an unfiltered custom archive.');
 assert.doesNotMatch(
   workflow,
-  /\bpg_dump\b/,
-  'Recovery workflow must not call raw pg_dump because Supabase-managed internal DDL can fail during restore.',
-);
-assert.doesNotMatch(
-  workflow,
-  /\bpg_restore\b/,
-  'Recovery workflow must not replay an unfiltered custom archive into a local Supabase target.',
+  /supabase db dump[\s\S]{0,500}--clean/,
+  'Data recovery must not hide baseline conflicts by turning a data-only import into destructive schema cleanup.',
 );
 assert.match(
   workflow,
   /RECOVERY_TARGET_DATABASE_URL:\s*postgresql:\/\/postgres:postgres@127\.0\.0\.1:54322\/postgres/,
   'Database recovery target must remain the ephemeral loopback Supabase Postgres instance.',
 );
+
+const preflightIndex = workflow.indexOf('Verify isolated local transactional state before normalization');
+const normalizeIndex = workflow.indexOf('Normalize migration-materialized data on isolated local target');
+const normalizedVerifyIndex = workflow.indexOf('Verify normalized local data baseline');
+const restoreIndex = workflow.indexOf('Restore production data into isolated local Supabase database');
+assert.ok(preflightIndex >= 0, 'Recovery drill must verify transactional state before destructive local normalization.');
+assert.ok(normalizeIndex > preflightIndex, 'Local normalization must occur only after the pre-normalization safety check.');
+assert.ok(normalizedVerifyIndex > normalizeIndex, 'Recovery drill must verify the normalized baseline before production import.');
+assert.ok(restoreIndex > normalizedVerifyIndex, 'Production data import must occur only after baseline normalization is verified.');
 assert.match(
   workflow,
-  /Verify isolated local database is clean before restore/,
-  'Recovery drill must fail closed if the local target contains unexpected business/Auth data before import.',
+  /expected_target=['"]postgresql:\/\/postgres:postgres@127\.0\.0\.1:54322\/postgres['"]/,
+  'Workflow must independently bind destructive normalization to the exact loopback recovery URL.',
+);
+assert.match(
+  workflow,
+  /SET ctg\.recovery_target = 'local-ephemeral-supabase'/,
+  'Workflow must set the explicit local-recovery guard required by the normalization SQL.',
+);
+assert.match(
+  workflow,
+  /--file scripts\/recovery-normalize-local-data\.sql/,
+  'Recovery workflow must invoke the reviewed local normalization script.',
+);
+assert.match(
+  workflow,
+  /\.investmentBeerStyles == 0/,
+  'Normalized baseline verification must prove migration-materialized beer styles were removed before import.',
+);
+assert.match(
+  workflow,
+  /\.notificationTemplates == 0/,
+  'Normalized baseline verification must prove migration-materialized notification templates were removed before import.',
+);
+assert.match(
+  workflow,
+  /del\(\.snapshotAt, \.storageObjectMetadata\)/,
+  'Database row-count reconciliation must leave Storage metadata to the byte-level Storage recovery contract.',
 );
 assert.match(
   workflow,
   /SET session_replication_role = replica/,
   'Production data restore must disable triggers using the provider-documented restore pattern.',
 );
+
+assert.match(
+  normalizer,
+  /current_setting\('ctg\.recovery_target', true\)/,
+  'Normalizer must require an explicit session-scoped recovery target guard.',
+);
+assert.match(
+  normalizer,
+  /local-ephemeral-supabase/,
+  'Normalizer must recognize only the reviewed local ephemeral recovery guard value.',
+);
+assert.match(
+  normalizer,
+  /pg_depend[\s\S]*pg_extension/,
+  'Normalizer must exclude extension-owned tables from application-data truncation.',
+);
+assert.match(
+  normalizer,
+  /truncate table[\s\S]*restart identity/i,
+  'Normalizer must clear migration-materialized application rows in an FK-aware table set.',
+);
+assert.match(
+  normalizer,
+  /storage\.objects[\s\S]*kyc-documents[\s\S]*payment-proofs/,
+  'Normalizer must refuse to remove migration-created Storage buckets when they unexpectedly contain objects.',
+);
+assert.match(
+  normalizer,
+  /delete from storage\.buckets/,
+  'Normalizer must remove migration-created bucket configuration so production Storage configuration remains authoritative.',
+);
+assert.doesNotMatch(
+  normalizer,
+  /https?:\/\//,
+  'Normalizer is a database-local contract and must not contain any hosted endpoint.',
+);
+
+for (const criticalCount of [
+  'investmentBeerStyles',
+  'investmentPaymentReceipts',
+  'investmentPayouts',
+  'notificationTemplates',
+  'domainEvents',
+]) {
+  assert.match(snapshot, new RegExp(`'${criticalCount}'`), `Recovery snapshot must include ${criticalCount}.`);
+  assert.match(evidenceCompiler, new RegExp(`'${criticalCount}'`), `Recovery evidence must reconcile ${criticalCount}.`);
+}
+assert.match(
+  evidenceCompiler,
+  /sourceObjectCount[\s\S]*source\.storageObjectMetadata/,
+  'Storage byte count must still reconcile against source storage.objects metadata.',
+);
+
 assert.match(workflow, /recovery-storage-drill\.mjs/, 'Recovery drill must restore actual Storage bytes, not metadata only.');
 assert.match(workflow, /golden-path-transactional-smoke\.sql/, 'Recovered database must execute the transactional Golden Path.');
 assert.match(workflow, /Upload redacted recovery evidence only/, 'Only redacted evidence may leave the ephemeral runner.');
