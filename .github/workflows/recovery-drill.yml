@@ -138,17 +138,26 @@ jobs:
           supabase db dump \
             --db-url "$SOURCE_DATABASE_URL" \
             --file "$RECOVERY_DATABASE_SCHEMA_DUMP"
-          # Storage is intentionally excluded from the SQL data restore. Hosted
-          # Storage metadata can run a newer managed schema than the pinned local
-          # stack, while bucket configuration and object bytes are already restored
-          # and checksum-verified later through the loopback Storage API.
+          # Use the provider-documented exact Storage vector exclusions during
+          # export. CLI -x accepts schema.table entries; a storage.* wildcard is
+          # not relied on because run #7 proved it can still emit storage.buckets.
+          # The next fail-closed sanitizer removes every managed Storage COPY
+          # block before SQL restore. Storage is recovered separately via API.
           supabase db dump \
             --db-url "$SOURCE_DATABASE_URL" \
             --file "$RECOVERY_DATABASE_DATA_DUMP" \
             --data-only \
             --use-copy \
-            -x 'storage.*'
+            -x 'storage.buckets_vectors' \
+            -x 'storage.vector_indexes'
           test -s "$RECOVERY_DATABASE_SCHEMA_DUMP"
+          test -s "$RECOVERY_DATABASE_DATA_DUMP"
+
+      - name: Sanitize managed Storage metadata from production data dump
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/sanitize-recovery-data-dump.mjs "$RECOVERY_DATABASE_DATA_DUMP"
           test -s "$RECOVERY_DATABASE_DATA_DUMP"
 
       - name: Verify isolated local transactional state before normalization

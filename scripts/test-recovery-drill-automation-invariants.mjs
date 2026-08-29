@@ -2,11 +2,12 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (file) => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
-const [workflow, normalizer, snapshot, storageDrill, evidenceCompiler, runbook] = await Promise.all([
+const [workflow, normalizer, snapshot, storageDrill, dumpSanitizer, evidenceCompiler, runbook] = await Promise.all([
   read('.github/workflows/recovery-drill.yml'),
   read('scripts/recovery-normalize-local-data.sql'),
   read('scripts/recovery-database-snapshot.sql'),
   read('scripts/recovery-storage-drill.mjs'),
+  read('scripts/sanitize-recovery-data-dump.mjs'),
   read('scripts/compile-recovery-evidence.mjs'),
   read('docs/infrastructure/BACKUP_RESTORE.md'),
 ]);
@@ -91,11 +92,36 @@ assert.match(
   /--file "\$RECOVERY_DATABASE_DATA_DUMP"[\s\S]*--data-only[\s\S]*--use-copy/,
   'Recovery set must contain a production data backup suitable for supported Supabase restore semantics.',
 );
+for (const providerDocumentedStorageExclude of ['storage.buckets_vectors', 'storage.vector_indexes']) {
+  assert.match(
+    workflow,
+    new RegExp(`-x ['"]${providerDocumentedStorageExclude.replaceAll('.', '\\.')}['"]`),
+    `Production dump must keep the provider-documented ${providerDocumentedStorageExclude} exclusion.`,
+  );
+}
+assert.doesNotMatch(
+  workflow,
+  /-x ['"]storage\.\*['"]/,
+  'Recovery must not rely on a storage.* -x wildcard; production run #7 proved that CLI 2.111.0 can still emit storage.buckets.',
+);
 assert.match(
   workflow,
-  /--file "\$RECOVERY_DATABASE_DATA_DUMP"[\s\S]*-x ['"]storage\.\*['"]/,
-  'Production SQL data restore must exclude managed Storage metadata because Storage is recovered through the API and hosted/local Storage schemas may differ.',
+  /Sanitize managed Storage metadata from production data dump[\s\S]*node scripts\/sanitize-recovery-data-dump\.mjs "\$RECOVERY_DATABASE_DATA_DUMP"/,
+  'Recovery workflow must deterministically sanitize managed Storage COPY blocks after dump creation.',
 );
+const dataBackupIndex = workflow.indexOf('Create Supabase-aware ephemeral production database backup');
+const dataSanitizerIndex = workflow.indexOf('Sanitize managed Storage metadata from production data dump');
+const preflightIndex = workflow.indexOf('Verify isolated local transactional state before normalization');
+const normalizeIndex = workflow.indexOf('Normalize migration-materialized data on isolated local target');
+const normalizedVerifyIndex = workflow.indexOf('Verify normalized local data baseline');
+const restoreIndex = workflow.indexOf('Restore production data into isolated local Supabase database');
+assert.ok(dataBackupIndex >= 0, 'Recovery drill must create a production data backup.');
+assert.ok(dataSanitizerIndex > dataBackupIndex, 'Managed Storage data sanitization must occur only after the production dump exists.');
+assert.ok(preflightIndex > dataSanitizerIndex, 'Target preflight must run after the recovery data dump has passed sanitization.');
+assert.ok(preflightIndex >= 0, 'Recovery drill must verify transactional state before destructive local normalization.');
+assert.ok(normalizeIndex > preflightIndex, 'Local normalization must occur only after the pre-normalization safety check.');
+assert.ok(normalizedVerifyIndex > normalizeIndex, 'Recovery drill must verify the normalized baseline before production import.');
+assert.ok(restoreIndex > normalizedVerifyIndex, 'Production data import must occur only after baseline normalization is verified.');
 assert.doesNotMatch(workflow, /\bpg_dump\b/, 'Recovery workflow must not call raw pg_dump.');
 assert.doesNotMatch(workflow, /\bpg_restore\b/, 'Recovery workflow must not replay an unfiltered custom archive.');
 assert.doesNotMatch(
@@ -109,14 +135,6 @@ assert.match(
   'Database recovery target must remain the ephemeral loopback Supabase Postgres instance.',
 );
 
-const preflightIndex = workflow.indexOf('Verify isolated local transactional state before normalization');
-const normalizeIndex = workflow.indexOf('Normalize migration-materialized data on isolated local target');
-const normalizedVerifyIndex = workflow.indexOf('Verify normalized local data baseline');
-const restoreIndex = workflow.indexOf('Restore production data into isolated local Supabase database');
-assert.ok(preflightIndex >= 0, 'Recovery drill must verify transactional state before destructive local normalization.');
-assert.ok(normalizeIndex > preflightIndex, 'Local normalization must occur only after the pre-normalization safety check.');
-assert.ok(normalizedVerifyIndex > normalizeIndex, 'Recovery drill must verify the normalized baseline before production import.');
-assert.ok(restoreIndex > normalizedVerifyIndex, 'Production data import must occur only after baseline normalization is verified.');
 assert.match(
   workflow,
   /expected_target=['"]postgresql:\/\/postgres:postgres@127\.0\.0\.1:54322\/postgres['"]/,
@@ -151,6 +169,37 @@ assert.match(
   workflow,
   /SET session_replication_role = replica/,
   'Production data restore must disable triggers using the provider-documented restore pattern.',
+);
+
+assert.match(
+  dumpSanitizer,
+  /COPY_HEADER/,
+  'Recovery dump sanitizer must parse COPY blocks structurally instead of using an unsafe global text replacement.',
+);
+assert.match(
+  dumpSanitizer,
+  /schema\?\.toLowerCase\(\) === 'storage'/,
+  'Recovery dump sanitizer must identify managed Storage COPY blocks by parsed schema.',
+);
+assert.match(
+  dumpSanitizer,
+  /COPY_TERMINATOR/,
+  'Recovery dump sanitizer must consume complete COPY payloads through the pg_dump terminator.',
+);
+assert.match(
+  dumpSanitizer,
+  /unterminated COPY block/,
+  'Recovery dump sanitizer must fail closed on malformed COPY blocks.',
+);
+assert.match(
+  dumpSanitizer,
+  /Managed Storage SQL remained after recovery dump sanitization/,
+  'Recovery dump sanitizer must verify that managed Storage SQL cannot reach psql restore.',
+);
+assert.match(
+  dumpSanitizer,
+  /pathToFileURL\(invokedPath\)\.href === import\.meta\.url/,
+  'Recovery dump sanitizer must remain testable as a pure module and executable as a reviewed CLI.',
 );
 
 assert.match(
