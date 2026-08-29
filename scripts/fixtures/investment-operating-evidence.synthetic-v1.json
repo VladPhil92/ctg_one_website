@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0074",
-    "schemaMigrationName": "revoke_anonymous_sensitive_rpc_execution",
-    "schemaMigrationCount": 74,
+    "schemaMigration": "0075",
+    "schemaMigrationName": "fail_closed_negative_investment_settlement",
+    "schemaMigrationCount": 75,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
