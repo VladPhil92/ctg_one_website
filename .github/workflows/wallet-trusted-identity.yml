@@ -68,11 +68,24 @@ jobs:
         with:
           version: 2.111.0
 
+      - name: Configure isolated database port
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('supabase/config.toml')
+          source = path.read_text()
+          marker = '[db]\n# Port to use for the local database URL.\nport = 54322'
+          replacement = '[db]\n# Port to use for the local database URL.\nport = 55432'
+          if marker not in source:
+              raise SystemExit('Expected Supabase database port stanza was not found')
+          path.write_text(source.replace(marker, replacement, 1))
+          PY
+
       - name: Start isolated Supabase database
         run: supabase db start
 
       - name: Trusted wallet identity PostgreSQL contract
         run: |
-          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+          psql "postgresql://postgres:postgres@127.0.0.1:55432/postgres" \
             -v ON_ERROR_STOP=1 \
             -f scripts/wallet-trusted-identity-schema-smoke.sql
