@@ -6,7 +6,6 @@ const files = {
   migration: path.join(root, 'supabase/migrations/20260829234000_0077_trusted_wallet_identity_linking.sql'),
   verifier: path.join(root, 'src/lib/wallet/privy-identity-token.ts'),
   route: path.join(root, 'src/app/api/wallet/identity/link/route.ts'),
-  rateLimit: path.join(root, 'src/lib/security/api-rate-limit.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
   env: path.join(root, '.env.local.example'),
 };
@@ -20,7 +19,6 @@ for (const [label, file] of Object.entries(files)) {
 const migration = fs.readFileSync(files.migration, 'utf8');
 const verifier = fs.readFileSync(files.verifier, 'utf8');
 const route = fs.readFileSync(files.route, 'utf8');
-const rateLimit = fs.readFileSync(files.rateLimit, 'utf8');
 const schema = fs.readFileSync(files.schema, 'utf8');
 const env = fs.readFileSync(files.env, 'utf8');
 
@@ -33,9 +31,13 @@ const requireFragments = (source, label, fragments) => {
 };
 
 requireFragments(migration, 'trusted identity migration', [
-  "when 'wallet.identity-link' then",
-  'v_limit := 6;',
-  'v_window_seconds := 600;',
+  'create or replace function public.consume_wallet_identity_link_rate_limit(p_user_id uuid)',
+  'v_limit constant integer := 6;',
+  'v_window_seconds constant integer := 600;',
+  "v_scope constant text := 'wallet.identity-link';",
+  'revoke all on function public.consume_wallet_identity_link_rate_limit(uuid)',
+  'grant execute on function public.consume_wallet_identity_link_rate_limit(uuid)',
+  'to service_role;',
   'create table public.wallet_legacy_migration_evidence',
   'expected_address_normalized text generated always as (lower(trim(expected_address))) stored',
   'source_digest_sha256 text not null',
@@ -60,12 +62,11 @@ requireFragments(migration, 'trusted identity migration', [
   "raise exception 'canonical CTG user already has a different active primary EVM wallet'",
   "set status = 'consumed', consumed_at = v_now",
   'revoke all on function public.link_verified_wallet_identity(uuid,text,text,text)',
-  'from public, anon, authenticated;',
   'grant execute on function public.link_verified_wallet_identity(uuid,text,text,text)',
-  'to service_role;',
 ]);
 
 const forbiddenMigration = [
+  'grant execute on function public.consume_wallet_identity_link_rate_limit(uuid) to authenticated',
   'grant execute on function public.link_verified_wallet_identity(uuid,text,text,text) to authenticated',
   'grant select on public.wallet_legacy_migration_evidence to authenticated',
   'grant insert on public.wallet_legacy_migration_evidence to authenticated',
@@ -97,8 +98,9 @@ requireFragments(verifier, 'Privy identity-token verifier', [
 ]);
 
 requireFragments(route, 'trusted identity-link route', [
-  "supabase.auth.getUser()",
-  "consumeAuthenticatedRateLimit(supabase, 'wallet.identity-link')",
+  'supabase.auth.getUser()',
+  'const serviceRole = createAdminClient()',
+  "serviceRole.rpc(\n    'consume_wallet_identity_link_rate_limit'",
   "request.headers.get('privy-id-token')",
   "body.linkMode === 'legacy_preserve'",
   ".from('wallet_legacy_migration_evidence')",
@@ -107,7 +109,6 @@ requireFragments(route, 'trusted identity-link route', [
   'legacyEvidence.provider_user_id !== verifiedIdentity.privyUserId',
   'verifyPrivyIdentityToken({',
   'canonicalCtgUserId: user.id',
-  'createAdminClient()',
   "serviceRole.rpc('link_verified_wallet_identity'",
   'p_provider_user_id: verifiedIdentity.privyUserId',
   'p_evm_address: verifiedIdentity.embeddedEvmAddress',
@@ -119,23 +120,21 @@ requireFragments(route, 'trusted identity-link route', [
 if (
   /walletAddress\s*:/i.test(route) ||
   /evmAddress\s*:/i.test(route) ||
-  route.includes('expectedLegacyWalletAddress')
+  route.includes('expectedLegacyWalletAddress') ||
+  route.includes('consumeAuthenticatedRateLimit')
 ) {
-  throw new Error('identity-link request body must not accept browser-asserted wallet or legacy provenance');
+  throw new Error('identity-link route must not trust browser wallet provenance or widen the authenticated rate-limit RPC');
 }
 
 const authIndex = route.indexOf('supabase.auth.getUser()');
-const adminIndex = route.indexOf('createAdminClient()');
+const adminIndex = route.indexOf('const serviceRole = createAdminClient()');
+const rateIndex = route.indexOf("'consume_wallet_identity_link_rate_limit'");
 const evidenceIndex = route.indexOf(".from('wallet_legacy_migration_evidence')");
 const verifyIndex = route.indexOf('verifyPrivyIdentityToken({');
 const rpcIndex = route.indexOf("serviceRole.rpc('link_verified_wallet_identity'");
-if (!(authIndex >= 0 && adminIndex > authIndex && evidenceIndex > adminIndex && verifyIndex > evidenceIndex && rpcIndex > verifyIndex)) {
-  throw new Error('legacy linking must authenticate, load trusted provenance, verify Privy, then mutate with service role');
+if (!(authIndex >= 0 && adminIndex > authIndex && rateIndex > adminIndex && evidenceIndex > rateIndex && verifyIndex > evidenceIndex && rpcIndex > verifyIndex)) {
+  throw new Error('trusted linking must authenticate, rate-limit, load provenance, verify Privy, then mutate');
 }
-
-requireFragments(rateLimit, 'API rate-limit contract', [
-  "| 'wallet.identity-link';",
-]);
 
 requireFragments(schema, 'runtime schema contract', [
   "EXPECTED_DATABASE_MIGRATION = '0077'",
