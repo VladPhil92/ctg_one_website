@@ -106,6 +106,9 @@ jobs:
       - name: Install repository dependencies
         run: npm ci
 
+      - name: Validate production Storage credential before expensive restore
+        run: node scripts/validate-recovery-storage-source.mjs
+
       - name: Set up pinned Supabase CLI
         uses: supabase/setup-cli@v3
         with:
