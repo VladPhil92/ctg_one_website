@@ -138,13 +138,16 @@ jobs:
           supabase db dump \
             --db-url "$SOURCE_DATABASE_URL" \
             --file "$RECOVERY_DATABASE_SCHEMA_DUMP"
+          # Storage is intentionally excluded from the SQL data restore. Hosted
+          # Storage metadata can run a newer managed schema than the pinned local
+          # stack, while bucket configuration and object bytes are already restored
+          # and checksum-verified later through the loopback Storage API.
           supabase db dump \
             --db-url "$SOURCE_DATABASE_URL" \
             --file "$RECOVERY_DATABASE_DATA_DUMP" \
             --data-only \
             --use-copy \
-            -x 'storage.buckets_vectors' \
-            -x 'storage.vector_indexes'
+            -x 'storage.*'
           test -s "$RECOVERY_DATABASE_SCHEMA_DUMP"
           test -s "$RECOVERY_DATABASE_DATA_DUMP"
 

@@ -91,6 +91,11 @@ assert.match(
   /--file "\$RECOVERY_DATABASE_DATA_DUMP"[\s\S]*--data-only[\s\S]*--use-copy/,
   'Recovery set must contain a production data backup suitable for supported Supabase restore semantics.',
 );
+assert.match(
+  workflow,
+  /--file "\$RECOVERY_DATABASE_DATA_DUMP"[\s\S]*-x ['"]storage\.\*['"]/,
+  'Production SQL data restore must exclude managed Storage metadata because Storage is recovered through the API and hosted/local Storage schemas may differ.',
+);
 assert.doesNotMatch(workflow, /\bpg_dump\b/, 'Recovery workflow must not call raw pg_dump.');
 assert.doesNotMatch(workflow, /\bpg_restore\b/, 'Recovery workflow must not replay an unfiltered custom archive.');
 assert.doesNotMatch(
