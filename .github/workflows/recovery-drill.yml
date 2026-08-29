@@ -64,13 +64,18 @@ jobs:
             fi
           done
           echo "RECOVERY_DRILL_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
-          umask 077
-          mkdir -p .recovery-work/evidence .recovery-work/storage
 
       - name: Checkout canonical main
         uses: actions/checkout@v4
         with:
           ref: main
+
+      - name: Prepare recovery workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p .recovery-work/evidence .recovery-work/storage
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
