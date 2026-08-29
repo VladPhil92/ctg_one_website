@@ -72,7 +72,7 @@ requireFragments(verifier, 'Privy identity-token verifier', [
   "iss !== 'privy.io'",
   'aud !== expectedAppId',
   "dsaEncoding: 'ieee-p1363'",
-  "account.type === 'custom_auth'",
+  "account.type !== 'custom_auth'",
   "customUserId === params.canonicalCtgUserId",
   "account.type === 'wallet'",
   "account.chainType === 'ethereum'",
