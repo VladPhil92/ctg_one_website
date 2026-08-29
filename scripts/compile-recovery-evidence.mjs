@@ -8,13 +8,14 @@ const dumpPath = process.env.RECOVERY_DATABASE_DUMP ?? '.recovery-work/productio
 const outputJson = process.env.RECOVERY_EVIDENCE_JSON ?? '.recovery-work/evidence/recovery-drill.json';
 const outputMarkdown = process.env.RECOVERY_EVIDENCE_MARKDOWN ?? '.recovery-work/evidence/recovery-drill.md';
 const startedAt = new Date(process.env.RECOVERY_DRILL_STARTED_AT ?? '');
-const gitSha = process.env.GITHUB_SHA ?? null;
+const gitSha = process.env.RECOVERY_CHECKED_OUT_SHA ?? process.env.GITHUB_SHA ?? null;
 const runId = process.env.RECOVERY_GITHUB_RUN_ID ?? process.env.GITHUB_RUN_ID ?? null;
 const runAttempt = process.env.RECOVERY_GITHUB_RUN_ATTEMPT ?? process.env.GITHUB_RUN_ATTEMPT ?? null;
 const repository = process.env.RECOVERY_GITHUB_REPOSITORY ?? process.env.GITHUB_REPOSITORY ?? null;
 const gitRef = process.env.RECOVERY_GITHUB_REF ?? process.env.GITHUB_REF ?? null;
 
 if (Number.isNaN(startedAt.getTime())) throw new Error('RECOVERY_DRILL_STARTED_AT must be a valid ISO timestamp.');
+if (!gitSha || !/^[0-9a-f]{40}$/i.test(gitSha)) throw new Error('Recovery evidence requires an exact checked-out Git SHA.');
 
 const parseJson = async (file) => JSON.parse(await readFile(file, 'utf8'));
 const [source, restored, storage, dump] = await Promise.all([
@@ -101,8 +102,8 @@ const evidence = {
   },
 };
 
-const markdown = `# Recovery drill evidence\n\n- Result: **PASS**\n- Repository: \`${repository ?? 'unknown'}\`\n- Git ref: \`${gitRef ?? 'unknown'}\`\n- Git SHA: \`${gitSha ?? 'unknown'}\`\n- GitHub Actions run: \`${runId ?? 'unknown'}\` attempt \`${runAttempt ?? 'unknown'}\`\n- Source snapshot: ${evidence.sourceSnapshotAt}\n- Completed: ${evidence.completedAt}\n- Latest migration: \`${evidence.sourceSchema.latestMigration}\` (${evidence.sourceSchema.migrationCount} migrations)\n- Database dump SHA-256: \`${dumpSha256}\`\n- Database critical counts matched: **yes**\n- Golden Path on restored database: **PASS**\n- KYC transactional resilience contract: **PASS**\n- Storage buckets restored: ${evidence.storage.bucketCount}\n- Storage objects restored and checksum-verified: ${evidence.storage.objectCount}\n- Storage bytes verified: ${evidence.storage.bytes}\n- Measured drill duration: ${rtoSeconds}s\n- Observed backup age at completion: ${observedBackupAgeSeconds}s\n\nOnly redacted operational evidence is retained. The database dump and Storage object bytes remain ephemeral runner data and are deleted at job completion.\n`;
+const markdown = `# Recovery drill evidence\n\n- Result: **PASS**\n- Repository: \`${repository ?? 'unknown'}\`\n- Git ref: \`${gitRef ?? 'unknown'}\`\n- Git SHA: \`${gitSha}\`\n- GitHub Actions run: \`${runId ?? 'unknown'}\` attempt \`${runAttempt ?? 'unknown'}\`\n- Source snapshot: ${evidence.sourceSnapshotAt}\n- Completed: ${evidence.completedAt}\n- Latest migration: \`${evidence.sourceSchema.latestMigration}\` (${evidence.sourceSchema.migrationCount} migrations)\n- Database dump SHA-256: \`${dumpSha256}\`\n- Database critical counts matched: **yes**\n- Golden Path on restored database: **PASS**\n- KYC transactional resilience contract: **PASS**\n- Storage buckets restored: ${evidence.storage.bucketCount}\n- Storage objects restored and checksum-verified: ${evidence.storage.objectCount}\n- Storage bytes verified: ${evidence.storage.bytes}\n- Measured drill duration: ${rtoSeconds}s\n- Observed backup age at completion: ${observedBackupAgeSeconds}s\n\nOnly redacted operational evidence is retained. The database dump and Storage object bytes remain ephemeral runner data and are deleted at job completion.\n`;
 
 await writeFile(outputJson, JSON.stringify(evidence, null, 2));
 await writeFile(outputMarkdown, markdown);
-console.log(`Recovery drill evidence PASS. Measured drill duration: ${rtoSeconds}s.`);
+console.log(`Recovery drill evidence PASS for ${gitSha}. Measured drill duration: ${rtoSeconds}s.`);
