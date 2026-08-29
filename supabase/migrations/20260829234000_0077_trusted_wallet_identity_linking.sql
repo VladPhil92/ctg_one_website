@@ -128,6 +128,7 @@ create index wallet_legacy_migration_evidence_status_idx
 
 alter table public.wallet_legacy_migration_evidence enable row level security;
 revoke all on public.wallet_legacy_migration_evidence from public, anon, authenticated;
+grant select, insert, update on public.wallet_legacy_migration_evidence to service_role;
 
 -- ---------------------------------------------------------------------------
 -- Append-only identity-link audit trail.
