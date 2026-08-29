@@ -324,5 +324,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          supabase stop --no-backup
+          if command -v supabase >/dev/null 2>&1; then
+            supabase stop --no-backup || true
+          fi
           rm -rf .recovery-work
