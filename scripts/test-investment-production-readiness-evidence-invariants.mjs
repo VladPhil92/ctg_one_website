@@ -106,7 +106,7 @@ const [workflow, verifier, releaseGate, governance, gitignore, validatorCli] = a
 
 assert.match(workflow, /INVESTMENT_CANARY_EVIDENCE_PATH:\s*canary-evidence\/investment-production-readiness\.json/, 'Workflow must define the generated evidence path.');
 assert.match(workflow, /id:\s*investment-canary/, 'Investment canary step needs a stable id for conditional artifact archival.');
-assert.match(workflow, /uses:\s*actions\/upload-artifact@v4/, 'Workflow must archive the canary evidence artifact.');
+assert.match(workflow, /uses:\s*actions\/upload-artifact@v7/, 'Workflow must archive the canary evidence artifact using the current action runtime.');
 assert.match(workflow, /if:\s*always\(\) && steps\.investment-canary\.outcome != 'skipped'/, 'Artifact archival must run on pass/fail only when the Investment canary was attempted.');
 assert.match(workflow, /if-no-files-found:\s*error/, 'Missing evidence after an attempted canary must fail loudly.');
 assert.match(workflow, /retention-days:\s*14/, 'Canary evidence retention must be explicit and bounded.');

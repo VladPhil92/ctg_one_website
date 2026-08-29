@@ -69,7 +69,7 @@ jobs:
           echo "RECOVERY_DRILL_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
       - name: Checkout dispatched main commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
 
@@ -92,7 +92,7 @@ jobs:
           mkdir -p .recovery-work/evidence .recovery-work/storage
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22.22.0
           cache: npm
@@ -148,27 +148,100 @@ jobs:
           test -s "$RECOVERY_DATABASE_SCHEMA_DUMP"
           test -s "$RECOVERY_DATABASE_DATA_DUMP"
 
-      - name: Verify isolated local database is clean before restore
+      - name: Verify isolated local transactional state before normalization
         shell: bash
         run: |
           set -euo pipefail
           psql "$RECOVERY_TARGET_DATABASE_URL" \
             -X -qAt -v ON_ERROR_STOP=1 \
             -f scripts/recovery-database-snapshot.sql \
-            > .recovery-work/pre-restore-db.json
+            > .recovery-work/pre-normalize-db.json
           jq -e '
             .authUsers == 0 and
             .profiles == 0 and
+            .wallets == 0 and
+            .transactions == 0 and
+            .kycSubmissions == 0 and
+            .kycDocuments == 0 and
+            .adminAuditEntries == 0 and
             .storageObjectMetadata == 0 and
+            .investmentParticipantProfiles == 0 and
             .investmentLots == 0 and
             .investmentOrders == 0 and
+            .investmentFundingAllocations == 0 and
+            .investmentPaymentReceipts == 0 and
             .investmentLedgerEntries == 0 and
             .investmentSettlements == 0 and
             .investmentSales == 0 and
             .investmentBottleUnits == 0 and
+            .investmentWithdrawalRequests == 0 and
+            .investmentReinvestmentRequests == 0 and
+            .investmentPayouts == 0 and
+            .investmentPayoutEvents == 0 and
+            .investmentAuditEntries == 0 and
+            .domainEvents == 0 and
+            .notificationDeliveries == 0 and
+            .notificationDeliveryAttempts == 0 and
+            .documentJobs == 0 and
             .migrationCount >= 1 and
             (.latestMigration | type == "string")
-          ' .recovery-work/pre-restore-db.json >/dev/null
+          ' .recovery-work/pre-normalize-db.json >/dev/null
+
+      - name: Normalize migration-materialized data on isolated local target
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_target='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          if [ "$RECOVERY_TARGET_DATABASE_URL" != "$expected_target" ]; then
+            echo "::error::Recovery normalization is allowed only on the exact loopback Supabase database target."
+            exit 1
+          fi
+          psql "$RECOVERY_TARGET_DATABASE_URL" \
+            -X -v ON_ERROR_STOP=1 \
+            --command "SET ctg.recovery_target = 'local-ephemeral-supabase'" \
+            --file scripts/recovery-normalize-local-data.sql
+
+      - name: Verify normalized local data baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$RECOVERY_TARGET_DATABASE_URL" \
+            -X -qAt -v ON_ERROR_STOP=1 \
+            -f scripts/recovery-database-snapshot.sql \
+            > .recovery-work/normalized-db.json
+          jq -e '
+            .authUsers == 0 and
+            .profiles == 0 and
+            .wallets == 0 and
+            .transactions == 0 and
+            .kycSubmissions == 0 and
+            .kycDocuments == 0 and
+            .adminAuditEntries == 0 and
+            .storageObjectMetadata == 0 and
+            .investmentParticipantProfiles == 0 and
+            .investmentFormulaVersions == 0 and
+            .investmentBeerStyles == 0 and
+            .investmentLots == 0 and
+            .investmentOrders == 0 and
+            .investmentFundingAllocations == 0 and
+            .investmentPaymentReceipts == 0 and
+            .investmentLedgerEntries == 0 and
+            .investmentSettlements == 0 and
+            .investmentSales == 0 and
+            .investmentBottleUnits == 0 and
+            .investmentWithdrawalRequests == 0 and
+            .investmentReinvestmentRequests == 0 and
+            .investmentPayouts == 0 and
+            .investmentPayoutEvents == 0 and
+            .investmentAuditEntries == 0 and
+            .domainEvents == 0 and
+            .notificationTemplates == 0 and
+            .notificationDeliveries == 0 and
+            .notificationDeliveryAttempts == 0 and
+            .documentJobs == 0 and
+            .migrationCount >= 1 and
+            (.latestMigration | type == "string")
+          ' .recovery-work/normalized-db.json >/dev/null
 
       - name: Restore production data into isolated local Supabase database
         shell: bash
@@ -188,8 +261,9 @@ jobs:
             -X -qAt -v ON_ERROR_STOP=1 \
             -f scripts/recovery-database-snapshot.sql \
             > "$RECOVERY_RESTORED_DB_EVIDENCE"
-          jq -S 'del(.snapshotAt)' "$RECOVERY_SOURCE_DB_EVIDENCE" > .recovery-work/source-counts.json
-          jq -S 'del(.snapshotAt)' "$RECOVERY_RESTORED_DB_EVIDENCE" > .recovery-work/restored-counts.json
+          # Storage metadata is reconciled later by the byte-level Storage drill.
+          jq -S 'del(.snapshotAt, .storageObjectMetadata)' "$RECOVERY_SOURCE_DB_EVIDENCE" > .recovery-work/source-counts.json
+          jq -S 'del(.snapshotAt, .storageObjectMetadata)' "$RECOVERY_RESTORED_DB_EVIDENCE" > .recovery-work/restored-counts.json
           diff -u .recovery-work/source-counts.json .recovery-work/restored-counts.json
 
       - name: Run Golden Path and security contracts on restored database
@@ -215,7 +289,7 @@ jobs:
         run: node scripts/compile-recovery-evidence.mjs
 
       - name: Upload redacted recovery evidence only
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: recovery-drill-evidence-${{ github.run_id }}
           path: |

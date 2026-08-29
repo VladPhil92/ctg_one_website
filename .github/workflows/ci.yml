@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Enforce PR-only changes to main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -47,7 +47,7 @@ jobs:
           echo "Main commit is associated with a merged pull request."
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22.22.0
           cache: npm
@@ -84,7 +84,7 @@ jobs:
 
       - name: Upload Playwright report on failure
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
@@ -98,7 +98,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v3
@@ -187,6 +187,66 @@ jobs:
             -v ON_ERROR_STOP=1 \
             -f scripts/operations-intelligence-schema-smoke.sql
 
+      - name: Recovery migration-baseline normalization contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          database_url='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+
+          # Prove this test actually starts from migration-materialized data, so a
+          # green result cannot be obtained by accidentally testing an empty DB.
+          baseline_materialized="$(psql "$database_url" -X -qAt -v ON_ERROR_STOP=1 -c "
+            select
+              (select count(*) from public.investment_beer_styles) >= 4
+              and (select count(*) from public.system_notification_templates) >= 2
+              and (select count(*) from storage.buckets where id in ('kyc-documents','payment-proofs')) = 2;
+          ")"
+          test "$baseline_materialized" = 't'
+
+          psql "$database_url" \
+            -X -v ON_ERROR_STOP=1 \
+            --command "SET ctg.recovery_target = 'local-ephemeral-supabase'" \
+            --file scripts/recovery-normalize-local-data.sql
+
+          psql "$database_url" \
+            -X -qAt -v ON_ERROR_STOP=1 \
+            -f scripts/recovery-database-snapshot.sql \
+            > /tmp/recovery-normalized-db.json
+
+          jq -e '
+            .authUsers == 0 and
+            .profiles == 0 and
+            .wallets == 0 and
+            .transactions == 0 and
+            .kycSubmissions == 0 and
+            .kycDocuments == 0 and
+            .adminAuditEntries == 0 and
+            .storageObjectMetadata == 0 and
+            .investmentParticipantProfiles == 0 and
+            .investmentFormulaVersions == 0 and
+            .investmentBeerStyles == 0 and
+            .investmentLots == 0 and
+            .investmentOrders == 0 and
+            .investmentFundingAllocations == 0 and
+            .investmentPaymentReceipts == 0 and
+            .investmentLedgerEntries == 0 and
+            .investmentSettlements == 0 and
+            .investmentSales == 0 and
+            .investmentBottleUnits == 0 and
+            .investmentWithdrawalRequests == 0 and
+            .investmentReinvestmentRequests == 0 and
+            .investmentPayouts == 0 and
+            .investmentPayoutEvents == 0 and
+            .investmentAuditEntries == 0 and
+            .domainEvents == 0 and
+            .notificationTemplates == 0 and
+            .notificationDeliveries == 0 and
+            .notificationDeliveryAttempts == 0 and
+            .documentJobs == 0 and
+            .migrationCount >= 1 and
+            (.latestMigration | type == "string")
+          ' /tmp/recovery-normalized-db.json >/dev/null
+
   critical-authenticated-e2e:
     name: Critical authenticated browser journey
     runs-on: ubuntu-latest
@@ -200,10 +260,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22.22.0
           cache: npm
@@ -249,7 +309,7 @@ jobs:
 
       - name: Upload authenticated E2E report on failure
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: authenticated-playwright-report
           path: playwright-report/

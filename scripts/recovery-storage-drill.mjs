@@ -134,7 +134,25 @@ await writeFile(path.join(backupDir, 'manifest.json'), JSON.stringify(manifest),
 
 const { data: targetBuckets, error: targetBucketsError } = await target.storage.listBuckets();
 if (targetBucketsError) throw new Error(`Unable to list recovery-target Storage buckets: ${targetBucketsError.message}`);
+
+const sourceBucketIds = new Set(manifest.buckets.map((bucket) => bucket.id));
 const targetBucketIds = new Set((targetBuckets ?? []).map((bucket) => bucket.id));
+
+// Schema replay can materialize local bootstrap buckets. Production is the
+// authority for current bucket configuration, so target-only buckets must not
+// silently survive the recovery. Supabase intentionally protects direct DML on
+// storage schema tables; remove only empty target-only buckets through the
+// loopback Storage API.
+for (const bucket of targetBuckets ?? []) {
+  if (sourceBucketIds.has(bucket.id)) continue;
+  const unexpectedObjects = await listObjectsRecursively(target, bucket.id);
+  if (unexpectedObjects.length !== 0) {
+    throw new Error(`Refusing to remove non-production local bucket ${bucket.id} because it contains objects.`);
+  }
+  const { error } = await target.storage.deleteBucket(bucket.id);
+  if (error) throw new Error(`Unable to remove target-only local recovery bucket ${bucket.id}: ${error.message}`);
+  targetBucketIds.delete(bucket.id);
+}
 
 for (const bucket of manifest.buckets) {
   const options = {
@@ -154,6 +172,14 @@ for (const bucket of manifest.buckets) {
     if (error) throw new Error(`Unable to create local recovery bucket ${bucket.id}: ${error.message}`);
     targetBucketIds.add(bucket.id);
   }
+}
+
+const { data: alignedBuckets, error: alignedBucketsError } = await target.storage.listBuckets();
+if (alignedBucketsError) throw new Error(`Unable to verify recovery-target Storage buckets: ${alignedBucketsError.message}`);
+const alignedBucketIds = [...(alignedBuckets ?? []).map((bucket) => bucket.id)].sort();
+const expectedBucketIds = [...sourceBucketIds].sort();
+if (JSON.stringify(alignedBucketIds) !== JSON.stringify(expectedBucketIds)) {
+  throw new Error('Recovery-target Storage bucket set does not match the production source bucket set.');
 }
 
 for (const object of manifest.objects) {
