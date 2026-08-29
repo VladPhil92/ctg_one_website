@@ -17,6 +17,17 @@ export function classifyRecoveryAdminKey(rawValue) {
   const value = rawValue?.trim();
   if (!value) throw new Error('RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY is missing.');
 
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    throw new Error('RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY is wrapped in quotes. Store only the raw Supabase server key in the GitHub secret, without quotes.');
+  }
+
+  if (/^[A-Z][A-Z0-9_]*\s*=/.test(value)) {
+    throw new Error('RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY looks like an environment assignment. Store only the raw key value, without KEY= or variable-name prefixes.');
+  }
+
   if (value.startsWith('sb_secret_')) return 'modern-secret';
   if (value.startsWith('sb_publishable_')) {
     throw new Error('RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY contains a publishable key; use a server-only Supabase Secret key (sb_secret_...).');
@@ -28,15 +39,19 @@ export function classifyRecoveryAdminKey(rawValue) {
     throw new Error(`RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY contains a JWT for role '${String(payload.role ?? 'unknown')}'; recovery requires service_role privileges.`);
   }
 
-  throw new Error('RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY is not a recognized Supabase server credential. Use Settings > API Keys > Secret keys and copy an sb_secret_... key (preferred), or a valid legacy service_role JWT.');
+  if (value.startsWith('eyJ')) {
+    throw new Error('RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY looks like a malformed or truncated JWT. Copy the complete legacy service_role key, or preferably use a modern sb_secret_... key.');
+  }
+
+  throw new Error('RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY is an unrecognized opaque value. Do not use the project JWT Secret, database password, personal access token, anon key, or publishable key. In Supabase Dashboard open Settings > API Keys and copy a server-only Secret key beginning sb_secret_... (preferred), or the complete legacy service_role JWT. Store only the key value in GitHub Actions.');
 }
 
 export function storageCredentialFailureMessage(providerMessage = '') {
   if (/invalid compact jws/i.test(providerMessage)) {
-    return 'Production Storage rejected RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY as an invalid JWT/JWS. Replace the GitHub secret with a current Supabase Secret key from Settings > API Keys > Secret keys (sb_secret_... preferred).';
+    return 'Production Storage rejected RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY as an invalid JWT/JWS. The configured value is not a usable Storage admin credential. Replace it with a current Supabase Secret key from Settings > API Keys (sb_secret_... preferred), or a complete legacy service_role JWT.';
   }
   if (/invalid.*(?:api )?key|unauthori[sz]ed|jwt|forbidden|permission/i.test(providerMessage)) {
-    return 'Production Storage rejected RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY. Verify that the GitHub secret contains a current server-only Secret key for the reviewed production project.';
+    return 'Production Storage rejected RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY. Verify that GitHub Actions contains a current server-only Secret key for the reviewed production project, not the JWT Secret, anon key, publishable key, database password, or PAT.';
   }
   return 'Production Storage credential preflight failed. Verify RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY in GitHub Actions against Supabase Settings > API Keys before retrying the recovery drill.';
 }
