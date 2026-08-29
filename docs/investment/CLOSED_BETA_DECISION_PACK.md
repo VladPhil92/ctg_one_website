@@ -22,7 +22,8 @@ The recommended baseline follows these constraints:
 4. a participant must never acquire an unbounded negative balance or automatic capital-call obligation;
 5. no cost may be deducted twice — especially a cost already represented by deployed participant capital;
 6. no profit is distributable before the applicable capital-recovery waterfall has been applied;
-7. unresolved legal classification must not be inferred by software.
+7. cent rounding must conserve the lot-level profit pool exactly;
+8. unresolved legal classification must not be inferred by software.
 
 ## BR-001 — Cost scope
 
@@ -68,7 +69,7 @@ The same economic cost may never appear in both classes.
 
 Capital recovery is **economic recovery from realized lot proceeds, not a guaranteed repayment obligation**.
 
-For each allocation `a`, all values are integer COP cents and are derived from authoritative realized entries under the allocation's pinned formula version.
+For each allocation `a`, all monetary outputs are integer COP cents and are derived from authoritative realized entries under the lot's pinned formula version. For the closed-beta version, every allocation in one lot must use the same formula version and therefore the same participant profit-share percentage `S`.
 
 Definitions:
 
@@ -78,10 +79,10 @@ T_a = attributable applicable taxes
 D_a = attributable NON_CAPITAL_DEDUCTION amounts
 L_a = attributable participant-borne loss deductions approved under BR-003
 K_a = eligible deployed capital for the allocation
-S_a = participant profit-share percentage from the pinned formula version
+S   = participant profit-share percentage from the lot's pinned formula version
 ```
 
-Settlement waterfall:
+Capital-recovery waterfall:
 
 ```text
 AvailableForCapitalAndProfit_a = max(0, R_a - T_a - D_a - L_a)
@@ -94,12 +95,35 @@ ProfitBase_a = max(
   0,
   AvailableForCapitalAndProfit_a - EligibleCapitalRecovery_a
 )
+```
 
-ParticipantProfit_a = round(ProfitBase_a × S_a)
-CTGProfit_a         = ProfitBase_a - ParticipantProfit_a
+Profit-share cent reconciliation uses a largest-remainder allocation so independent per-allocation rounding can never distort the pinned lot-level split:
+
+```text
+ExactParticipantProfit_a = ProfitBase_a × S
+BaseParticipantProfit_a  = floor(ExactParticipantProfit_a)
+Fraction_a               = ExactParticipantProfit_a - BaseParticipantProfit_a
+
+ParticipantProfitPool = round(sum(ProfitBase_a) × S)
+RemainderCents =
+  ParticipantProfitPool - sum(BaseParticipantProfit_a)
+
+ParticipantProfit_a = BaseParticipantProfit_a
+  + 1 cent for the first RemainderCents allocations ordered by:
+      Fraction_a DESC,
+      allocation_id ASC
+
+CTGProfit_a = ProfitBase_a - ParticipantProfit_a
 
 ParticipantSettlement_a =
   EligibleCapitalRecovery_a + ParticipantProfit_a
+```
+
+Required conservation identities:
+
+```text
+sum(ParticipantProfit_a) = ParticipantProfitPool
+sum(ParticipantProfit_a + CTGProfit_a) = sum(ProfitBase_a)
 ```
 
 Required interpretation:
@@ -109,11 +133,12 @@ Required interpretation:
 - `EligibleCapitalRecovery_a` can be less than `K_a` when realized economics are insufficient.
 - `UnrecoveredCapital_a` is an economic loss/shortfall, not a debt owed by the participant and not an automatic debt owed by CTG.
 - No negative settlement credit, negative participant wallet, or automatic capital call is created.
+- Largest-remainder tie-breaking is deterministic by allocation ID after fractional remainder.
 - No UI, agreement or report may describe principal or return as guaranteed.
 
 ### Current runtime gap that must be closed before approval becomes operational
 
-The existing settlement implementation predates this final business decision and must not be treated as authoritative for a loss/shortfall case. Before the first real settlement, runtime logic and tests must be changed so `capital_recovery_cents` is calculated by the approved waterfall rather than assumed to equal committed capital, and negative NDLP must never create an implicit or unreconciled money obligation.
+The existing settlement implementation predates this final business decision and must not be treated as authoritative for a loss/shortfall case. Before the first real settlement, runtime logic and tests must be changed so `capital_recovery_cents` is calculated by the approved waterfall rather than assumed to equal committed capital, negative economics cannot create an implicit or unreconciled money obligation, and profit-share cents conserve the lot-level pool exactly.
 
 ### Approval required
 
@@ -204,11 +229,11 @@ The write-off rule is deliberately deterministic for the closed-beta version so 
 Approval of the prose alone is insufficient. Before a real settlement is allowed, the approved rules must be propagated into:
 
 - `BUSINESS_MODEL.md` as authoritative business rules;
-- `FINANCIAL_MODEL.md` with the exact waterfall and double-count prevention;
+- `FINANCIAL_MODEL.md` with the exact waterfall, largest-remainder cent reconciliation and double-count prevention;
 - `LOT_STATE_MACHINE.md` / inventory rules for long-stop and terminal disposition;
 - the versioned agreement/legal configuration;
 - PostgreSQL settlement logic and schema fields needed to pin the long-stop/extension/formula facts;
-- Golden Path financial tests covering full recovery, partial recovery, zero recovery, positive profit, loss, unsold write-off and no-negative-wallet cases;
+- Golden Path financial tests covering full recovery, partial recovery, zero recovery, positive profit, cent-rounding edge cases, loss, unsold write-off and no-negative-wallet cases;
 - operator/release evidence tooling.
 
 Until this propagation is merged, tested, deployed and verified, existing real-money settlement must remain operationally blocked.
