@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createClient } from '@supabase/supabase-js';
+import { classifyRecoveryAdminKey } from './validate-recovery-storage-source.mjs';
 
 const required = (name) => {
   const value = process.env[name]?.trim();
@@ -32,6 +33,7 @@ if (!['127.0.0.1', 'localhost', '::1'].includes(targetParsed.hostname)) {
 if (new URL(sourceUrl).origin === targetParsed.origin) {
   throw new Error('Source and recovery target must be different environments.');
 }
+classifyRecoveryAdminKey(sourceKey);
 
 const source = createClient(sourceUrl, sourceKey, {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
