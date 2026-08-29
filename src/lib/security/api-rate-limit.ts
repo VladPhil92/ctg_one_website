@@ -1,6 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-export type ApiRateLimitScope = 'knowledge.query' | 'investment.payment-proof';
+export type ApiRateLimitScope =
+  | 'knowledge.query'
+  | 'investment.payment-proof'
+  | 'wallet.identity-link';
 
 export type ApiRateLimitDecision = {
   allowed: boolean;
