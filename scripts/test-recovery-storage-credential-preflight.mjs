@@ -1,10 +1,23 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import {
   EXPECTED_PRODUCTION_SUPABASE_URL,
   classifyRecoveryAdminKey,
   storageCredentialFailureMessage,
   validateRecoveryStorageSource,
 } from './validate-recovery-storage-source.mjs';
+
+const workflow = await readFile(new URL('../.github/workflows/recovery-drill.yml', import.meta.url), 'utf8');
+const preflightIndex = workflow.indexOf('Validate production Storage credential before expensive restore');
+const installIndex = workflow.indexOf('Install repository dependencies');
+const localStartIndex = workflow.indexOf('Start isolated full local Supabase recovery target');
+assert.ok(preflightIndex > installIndex, 'Storage credential preflight must run only after the Supabase JS dependency is installed.');
+assert.ok(localStartIndex > preflightIndex, 'Storage credential preflight must run before the expensive local Supabase recovery target starts.');
+assert.match(
+  workflow,
+  /node scripts\/validate-recovery-storage-source\.mjs/,
+  'Recovery workflow must execute the reviewed Storage credential preflight script.',
+);
 
 const jwt = (payload) => {
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
