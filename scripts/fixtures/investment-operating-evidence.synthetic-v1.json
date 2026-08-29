@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0075",
-    "schemaMigrationName": "fail_closed_negative_investment_settlement",
-    "schemaMigrationCount": 75,
+    "schemaMigration": "0076",
+    "schemaMigrationName": "wallet_identity_bridge",
+    "schemaMigrationCount": 76,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
