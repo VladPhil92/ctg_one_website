@@ -8,249 +8,206 @@
 
 **Schema reconstruction: VERIFIED IN CI**
 
-The production Supabase organization hosting `CTG One Web` is currently on the **Free** plan. Do not assume provider-managed daily database backups or Point-in-Time Recovery (PITR) are available. Until an off-site backup process is configured and a restore rehearsal succeeds, CTG One must treat material financial recovery capability as incomplete.
+The repository proves that the full migration chain can reconstruct a clean Supabase/PostgreSQL application schema and satisfy the Golden Path contracts. That does not by itself prove production-data or Storage recovery.
 
-The repository does verify that a fresh local PostgreSQL/Supabase database can apply the complete migration chain from zero and satisfy the Golden Path schema contract. That proves schema reconstruction, not production-data recovery.
-
-The repository also contains a manual `Production Recovery Drill` GitHub Actions workflow. Its existence does **not** change the recovery status to VERIFIED: the gate changes only after a successful production-derived run produces retained redacted evidence and the result is reviewed.
+Recovery becomes **VERIFIED** only after a fresh production-derived `Production Recovery Drill` completes on the exact reviewed `main` SHA, produces redacted evidence, and that evidence is reviewed.
 
 ## Recovery objectives
 
-RPO and RTO are not declared as achieved targets until measured in a restore rehearsal.
+Initial operational targets:
 
-Initial operational targets once backups are configured:
+- **Database RPO target:** 24 hours while using daily logical backups.
+- **RTO target:** 4 hours for the current small production dataset, subject to measurement.
+- **Storage RPO target:** equal to or better than database RPO for payment, KYC and evidence objects.
 
-- **Target RPO:** 24 hours maximum for database data while using daily logical backups.
-- **Target RTO:** 4 hours for a small production dataset, subject to measurement.
-- **Storage RPO:** must be equal to or better than database RPO for payment/KYC/evidence objects.
+These are targets, not achieved guarantees. Replace them with measured values after the first successful rehearsal.
 
-These are targets, not guarantees. Replace them with measured values after the first successful rehearsal.
+## Required recovery perimeter
 
-## Required backup perimeter
-
-A complete recovery set must include all of the following:
+A complete recovery set includes:
 
 1. PostgreSQL schema plus recoverable application/Auth data.
-2. Supabase Storage bucket configuration and object bytes, recovered through the Storage API rather than replaying provider-managed `storage.*` metadata into a potentially different managed schema version.
-3. A record of the Git commit deployed at backup time.
-4. The expected database migration number/name/count for that release.
-5. Non-secret configuration inventory: feature-flag names, callback URLs, bucket names and deployment topology.
-6. A secure external record of required secrets/credentials. Secrets must never be committed to Git.
+2. Supabase Storage bucket configuration and actual object bytes.
+3. Exact deployed Git SHA.
+4. Expected migration identity/count.
+5. Non-secret configuration inventory, including callback URLs, bucket names and deployment topology.
+6. A secure external record of required credentials. Secrets must never be committed to Git or uploaded in recovery artifacts.
 
-A database dump alone is not a complete platform backup because Storage files are external objects and the hosted managed Storage schema can evolve independently from a pinned local Supabase stack.
+A database dump alone is not a complete Supabase backup because Storage bytes live outside PostgreSQL and provider-managed `storage.*` metadata can evolve independently of the pinned local stack.
 
-## Manual Production Recovery Drill workflow
+## Manual Production Recovery Drill
 
-`.github/workflows/recovery-drill.yml` is deliberately **manual-only**. It must never run from `push`, `pull_request`, a schedule, or `workflow_run`, because a recovery rehearsal reads production-derived data and must require an explicit operator decision.
+`.github/workflows/recovery-drill.yml` is deliberately **manual-only**. It must not run from `push`, `pull_request`, schedules or `workflow_run`.
 
-The workflow requires the operator to type `RUN_READ_ONLY_RECOVERY_DRILL` and uses these GitHub Actions secrets:
+The operator must type:
 
-- `RECOVERY_PRODUCTION_DATABASE_URL` — a production PostgreSQL direct/session connection suitable for Supabase CLI logical backup operations;
-- `RECOVERY_PRODUCTION_SUPABASE_URL` — the production project URL;
-- `RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY` — a server-only key authorized to read private Storage objects.
+`RUN_READ_ONLY_RECOVERY_DRILL`
 
-The workflow performs the following bounded sequence:
+The workflow currently requires only these GitHub Actions secrets:
 
-1. capture only redacted source counts and migration identity, including source `storage.objects` metadata count as a reconciliation fact;
-2. create a Supabase-aware filtered production schema backup and a production data backup with `supabase db dump --data-only --use-copy`, retaining the provider-documented exact exclusions for `storage.buckets_vectors` and `storage.vector_indexes`;
-3. deterministically sanitize the plain SQL data backup before restore: parse `COPY ... FROM stdin` blocks, remove every block whose parsed schema is `storage`, remove residual Storage-scoped data statements, and fail closed if malformed or unsupported managed Storage SQL remains;
-4. reconstruct the exact checked-out release in an isolated local Supabase target through the reviewed migration chain;
-5. verify that transactional/Auth/business state is empty before any destructive local normalization;
-6. normalize **only the ephemeral loopback PostgreSQL target** by removing migration-materialized rows from application-owned `public` tables that would otherwise collide with authoritative production data;
-7. verify that the normalized application-data baseline is empty while migration history and provider-managed schemas remain intact;
-8. import the sanitized production data backup using the provider-documented trigger-disabled restore pattern;
-9. compare broad source/restored database counts and migration identity, with Storage metadata excluded from this database-only comparison because it is verified independently through the Storage API;
-10. run the Golden Path, HTTP-security, `SECURITY DEFINER`, outbox, Document/Notification OS and Operations Intelligence PostgreSQL contracts against the restored database;
-11. download the **actual bytes** of every source Storage object within configured object/byte limits;
-12. reconcile Storage bucket configuration through the **loopback Storage API**: update/create source buckets, remove only empty target-only buckets through `deleteBucket`, and verify the resulting bucket set exactly matches production;
-13. restore Storage object bytes, re-download them and compare SHA-256 hashes, then reconcile the Storage API object count against the source `storage.objects` metadata count captured before backup;
-14. retain only a redacted evidence JSON/Markdown artifact containing database backup digests, critical counts, checksums, schema identity and measured drill timing;
-15. destroy the raw database backup files and Storage object bytes even when a prior step fails.
+- `RECOVERY_PRODUCTION_DATABASE_URL` — production PostgreSQL session/direct connection suitable for Supabase CLI logical backup operations.
+- `RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY` — server-only Supabase API credential authorized for Storage administration/read access.
 
-The local Supabase stack itself is the isolated recovery target. It is ephemeral to the GitHub runner and must never be replaced with a hosted target. Both the workflow and the Storage script independently refuse a hosted destructive target.
+The production Supabase API origin is public configuration and is pinned in the workflow as:
 
-Raw production database backup files, object paths and Storage bytes must not be uploaded as GitHub Actions artifacts. Only the redacted recovery evidence may be retained.
+`https://mdscwjvlihdiflcvghhk.supabase.co`
 
-### Why migration-materialized data is normalized before import
+`RECOVERY_PRODUCTION_SUPABASE_URL` is **not** a required secret and must not be reintroduced as one.
 
-Some reviewed migrations intentionally materialize bootstrap/reference rows as part of schema reconstruction. Examples include the CTG Craft Beer style catalog and notification templates. Those rows are useful for a new empty installation, but a production `--data-only` backup contains the current authoritative values again.
+## Storage administrator credential contract
 
-Importing production data directly on top of migration-materialized rows can therefore fail on primary/unique keys even though the transactional database is otherwise clean. It can also silently preserve stale bootstrap configuration instead of the current production value if such tables were excluded from backup.
+`RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY` must contain the **raw key only**.
 
-The recovery design resolves that conflict explicitly:
+Preferred format:
 
-- migrations remain the authority for **structure, functions, policies and constraints**;
-- production backup remains the authority for **current recoverable application/Auth data and mutable application configuration rows**;
-- a reviewed recovery-only SQL script removes migration-materialized data only from application-owned `public` tables before import;
-- the SQL script requires an explicit session guard and the workflow independently requires the exact loopback PostgreSQL URL;
-- extension-owned tables are excluded from the SQL normalization perimeter;
-- migration history is preserved;
-- **the SQL normalizer never mutates `storage.*` tables**; Supabase protects those tables from direct destructive DML and the drill respects that boundary;
-- managed `storage.*` data emitted by the production data dump is removed by a separate deterministic sanitizer before `psql` receives the file;
-- Storage bucket configuration is reconciled later using the supported Storage API, and actual object bytes are restored and checksum-verified separately.
+`sb_secret_...`
 
-This normalization is destructive by design and is permitted **only** on the ephemeral local recovery target. It must never be run against production or a hosted Supabase project.
+Accepted compatibility format:
 
-### Why managed Storage metadata is not replayed through SQL
+- complete legacy `service_role` JWT while Supabase still supports it.
 
-Supabase Storage is a managed subsystem. Its `storage.*` database schema is metadata for the Storage service and can change as the hosted service evolves. A pinned local Supabase stack may therefore expose a different `storage.buckets` column set from production even when the application migration chain and PostgreSQL major version are compatible.
+Do **not** use any of the following:
 
-Production Recovery Drill run `33265841818` demonstrated this boundary: application normalization succeeded, but replaying hosted `storage.buckets` data into the local managed schema failed because production contained a `versioning_status` column not present in the pinned local target.
+- project JWT Secret;
+- database password;
+- `anon` key;
+- `sb_publishable_...` key;
+- personal access token;
+- `KEY=value` environment assignment;
+- a quoted value such as `"sb_secret_..."`;
+- truncated JWT/key text.
 
-Recovery Drill run `33267335409` then proved an additional tooling fact: `supabase db dump --data-only --use-copy -x 'storage.*'` still emitted `COPY storage.buckets (...)` under the pinned Supabase CLI `2.111.0`. The recovery design therefore does **not** rely on a schema wildcard for `-x`. `-x/--exclude` is treated as a `schema.table` exclusion interface, matching the provider's documented exact Storage vector exclusions.
+For managed Supabase, obtain the correct server credential from **Project Settings > API Keys**. Prefer a modern Secret key beginning `sb_secret_`.
 
-The recovery contract now establishes an explicit compatibility boundary:
+The drill validates this credential before starting the expensive local recovery stack. The preflight:
 
-- the dump keeps the provider-documented exact exclusions for `storage.buckets_vectors` and `storage.vector_indexes`;
-- the generated plain SQL is parsed before restore and every `COPY` block whose parsed schema is `storage` is removed through its exact `\.` terminator;
-- residual Storage-scoped data statements are removed, while any unsupported Storage SQL causes a fail-closed error before `psql` restore;
-- non-Storage COPY payloads are preserved verbatim, so application/Auth data remains recoverable even if a user-data value happens to contain text such as `storage.`;
-- the source `storage.objects` row count remains a redacted independent reconciliation fact;
-- bucket definitions are listed and aligned through the Storage API;
-- target-only buckets are removed only through the Storage API and only when empty;
-- actual object bytes are downloaded from production, restored only to the loopback target, re-downloaded and SHA-256 verified;
-- the restored API object count must reconcile with the source metadata count.
+1. verifies the expected production project origin;
+2. rejects obviously wrong credential classes locally;
+3. performs the read-only `storage.listBuckets()` call;
+4. fails before database export/restore if Storage administration cannot be authenticated.
 
-This separation avoids coupling recoverability to incidental hosted/local Storage metadata column parity while preserving stronger verification of the actual recoverable asset: bucket configuration plus object bytes.
+No credential value is printed to logs.
 
-### Why raw `pg_dump` is not used for the drill
+## Recovery sequence
 
-A managed Supabase database contains provider-owned schemas such as Realtime, Auth, Storage and extension-managed objects. An unfiltered raw `pg_dump` includes internal DDL that is not intended to be replayed as the project `postgres` role into a newly initialized Supabase target and can fail on privileged function settings or other provider-managed objects.
+The bounded workflow performs:
 
-The supported recovery strategy is therefore:
+1. explicit authorization, exact-SHA checkout and provenance verification;
+2. read-only production Storage credential preflight;
+3. isolated local Supabase startup;
+4. redacted production database snapshot and migration identity capture;
+5. Supabase-aware schema and data dumps;
+6. deterministic removal of provider-managed `storage.*` data blocks from the plain SQL data dump;
+7. validation that the local transactional/Auth/application state is empty;
+8. recovery-only normalization of migration-materialized rows on the exact loopback PostgreSQL target;
+9. import of authoritative production application/Auth data;
+10. source/restored database fact reconciliation;
+11. Golden Path, HTTP security, `SECURITY DEFINER`, outbox, Document/Notification OS and Operations Intelligence contracts;
+12. actual Storage bucket/object-byte backup through the production Storage API;
+13. bucket configuration reconciliation only against the loopback Storage API;
+14. object restore, re-download and SHA-256 verification;
+15. Storage API object-count reconciliation against the source `storage.objects` metadata count;
+16. redacted JSON/Markdown evidence artifact creation;
+17. destruction of raw database dumps and Storage bytes even if an earlier stage fails.
 
-- reconstruct the exact application schema from the reviewed Git migration chain;
-- capture a Supabase-filtered schema backup for the recovery set;
-- capture production data with `supabase db dump --data-only --use-copy` and the provider-documented exact Storage vector exclusions;
-- sanitize managed Storage data blocks from the generated plain SQL before restore, failing closed on unknown managed Storage SQL;
-- normalize migration-materialized `public` application data on the exact ephemeral loopback target;
-- restore authoritative application/Auth data using `SET session_replication_role = replica`;
-- align Storage buckets through the loopback Storage API, restore actual object bytes separately and verify checksums.
+Raw production data, object names/paths and object bytes must never be retained as GitHub artifacts.
 
-Do not add `--clean` to the data-only dump as a substitute for these boundaries. Recovery deliberately separates schema reconstruction from application/Auth-data restoration and Storage recovery, and does not allow a production-derived dump to drop/recreate the local schema.
+## Database recovery boundary
 
-## Free-plan production strategy
+Managed Supabase schemas contain provider-owned objects that are not safe to replay blindly into another stack. The recovery strategy therefore separates responsibilities:
 
-Until the project is upgraded to a plan with managed backups, use an off-site logical backup process.
+- reviewed Git migrations are authoritative for application structure, functions, policies and constraints;
+- production logical backup is authoritative for current recoverable application/Auth data and mutable application configuration;
+- the exact local Supabase stack provides provider schemas/services;
+- migration-materialized bootstrap/reference rows are removed only on the ephemeral loopback target before importing production values.
 
-Recommended implementation:
+The recovery SQL normalizer must never mutate `storage.*` directly.
 
-- create a dedicated least-privilege operational credential for backup execution;
-- use `supabase db dump` on a defined schedule so Supabase-managed schema/role filtering is applied;
-- create both schema and recoverable data backup files and encrypt them before off-site storage;
-- retain multiple restore points;
-- separately mirror Supabase Storage objects using the Storage S3-compatible interface or supported API/CLI tooling;
-- store database backups and Storage backups outside the production Supabase project;
-- record backup timestamp, Git SHA and expected schema version in a manifest.
+Do not replace this design with raw unfiltered `pg_dump`, `pg_restore --superuser`, or `--clean` on a production-derived data dump.
 
-Do not use an unfiltered raw `pg_dump` as the default Supabase project backup path. Do not store production database dumps as public GitHub artifacts or commit them to this repository.
+## Storage recovery boundary
 
-## Managed-backup upgrade path
+Supabase Storage is a managed subsystem. Hosted and local versions can expose different internal `storage.buckets` columns. The drill therefore does **not** replay Storage metadata through SQL.
 
-If the organization moves to Supabase Pro or above, verify backup availability in the Supabase Dashboard before changing this document from UNVERIFIED. Managed-backup availability alone is insufficient: perform an actual non-production restore rehearsal.
+The production data dump is sanitized before `psql` receives it:
 
-PITR should be considered only if the business requires a materially smaller RPO than the selected daily-backup cadence. Enabling PITR is an operational/billing decision and must not be inferred from source code.
+- `COPY storage.<table> (...) FROM stdin` blocks are removed through their exact `\.` terminator;
+- supported residual Storage-scoped data statements are removed;
+- unknown/malformed managed Storage SQL fails closed;
+- application/Auth COPY payloads remain unchanged.
 
-## Restore rehearsal
+Storage is recovered independently through the API:
 
-Never rehearse destructive restore operations against the production project.
+- list source buckets;
+- align bucket configuration on the loopback target;
+- remove only empty target-only buckets through `deleteBucket`;
+- download actual source object bytes within configured object/byte limits;
+- upload them to the local target;
+- re-download and compare SHA-256;
+- reconcile object count with the redacted production metadata count.
 
-Use a local Supabase environment or a disposable non-production project. The repository's automated drill currently allows destructive normalization only on its exact loopback local target; a future disposable-hosted restore procedure would require a separate reviewed safety design rather than weakening that guard.
+The Storage script independently refuses a hosted destructive target.
 
-### Database restore rehearsal
+## Cleanup behavior
 
-1. Select the schema/data backup set and its manifest.
-2. Verify checksums and decrypt the backups in a controlled environment.
-3. Provision a clean compatible Supabase target and reconstruct the expected application schema from the exact reviewed migration chain.
-4. Verify the target contains no unexpected Auth, Storage-object or transactional/business state.
-5. Sanitize provider-managed Storage data from the plain SQL data dump using the reviewed parser; do not rely on a `storage.*` wildcard exclusion and do not globally replace user-data text.
-6. On the approved ephemeral/local target only, normalize migration-materialized application/reference data in `public` that is also present in the authoritative production backup.
-7. Verify the normalized application-data baseline while retaining migration history and provider infrastructure.
-8. Import the sanitized production application/Auth data using the documented trigger-disabled restore pattern.
-9. Apply any repository migrations newer than the backup manifest, in order, only when rehearsing recovery to a newer release.
-10. Run the repository Golden Path database contract.
-11. Compare critical row counts and domain totals against the backup manifest or source snapshot.
-12. Verify authentication-linked foreign keys are intact.
-13. Verify ledger tables remain append-only and settlement uniqueness constraints exist.
-14. Record actual recovery duration and resulting RPO/RTO.
+Cleanup runs with `if: always()`.
 
-### Storage restore rehearsal
-
-1. List source and target buckets through the Storage API.
-2. Refuse hosted destructive targets; on the approved local target, remove only empty target-only buckets through the Storage API and align source bucket configuration.
-3. Restore Storage objects from the off-site mirror.
-4. Compare bucket sets, object counts and checksums; keep object paths out of retained public/redacted evidence.
-5. Verify representative payment proof, KYC/evidence and public media objects are readable only by intended roles.
-6. Confirm the recovered Storage API object count reconciles with the source metadata count captured before recovery.
+If a failure occurs before Supabase CLI installation, cleanup must not emit a misleading `supabase: command not found` error. The workflow checks whether the CLI exists before calling `supabase stop`, then removes `.recovery-work` unconditionally.
 
 ## Application rollback
 
-Application rollback and database rollback are different operations.
+Application rollback and database recovery are different operations.
 
-### Safe application rollback
+If a faulty release has backward-compatible database changes:
 
-If a release is faulty but its database changes are backward-compatible:
-
-1. identify the last known-good merge commit;
-2. redeploy/revert application code through a reviewed PR or Render rollback capability;
+1. identify the last known-good commit;
+2. revert/redeploy application code through a reviewed PR or deployment rollback;
 3. verify `/api/health` and schema compatibility;
-4. run critical auth and investment smoke checks.
+4. run critical Auth and Investment smoke checks.
 
-### Database rollback rule
-
-Do **not** edit or delete an already-applied migration and do not blindly reverse financial data.
-
-For normal defects, prefer a new forward corrective migration. Use database restore only for true destructive/corruption incidents where forward correction cannot preserve integrity.
-
-Before restoring production, explicitly determine:
-
-- transactions that will be lost between the restore point and incident time;
-- whether external bank/provider events occurred after the restore point;
-- whether Storage objects would become orphaned or missing;
-- whether reconciliation must be re-run after restore.
+Do not edit/delete already-applied migrations and do not blindly reverse financial records. Prefer forward corrective migrations unless a true corruption/destructive incident requires point-in-time recovery.
 
 ## Production financial gate
 
-The following capabilities must remain fail-closed until data and Storage recovery are VERIFIED:
+The following remain fail-closed until database and Storage recovery are VERIFIED:
 
 - public investment funding;
 - automatic settlement;
 - automatic withdrawals;
-- automatic payment gateway activation where it can create authoritative financial state.
+- automatic payment-gateway activation where it creates authoritative financial state.
 
-Repository defaults must remain `false`. Production activation requires an explicit operational sign-off after a successful restore rehearsal.
+Repository defaults must remain disabled. Production activation requires explicit human approval after recovery and operating-evidence gates pass.
 
 ## Recovery evidence record
 
-For every rehearsal record:
+A successful rehearsal must record at least:
 
-- date/time;
-- operator;
-- backup timestamp;
-- database schema backup checksum;
-- database recoverable-data backup checksum;
-- combined recovery-set checksum;
-- Git SHA;
-- expected schema version;
+- date/time and operator;
+- exact Git SHA;
+- migration identity;
+- schema/data backup digests;
+- combined recovery-set digest;
+- critical source/restored counts;
+- Storage object count and aggregate checksum evidence;
 - target environment;
-- database restore start/end;
-- Storage restore start/end;
-- measured RPO;
-- measured RTO;
-- Golden Path result;
-- discrepancies found;
-- corrective actions.
+- measured duration/RTO;
+- effective backup age/RPO;
+- Golden Path/security result;
+- cleanup result;
+- discrepancies and corrective actions.
 
 ## Definition of verified recovery
 
-Recovery is **VERIFIED** only when all conditions are true:
+Recovery is **VERIFIED** only when all of the following are true:
 
-- a real production-derived backup exists outside the production project;
-- the database recoverable-data backup has been restored successfully to a non-production target;
-- Storage objects have been restored or independently verified recoverable;
-- Golden Path schema checks pass after restoration;
-- critical data reconciliation succeeds;
-- measured RPO/RTO are recorded;
-- an owner and escalation path are assigned.
+- the production-derived logical backup succeeds;
+- recoverable application/Auth data restores to the isolated target;
+- source/restored database reconciliation succeeds;
+- Storage buckets and actual object bytes restore and checksum-verify;
+- Golden Path/security contracts pass after restoration;
+- measured recovery timing is captured;
+- only redacted evidence is retained;
+- raw recovery material is destroyed;
+- the evidence is bound to the current reviewed/deployed SHA and receives human review.
 
 Until then, the correct status remains **UNVERIFIED**.
