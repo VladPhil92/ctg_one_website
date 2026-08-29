@@ -1,0 +1,38 @@
+name: Wallet Unification Invariants
+
+on:
+  pull_request:
+    paths:
+      - 'docs/CTG_ONE_WALLET_UNIFICATION.md'
+      - 'src/lib/wallet/**'
+      - 'supabase/migrations/*wallet_identity_bridge*.sql'
+      - 'scripts/test-wallet-unification-invariants.mjs'
+      - '.github/workflows/wallet-unification-invariants.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/CTG_ONE_WALLET_UNIFICATION.md'
+      - 'src/lib/wallet/**'
+      - 'supabase/migrations/*wallet_identity_bridge*.sql'
+      - 'scripts/test-wallet-unification-invariants.mjs'
+      - '.github/workflows/wallet-unification-invariants.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+
+      - name: Verify canonical wallet identity boundary
+        run: node scripts/test-wallet-unification-invariants.mjs
