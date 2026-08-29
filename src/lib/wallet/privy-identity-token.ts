@@ -4,6 +4,7 @@ import { createPublicKey, verify as verifySignature, type KeyObject } from 'node
 import type { JsonWebKey as NodeJsonWebKey } from 'node:crypto';
 
 const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+const PRIVY_USER_ID_RE = /^did:privy:[A-Za-z0-9._:-]+$/;
 const MAX_CLOCK_SKEW_SECONDS = 60;
 const MAX_TOKEN_AGE_SECONDS = 2 * 60 * 60;
 
@@ -88,7 +89,7 @@ function requireClaims(payload: JsonObject, expectedAppId: string): PrivyIdentit
   const { sub, iss, aud, iat, exp, linked_accounts: linkedAccounts } = payload;
 
   if (
-    typeof sub !== 'string' || sub.length < 3 ||
+    typeof sub !== 'string' || !PRIVY_USER_ID_RE.test(sub) ||
     iss !== 'privy.io' ||
     aud !== expectedAppId ||
     typeof iat !== 'number' || !Number.isFinite(iat) ||
@@ -268,13 +269,14 @@ export function verifyPrivyIdentityToken(params: {
   const claims = requireClaims(decodeBase64UrlJson(encodedPayload), appId);
   const accounts = parseLinkedAccounts(claims.linked_accounts);
 
-  const matchingCustomAuth = accounts.filter((account) => {
-    if (account.type !== 'custom_auth') return false;
-    const customUserId = readString(account, 'custom_user_id', 'customUserId');
-    return customUserId === params.canonicalCtgUserId;
-  });
+  const customAuthAccounts = accounts
+    .filter((account) => account.type === 'custom_auth')
+    .map((account) => readString(account, 'custom_user_id', 'customUserId'));
 
-  if (matchingCustomAuth.length !== 1) {
+  if (
+    customAuthAccounts.length !== 1 ||
+    customAuthAccounts[0] !== params.canonicalCtgUserId
+  ) {
     throw new PrivyIdentityTokenError(
       'PRIVY_IDENTITY_RELATIONSHIP_MISMATCH',
       'Signed Privy identity is not uniquely linked to the authenticated CTG user.',
