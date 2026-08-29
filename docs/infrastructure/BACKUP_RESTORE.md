@@ -20,7 +20,7 @@ Initial operational targets:
 - **RTO target:** 4 hours for the current small production dataset, subject to measurement.
 - **Storage RPO target:** equal to or better than database RPO for payment, KYC and evidence objects.
 
-These are targets, not achieved guarantees. Replace them with measured values after the first successful rehearsal.
+These are targets, not achieved guarantees. Replace them with measured values after the first successful restore rehearsal.
 
 ## Required recovery perimeter
 
@@ -148,6 +148,12 @@ Storage is recovered independently through the API:
 
 The Storage script independently refuses a hosted destructive target.
 
+## Restore rehearsal safety
+
+A restore rehearsal must never target production. Destructive normalization is permitted only on the exact ephemeral loopback PostgreSQL target established by the workflow, and Storage bucket/object restoration is permitted only through the loopback Storage API.
+
+A failed rehearsal is diagnostic evidence, not permission to weaken these guards. Correct the failing boundary, retain only redacted evidence, and start a fresh exact-SHA run after the correction is reviewed.
+
 ## Cleanup behavior
 
 Cleanup runs with `if: always()`.
@@ -165,7 +171,7 @@ If a faulty release has backward-compatible database changes:
 3. verify `/api/health` and schema compatibility;
 4. run critical Auth and Investment smoke checks.
 
-Do not edit/delete already-applied migrations and do not blindly reverse financial records. Prefer forward corrective migrations unless a true corruption/destructive incident requires point-in-time recovery.
+Do not edit/delete already-applied migrations and do not blindly reverse financial records. Prefer a forward corrective migration unless a true corruption/destructive incident requires point-in-time recovery.
 
 ## Production financial gate
 
