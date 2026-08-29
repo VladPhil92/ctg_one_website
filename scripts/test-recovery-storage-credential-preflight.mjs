@@ -18,6 +18,11 @@ assert.match(
   /node scripts\/validate-recovery-storage-source\.mjs/,
   'Recovery workflow must execute the reviewed Storage credential preflight script.',
 );
+assert.match(
+  workflow,
+  /if command -v supabase >\/dev\/null 2>&1; then/,
+  'Recovery cleanup must tolerate a preflight failure before Supabase CLI installation.',
+);
 
 const jwt = (payload) => {
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -37,15 +42,35 @@ assert.throws(
   'Recovery must reject low-privilege legacy JWTs.',
 );
 assert.throws(
-  () => classifyRecoveryAdminKey('not-a-supabase-key'),
-  /not a recognized Supabase server credential/i,
-  'Recovery must reject malformed credentials locally.',
+  () => classifyRecoveryAdminKey('"sb_secret_example"'),
+  /wrapped in quotes/i,
+  'Recovery must identify quoted secrets explicitly instead of reporting a generic credential failure.',
+);
+assert.throws(
+  () => classifyRecoveryAdminKey('SUPABASE_SECRET_KEY=sb_secret_example'),
+  /environment assignment/i,
+  'Recovery must reject KEY=value secret payloads and require the raw key only.',
+);
+assert.throws(
+  () => classifyRecoveryAdminKey('eyJbroken'),
+  /malformed or truncated JWT/i,
+  'Recovery must distinguish malformed JWT-looking values from unrelated opaque secrets.',
+);
+assert.throws(
+  () => classifyRecoveryAdminKey('some-random-jwt-secret-or-password'),
+  /Do not use the project JWT Secret/i,
+  'Recovery must explicitly warn against JWT Secret/database-password/PAT confusion.',
 );
 
 assert.match(
   storageCredentialFailureMessage('Invalid Compact JWS'),
   /sb_secret_/,
   'Invalid Compact JWS must produce actionable modern Secret-key guidance without echoing the supplied key.',
+);
+assert.match(
+  storageCredentialFailureMessage('Invalid Compact JWS'),
+  /not a usable Storage admin credential/i,
+  'Provider JWS failures must explain that the configured secret is the wrong credential class.',
 );
 
 let receivedUrl;
