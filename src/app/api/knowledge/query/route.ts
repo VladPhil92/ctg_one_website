@@ -9,8 +9,12 @@ import {
   type GroundingSource,
 } from '@/lib/ai/model-gateway';
 import { validateGroundedAnswer } from '@/lib/ai/grounding.mjs';
+import { getSafeErrorTelemetry } from '@/lib/observability/error-telemetry';
 import { logger } from '@/lib/observability/logger';
-import { getRequestObservabilityContext } from '@/lib/observability/request-context';
+import {
+  formatTraceparent,
+  getRequestObservabilityContext,
+} from '@/lib/observability/request-context';
 import { consumeAuthenticatedRateLimit } from '@/lib/security/api-rate-limit';
 
 export const runtime = 'nodejs';
@@ -41,6 +45,7 @@ export async function POST(request: Request) {
   const requestId = requestContext.request_id;
   const responseHeaders = (extra: Record<string, string> = {}) => ({
     'X-Request-ID': requestId,
+    traceparent: formatTraceparent(requestContext),
     ...extra,
   });
 
@@ -99,7 +104,7 @@ export async function POST(request: Request) {
       filter_business_unit: parsed.data.businessUnit ?? null,
     });
 
-    if (error) throw new Error(`Knowledge retrieval failed: ${error.message}`);
+    if (error) throw Object.assign(new Error('Knowledge retrieval failed'), { code: error.code });
     const matches = (data ?? []) as MatchRow[];
 
     if (!matches.length) {
@@ -204,7 +209,7 @@ export async function POST(request: Request) {
         provider: knowledgeAIConfig.provider,
         configVersion: knowledgeAIConfig.configVersion,
       },
-      error: error instanceof Error ? error.message : 'unknown error',
+      ...getSafeErrorTelemetry(error),
     });
     return NextResponse.json(
       { error: 'CTG Knowledge could not complete the query.', code: 'KNOWLEDGE_QUERY_FAILED', requestId },

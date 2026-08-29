@@ -8,8 +8,12 @@ import {
   isKnowledgeAIConfigured,
   knowledgeAIConfig,
 } from '@/lib/ai/model-gateway';
+import { getSafeErrorTelemetry } from '@/lib/observability/error-telemetry';
 import { logger } from '@/lib/observability/logger';
-import { getRequestObservabilityContext } from '@/lib/observability/request-context';
+import {
+  formatTraceparent,
+  getRequestObservabilityContext,
+} from '@/lib/observability/request-context';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,7 +30,10 @@ export async function POST(request: Request) {
   const started = Date.now();
   const requestContext = getRequestObservabilityContext(request);
   const requestId = requestContext.request_id;
-  const responseHeaders = { 'X-Request-ID': requestId };
+  const responseHeaders = {
+    'X-Request-ID': requestId,
+    traceparent: formatTraceparent(requestContext),
+  };
 
   try {
     if (!isSupabaseConfigured || !isKnowledgeAIConfigured) {
@@ -54,7 +61,7 @@ export async function POST(request: Request) {
     }
 
     const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
-    if (adminError) throw new Error(`Admin verification failed: ${adminError.message}`);
+    if (adminError) throw Object.assign(new Error('Admin verification failed'), { code: adminError.code });
     if (!isAdmin) {
       return NextResponse.json(
         { error: 'Admin access required.', code: 'ADMIN_REQUIRED', requestId },
@@ -119,7 +126,7 @@ export async function POST(request: Request) {
     const { error: chunkError } = await supabase.from('knowledge_chunks').insert(rows);
     if (chunkError) {
       await supabase.from('knowledge_documents').delete().eq('id', document.id);
-      throw new Error(`Chunk insert failed: ${chunkError.message}`);
+      throw Object.assign(new Error('Knowledge chunk insert failed'), { code: chunkError.code });
     }
 
     logger.info('knowledge.ingest.completed', {
@@ -151,7 +158,7 @@ export async function POST(request: Request) {
         provider: knowledgeAIConfig.provider,
         configVersion: knowledgeAIConfig.configVersion,
       },
-      error: error instanceof Error ? error.message : 'unknown error',
+      ...getSafeErrorTelemetry(error),
     });
     return NextResponse.json(
       { error: 'CTG Knowledge could not ingest the document.', code: 'KNOWLEDGE_INGEST_FAILED', requestId },

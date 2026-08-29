@@ -5,10 +5,14 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 const logger = await read('src/lib/observability/logger.ts');
 const requestContext = await read('src/lib/observability/request-context.ts');
+const errorTelemetry = await read('src/lib/observability/error-telemetry.ts');
 const healthRoute = await read('src/app/api/health/route.ts');
+const knowledgeQuery = await read('src/app/api/knowledge/query/route.ts');
+const knowledgeIngest = await read('src/app/api/knowledge/admin/ingest/route.ts');
 const runtimeSchema = await read('src/lib/observability/runtime-schema.ts');
 
 for (const field of [
+  'telemetry_schema',
   'deployment_provider',
   'deployment_commit',
   'deployment_branch',
@@ -17,6 +21,10 @@ for (const field of [
 ]) {
   assert.ok(logger.includes(field), `Structured logger must include ${field}.`);
 }
+assert.ok(
+  logger.includes("'ctg.one.telemetry.v2'"),
+  'Structured telemetry must expose an explicit schema version for downstream consumers.',
+);
 
 for (const sensitiveKey of ['password', 'authorization', 'service_role', 'access_token', 'refresh_token']) {
   assert.ok(logger.includes(`'${sensitiveKey}'`), `Sensitive-field redaction must include ${sensitiveKey}.`);
@@ -34,6 +42,39 @@ assert.ok(
   requestContext.includes('REQUEST_ID_PATTERN'),
   'Untrusted request IDs must be validated before they enter logs or response headers.',
 );
+assert.ok(
+  requestContext.includes('TRACEPARENT_PATTERN'),
+  'Trace correlation must validate inbound W3C traceparent headers.',
+);
+assert.ok(
+  requestContext.includes("trace_flags: '01'"),
+  'Locally-created traces must use an explicit sampled trace flag.',
+);
+assert.ok(
+  requestContext.includes('isNonZeroHex(traceId) && isNonZeroHex(parentSpanId)'),
+  'All-zero W3C trace/span identifiers must be rejected.',
+);
+assert.ok(
+  requestContext.includes('formatTraceparent'),
+  'Observability context must support standards-compatible traceparent propagation.',
+);
+
+assert.ok(
+  errorTelemetry.includes("createHash('sha256')"),
+  'Error intelligence must generate stable opaque fingerprints without publishing raw messages.',
+);
+assert.ok(
+  errorTelemetry.includes("error_fingerprint"),
+  'Error telemetry must expose a grouping fingerprint.',
+);
+assert.ok(
+  errorTelemetry.includes("retryable"),
+  'Error telemetry must classify whether a failure category is retryable.',
+);
+assert.ok(
+  !errorTelemetry.includes('error_message:'),
+  'Safe error telemetry must not emit raw error messages.',
+);
 
 assert.ok(
   healthRoute.includes('getRequestObservabilityContext(request)'),
@@ -44,6 +85,10 @@ assert.ok(
   'Health responses must expose the same safe request ID used for logging.',
 );
 assert.ok(
+  healthRoute.includes('traceparent: formatTraceparent(requestContext)'),
+  'Health responses must propagate W3C trace context.',
+);
+assert.ok(
   healthRoute.includes('...requestContext'),
   'Health log events must include the request correlation context.',
 );
@@ -51,6 +96,24 @@ assert.ok(
   !healthRoute.includes('SUPABASE_SERVICE_ROLE_KEY'),
   'Public health route must not inspect or expose the Supabase service-role secret.',
 );
+
+for (const [name, route] of [
+  ['knowledge query', knowledgeQuery],
+  ['knowledge ingestion', knowledgeIngest],
+]) {
+  assert.ok(
+    route.includes('traceparent: formatTraceparent(requestContext)'),
+    `${name} responses must propagate the same W3C trace context used in logs.`,
+  );
+  assert.ok(
+    route.includes('getSafeErrorTelemetry(error)'),
+    `${name} failures must use safe classified error telemetry.`,
+  );
+  assert.ok(
+    !route.includes("error: error instanceof Error ? error.message"),
+    `${name} logs must not emit raw exception messages.`,
+  );
+}
 
 assert.ok(
   runtimeSchema.includes('EXPECTED_DATABASE_MIGRATION,'),

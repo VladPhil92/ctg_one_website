@@ -6,8 +6,8 @@ import {
   validateEvaluationDatasetAgainstCorpus,
 } from '../src/lib/ai/evaluation-corpus.mjs';
 
-const manifestPath = 'scripts/fixtures/knowledge-evaluation-corpus.public-v1.json';
-const datasetPath = 'scripts/fixtures/knowledge-evaluation-dataset.public-v1.json';
+const manifestPath = 'scripts/fixtures/knowledge-evaluation-corpus.public-v2.json';
+const datasetPath = 'scripts/fixtures/knowledge-evaluation-dataset.public-v2.json';
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const dataset = JSON.parse(readFileSync(datasetPath, 'utf8'));
 const moduleSource = readFileSync('src/lib/ai/evaluation-corpus.mjs', 'utf8');
@@ -16,8 +16,8 @@ const packageSource = readFileSync('scripts/prepare-knowledge-evaluation-corpus.
 const validation = validateEvaluationDatasetAgainstCorpus(manifest, dataset);
 assert.equal(validation.corpusVersion, manifest.version);
 assert.equal(validation.datasetVersion, dataset.version);
-assert.equal(validation.sourceCount, 12, 'public evaluation corpus must pin the reviewed source set');
-assert.equal(validation.caseCount, 17, 'representative public evaluation dataset must retain its case coverage');
+assert.equal(validation.sourceCount, 13, 'public evaluation corpus must pin the reviewed source set');
+assert.equal(validation.caseCount, 18, 'representative public evaluation dataset must retain its case coverage');
 assert.ok(validation.supportedCount >= 8);
 assert.ok(validation.noEvidenceCount >= 2);
 assert.ok(validation.adversarialCount >= 2);
