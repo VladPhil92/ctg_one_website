@@ -33,7 +33,9 @@ jobs:
     timeout-minutes: 40
     env:
       SOURCE_DATABASE_URL: ${{ secrets.RECOVERY_PRODUCTION_DATABASE_URL }}
-      SOURCE_SUPABASE_URL: ${{ secrets.RECOVERY_PRODUCTION_SUPABASE_URL }}
+      # The project URL is public, non-secret configuration. Pin it here so the
+      # production Storage recovery path cannot be broken by a malformed secret.
+      SOURCE_SUPABASE_URL: https://mdscwjvlihdiflcvghhk.supabase.co
       SOURCE_SUPABASE_SECRET_KEY: ${{ secrets.RECOVERY_PRODUCTION_SUPABASE_SECRET_KEY }}
       RECOVERY_STORAGE_MAX_OBJECTS: ${{ github.event.inputs.max_storage_objects }}
       RECOVERY_STORAGE_MAX_BYTES: ${{ github.event.inputs.max_storage_bytes }}
@@ -60,12 +62,16 @@ jobs:
             echo "::error::Explicit recovery-drill confirmation did not match."
             exit 1
           fi
-          for name in SOURCE_DATABASE_URL SOURCE_SUPABASE_URL SOURCE_SUPABASE_SECRET_KEY; do
+          for name in SOURCE_DATABASE_URL SOURCE_SUPABASE_SECRET_KEY; do
             if [ -z "${!name:-}" ]; then
               echo "::error::Required GitHub secret for ${name} is not configured."
               exit 1
             fi
           done
+          if [ "$SOURCE_SUPABASE_URL" != "https://mdscwjvlihdiflcvghhk.supabase.co" ]; then
+            echo "::error::Production Supabase API origin does not match the reviewed project URL."
+            exit 1
+          fi
           echo "RECOVERY_DRILL_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
       - name: Checkout dispatched main commit
