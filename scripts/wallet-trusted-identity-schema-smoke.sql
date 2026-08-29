@@ -84,8 +84,8 @@ declare
   v_second jsonb;
   v_user_a uuid := '10000000-0000-0000-0000-000000000001';
   v_user_b uuid := '10000000-0000-0000-0000-000000000002';
-  v_address_a text := '0x1111111111111111111111111111111111111111';
-  v_address_b text := '0x2222222222222222222222222222222222222222';
+  v_address_a text := '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
+  v_address_b text := '0x1234567890abcdef1234567890abcdef12345678';
 begin
   v_first := public.link_verified_wallet_identity(
     v_user_a,
@@ -106,7 +106,7 @@ begin
   v_second := public.link_verified_wallet_identity(
     v_user_a,
     'did:privy:ctg-wallet-a',
-    upper(v_address_a),
+    '0x' || upper(substr(v_address_a, 3)),
     'new',
     null
   );
@@ -199,7 +199,7 @@ begin
     'did:privy:ctg-wallet-b',
     v_address_b,
     'legacy_preserve',
-    upper(v_address_b)
+    '0x' || upper(substr(v_address_b, 3))
   );
 
   if not (v_second->>'legacyPreserved')::boolean
