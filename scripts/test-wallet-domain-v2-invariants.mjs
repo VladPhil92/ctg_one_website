@@ -102,10 +102,18 @@ requireFragments(domain, 'Wallet Domain V2 types', [
   'export function normalizeWalletReference',
 ]);
 
-requireFragments(schema, 'runtime schema contract', [
-  "EXPECTED_DATABASE_MIGRATION = '0078'",
-  "EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_domain_v2_foundation'",
-  'EXPECTED_DATABASE_MIGRATION_COUNT = 78',
-]);
+// Wallet Domain V2 is a historical foundation invariant, not a requirement that
+// migration 0078 remain the repository tip forever. Future migrations must be
+// able to advance the runtime schema while never regressing below this boundary.
+const currentSchemaMatch = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
+const currentSchemaCountMatch = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(schema);
+if (
+  !currentSchemaMatch
+  || !currentSchemaCountMatch
+  || Number(currentSchemaMatch[1]) < 78
+  || Number(currentSchemaCountMatch[1]) < 78
+) {
+  throw new Error('runtime schema contract must never regress below Wallet Domain V2 migration 0078');
+}
 
 console.log('Wallet Domain V2 invariants: PASS');

@@ -1,0 +1,46 @@
+name: Investment Settlement Preview
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/investment-settlement-preview-v1-smoke.sql'
+      - '.github/workflows/investment-settlement-preview.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/investment-settlement-preview-v1-smoke.sql'
+      - '.github/workflows/investment-settlement-preview.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: investment-settlement-preview-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview-contract:
+    name: Pure settlement arithmetic contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.111.0
+
+      - name: Apply migrations to isolated local Postgres
+        run: supabase db start
+
+      - name: Validate non-authoritative settlement preview
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -X -v ON_ERROR_STOP=1 \
+            -f scripts/investment-settlement-preview-v1-smoke.sql
