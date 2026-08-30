@@ -259,7 +259,7 @@ export function buildWalletOverviewV2(params: {
       amountCents: requireSafeCents(transaction.amount_cents, 'legacy transaction amount'),
       reference: transaction.crypto_tx_hash ?? transaction.external_reference,
       occurredAt: transaction.created_at,
-      settledAt: transaction.reviewed_at,
+      settledAt: transaction.status === 'approved' ? transaction.reviewed_at : null,
     });
   }
 
