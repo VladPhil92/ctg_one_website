@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0078",
-    "schemaMigrationName": "wallet_domain_v2_foundation",
-    "schemaMigrationCount": 78,
+    "schemaMigration": "0079",
+    "schemaMigrationName": "investment_settlement_preview_v1",
+    "schemaMigrationCount": 79,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
