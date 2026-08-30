@@ -100,6 +100,8 @@ const currentSchemaMatch = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.e
 const currentSchemaCountMatch = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(schema);
 if (!currentSchemaMatch || !currentSchemaCountMatch || Number(currentSchemaMatch[1]) < 78 || Number(currentSchemaCountMatch[1]) < 78) {
   throw new Error('runtime schema contract must never regress below Wallet Domain V2 migration 0078');
+}
+
 requireFragments(intentCreationMigration, 'Wallet Intent V1 creation migration', [
   'add column if not exists amount_base_units text',
   'add column if not exists destination_address text',
@@ -281,15 +283,13 @@ requireFragments(readModel, 'Wallet intent read model', [
   'reference: intent.tx_hash ?? intent.external_reference',
 ]);
 
-const currentSchemaMatch = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
-const currentSchemaCountMatch = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(schema);
 if (
   !currentSchemaMatch
   || !currentSchemaCountMatch
-  || Number(currentSchemaMatch[1]) < 85
-  || Number(currentSchemaCountMatch[1]) < 85
+  || Number(currentSchemaMatch[1]) < 87
+  || Number(currentSchemaCountMatch[1]) < 87
 ) {
-  throw new Error('runtime schema contract must include Wallet Intent Authorization V1 migration 0085');
+  throw new Error('runtime schema contract must include canonical COP ledger hardening migration 0087');
 }
 
 console.log('Wallet Domain V2 + trusted Intent Creation/Authorization V1 invariants: PASS');
