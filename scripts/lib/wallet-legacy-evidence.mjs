@@ -210,6 +210,12 @@ export function planWalletLegacyEvidenceImport(document, database) {
     if (existingEvidence.length === 1) {
       const existing = existingEvidence[0];
       if (sameEvidence(existing, document, record)) {
+        if (existing.status === 'rejected') {
+          conflict('EXISTING_EVIDENCE_REJECTED', 'Matching immutable legacy evidence is rejected and requires operator review.', {
+            evidenceId: existing.id,
+          });
+          continue;
+        }
         alreadyPresent.push({ record, status: existing.status, evidenceId: existing.id });
         continue;
       }
@@ -236,6 +242,16 @@ export function planWalletLegacyEvidenceImport(document, database) {
       conflict('CANONICAL_USER_LINK_CONFLICT', 'Canonical CTG user is already linked to a different Privy identity.');
       continue;
     }
+    const matchingUserLinks = userLinks.filter((row) => row.provider === 'privy' && row.provider_user_id === record.privyUserId);
+    if (matchingUserLinks.some((row) => row.status === 'revoked')) {
+      conflict('REVOKED_IDENTITY_LINK', 'Matching Privy identity link is revoked and requires operator review.');
+      continue;
+    }
+    if (matchingUserLinks.some((row) => row.link_mode !== 'legacy_preserve')) {
+      conflict('IDENTITY_LINK_MODE_CONFLICT', 'Existing Privy identity link was not created in legacy_preserve mode.');
+      continue;
+    }
+
     const providerLinks = linksByPrivy.get(record.privyUserId) ?? [];
     if (providerLinks.some((row) => String(row.user_id).toLowerCase() !== record.canonicalUserId)) {
       conflict('PRIVY_IDENTITY_LINK_CONFLICT', 'Privy identity is already linked to another CTG user.');
@@ -247,6 +263,15 @@ export function planWalletLegacyEvidenceImport(document, database) {
       conflict('EVM_ADDRESS_LINK_CONFLICT', 'EVM address is already linked to another CTG user.');
       continue;
     }
+    if (addressAccounts.some((row) => row.status === 'revoked')) {
+      conflict('REVOKED_EVM_ACCOUNT', 'Matching EVM account is revoked and requires operator review.');
+      continue;
+    }
+    if (addressAccounts.some((row) => row.provider !== 'privy' || row.account_kind !== 'embedded')) {
+      conflict('EVM_ACCOUNT_ASSOCIATION_CONFLICT', 'Existing EVM account association conflicts with the expected embedded Privy wallet.');
+      continue;
+    }
+
     const primaryAccounts = primaryAccountsByUser.get(record.canonicalUserId) ?? [];
     if (primaryAccounts.some((row) => row.address_normalized !== record.normalizedAddress)) {
       conflict('PRIMARY_EVM_WALLET_CONFLICT', 'Canonical CTG user already has a different active primary EVM wallet.');
