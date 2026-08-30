@@ -124,7 +124,7 @@ begin
     where n.nspname = 'public'
       and p.proname = 'post_wallet_journal_entry'
   ) then
-    raise exception 'Wallet Domain V2 journal posting must remain disabled in migration 0078';
+    raise exception 'Wallet Domain V2 authoritative journal posting RPC must remain disabled';
   end if;
 end $$;
 
@@ -210,12 +210,30 @@ begin
   end;
 end $$;
 
--- The foundation intentionally carries no monetary journal data.
+-- Later migrations may populate only explicitly non-authoritative shadow journal
+-- rows. The historical foundation invariant remains: no authoritative posting
+-- RPC and no unmarked money rows may appear through this compatibility test.
 do $$
 begin
-  if exists (select 1 from public.wallet_journal_entries_v2)
-     or exists (select 1 from public.wallet_journal_postings_v2) then
-    raise exception 'Wallet Domain V2 foundation unexpectedly created journal money movements';
+  if exists (
+    select 1 from public.wallet_journal_entries_v2 e
+    where coalesce(e.metadata ->> 'shadow', 'false') <> 'true'
+  ) then
+    raise exception 'Wallet Domain V2 contains unexpected non-shadow journal rows';
+  end if;
+
+  if exists (
+    select 1
+    from public.wallet_journal_entries_v2 e
+    left join lateral (
+      select count(*)::bigint as posting_count, coalesce(sum(p.amount_cents),0)::bigint as posting_sum
+      from public.wallet_journal_postings_v2 p
+      where p.entry_id = e.id
+    ) x on true
+    where e.metadata ->> 'shadow' = 'true'
+      and (x.posting_count <> 2 or x.posting_sum <> 0)
+  ) then
+    raise exception 'Wallet Domain V2 shadow journal row is not balanced';
   end if;
 end $$;
 
