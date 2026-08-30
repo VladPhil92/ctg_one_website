@@ -89,11 +89,11 @@ type IntentSnapshot = {
   user_id: string;
   status: string;
   intent_type: string;
-  rail: string | null;
-  chain_id: number | null;
-  asset_symbol: string | null;
-  amount_base_units: string | null;
-  destination_address: string | null;
+  rail: string;
+  chain_id: number;
+  asset_symbol: string;
+  amount_base_units: string;
+  destination_address: string;
   tx_hash: string | null;
   external_reference: string | null;
   settled_at: string | null;
