@@ -5,6 +5,7 @@ import {
   INVESTMENT_BUSINESS_RULE_GOVERNANCE,
   INVESTMENT_BUSINESS_RULE_GOVERNANCE_VERSION,
   INVESTMENT_BUSINESS_RULE_PROPAGATION,
+  INVESTMENT_BUSINESS_RULE_PROPAGATION_VERSION,
   INVESTMENT_REQUIRED_BUSINESS_RULE_IDS,
 } from '../src/data/investment-business-rule-governance.mjs';
 import {
@@ -33,6 +34,18 @@ function approvedGovernanceFixture() {
   };
 }
 
+function verifiedPropagationFixture() {
+  return {
+    version: INVESTMENT_BUSINESS_RULE_PROPAGATION_VERSION,
+    status: 'VERIFIED',
+    verifiedCandidateCommit: INVESTMENT_BUSINESS_RULE_CANDIDATE.commit,
+    verifiedCandidateBlobSha: INVESTMENT_BUSINESS_RULE_CANDIDATE.blobSha,
+    verifiedBy: 'independent-propagation-reviewer',
+    verifiedAt: '2026-08-30T10:00:00.000Z',
+    evidenceRef: 'propagation-review:fixture',
+  };
+}
+
 validateInvestmentBusinessRulePropagationChangeBlueprint(
   INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT,
 );
@@ -42,6 +55,7 @@ assert.equal(canonicalPlan.version, INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_
 assert.equal(canonicalPlan.status, 'BLOCKED_AWAITING_CANONICAL_APPROVAL');
 assert.deepEqual(canonicalPlan.decisionBlockers, INVESTMENT_REQUIRED_BUSINESS_RULE_IDS);
 assert.equal(canonicalPlan.canonicalApprovalsSatisfied, false);
+assert.equal(canonicalPlan.propagationAlreadyVerified, false);
 assert.equal(canonicalPlan.implementationPlanningEligible, false);
 assert.equal(canonicalPlan.implementationPrEligible, false);
 assert.equal(canonicalPlan.automaticApprovalAllowed, false);
@@ -76,12 +90,21 @@ assert.deepEqual(runtimeSurface.dependsOn, [
 assert.equal(runtimeSurface.tasks[0].action, 'NEW_IMMUTABLE_MIGRATION');
 assert.deepEqual(runtimeSurface.tasks[0].targets, [{ kind: 'DIRECTORY', path: 'supabase/migrations' }]);
 
+const legalSurface = canonicalPlan.blueprint.surfaces.find((surface) => surface.id === 'agreement-legal-config');
+assert.ok(legalSurface);
+assert.ok(
+  legalSurface.tasks[0].targets.some((target) => target.path === 'src/app/inversion/legal/page.tsx'),
+  'The actual participant-facing legal instrument must be part of propagation planning.',
+);
+
+const approvedGovernance = approvedGovernanceFixture();
 const readyPlan = buildInvestmentBusinessRulePropagationChangePlan({
-  governance: approvedGovernanceFixture(),
+  governance: approvedGovernance,
 });
 assert.equal(readyPlan.status, 'READY_FOR_REVIEWED_IMPLEMENTATION_PR');
 assert.deepEqual(readyPlan.decisionBlockers, []);
 assert.equal(readyPlan.canonicalApprovalsSatisfied, true);
+assert.equal(readyPlan.propagationAlreadyVerified, false);
 assert.equal(readyPlan.implementationPlanningEligible, true);
 assert.equal(readyPlan.implementationPrEligible, true);
 assert.equal(readyPlan.automaticApprovalAllowed, false);
@@ -90,6 +113,18 @@ assert.equal(readyPlan.runtimeMutationAllowedByPlanner, false);
 assert.equal(readyPlan.propagationVerificationAllowed, false);
 assert.equal(readyPlan.pilotAuthorizationGranted, false);
 assert.equal(readyPlan.livePromotionAllowed, false);
+
+const alreadyPropagatedPlan = buildInvestmentBusinessRulePropagationChangePlan({
+  governance: approvedGovernance,
+  propagation: verifiedPropagationFixture(),
+});
+assert.equal(alreadyPropagatedPlan.status, 'ALREADY_PROPAGATED');
+assert.equal(alreadyPropagatedPlan.propagationAlreadyVerified, true);
+assert.equal(alreadyPropagatedPlan.implementationPlanningEligible, false);
+assert.equal(alreadyPropagatedPlan.implementationPrEligible, false);
+assert.equal(alreadyPropagatedPlan.automaticMutationAllowed, false);
+assert.equal(alreadyPropagatedPlan.runtimeMutationAllowedByPlanner, false);
+assert.equal(alreadyPropagatedPlan.livePromotionAllowed, false);
 
 const staleCandidate = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
 staleCandidate.candidate.commit = 'a'.repeat(40);
@@ -104,6 +139,21 @@ duplicateTask.surfaces[1].tasks[0].id = duplicateTask.surfaces[0].tasks[0].id;
 assert.throws(
   () => validateInvestmentBusinessRulePropagationChangeBlueprint(duplicateTask),
   /Duplicate propagation change task id/,
+);
+
+const duplicateDependency = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
+duplicateDependency.surfaces[1].dependsOn = ['business-model', 'business-model'];
+assert.throws(
+  () => validateInvestmentBusinessRulePropagationChangeBlueprint(duplicateDependency),
+  /contains duplicate dependency/,
+);
+
+const sameStageCycle = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
+sameStageCycle.surfaces.find((surface) => surface.id === 'business-model').dependsOn = ['financial-model'];
+assert.throws(
+  () => validateInvestmentBusinessRulePropagationChangeBlueprint(sameStageCycle),
+  /dependency cycle detected/,
+  'Same-stage dependency cycles must fail closed.',
 );
 
 const missingCoverage = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
@@ -159,6 +209,7 @@ for (const path of [
   'docs/investment/DOMAIN_MODEL.md',
   'docs/investment/LEGAL_CONFIGURATION.md',
   'src/lib/investment/config.ts',
+  'src/app/inversion/legal/page.tsx',
   'scripts/golden-path-transactional-smoke.sql',
   'scripts/investment-operational-golden-journey.sql',
   'docs/investment/OPERATING_EVIDENCE_CAPTURE.md',
@@ -177,6 +228,8 @@ const packageJson = JSON.parse(packageSource);
 assert.match(packageJson.scripts.test, /test-investment-business-rule-propagation-change-plan-invariants\.mjs/);
 assert.match(packageJson.scripts['investment:br:propagation:plan'], /plan-investment-business-rule-propagation\.mjs/);
 assert.match(docsSource, /BLOCKED_AWAITING_CANONICAL_APPROVAL/);
+assert.match(docsSource, /ALREADY_PROPAGATED/);
+assert.match(docsSource, /src\/app\/inversion\/legal\/page\.tsx/);
 assert.match(docsSource, /new immutable migration/i);
 assert.match(docsSource, /does \*\*not\*\* reserve a migration number/i);
 assert.match(plannerCliSource, /result\.status === 'INVALID' \? 1 : 0/);
