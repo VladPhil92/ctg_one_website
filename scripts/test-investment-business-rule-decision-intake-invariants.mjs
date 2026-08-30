@@ -16,7 +16,6 @@ import {
   validateInvestmentBusinessRulePropagationManifest,
 } from '../src/lib/investment/business-rule-decision-intake.mjs';
 
-const clone = (value) => JSON.parse(JSON.stringify(value));
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 function pendingIntake() {
@@ -122,6 +121,14 @@ assert.equal(approvedSummary.governancePrReviewEligible, true);
 assert.equal(approvedSummary.canonicalMutationAllowed, false);
 assert.deepEqual(approvedSummary.decisionBlockers, []);
 
+const impossibleCalendar = approvedIntake();
+impossibleCalendar.decisions[0].decidedAt = '2026-99-99T99:99:99.000Z';
+assert.throws(
+  () => validateInvestmentBusinessRuleDecisionIntake(impossibleCalendar),
+  /valid calendar instant|valid round-tripping UTC instant/,
+  'Impossible calendar values must never become governance timestamps.',
+);
+
 const changesRequired = approvedIntake();
 changesRequired.decisions[2].status = 'CHANGES_REQUIRED';
 const changesSummary = summarizeInvestmentBusinessRuleDecisionIntake(changesRequired);
@@ -185,7 +192,36 @@ const traversal = verifiedPropagationManifest();
 traversal.surfaces[0].artifactRefs = ['../private/decision.json'];
 assert.throws(
   () => validateInvestmentBusinessRulePropagationManifest(traversal),
-  /cannot traverse directories/,
+  /repository-relative path syntax|traverse directories/,
+);
+
+const externalScheme = verifiedPropagationManifest();
+externalScheme.surfaces[0].artifactRefs = ['file:///etc/passwd'];
+assert.throws(
+  () => validateInvestmentBusinessRulePropagationManifest(externalScheme),
+  /must not use a URI scheme/,
+  'Repository propagation evidence must reject every URI scheme, not only HTTP(S).',
+);
+
+const overallBeforeSurface = verifiedPropagationManifest();
+overallBeforeSurface.overallReview.reviewedAt = '2026-08-30T06:32:00.000Z';
+assert.throws(
+  () => validateInvestmentBusinessRulePropagationManifest(overallBeforeSurface),
+  /cannot predate a required surface verification/,
+);
+
+const propagationBeforeApproval = verifiedPropagationManifest();
+propagationBeforeApproval.preparedAt = '2026-08-30T05:20:00.000Z';
+propagationBeforeApproval.surfaces = propagationBeforeApproval.surfaces.map((surface, index) => ({
+  ...surface,
+  verifiedAt: `2026-08-30T05:${30 + index}:00.000Z`,
+}));
+propagationBeforeApproval.overallReview.reviewedAt = '2026-08-30T06:03:00.000Z';
+validateInvestmentBusinessRulePropagationManifest(propagationBeforeApproval);
+assert.throws(
+  () => buildInvestmentBusinessRulePropagationReadiness({ intake: approved, manifest: propagationBeforeApproval }),
+  /must postdate the latest BR approval decision/,
+  'Propagation review evidence created before the latest approval must not be reusable.',
 );
 
 const stalePropagationCandidate = verifiedPropagationManifest();
@@ -209,9 +245,10 @@ assert.equal(ready.livePromotionAllowed, false);
 assert.ok(INVESTMENT_BUSINESS_RULE_GOVERNANCE.rules.every((rule) => rule.status === 'PENDING'));
 assert.equal(INVESTMENT_BUSINESS_RULE_PROPAGATION.status, 'PENDING');
 
-const [packageSource, docsSource] = await Promise.all([
+const [packageSource, docsSource, propagationValidatorSource] = await Promise.all([
   read('package.json'),
   read('docs/investment/BUSINESS_RULE_DECISION_INTAKE.md'),
+  read('scripts/validate-investment-business-rule-propagation-readiness.mjs'),
 ]);
 const packageJson = JSON.parse(packageSource);
 assert.match(packageJson.scripts.test, /test-investment-business-rule-decision-intake-invariants\.mjs/);
@@ -221,5 +258,9 @@ assert.match(packageJson.scripts['investment:br:propagation:template'], /create-
 assert.match(packageJson.scripts['investment:br:propagation:validate'], /validate-investment-business-rule-propagation-readiness\.mjs/);
 assert.match(docsSource, /does not approve BR-001\.\.BR-005/i);
 assert.match(docsSource, /canonicalMutationAllowed.*false/i);
+assert.match(docsSource, /implementationCommit.*Git `HEAD`/i);
+assert.match(propagationValidatorSource, /rev-parse', 'HEAD'/);
+assert.match(propagationValidatorSource, /cat-file', '-t'/);
+assert.match(propagationValidatorSource, /repositoryEvidenceVerified: true/);
 
 console.log('Investment business-rule decision intake and propagation readiness invariants: PASS');
