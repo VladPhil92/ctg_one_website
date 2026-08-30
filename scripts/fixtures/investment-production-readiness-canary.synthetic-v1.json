@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0080",
-  "expectedMigrationName": "wallet_shadow_journal_reconciliation",
-  "expectedMigrationCount": 80,
+  "expectedMigration": "0083",
+  "expectedMigrationName": "wallet_topup_rls_permission_hoisting",
+  "expectedMigrationCount": 83,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
