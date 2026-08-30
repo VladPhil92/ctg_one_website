@@ -5,6 +5,8 @@ const root = process.cwd();
 const files = {
   topupMigration: path.join(root, 'supabase/migrations/20260830150000_0081_wallet_cop_topup_trust_boundary.sql'),
   rateMigration: path.join(root, 'supabase/migrations/20260830151000_0082_wallet_topup_rate_limit_scope.sql'),
+  ledgerMigration: path.join(root, 'supabase/migrations/20260830215500_0084_wallet_canonical_cop_ledger_authority.sql'),
+  ledgerHardeningMigration: path.join(root, 'supabase/migrations/20260830220500_0085_wallet_canonical_cop_ledger_balance_hardening.sql'),
   route: path.join(root, 'src/app/api/wallet/deposits/route.ts'),
   qrRoute: path.join(root, 'src/app/api/wallet/payment-qr/route.ts'),
   page: path.join(root, 'src/app/dashboard/depositos/page.tsx'),
@@ -38,7 +40,9 @@ function requireFragments(text, label, fragments) {
   }
 }
 
-requireFragments(source.topupMigration, 'top-up migration', [
+// 0081 remains immutable evidence of the two-human trust boundary that existed
+// before ledger authority. 0084 replaces only the reconciliation implementation.
+requireFragments(source.topupMigration, 'top-up trust-boundary migration', [
   'create table public.wallet_topup_claims',
   "check (state in ('submitted','verified','rejected','reconciled'))",
   'create unique index wallet_topup_claims_rail_reference_unique',
@@ -53,8 +57,6 @@ requireFragments(source.topupMigration, 'top-up migration', [
   "v_claim.state <> 'verified'",
   'v_claim.verified_by = auth.uid()',
   "raise exception 'WALLET_TOPUP_INDEPENDENT_RECONCILER_REQUIRED'",
-  'update public.wallets',
-  'balance_cents = balance_cents + v_claim.amount_cents',
   'create or replace function public.approve_deposit',
   "raise exception 'WALLET_TOPUP_CLAIM_REQUIRED'",
 ]);
@@ -68,6 +70,24 @@ for (const unsafe of [
     throw new Error(`top-up migration widens a forbidden client money boundary: ${unsafe}`);
   }
 }
+
+// Current reconciliation authority must post the canonical journal before it
+// updates the compatibility cache.
+requireFragments(source.ledgerMigration, 'canonical top-up ledger reconciliation', [
+  'create or replace function public.reconcile_wallet_topup_claim(',
+  "'ledger.topup'",
+  "'authoritative', true",
+  "'wallet_topup_claim'",
+  "'COP_EXTERNAL_CLEARING'",
+  'perform public._wallet_ledger_assert_balanced(v_entry_id)',
+  "raise exception 'WALLET_TOPUP_COMPATIBILITY_CACHE_DRIFT'",
+  "raise exception 'WALLET_TOPUP_LEDGER_POSTING_MISMATCH'",
+  "'balance_authority', 'ctg_ledger_v2'",
+]);
+requireFragments(source.ledgerHardeningMigration, 'canonical top-up balance helper', [
+  "e.status = 'posted'",
+  "e.metadata ->> 'authoritative' = 'true'",
+]);
 
 requireFragments(source.route, 'top-up server route', [
   "consumeAuthenticatedRateLimit(participantClient, 'wallet.topup-proof')",
@@ -95,7 +115,8 @@ requireFragments(source.page, 'deposit dashboard', [
   'BRE_B_INSTRUCTIONS.qrImageUrl',
   'Recargar Saldo CTG',
   'Enviar comprobante de recarga',
-  'Subir un comprobante no acredita saldo por sí mismo.',
+  'Subir un comprobante, recargar la página o modificar el cliente nunca cambia por sí solo el saldo financiero.',
+  'cuando Finanzas verifique el pago y un segundo control lo concilie',
 ]);
 for (const unsafe of [".from('transactions')", ".storage.from('payment-proofs')", 'createClient()']) {
   if (source.page.includes(unsafe)) {
@@ -184,17 +205,21 @@ requireFragments(source.securityGuard, 'SECURITY DEFINER config guard', [
 
 const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(source.schema);
 const schemaCount = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(source.schema);
-if (!schemaMigration || Number(schemaMigration[1]) < 82 || !schemaCount || Number(schemaCount[1]) < 82) {
-  throw new Error('runtime schema contract must include wallet COP top-up migrations 0081/0082');
+if (!schemaMigration || Number(schemaMigration[1]) < 85 || !schemaCount || Number(schemaCount[1]) < 85) {
+  throw new Error('runtime schema contract must include canonical Saldo CTG ledger hardening through 0085');
 }
 
 requireFragments(source.smoke, 'PostgreSQL smoke contract', [
   'proof submission credited money before reconciliation',
+  'proof submission posted canonical ledger money before reconciliation',
   'same verifier was allowed to reconcile',
-  'independent reconciliation did not credit exactly once',
+  'independent reconciliation did not credit canonical ledger exactly once',
+  'reconciled top-up created duplicate canonical journal entries',
+  'wallet ledger did not expose reconciled COP credit',
+  'wallet ledger/cache reconciliation failed after COP credit',
   'legacy approve_deposit accepted a transaction without a verified claim',
   'authenticated regained INSERT on public.transactions',
-  'wallet shadow did not mirror reconciled COP credit',
+  'authenticated can execute server-only Saldo CTG consumption RPC',
 ]);
 
 console.log('Wallet COP top-up trust invariants: PASS');
