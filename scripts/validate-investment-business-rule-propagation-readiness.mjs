@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import process from 'node:process';
@@ -10,6 +11,39 @@ import {
 function argumentValue(name) {
   const index = process.argv.indexOf(name);
   return index === -1 ? null : process.argv[index + 1] ?? null;
+}
+
+function gitText(args) {
+  return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+}
+
+function verifyRepositoryEvidence(manifest) {
+  const headCommit = gitText(['rev-parse', 'HEAD']);
+  if (headCommit !== manifest.implementationCommit) {
+    throw new Error(`Propagation implementationCommit must equal checked-out HEAD (${headCommit}).`);
+  }
+
+  const refs = [...new Set(
+    manifest.surfaces
+      .filter((surface) => surface.status === 'VERIFIED')
+      .flatMap((surface) => surface.artifactRefs),
+  )];
+  const artifacts = refs.map((path) => {
+    const objectSpec = `${headCommit}:${path}`;
+    const type = gitText(['cat-file', '-t', objectSpec]);
+    if (type !== 'blob') throw new Error(`Propagation artifact must resolve to a tracked file blob at implementationCommit: ${path}`);
+    return Object.freeze({
+      path,
+      blobSha: gitText(['rev-parse', objectSpec]),
+    });
+  });
+
+  return Object.freeze({
+    headCommit,
+    implementationCommitMatchesHead: true,
+    artifactCount: artifacts.length,
+    artifacts: Object.freeze(artifacts),
+  });
 }
 
 const intakePath = argumentValue('--intake');
@@ -26,10 +60,16 @@ try {
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   validateInvestmentBusinessRuleDecisionIntake(intake);
   validateInvestmentBusinessRulePropagationManifest(manifest);
-  result = buildInvestmentBusinessRulePropagationReadiness({ intake, manifest });
+  const repositoryEvidence = verifyRepositoryEvidence(manifest);
+  result = {
+    ...buildInvestmentBusinessRulePropagationReadiness({ intake, manifest }),
+    repositoryEvidenceVerified: true,
+    repositoryEvidence,
+  };
 } catch (error) {
   result = {
     status: 'INVALID',
+    repositoryEvidenceVerified: false,
     canonicalMutationAllowed: false,
     runtimeMutationAllowed: false,
     livePromotionAllowed: false,
@@ -42,4 +82,4 @@ if (reportOut) {
   writeFileSync(reportOut, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
 }
 console.log(JSON.stringify(result, null, 2));
-process.exit(result.status === 'ELIGIBLE_FOR_PROPAGATION_GOVERNANCE_PR' ? 0 : 1);
+process.exit(result.status === 'ELIGIBLE_FOR_PROPAGATION_GOVERNANCE_PR' && result.repositoryEvidenceVerified ? 0 : 1);
