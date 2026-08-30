@@ -4,7 +4,10 @@ import path from 'node:path';
 const root = process.cwd();
 const files = {
   migration: path.join(root, 'supabase/migrations/20260830003500_0078_wallet_domain_v2_foundation.sql'),
+  intentCreationMigration: path.join(root, 'supabase/migrations/20260830223000_0084_wallet_intent_creation_v1.sql'),
+  intentRoute: path.join(root, 'src/app/api/wallet/intents/route.ts'),
   domain: path.join(root, 'src/lib/wallet/domain.ts'),
+  readModel: path.join(root, 'src/lib/wallet/read-model.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
 };
 
@@ -15,7 +18,10 @@ for (const [label, file] of Object.entries(files)) {
 }
 
 const migration = fs.readFileSync(files.migration, 'utf8');
+const intentCreationMigration = fs.readFileSync(files.intentCreationMigration, 'utf8');
+const intentRoute = fs.readFileSync(files.intentRoute, 'utf8');
 const domain = fs.readFileSync(files.domain, 'utf8');
+const readModel = fs.readFileSync(files.readModel, 'utf8');
 const schema = fs.readFileSync(files.schema, 'utf8');
 
 const requireFragments = (source, label, fragments) => {
@@ -92,6 +98,11 @@ requireFragments(domain, 'Wallet Domain V2 types', [
   'export type WalletInternalAccountKind',
   'export interface WalletInternalAccount',
   'export type WalletIntentStatus',
+  "| 'pending_external'",
+  "| 'confirmed_external'",
+  "| 'replaced'",
+  'destinationAddress: string | null',
+  'amountBaseUnits: string | null',
   'export interface WalletIntent',
   'export type WalletJournalEntryStatus',
   'export interface WalletJournalEntry',
@@ -102,6 +113,70 @@ requireFragments(domain, 'Wallet Domain V2 types', [
   'export function normalizeWalletReference',
 ]);
 
+requireFragments(intentCreationMigration, 'Wallet Intent V1 creation migration', [
+  'add column if not exists amount_base_units text',
+  'add column if not exists destination_address text',
+  "'pending_external'",
+  "'confirmed_external'",
+  "'replaced'",
+  'create or replace function public.create_wallet_intent_v1_server(',
+  "'crypto_send'",
+  "'polygon'",
+  "now() + interval '15 minutes'",
+  'on conflict on constraint wallet_intents_v2_user_idempotency_unique do nothing',
+  'WALLET_INTENT_IDEMPOTENCY_CONFLICT',
+  "'replayed', v_replayed",
+  "'version', 'ctg-wallet-intent-v1'",
+  'revoke insert, update, delete on public.wallet_intents_v2',
+  'from public, anon, authenticated, service_role',
+  "when 'wallet.intent-create' then",
+]);
+
+for (const unsafe of [
+  'grant execute on function public.create_wallet_intent_v1_server(uuid, text, bigint, text, text, text)\n  to authenticated',
+  'grant insert on public.wallet_intents_v2 to authenticated',
+  'grant update on public.wallet_intents_v2 to authenticated',
+  'update public.wallets set balance_cents',
+  'insert into public.wallet_journal_entries_v2',
+  'insert into public.wallet_journal_postings_v2',
+]) {
+  if (intentCreationMigration.includes(unsafe)) {
+    throw new Error(`Wallet Intent V1 creation must not cross the money-movement boundary: ${unsafe}`);
+  }
+}
+
+requireFragments(intentRoute, 'Wallet Intent V1 route', [
+  "const CORS_METHODS = ['POST', 'OPTIONS'] as const",
+  "const INTENT_VERSION = 'ctg-wallet-intent-v1' as const",
+  "value.kind !== 'crypto_send'",
+  "value.rail !== 'polygon'",
+  "value.chainId !== POLYGON_CHAIN_ID",
+  "consumeAuthenticatedRateLimit(auth.supabase, 'wallet.intent-create')",
+  "admin.rpc('create_wallet_intent_v1_server'",
+  'p_user_id: auth.user.id',
+  'status: data.replayed ? 200 : 201',
+]);
+
+for (const unsafe of [
+  "status: 'authorized'",
+  "status: 'submitted'",
+  'eth_sendTransaction',
+  'sendTransaction(',
+  'wallet_journal_entries_v2',
+  'wallet_journal_postings_v2',
+]) {
+  if (intentRoute.includes(unsafe)) {
+    throw new Error(`Wallet Intent V1 route must remain creation-only: ${unsafe}`);
+  }
+}
+
+requireFragments(readModel, 'Wallet intent read model', [
+  'asset_symbol: string | null',
+  'amount_base_units: string | null',
+  'currency: requireIntentDisplayUnit(intent)',
+  'reference: intent.tx_hash ?? intent.external_reference',
+]);
+
 // Wallet Domain V2 is a historical foundation invariant, not a requirement that
 // migration 0078 remain the repository tip forever. Future migrations must be
 // able to advance the runtime schema while never regressing below this boundary.
@@ -110,10 +185,10 @@ const currentSchemaCountMatch = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.
 if (
   !currentSchemaMatch
   || !currentSchemaCountMatch
-  || Number(currentSchemaMatch[1]) < 78
-  || Number(currentSchemaCountMatch[1]) < 78
+  || Number(currentSchemaMatch[1]) < 84
+  || Number(currentSchemaCountMatch[1]) < 84
 ) {
-  throw new Error('runtime schema contract must never regress below Wallet Domain V2 migration 0078');
+  throw new Error('runtime schema contract must include Wallet Intent V1 migration 0084');
 }
 
-console.log('Wallet Domain V2 invariants: PASS');
+console.log('Wallet Domain V2 + Intent V1 invariants: PASS');
