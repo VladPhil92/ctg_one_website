@@ -12,8 +12,10 @@ import {
   validateInvestmentClosedBetaPilotAuthorization,
 } from '../src/data/investment-closed-beta-pilot-governance.mjs';
 import {
+  INVESTMENT_CLOSED_BETA_PRODUCTION_FLAG_EVIDENCE_VERSION,
   buildInvestmentClosedBetaPilotPreflight,
   validateInvestmentClosedBetaPilotManifest,
+  validateInvestmentClosedBetaProductionFlagEvidence,
 } from '../src/lib/investment/closed-beta-pilot-preflight.mjs';
 import { createInvestmentProductionReadinessEvidence } from '../src/lib/investment/production-readiness-evidence.mjs';
 
@@ -31,14 +33,6 @@ assert.ok(expectedSchema.migration && expectedSchema.name && Number.isSafeIntege
 const syntheticManifest = JSON.parse(await read('scripts/fixtures/investment-closed-beta-pilot.synthetic-v1.json'));
 validateInvestmentClosedBetaPilotManifest(syntheticManifest, { expectedSchema });
 
-const safeFlags = {
-  publicRegistrationEnabled: false,
-  publicFundingEnabled: false,
-  paymentGatewayEnabled: false,
-  automaticSettlementEnabled: false,
-  automaticWithdrawalsEnabled: false,
-};
-
 const canonical = buildInvestmentClosedBetaPilotPreflight({
   manifest: syntheticManifest,
   expectedSchema,
@@ -51,7 +45,7 @@ const canonical = buildInvestmentClosedBetaPilotPreflight({
     branch: syntheticManifest.environment.branch,
     commit: syntheticManifest.environment.commit,
   },
-  flags: safeFlags,
+  productionFlagEvidence: null,
 });
 assert.equal(canonical.status, 'BLOCKED');
 assert.equal(canonical.pilotStartReviewEligible, false);
@@ -61,6 +55,7 @@ assert.ok(canonical.blockers.includes('production-classification'));
 assert.ok(canonical.blockers.includes('business-rules-and-propagation'));
 assert.ok(canonical.blockers.includes('pilot-authorization'));
 assert.ok(canonical.blockers.includes('exact-deployment-readiness'));
+assert.ok(canonical.blockers.includes('closed-beta-exposure'));
 
 const approvedGovernance = clone(INVESTMENT_BUSINESS_RULE_GOVERNANCE);
 for (const [index, rule] of approvedGovernance.rules.entries()) {
@@ -84,7 +79,7 @@ const approvedButUnpropagated = buildInvestmentClosedBetaPilotPreflight({
     branch: syntheticManifest.environment.branch,
     commit: syntheticManifest.environment.commit,
   },
-  flags: safeFlags,
+  productionFlagEvidence: null,
 });
 assert.deepEqual(approvedButUnpropagated.businessDecisionBlockers, INVESTMENT_REQUIRED_BUSINESS_RULE_IDS);
 assert.ok(approvedButUnpropagated.blockers.includes('business-rules-and-propagation'));
@@ -133,6 +128,27 @@ const successfulCanary = createInvestmentProductionReadinessEvidence({
   failures: [],
 });
 
+const safeProductionFlagEvidence = {
+  evidenceVersion: INVESTMENT_CLOSED_BETA_PRODUCTION_FLAG_EVIDENCE_VERSION,
+  classification: 'production-runtime-flags',
+  capturedAt: '2026-08-30T03:31:00.000Z',
+  source: 'render-environment-review',
+  provider: 'render',
+  branch: 'main',
+  commit: productionDeployment.commit,
+  flags: {
+    publicRegistrationEnabled: false,
+    publicFundingEnabled: false,
+    paymentGatewayEnabled: false,
+    automaticSettlementEnabled: false,
+    automaticWithdrawalsEnabled: false,
+  },
+  reviewedBy: 'deployment-governance-reviewer',
+  reviewedAt: '2026-08-30T03:32:00.000Z',
+  evidenceRef: 'render-flags-review:fixture',
+};
+validateInvestmentClosedBetaProductionFlagEvidence(safeProductionFlagEvidence, productionDeployment);
+
 const noPilotAuthorization = buildInvestmentClosedBetaPilotPreflight({
   manifest: productionManifest,
   expectedSchema,
@@ -141,7 +157,7 @@ const noPilotAuthorization = buildInvestmentClosedBetaPilotPreflight({
   pilotAuthorization: INVESTMENT_CLOSED_BETA_PILOT_AUTHORIZATION,
   productionReadinessCanary: successfulCanary,
   deployment: productionDeployment,
-  flags: safeFlags,
+  productionFlagEvidence: safeProductionFlagEvidence,
 });
 assert.deepEqual(noPilotAuthorization.businessDecisionBlockers, []);
 assert.deepEqual(noPilotAuthorization.blockers, ['pilot-authorization']);
@@ -159,6 +175,19 @@ const authorizedPilot = {
 };
 validateInvestmentClosedBetaPilotAuthorization(authorizedPilot);
 
+const missingFlagEvidence = buildInvestmentClosedBetaPilotPreflight({
+  manifest: productionManifest,
+  expectedSchema,
+  businessRuleGovernance: approvedGovernance,
+  businessRulePropagation: verifiedPropagation,
+  pilotAuthorization: authorizedPilot,
+  productionReadinessCanary: successfulCanary,
+  deployment: productionDeployment,
+  productionFlagEvidence: null,
+});
+assert.deepEqual(missingFlagEvidence.blockers, ['closed-beta-exposure']);
+assert.equal(missingFlagEvidence.status, 'BLOCKED');
+
 const ready = buildInvestmentClosedBetaPilotPreflight({
   manifest: productionManifest,
   expectedSchema,
@@ -167,7 +196,7 @@ const ready = buildInvestmentClosedBetaPilotPreflight({
   pilotAuthorization: authorizedPilot,
   productionReadinessCanary: successfulCanary,
   deployment: productionDeployment,
-  flags: safeFlags,
+  productionFlagEvidence: safeProductionFlagEvidence,
 });
 assert.equal(ready.status, 'READY');
 assert.equal(ready.pilotStartReviewEligible, true);
@@ -190,7 +219,7 @@ const staleReadiness = buildInvestmentClosedBetaPilotPreflight({
   pilotAuthorization: authorizedPilot,
   productionReadinessCanary: staleCanary,
   deployment: productionDeployment,
-  flags: safeFlags,
+  productionFlagEvidence: safeProductionFlagEvidence,
 });
 assert.ok(staleReadiness.blockers.includes('exact-deployment-readiness'));
 assert.equal(staleReadiness.status, 'BLOCKED');
@@ -209,26 +238,38 @@ const staleSchemaReadiness = buildInvestmentClosedBetaPilotPreflight({
   pilotAuthorization: authorizedPilot,
   productionReadinessCanary: staleSchemaCanary,
   deployment: productionDeployment,
-  flags: safeFlags,
+  productionFlagEvidence: safeProductionFlagEvidence,
 });
 assert.ok(staleSchemaReadiness.blockers.includes('exact-deployment-readiness'));
 assert.equal(staleSchemaReadiness.status, 'BLOCKED', 'A canary for stale schema metadata must not satisfy pilot readiness.');
 
-const incompleteFlags = { ...safeFlags };
-delete incompleteFlags.publicFundingEnabled;
+const staleFlagEvidence = {
+  ...safeProductionFlagEvidence,
+  commit: 'dddddddddddddddddddddddddddddddddddddddd',
+};
 assert.throws(
-  () => buildInvestmentClosedBetaPilotPreflight({
-    manifest: productionManifest,
-    expectedSchema,
-    businessRuleGovernance: approvedGovernance,
-    businessRulePropagation: verifiedPropagation,
-    pilotAuthorization: authorizedPilot,
-    productionReadinessCanary: successfulCanary,
-    deployment: productionDeployment,
-    flags: incompleteFlags,
-  }),
-  /publicFundingEnabled must be explicitly boolean/,
-  'An omitted safety flag must fail closed rather than being treated as false.',
+  () => validateInvestmentClosedBetaProductionFlagEvidence(staleFlagEvidence, productionDeployment),
+  /commit does not match deployment/,
+);
+const staleFlagReadiness = buildInvestmentClosedBetaPilotPreflight({
+  manifest: productionManifest,
+  expectedSchema,
+  businessRuleGovernance: approvedGovernance,
+  businessRulePropagation: verifiedPropagation,
+  pilotAuthorization: authorizedPilot,
+  productionReadinessCanary: successfulCanary,
+  deployment: productionDeployment,
+  productionFlagEvidence: staleFlagEvidence,
+});
+assert.ok(staleFlagReadiness.blockers.includes('closed-beta-exposure'));
+assert.equal(staleFlagReadiness.status, 'BLOCKED');
+
+const incompleteFlagEvidence = clone(safeProductionFlagEvidence);
+delete incompleteFlagEvidence.flags.publicFundingEnabled;
+assert.throws(
+  () => validateInvestmentClosedBetaProductionFlagEvidence(incompleteFlagEvidence, productionDeployment),
+  /publicFundingEnabled is required/,
+  'An omitted production flag must fail closed rather than being treated as false.',
 );
 
 for (const unsafeFlag of [
@@ -238,6 +279,8 @@ for (const unsafeFlag of [
   'automaticSettlementEnabled',
   'automaticWithdrawalsEnabled',
 ]) {
+  const unsafeFlagEvidence = clone(safeProductionFlagEvidence);
+  unsafeFlagEvidence.flags[unsafeFlag] = true;
   const unsafe = buildInvestmentClosedBetaPilotPreflight({
     manifest: productionManifest,
     expectedSchema,
@@ -246,7 +289,7 @@ for (const unsafeFlag of [
     pilotAuthorization: authorizedPilot,
     productionReadinessCanary: successfulCanary,
     deployment: productionDeployment,
-    flags: { ...safeFlags, [unsafeFlag]: true },
+    productionFlagEvidence: unsafeFlagEvidence,
   });
   assert.ok(unsafe.blockers.includes('closed-beta-exposure'), `${unsafeFlag} must block closed-beta preflight.`);
   assert.equal(unsafe.status, 'BLOCKED');
@@ -286,22 +329,31 @@ const fullyGovernedSynthetic = buildInvestmentClosedBetaPilotPreflight({
     branch: syntheticManifest.environment.branch,
     commit: syntheticManifest.environment.commit,
   },
-  flags: safeFlags,
+  productionFlagEvidence: safeProductionFlagEvidence,
 });
 assert.ok(fullyGovernedSynthetic.blockers.includes('production-classification'));
+assert.ok(fullyGovernedSynthetic.blockers.includes('closed-beta-exposure'));
 assert.equal(fullyGovernedSynthetic.status, 'BLOCKED', 'Synthetic CI evidence must never satisfy a real pilot preflight.');
 
-const [packageSource, docsSource, governanceSource] = await Promise.all([
+const [packageSource, docsSource, governanceSource, cliSource, templateSource] = await Promise.all([
   read('package.json'),
   read('docs/investment/CLOSED_BETA_PILOT_PREFLIGHT.md'),
   read('src/data/investment-closed-beta-pilot-governance.mjs'),
+  read('scripts/validate-investment-closed-beta-pilot.mjs'),
+  read('scripts/create-investment-closed-beta-pilot-template.mjs'),
 ]);
 const packageJson = JSON.parse(packageSource);
 assert.match(packageJson.scripts.test, /test-investment-closed-beta-pilot-preflight-invariants\.mjs/);
+assert.match(packageJson.scripts.test, /test-wallet-shadow-journal-invariants\.mjs/);
 assert.match(packageJson.scripts['investment:pilot:template'], /create-investment-closed-beta-pilot-template\.mjs/);
 assert.match(packageJson.scripts['investment:pilot:preflight'], /validate-investment-closed-beta-pilot\.mjs/);
 assert.match(docsSource, /`READY` does not authorize/i);
 assert.match(docsSource, /automaticExecutionAllowed.*false/i);
+assert.match(docsSource, /production-flags-evidence/i);
 assert.match(governanceSource, /status: 'NOT_AUTHORIZED'/);
+assert.match(governanceSource, /INVESTMENT_CLOSED_BETA_PRODUCTION_FLAG_EVIDENCE = null/);
+assert.doesNotMatch(cliSource, /process\.env\[|CTG_INVESTMENT_PUBLIC_FUNDING_ENABLED/);
+assert.match(cliSource, /--production-flags-evidence/);
+assert.match(templateSource, /mkdirSync\(dirname\(outputPath\), \{ recursive: true \}\)/);
 
 console.log('Investment closed-beta pilot preflight invariants: PASS');
