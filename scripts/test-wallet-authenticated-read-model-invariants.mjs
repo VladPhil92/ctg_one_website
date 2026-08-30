@@ -6,6 +6,7 @@ const files = {
   route: path.join(root, 'src/app/api/wallet/overview/route.ts'),
   readModel: path.join(root, 'src/lib/wallet/read-model.ts'),
   domain: path.join(root, 'src/lib/wallet/domain.ts'),
+  copTopUp: path.join(root, 'src/lib/wallet/cop-topup-capability.ts'),
   polygonPortfolio: path.join(root, 'src/lib/wallet/polygon-portfolio.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
 };
@@ -19,6 +20,7 @@ for (const [label, file] of Object.entries(files)) {
 const route = fs.readFileSync(files.route, 'utf8');
 const readModel = fs.readFileSync(files.readModel, 'utf8');
 const domain = fs.readFileSync(files.domain, 'utf8');
+const copTopUp = fs.readFileSync(files.copTopUp, 'utf8');
 const polygonPortfolio = fs.readFileSync(files.polygonPortfolio, 'utf8');
 const schema = fs.readFileSync(files.schema, 'utf8');
 
@@ -51,6 +53,9 @@ requireFragments(route, 'wallet overview route', [
   'account.is_primary === true',
   'readPolygonPortfolio(primaryVerifiedEvmAccount?.address ?? null)',
   "blockchain.status === 'available' || blockchain.status === 'degraded'",
+  'buildWalletCopTopUpCapability(overview.user.kycStatus)',
+  'copTopUp: copTopUp.action',
+  'copTopUp: copTopUp.enabled',
   "{ error: 'UNAUTHENTICATED' }",
   "{ error: 'WALLET_ACCOUNT_INCOMPLETE' }",
   "{ error: 'WALLET_READ_CONTRACT_VIOLATION' }",
@@ -83,9 +88,37 @@ for (const forbidden of [
   'idempotency_key',
   'metadata',
   'provider_user_id',
+  'BANK_TRANSFER_INSTRUCTIONS',
+  'BRE_B_INSTRUCTIONS',
 ]) {
   if (route.includes(forbidden)) {
     throw new Error(`wallet overview route must remain read-only/minimal: ${forbidden}`);
+  }
+}
+
+requireFragments(copTopUp, 'COP top-up capability', [
+  "export type WalletCopTopUpRail = 'bank_transfer' | 'bre_b_qr'",
+  "currency: 'COP'",
+  "submissionMode: 'ctg_one_web'",
+  "path: '/dashboard/depositos'",
+  'requiresKyc: true',
+  'BANK_TRANSFER_CONFIGURED',
+  'BRE_B_CONFIGURED',
+  "kycStatus !== 'verified' || rails.length === 0",
+  'return { enabled: false }',
+]);
+
+for (const forbidden of [
+  'BANK_TRANSFER_INSTRUCTIONS',
+  'BRE_B_INSTRUCTIONS',
+  'accountNumber',
+  'accountHolder',
+  'nit:',
+  'proof_storage_path',
+  'SUPABASE_SERVICE_ROLE_KEY',
+]) {
+  if (copTopUp.includes(forbidden)) {
+    throw new Error(`COP top-up capability leaked payment or server detail: ${forbidden}`);
   }
 }
 
