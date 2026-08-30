@@ -34,6 +34,8 @@ insert into auth.users (
 do $$
 declare
   v_user uuid := '21000000-0000-0000-0000-000000000001';
+  v_wallet text := '0x1111111111111111111111111111111111111111';
+  v_destination text := '0x2222222222222222222222222222222222222222';
   v_link_id uuid;
   v_creation jsonb;
   v_authorization jsonb;
@@ -81,7 +83,7 @@ begin
     'privy',
     'evm',
     'embedded',
-    '0x1111111111111111111111111111111111111111',
+    v_wallet,
     'verified',
     true,
     now()
@@ -99,7 +101,7 @@ begin
     137,
     'USDC',
     '1000000',
-    '0x2222222222222222222222222222222222222222'
+    v_destination
   );
 
   v_intent_id := (v_creation -> 'intent' ->> 'id')::uuid;
@@ -111,7 +113,12 @@ begin
   v_authorization := public.authorize_wallet_intent_v1_server(
     v_user,
     v_intent_id,
-    v_digest
+    v_digest,
+    v_wallet,
+    137,
+    'USDC',
+    '1000000',
+    v_destination
   );
 
   if v_authorization ->> 'version' <> 'ctg-wallet-authorization-v1' then
@@ -120,11 +127,11 @@ begin
   if (v_authorization ->> 'replayed')::boolean is not false then
     raise exception 'first authorization unexpectedly reported a replay';
   end if;
-  if v_authorization ->> 'authorizedWalletAddress' <> '0x1111111111111111111111111111111111111111' then
-    raise exception 'authorization did not derive the verified primary Privy wallet';
+  if v_authorization ->> 'authorizedWalletAddress' <> v_wallet then
+    raise exception 'authorization did not bind the verified primary Privy wallet';
   end if;
   if v_authorization ->> 'simulationDigestSha256' <> v_digest then
-    raise exception 'authorization did not bind the simulation digest';
+    raise exception 'authorization did not bind the trusted simulation digest';
   end if;
   if v_authorization -> 'intent' ->> 'status' <> 'authorized' then
     raise exception 'created intent did not advance exactly to authorized';
@@ -139,18 +146,55 @@ begin
     raise exception 'authorization must not settle an intent';
   end if;
 
+  -- Identical replay is idempotent before expiration.
   v_replay := public.authorize_wallet_intent_v1_server(
     v_user,
     v_intent_id,
-    v_digest
+    v_digest,
+    v_wallet,
+    137,
+    'USDC',
+    '1000000',
+    v_destination
   );
 
   if (v_replay ->> 'replayed')::boolean is not true then
     raise exception 'identical authorization replay was not idempotent';
   end if;
 
+  -- A response can be lost after durable authorization. Expiring the original
+  -- creation TTL must not break an identical replay because no new transition
+  -- or signing authority is granted.
+  update public.wallet_intents_v2
+  set expires_at = now() - interval '1 minute'
+  where id = v_intent_id;
+
+  v_replay := public.authorize_wallet_intent_v1_server(
+    v_user,
+    v_intent_id,
+    v_digest,
+    v_wallet,
+    137,
+    'USDC',
+    '1000000',
+    v_destination
+  );
+
+  if (v_replay ->> 'replayed')::boolean is not true then
+    raise exception 'post-expiry identical authorization replay must remain idempotent';
+  end if;
+
   begin
-    perform public.authorize_wallet_intent_v1_server(v_user, v_intent_id, v_other_digest);
+    perform public.authorize_wallet_intent_v1_server(
+      v_user,
+      v_intent_id,
+      v_other_digest,
+      v_wallet,
+      137,
+      'USDC',
+      '1000000',
+      v_destination
+    );
     raise exception 'TEST_EXPECTED_AUTHORIZATION_REPLAY_CONFLICT';
   exception when others then
     if sqlerrm = 'TEST_EXPECTED_AUTHORIZATION_REPLAY_CONFLICT' then
@@ -158,6 +202,27 @@ begin
     end if;
     if position('WALLET_AUTH_REPLAY_CONFLICT' in sqlerrm) = 0 then
       raise exception 'unexpected conflicting replay error: %', sqlerrm;
+    end if;
+  end;
+
+  begin
+    perform public.authorize_wallet_intent_v1_server(
+      v_user,
+      v_intent_id,
+      v_digest,
+      v_wallet,
+      137,
+      'USDC',
+      '1000000',
+      '0x9999999999999999999999999999999999999999'
+    );
+    raise exception 'TEST_EXPECTED_SIMULATION_BINDING_CONFLICT';
+  exception when others then
+    if sqlerrm = 'TEST_EXPECTED_SIMULATION_BINDING_CONFLICT' then
+      raise;
+    end if;
+    if position('WALLET_AUTH_SIMULATION_BINDING_CONFLICT' in sqlerrm) = 0 then
+      raise exception 'unexpected simulation binding error: %', sqlerrm;
     end if;
   end;
 
@@ -176,7 +241,16 @@ begin
   where id = v_expired_id;
 
   begin
-    perform public.authorize_wallet_intent_v1_server(v_user, v_expired_id, v_digest);
+    perform public.authorize_wallet_intent_v1_server(
+      v_user,
+      v_expired_id,
+      v_digest,
+      v_wallet,
+      137,
+      'POL',
+      '1000000000000000',
+      '0x3333333333333333333333333333333333333333'
+    );
     raise exception 'TEST_EXPECTED_EXPIRED_AUTHORIZATION_FAILURE';
   exception when others then
     if sqlerrm = 'TEST_EXPECTED_EXPIRED_AUTHORIZATION_FAILURE' then
@@ -206,7 +280,7 @@ begin
       and (
         status <> 'authorized'
         or authorized_at is null
-        or authorized_wallet_address <> '0x1111111111111111111111111111111111111111'
+        or authorized_wallet_address <> v_wallet
         or simulation_digest_sha256 <> v_digest
         or tx_hash is not null
         or external_reference is not null
@@ -221,7 +295,7 @@ do $$
 begin
   if has_function_privilege(
     'authenticated',
-    'public.authorize_wallet_intent_v1_server(uuid,uuid,text)',
+    'public.authorize_wallet_intent_v1_server(uuid,uuid,text,text,bigint,text,text,text)',
     'EXECUTE'
   ) then
     raise exception 'authenticated must not execute the authorization RPC directly';
@@ -229,7 +303,7 @@ begin
 
   if not has_function_privilege(
     'service_role',
-    'public.authorize_wallet_intent_v1_server(uuid,uuid,text)',
+    'public.authorize_wallet_intent_v1_server(uuid,uuid,text,text,bigint,text,text,text)',
     'EXECUTE'
   ) then
     raise exception 'service_role authorization RPC privilege missing';
