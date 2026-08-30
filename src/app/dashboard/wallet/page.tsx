@@ -109,7 +109,14 @@ export default function WalletDashboardPage() {
 
   const overview = state.status === 'ready' ? state.data : null;
   const primaryEvm = useMemo(
-    () => overview?.externalAccounts.find((account) => account.chainFamily === 'evm' && account.isPrimary) ?? null,
+    () => overview?.identity?.status === 'verified'
+      ? overview.externalAccounts.find(
+          (account) =>
+            account.chainFamily === 'evm' &&
+            account.status === 'verified' &&
+            account.isPrimary,
+        ) ?? null
+      : null,
     [overview],
   );
   const polygonPositions = overview?.blockchain?.positions ?? [];
