@@ -7,39 +7,68 @@
 const PENDING = 'PENDING_CONFIGURATION';
 
 export const BANK_TRANSFER_INSTRUCTIONS = {
-  bankName: PENDING,
-  accountType: PENDING,
-  accountNumber: PENDING,
-  accountHolder: PENDING,
-  nit: PENDING,
+  bankName: process.env.NEXT_PUBLIC_WALLET_BANK_NAME ?? PENDING,
+  accountType: process.env.NEXT_PUBLIC_WALLET_BANK_ACCOUNT_TYPE ?? PENDING,
+  accountNumber: process.env.NEXT_PUBLIC_WALLET_BANK_ACCOUNT_NUMBER ?? PENDING,
+  accountHolder: process.env.NEXT_PUBLIC_WALLET_BANK_ACCOUNT_HOLDER ?? PENDING,
+  nit: process.env.NEXT_PUBLIC_WALLET_BANK_ACCOUNT_HOLDER_NIT ?? PENDING,
 };
 
 export const PSE_INSTRUCTIONS = {
-  note: PENDING,
+  note: process.env.NEXT_PUBLIC_WALLET_PSE_NOTE ?? PENDING,
 };
 
 export const BRE_B_INSTRUCTIONS = {
-  key: PENDING,
+  key: process.env.NEXT_PUBLIC_WALLET_BRE_B_KEY ?? PENDING,
 };
 
 export const CRYPTO_DEPOSIT_ADDRESSES: Array<{ network: string; asset: string; address: string }> = [
-  { network: 'polygon', asset: 'CTGO', address: PENDING },
+  {
+    network: process.env.NEXT_PUBLIC_WALLET_CRYPTO_NETWORK ?? 'polygon',
+    asset: process.env.NEXT_PUBLIC_WALLET_CRYPTO_ASSET ?? 'CTGO',
+    address: process.env.NEXT_PUBLIC_WALLET_CRYPTO_ADDRESS ?? PENDING,
+  },
 ];
 
 const configured = (value: string) => value.trim().length > 0 && value !== PENDING;
 
 /**
- * Legacy/global top-up channels remain fail-closed until every value shown in
- * those flows is explicitly configured.
+ * Wallet rails are configured independently. A verified Bancolombia/Bre-B COP
+ * rail must not be blocked merely because PSE or crypto are still unavailable.
  */
-export const PAYMENT_INSTRUCTIONS_CONFIGURED =
-  Object.values(BANK_TRANSFER_INSTRUCTIONS).every(configured) &&
-  configured(PSE_INSTRUCTIONS.note) &&
-  configured(BRE_B_INSTRUCTIONS.key) &&
+export const BANK_TRANSFER_CONFIGURED =
+  Object.values(BANK_TRANSFER_INSTRUCTIONS).every(configured);
+
+export const PSE_CONFIGURED = configured(PSE_INSTRUCTIONS.note);
+export const BRE_B_CONFIGURED = configured(BRE_B_INSTRUCTIONS.key);
+export const CRYPTO_DEPOSIT_CONFIGURED =
   CRYPTO_DEPOSIT_ADDRESSES.length > 0 &&
   CRYPTO_DEPOSIT_ADDRESSES.every((item) =>
     configured(item.network) && configured(item.asset) && configured(item.address)
   );
+
+/**
+ * First production-safe wallet funding slice: manual COP transfer evidence.
+ * PSE and crypto remain separate future trust-boundary work.
+ */
+export const WALLET_MANUAL_COP_TOPUP_CONFIGURED =
+  BANK_TRANSFER_CONFIGURED || BRE_B_CONFIGURED;
+
+export function isWalletManualCopRailConfigured(rail: string) {
+  if (rail === 'bank_transfer') return BANK_TRANSFER_CONFIGURED;
+  if (rail === 'bre_b_qr') return BRE_B_CONFIGURED;
+  return false;
+}
+
+/**
+ * Backward-compatible global flag for any legacy surface that still expects all
+ * top-up channels to be ready simultaneously.
+ */
+export const PAYMENT_INSTRUCTIONS_CONFIGURED =
+  BANK_TRANSFER_CONFIGURED &&
+  PSE_CONFIGURED &&
+  BRE_B_CONFIGURED &&
+  CRYPTO_DEPOSIT_CONFIGURED;
 
 /**
  * CTG Craft Beer Investment currently operates with one deliberately simple
