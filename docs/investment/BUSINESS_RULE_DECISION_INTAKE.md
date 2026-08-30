@@ -70,7 +70,7 @@ Each VERIFIED surface requires at least one repository-relative artifact referen
 
 The overall propagation review cannot be `VERIFIED` until all seven surfaces are individually `VERIFIED`.
 
-Validate readiness with:
+Validate readiness from a checkout of the exact implementation commit:
 
 ```bash
 npm run investment:br:propagation:validate -- \
@@ -79,7 +79,9 @@ npm run investment:br:propagation:validate -- \
   --report-out .private-evidence/investment-br-propagation-readiness.json
 ```
 
-Only a fully approved decision intake plus seven verified propagation surfaces plus an explicit overall review returns `ELIGIBLE_FOR_PROPAGATION_GOVERNANCE_PR`.
+The operational validator does not trust the manifest declaration by itself. It requires `implementationCommit` to equal the checked-out Git `HEAD`, resolves every artifact reference from every VERIFIED surface at that exact commit, requires each reference to be a tracked file blob, and records the resolved Git blob SHA in the safe report. A stale commit, nonexistent file, directory reference or declarative-only claim therefore fails closed.
+
+Only a fully approved decision intake plus seven verified propagation surfaces plus an explicit overall review plus exact Git repository evidence returns `ELIGIBLE_FOR_PROPAGATION_GOVERNANCE_PR`.
 
 That result still does not mutate canonical propagation. It only produces a proposed `INVESTMENT_BUSINESS_RULE_PROPAGATION` record for a separate reviewed PR. `canonicalMutationAllowed` and `runtimeMutationAllowed` remain `false`.
 
@@ -91,11 +93,12 @@ The authority chain is deliberately ordered:
 2. reviewed governance PR recording those decisions;
 3. implementation/propagation work on authoritative surfaces;
 4. surface-by-surface verification;
-5. independent overall propagation review;
-6. reviewed governance PR recording propagation as VERIFIED;
-7. separate closed-beta pilot authorization and exact-deployment preflight;
-8. real controlled operating cycle and redacted evidence;
-9. final release governance.
+5. exact Git artifact verification at the implementation commit;
+6. independent overall propagation review;
+7. reviewed governance PR recording propagation as VERIFIED;
+8. separate closed-beta pilot authorization and exact-deployment preflight;
+9. real controlled operating cycle and redacted evidence;
+10. final release governance.
 
 Skipping a stage must not be compensated for by CI, Codex review, deployment health, a canary or a successful test fixture.
 
@@ -114,4 +117,4 @@ The invariant suite proves that:
 - repository artifact references cannot traverse directories or use remote URLs;
 - even a fully valid in-memory approval/propagation fixture cannot mutate canonical governance, runtime state or LIVE status automatically.
 
-No real participant data, financial credentials or production secret is required by this phase or its CI coverage.
+The operator validator additionally binds the declared implementation SHA and every VERIFIED artifact path to real Git objects before returning success. No real participant data, financial credentials or production secret is required by this phase or its CI coverage.
