@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0084",
-    "schemaMigrationName": "wallet_intent_creation_v1",
-    "schemaMigrationCount": 84,
+    "schemaMigration": "0085",
+    "schemaMigrationName": "wallet_intent_authorization_v1",
+    "schemaMigrationCount": 85,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
