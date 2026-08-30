@@ -6,6 +6,7 @@ const files = {
   route: path.join(root, 'src/app/api/wallet/overview/route.ts'),
   readModel: path.join(root, 'src/lib/wallet/read-model.ts'),
   domain: path.join(root, 'src/lib/wallet/domain.ts'),
+  polygonPortfolio: path.join(root, 'src/lib/wallet/polygon-portfolio.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
 };
 
@@ -18,6 +19,7 @@ for (const [label, file] of Object.entries(files)) {
 const route = fs.readFileSync(files.route, 'utf8');
 const readModel = fs.readFileSync(files.readModel, 'utf8');
 const domain = fs.readFileSync(files.domain, 'utf8');
+const polygonPortfolio = fs.readFileSync(files.polygonPortfolio, 'utf8');
 const schema = fs.readFileSync(files.schema, 'utf8');
 
 const requireFragments = (source, label, fragments) => {
@@ -43,6 +45,12 @@ requireFragments(route, 'wallet overview route', [
   ".from('wallet_intents_v2')",
   ".eq('user_id', userId)",
   'buildWalletOverviewV2({',
+  "identityResult.data?.status === 'verified'",
+  "account.chain_family === 'evm'",
+  "account.status === 'verified'",
+  'account.is_primary === true',
+  'readPolygonPortfolio(primaryVerifiedEvmAccount?.address ?? null)',
+  "blockchain.status === 'available' || blockchain.status === 'degraded'",
   "{ error: 'UNAUTHENTICATED' }",
   "{ error: 'WALLET_ACCOUNT_INCOMPLETE' }",
   "{ error: 'WALLET_READ_CONTRACT_VIOLATION' }",
@@ -105,14 +113,43 @@ requireFragments(domain, 'wallet overview domain contract', [
   'export interface WalletOverviewBalance',
   'export interface WalletOverviewIdentity',
   'export interface WalletOverviewExternalAccount',
+  'export interface WalletOverviewBlockchainPosition',
+  'export interface WalletOverviewBlockchainPortfolio',
   'export interface WalletOverviewActivityItem',
   'export interface WalletOverviewCapabilities',
   'export interface WalletOverviewV2',
   'journalPosting: false',
   'moneyMovement: false',
-  'blockchainBalances: false',
+  'blockchainBalances: boolean',
   'investmentPositions: false',
 ]);
+
+requireFragments(polygonPortfolio, 'Polygon portfolio read service', [
+  "import 'server-only'",
+  "POLYGON_CHAIN_ID = 137",
+  "POLYGON_NETWORK = 'polygon'",
+  'process.env.POLYGON_RPC_URL',
+  'process.env.CTG_TOKEN_POLYGON_ADDRESS',
+  'client.getBalance({ address })',
+  "functionName: 'balanceOf'",
+  "authority: 'blockchain'",
+  "assetKind: 'native'",
+  "assetKind: 'erc20'",
+  "return unavailable(address, 'RPC_READ_FAILED')",
+]);
+
+for (const forbidden of [
+  'sendTransaction',
+  'writeContract',
+  'signMessage',
+  'signTransaction',
+  'privateKeyToAccount',
+  'walletClient',
+]) {
+  if (polygonPortfolio.includes(forbidden)) {
+    throw new Error(`Polygon portfolio service must remain read-only: ${forbidden}`);
+  }
+}
 
 const schemaMatch = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
 if (!schemaMatch || Number(schemaMatch[1]) < 78) {
