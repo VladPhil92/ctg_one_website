@@ -123,9 +123,24 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Archive merged-main provenance evidence
+        id: provenance-artifact
         uses: actions/upload-artifact@v7
         with:
           name: investment-br-main-provenance-${{ github.sha }}
           path: provenance-evidence/investment-business-rule-main-provenance.json
           if-no-files-found: error
           retention-days: 30
+
+      - name: Record artifact transport identity
+        shell: bash
+        env:
+          ARTIFACT_ID: ${{ steps.provenance-artifact.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.provenance-artifact.outputs.artifact-digest }}
+        run: |
+          set -euo pipefail
+          test -n "${ARTIFACT_ID}"
+          test -n "${ARTIFACT_DIGEST}"
+          {
+            echo "- Artifact ID: \`${ARTIFACT_ID}\`"
+            echo "- Artifact digest: \`${ARTIFACT_DIGEST}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
