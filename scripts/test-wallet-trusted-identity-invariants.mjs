@@ -41,8 +41,10 @@ requireFragments(migration, 'trusted identity migration', [
   'create table public.wallet_legacy_migration_evidence',
   'expected_address_normalized text generated always as (lower(trim(expected_address))) stored',
   'source_digest_sha256 text not null',
+  'constraint wallet_legacy_migration_evidence_consumption_check check (',
   'alter table public.wallet_legacy_migration_evidence enable row level security',
   'revoke all on public.wallet_legacy_migration_evidence from public, anon, authenticated',
+  'revoke all on public.wallet_legacy_migration_evidence from service_role',
   'grant select, insert, update on public.wallet_legacy_migration_evidence to service_role',
   'create or replace function public._guard_wallet_legacy_migration_evidence_update()',
   "raise exception 'legacy wallet migration provenance is immutable'",
@@ -72,6 +74,7 @@ requireFragments(migration, 'trusted identity migration', [
 ]);
 
 const forbiddenMigration = [
+  'constraint wallet_legacy_migration_evidence_status_check check (',
   'grant execute on function public.consume_wallet_identity_link_rate_limit(uuid) to authenticated',
   'grant execute on function public.link_verified_wallet_identity(uuid,text,text,text) to authenticated',
   'grant select on public.wallet_legacy_migration_evidence to authenticated',
