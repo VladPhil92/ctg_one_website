@@ -164,14 +164,18 @@ export function validateInvestmentBusinessRuleMainProvenanceEvidence(evidence) {
 
   const approvalsSatisfied = evidence.governance.ruleStatuses.every((rule) => rule.status === 'APPROVED');
   assert(evidence.governance.approvalsSatisfied === approvalsSatisfied, 'Merged-main provenance approvalsSatisfied mismatch');
+  assert(['PENDING', 'VERIFIED'].includes(evidence.governance.propagationStatus), 'Merged-main provenance propagation status is invalid');
+  if (evidence.governance.propagationStatus === 'VERIFIED') {
+    assert(approvalsSatisfied, 'Verified propagation provenance requires five approved business rules');
+  }
+  const expectedStatus = evidence.governance.propagationStatus === 'VERIFIED'
+    ? 'PROPAGATION_ALREADY_VERIFIED'
+    : approvalsSatisfied
+      ? 'MERGED_MAIN_PROVENANCE_EVIDENCE_ELIGIBLE'
+      : 'BLOCKED_AWAITING_BUSINESS_RULE_APPROVALS';
+  assert(evidence.status === expectedStatus, 'Merged-main provenance status does not match governance state');
   const expectedCandidateEligible = approvalsSatisfied && evidence.governance.propagationStatus === 'PENDING';
   assert(evidence.workflowEvidenceCandidateEligible === expectedCandidateEligible, 'Merged-main provenance evidence eligibility mismatch');
-  if (evidence.status === 'BLOCKED_AWAITING_BUSINESS_RULE_APPROVALS') assert(!approvalsSatisfied, 'Blocked provenance evidence cannot contain five approvals');
-  if (evidence.status === 'MERGED_MAIN_PROVENANCE_EVIDENCE_ELIGIBLE') {
-    assert(approvalsSatisfied, 'Eligible provenance evidence requires five approvals');
-    assert(evidence.governance.propagationStatus === 'PENDING', 'Eligible provenance evidence requires pending propagation');
-  }
-  if (evidence.status === 'PROPAGATION_ALREADY_VERIFIED') assert(evidence.governance.propagationStatus === 'VERIFIED', 'Verified provenance status requires verified propagation');
 
   assert(evidence.standaloneAuthorityAllowed === false, 'Standalone provenance files cannot grant authority');
   assert(evidence.implementationPlanningEligible === false, 'Provenance evidence cannot independently grant implementation planning');
