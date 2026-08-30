@@ -129,7 +129,11 @@ requireFragments(intentCreationMigration, 'Wallet Intent V1 creation migration',
   "'version', 'ctg-wallet-intent-v1'",
   'revoke insert, update, delete on public.wallet_intents_v2',
   'from public, anon, authenticated, service_role',
-  "when 'wallet.intent-create' then",
+  "'wallet.intent-create'",
+  "interval '5 minutes'",
+  'v_rate_row.request_count >= 20',
+  'for update;',
+  'WALLET_INTENT_RATE_LIMITED',
 ]);
 
 for (const unsafe of [
@@ -139,9 +143,10 @@ for (const unsafe of [
   'update public.wallets set balance_cents',
   'insert into public.wallet_journal_entries_v2',
   'insert into public.wallet_journal_postings_v2',
+  'create or replace function public.consume_api_rate_limit',
 ]) {
   if (intentCreationMigration.includes(unsafe)) {
-    throw new Error(`Wallet Intent V1 creation must not cross the money-movement boundary: ${unsafe}`);
+    throw new Error(`Wallet Intent V1 creation must not cross the money-movement or authenticated-definer boundary: ${unsafe}`);
   }
 }
 
@@ -151,9 +156,9 @@ requireFragments(intentRoute, 'Wallet Intent V1 route', [
   "value.kind !== 'crypto_send'",
   "value.rail !== 'polygon'",
   "value.chainId !== POLYGON_CHAIN_ID",
-  "consumeAuthenticatedRateLimit(auth.supabase, 'wallet.intent-create')",
   "admin.rpc('create_wallet_intent_v1_server'",
   'p_user_id: auth.user.id',
+  "message.includes('WALLET_INTENT_RATE_LIMITED')",
   'status: data.replayed ? 200 : 201',
 ]);
 
@@ -164,9 +169,10 @@ for (const unsafe of [
   'sendTransaction(',
   'wallet_journal_entries_v2',
   'wallet_journal_postings_v2',
+  'consumeAuthenticatedRateLimit(',
 ]) {
   if (intentRoute.includes(unsafe)) {
-    throw new Error(`Wallet Intent V1 route must remain creation-only: ${unsafe}`);
+    throw new Error(`Wallet Intent V1 route must remain creation-only and use the server-only rate boundary: ${unsafe}`);
   }
 }
 
