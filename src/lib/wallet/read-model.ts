@@ -27,6 +27,8 @@ const CHAIN_FAMILIES = new Set<WalletChainFamily>(['evm', 'bitcoin']);
 const ACCOUNT_KINDS = new Set<WalletExternalAccountKind>(['embedded', 'external', 'watch_only']);
 const ACCOUNT_STATUSES = new Set<WalletExternalAccountStatus>(['pending', 'verified', 'revoked']);
 const MAX_ACTIVITY_ITEMS = 20;
+const BASE_UNITS_RE = /^[1-9][0-9]*$/;
+const ASSET_SYMBOL_RE = /^[A-Z0-9]{2,12}$/;
 
 export class WalletReadModelError extends Error {
   constructor(
@@ -95,9 +97,17 @@ export type WalletOverviewIntentRow = {
   user_id: string;
   intent_type: string;
   status: string;
-  currency: string;
+  currency: string | null;
   amount_cents: number | string | null;
+  rail: string | null;
+  chain_id: number | string | null;
+  asset_symbol: string | null;
+  amount_base_units: string | null;
+  destination_address: string | null;
+  tx_hash: string | null;
   external_reference: string | null;
+  replaced_by_reference: string | null;
+  settled_at: string | null;
   expires_at: string | null;
   created_at: string;
   updated_at: string;
@@ -134,6 +144,36 @@ function requireCurrency(value: string, label: string): string {
     throw new WalletReadModelError('INVALID_WALLET_READ_MODEL', `${label} is invalid.`);
   }
   return value;
+}
+
+function requireAssetSymbol(value: string, label: string): string {
+  if (!ASSET_SYMBOL_RE.test(value)) {
+    throw new WalletReadModelError('INVALID_WALLET_READ_MODEL', `${label} is invalid.`);
+  }
+  return value;
+}
+
+function requireIntentDisplayUnit(intent: WalletOverviewIntentRow): string {
+  if (intent.asset_symbol !== null) {
+    return requireAssetSymbol(intent.asset_symbol, 'wallet intent asset symbol');
+  }
+  if (intent.currency !== null) {
+    return requireCurrency(intent.currency, 'wallet intent currency');
+  }
+  throw new WalletReadModelError(
+    'INVALID_WALLET_READ_MODEL',
+    'Wallet intent has no display-safe currency or asset symbol.',
+  );
+}
+
+function validateIntentBaseUnits(value: string | null) {
+  if (value === null) return;
+  if (value.length > 78 || !BASE_UNITS_RE.test(value)) {
+    throw new WalletReadModelError(
+      'INVALID_WALLET_READ_MODEL',
+      'Wallet intent base-unit amount is invalid.',
+    );
+  }
 }
 
 function requireKycStatus(value: string): WalletKycStatus {
@@ -265,17 +305,18 @@ export function buildWalletOverviewV2(params: {
 
   for (const intent of intents) {
     requireOwned(intent.user_id, authenticatedUserId, 'wallet intent');
+    validateIntentBaseUnits(intent.amount_base_units);
     activity.push({
       id: intent.id,
       source: 'wallet_intent',
       kind: intent.intent_type,
-      rail: null,
+      rail: intent.rail,
       status: intent.status,
-      currency: requireCurrency(intent.currency, 'wallet intent currency'),
+      currency: requireIntentDisplayUnit(intent),
       amountCents: optionalSafeCents(intent.amount_cents, 'wallet intent amount'),
-      reference: intent.external_reference,
+      reference: intent.tx_hash ?? intent.external_reference,
       occurredAt: intent.created_at,
-      settledAt: intent.status === 'reconciled' ? intent.updated_at : null,
+      settledAt: intent.status === 'reconciled' ? (intent.settled_at ?? intent.updated_at) : null,
     });
   }
 

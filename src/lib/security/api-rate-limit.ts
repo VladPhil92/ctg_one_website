@@ -3,7 +3,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export type ApiRateLimitScope =
   | 'knowledge.query'
   | 'investment.payment-proof'
-  | 'wallet.topup-proof';
+  | 'wallet.topup-proof'
+  | 'wallet.intent-create';
 
 export type ApiRateLimitDecision = {
   allowed: boolean;
