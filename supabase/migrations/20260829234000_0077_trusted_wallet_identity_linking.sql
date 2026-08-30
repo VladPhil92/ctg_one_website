@@ -113,7 +113,7 @@ create table public.wallet_legacy_migration_evidence (
   constraint wallet_legacy_migration_evidence_user_provider_unique unique (user_id, provider),
   constraint wallet_legacy_migration_evidence_provider_user_unique unique (provider, provider_user_id),
   constraint wallet_legacy_migration_evidence_address_unique unique (chain_family, expected_address_normalized),
-  constraint wallet_legacy_migration_evidence_status_check check (
+  constraint wallet_legacy_migration_evidence_consumption_check check (
     (status = 'pending' and consumed_at is null)
     or (status = 'consumed' and consumed_at is not null)
     or (status = 'rejected' and consumed_at is null)
@@ -128,6 +128,7 @@ create index wallet_legacy_migration_evidence_status_idx
 
 alter table public.wallet_legacy_migration_evidence enable row level security;
 revoke all on public.wallet_legacy_migration_evidence from public, anon, authenticated;
+revoke all on public.wallet_legacy_migration_evidence from service_role;
 grant select, insert, update on public.wallet_legacy_migration_evidence to service_role;
 
 create or replace function public._guard_wallet_legacy_migration_evidence_update()
