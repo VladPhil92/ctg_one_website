@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { consumeAuthenticatedRateLimit } from '@/lib/security/api-rate-limit';
 import {
   createAdminClient,
   createAuthenticatedRequestContext,
@@ -74,6 +73,7 @@ function parseCreateIntentBody(value: unknown) {
 }
 
 function rpcStatus(message: string) {
+  if (message.includes('WALLET_INTENT_RATE_LIMITED')) return 429;
   if (message.includes('WALLET_INTENT_IDEMPOTENCY_CONFLICT')) return 409;
   if (message.includes('WALLET_INTENT_CANONICAL_USER_INVALID')) return 409;
   if (message.includes('WALLET_INTENT_')) return 400;
@@ -116,27 +116,6 @@ export async function POST(request: Request) {
     return noStoreJson(request, { error: 'WALLET_INTENT_REQUEST_INVALID' }, { status: 400 });
   }
 
-  let rateLimit;
-  try {
-    rateLimit = await consumeAuthenticatedRateLimit(auth.supabase, 'wallet.intent-create');
-  } catch {
-    return noStoreJson(request, { error: 'WALLET_INTENT_RATE_LIMIT_UNAVAILABLE' }, { status: 503 });
-  }
-
-  if (!rateLimit.allowed) {
-    return noStoreJson(
-      request,
-      { error: 'RATE_LIMITED' },
-      {
-        status: 429,
-        headers: {
-          'Retry-After': String(rateLimit.retryAfterSeconds),
-          'X-RateLimit-Remaining': '0',
-        },
-      },
-    );
-  }
-
   const admin = createAdminClient();
   const { data, error } = await admin.rpc('create_wallet_intent_v1_server', {
     p_user_id: auth.user.id,
@@ -151,10 +130,7 @@ export async function POST(request: Request) {
     return noStoreJson(
       request,
       { error: error.message.includes('WALLET_INTENT_') ? error.message : 'WALLET_INTENT_CREATE_FAILED' },
-      {
-        status: rpcStatus(error.message),
-        headers: { 'X-RateLimit-Remaining': String(rateLimit.remaining) },
-      },
+      { status: rpcStatus(error.message) },
     );
   }
 
@@ -165,9 +141,6 @@ export async function POST(request: Request) {
   return noStoreJson(
     request,
     data,
-    {
-      status: data.replayed ? 200 : 201,
-      headers: { 'X-RateLimit-Remaining': String(rateLimit.remaining) },
-    },
+    { status: data.replayed ? 200 : 201 },
   );
 }
