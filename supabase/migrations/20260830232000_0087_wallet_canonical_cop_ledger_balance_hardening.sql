@@ -1,6 +1,6 @@
 -- CTG One Wallet — Canonical COP ledger balance hardening
 --
--- Migration 0084 promotes the reconciled journal to canonical authority. This
+-- Migration 0086 promotes the reconciled journal to canonical authority. This
 -- follow-up tightens the internal balance helper so historical shadow postings
 -- can never participate in a canonical Saldo CTG calculation.
 
