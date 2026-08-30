@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -27,17 +28,17 @@ import type { TransactionMethod } from '@/types/domain';
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 
 const METHODS: Array<{ value: TransactionMethod; label: string }> = [
-  ...(BANK_TRANSFER_CONFIGURED
-    ? [{ value: 'bank_transfer' as TransactionMethod, label: 'Transferencia' }]
-    : []),
   ...(BRE_B_CONFIGURED
     ? [{ value: 'bre_b_qr' as TransactionMethod, label: 'QR / Bre-B' }]
     : []),
+  ...(BANK_TRANSFER_CONFIGURED
+    ? [{ value: 'bank_transfer' as TransactionMethod, label: 'Transferencia' }]
+    : []),
 ];
 
-const DEFAULT_METHOD: TransactionMethod = BANK_TRANSFER_CONFIGURED
-  ? 'bank_transfer'
-  : 'bre_b_qr';
+const DEFAULT_METHOD: TransactionMethod = BRE_B_CONFIGURED
+  ? 'bre_b_qr'
+  : 'bank_transfer';
 
 export default function DepositosPage() {
   const { userId, profile, isAuthenticated, isLoading: isAuthLoading } = useAuth();
@@ -61,12 +62,12 @@ export default function DepositosPage() {
     setError(null);
 
     if (!WALLET_MANUAL_COP_TOPUP_CONFIGURED) {
-      setError('Las recargas COP están temporalmente deshabilitadas mientras configuramos Bancolombia/Bre-B.');
+      setError('Las recargas de Saldo CTG están temporalmente deshabilitadas.');
       return;
     }
 
     if (!isSupabaseConfigured || !userId) {
-      setError('Los depósitos no están disponibles todavía.');
+      setError('Las recargas no están disponibles todavía.');
       return;
     }
 
@@ -75,15 +76,15 @@ export default function DepositosPage() {
       return;
     }
 
-    const amountCop = Math.round(Number(amount) * 100);
-    if (!Number.isSafeInteger(amountCop) || amountCop <= 0) {
+    const amountCents = Math.round(Number(amount) * 100);
+    if (!Number.isSafeInteger(amountCents) || amountCents <= 0) {
       setError('Ingresa un monto válido.');
       return;
     }
 
     const reference = externalReference.trim();
     if (reference.length < 4) {
-      setError('Ingresa la referencia de la transferencia para evitar acreditaciones duplicadas.');
+      setError('Ingresa la referencia que aparece en el comprobante para evitar acreditaciones duplicadas.');
       return;
     }
 
@@ -109,7 +110,7 @@ export default function DepositosPage() {
           'X-File-Name': encodeURIComponent(proofFile.name),
           'X-Payment-Rail': method,
           'X-Payment-Reference': reference,
-          'X-Wallet-Topup-Amount-Cents': String(amountCop),
+          'X-Wallet-Topup-Amount-Cents': String(amountCents),
         },
         body: proofFile,
       });
@@ -135,8 +136,8 @@ export default function DepositosPage() {
       <AccountSurface
         code="FIN-02"
         eyebrow="Cuenta & Capital"
-        title="Recargar cuenta"
-        description="Administra el ingreso de fondos desde una superficie protegida del Personal OS."
+        title="Recargar Saldo CTG"
+        description="Registra un ingreso COP desde una superficie protegida del Personal OS."
         icon={<WalletCards size={20} />}
       >
         <section className="accountPanel">
@@ -152,7 +153,7 @@ export default function DepositosPage() {
             <ShieldCheck size={17} />
             <div>
               <strong>Recargas temporalmente deshabilitadas</strong>
-              <p>Los datos bancarios y la Llave Bre-B permanecen ocultos mientras termina la configuración operativa. PSE y cripto continúan fuera de este primer rail de recarga COP.</p>
+              <p>Los datos bancarios permanecen ocultos mientras termina la configuración operativa. PSE y cripto continúan fuera de este primer rail de recarga COP.</p>
             </div>
           </div>
           <Button href="/dashboard" variant="secondary" size="sm">Volver al panel</Button>
@@ -165,16 +166,24 @@ export default function DepositosPage() {
     <AccountSurface
       code="FIN-02"
       eyebrow="Cuenta & Capital"
-      title="Recargar cuenta"
-      description="Registra una transferencia COP. La evidencia debe ser verificada y conciliada antes de que el saldo quede disponible."
+      title="Recargar Saldo CTG"
+      description="Paga por Bre-B o transferencia y adjunta el comprobante. El saldo solo se acredita después de validar la operación bancaria."
       icon={<WalletCards size={20} />}
     >
+      <div className="accountNotice">
+        <ShieldCheck size={17} />
+        <div>
+          <strong>Saldo interno, conciliado contra pagos reales</strong>
+          <p>El dinero se recibe en la cuenta bancaria indicada. CTG One registra un Saldo CTG asociado a tu usuario únicamente después de que Finanzas comprueba y concilia el pago. Subir un comprobante no acredita saldo por sí mismo.</p>
+        </div>
+      </div>
+
       {profile && profile.kyc_status !== 'verified' && (
         <div className="accountNotice warning">
           <ShieldCheck size={17} />
           <div>
             <strong>Verificación de identidad requerida</strong>
-            <p>Debes completar KYC antes de registrar una recarga en tu cuenta CTG One.</p>
+            <p>Debes completar KYC antes de registrar una recarga de Saldo CTG.</p>
             <Button href="/dashboard/kyc" variant="outline" size="sm" className="mt-3">Abrir Identity Layer</Button>
           </div>
         </div>
@@ -184,8 +193,8 @@ export default function DepositosPage() {
         <div className="accountNotice success" role="status" aria-live="polite">
           <CheckCircle2 size={17} />
           <div>
-            <strong>Claim de recarga recibido</strong>
-            <p>El comprobante quedó pendiente de verificación y conciliación independiente. Enviar la evidencia no acredita saldo por sí mismo.</p>
+            <strong>Solicitud de recarga recibida</strong>
+            <p>El comprobante quedó asociado a tu usuario y pendiente de validación bancaria. Cuando la operación sea verificada y conciliada, el Saldo CTG se actualizará en el dashboard y en Wallet V2.</p>
           </div>
         </div>
       )}
@@ -194,15 +203,15 @@ export default function DepositosPage() {
         <section className="accountPanel">
           <div className="accountPanelHeader">
             <div>
-              <p className="accountMicro">COP top-up claim</p>
-              <h2>Registrar ingreso de fondos</h2>
-              <p>Selecciona Bancolombia o Bre-B y adjunta la evidencia que Finanzas conciliará antes de acreditar el saldo.</p>
+              <p className="accountMicro">Manual COP top-up</p>
+              <h2>Registrar una recarga</h2>
+              <p>Realiza el pago, conserva la referencia bancaria y adjunta el comprobante desde esta misma sesión.</p>
             </div>
             <div className="accountNode"><CircleDollarSign size={17} /></div>
           </div>
 
           <form onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }}>
-            <div className="accountSegments" aria-label="Método de depósito">
+            <div className="accountSegments" aria-label="Método de recarga">
               {METHODS.map((item) => (
                 <button
                   key={item.value}
@@ -219,7 +228,7 @@ export default function DepositosPage() {
             <MethodInstructions method={method} />
 
             <label className="accountField">
-              <span className="accountFieldLabel">Monto (COP)</span>
+              <span className="accountFieldLabel">Monto pagado (COP)</span>
               <input
                 type="number"
                 min="1"
@@ -242,6 +251,7 @@ export default function DepositosPage() {
                 autoComplete="off"
                 minLength={4}
                 maxLength={180}
+                placeholder="Número o referencia que muestra tu banco"
                 required
               />
             </label>
@@ -267,7 +277,7 @@ export default function DepositosPage() {
               icon={<UploadCloud size={16} />}
               iconPosition="left"
             >
-              Enviar claim de recarga
+              Enviar comprobante de recarga
             </Button>
           </form>
         </section>
@@ -290,8 +300,22 @@ function MethodInstructions({ method }: { method: TransactionMethod }) {
 
   return (
     <div className="accountInstruction">
-      <p className="accountMicro mb-2"><QrCode size={11} /> Llave Bre-B</p>
+      <p className="accountMicro mb-2"><QrCode size={11} /> Bancolombia / Bre-B</p>
+      <p className="instructionTitle">Escanea el QR desde la app de tu banco</p>
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
+        <Image
+          src={BRE_B_INSTRUCTIONS.qrImageUrl}
+          alt="QR Bancolombia Bre-B para recargar Saldo CTG"
+          width={360}
+          height={360}
+          unoptimized
+          priority
+          style={{ width: 'min(100%, 360px)', height: 'auto', background: '#fff', padding: 12, borderRadius: 12 }}
+        />
+      </div>
+      <p>Destinatario: <strong>{BRE_B_INSTRUCTIONS.recipientLabel}</strong></p>
       <p>Llave: <span className="mono">{BRE_B_INSTRUCTIONS.key}</span></p>
+      <p className="mt-2">Después de pagar, copia la referencia que muestra tu banco y sube el comprobante en este formulario.</p>
     </div>
   );
 }
