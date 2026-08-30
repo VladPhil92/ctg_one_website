@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import {
   INVESTMENT_BUSINESS_RULE_CANDIDATE,
@@ -12,6 +13,10 @@ import { INVESTMENT_REQUIRED_BUSINESS_DECISION_IDS } from '../src/data/investmen
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const clone = (value) => JSON.parse(JSON.stringify(value));
+const gitBlobSha = (content) => {
+  const bytes = Buffer.from(content, 'utf8');
+  return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+};
 
 assert.deepEqual(INVESTMENT_REQUIRED_BUSINESS_RULE_IDS, ['BR-001', 'BR-002', 'BR-003', 'BR-004', 'BR-005']);
 assert.equal(INVESTMENT_BUSINESS_RULE_CANDIDATE.path, 'docs/investment/CLOSED_BETA_DECISION_PACK.md');
@@ -95,6 +100,11 @@ const [decisionPack, releaseGovernanceSource, approvalDocs] = await Promise.all(
   read('src/data/investment-release-governance.mjs'),
   read('docs/investment/BUSINESS_RULE_APPROVAL_GOVERNANCE.md'),
 ]);
+assert.equal(
+  gitBlobSha(decisionPack),
+  INVESTMENT_BUSINESS_RULE_CANDIDATE.blobSha,
+  'Current decision-pack bytes must match the pinned immutable candidate blob. Any substantive edit requires a new candidate pin.',
+);
 assert.match(decisionPack, /PROPOSED FOR EXPLICIT BUSINESS\/LEGAL APPROVAL — NOT YET AUTHORITATIVE/);
 assert.match(releaseGovernanceSource, /derivePendingInvestmentBusinessDecisionIds\(INVESTMENT_BUSINESS_RULE_GOVERNANCE\)/);
 assert.doesNotMatch(releaseGovernanceSource, /Object\.freeze\(\[\s*'BR-001'/, 'Release blockers must not be maintained as a second hand-edited BR array.');
