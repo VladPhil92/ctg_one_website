@@ -4,8 +4,8 @@ import path from 'node:path';
 const root = process.cwd();
 const files = {
   shadowMigration: path.join(root, 'supabase/migrations/20260830014000_0080_wallet_shadow_journal_reconciliation.sql'),
-  ledgerMigration: path.join(root, 'supabase/migrations/20260830215500_0084_wallet_canonical_cop_ledger_authority.sql'),
-  ledgerHardeningMigration: path.join(root, 'supabase/migrations/20260830220500_0085_wallet_canonical_cop_ledger_balance_hardening.sql'),
+  ledgerMigration: path.join(root, 'supabase/migrations/20260830231000_0086_wallet_canonical_cop_ledger_authority.sql'),
+  ledgerHardeningMigration: path.join(root, 'supabase/migrations/20260830232000_0087_wallet_canonical_cop_ledger_balance_hardening.sql'),
   contract: path.join(root, 'src/lib/wallet/shadow-journal.ts'),
   domain: path.join(root, 'src/lib/wallet/domain.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
@@ -52,7 +52,7 @@ requireFragments(contract, 'shadow TypeScript contract', [
   "WALLET_SHADOW_BALANCE_AUTHORITY = 'legacy_wallets'",
 ]);
 
-// 0084 is the explicit authority boundary and must fail closed on drift.
+// 0086 is the explicit authority boundary and must fail closed on drift.
 requireFragments(ledger, 'canonical ledger cutover', [
   "raise exception 'WALLET_LEDGER_CUTOVER_RECONCILIATION_FAILED'",
   'drop trigger if exists wallet_shadow_capture_balance_delta_v2 on public.wallets',
@@ -78,7 +78,7 @@ requireFragments(ledger, 'canonical ledger cutover', [
   'to service_role',
 ]);
 
-// 0085 makes the helper immune to historical shadow postings.
+// 0087 makes the helper immune to historical shadow postings.
 requireFragments(ledgerHardening, 'canonical ledger balance hardening', [
   'create or replace function public._wallet_ledger_balance_cents',
   'join public.wallet_journal_postings_v2 p on p.account_id = a.id',
@@ -107,8 +107,8 @@ requireFragments(domain, 'canonical ledger domain', [
 
 const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
 const schemaCount = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(schema);
-if (!schemaMigration || !schemaCount || Number(schemaMigration[1]) < 85 || Number(schemaCount[1]) < 85) {
-  throw new Error('runtime schema contract must include canonical COP ledger hardening migration 0085 or later');
+if (!schemaMigration || !schemaCount || Number(schemaMigration[1]) < 87 || Number(schemaCount[1]) < 87) {
+  throw new Error('runtime schema contract must include canonical COP ledger hardening migration 0087 or later');
 }
 
 requireFragments(smoke, 'canonical ledger PostgreSQL contract', [
