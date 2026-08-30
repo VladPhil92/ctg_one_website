@@ -110,4 +110,11 @@ export const INVESTMENT_CLOSED_BETA_PILOT_AUTHORIZATION = Object.freeze({
   evidenceRef: null,
 });
 
+// Production feature-flag state must come from an explicit review of the
+// deployed environment, not from the machine running the preflight CLI.
+// Null is intentionally fail-closed. A future evidence record is supplied to
+// the preflight as a private reviewed artifact and is never inferred from
+// missing local environment variables.
+export const INVESTMENT_CLOSED_BETA_PRODUCTION_FLAG_EVIDENCE = null;
+
 validateInvestmentClosedBetaPilotAuthorization(INVESTMENT_CLOSED_BETA_PILOT_AUTHORIZATION);
