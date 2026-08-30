@@ -92,7 +92,7 @@ export async function GET(request: Request) {
     supabase
       .from('wallet_intents_v2')
       .select(
-        'id,user_id,intent_type,status,currency,amount_cents,external_reference,expires_at,created_at,updated_at',
+        'id,user_id,intent_type,status,currency,amount_cents,rail,chain_id,asset_symbol,amount_base_units,destination_address,tx_hash,external_reference,replaced_by_reference,settled_at,expires_at,created_at,updated_at',
       )
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
@@ -106,51 +106,6 @@ export async function GET(request: Request) {
       .order('occurred_at', { ascending: false })
       .limit(ACTIVITY_FETCH_LIMIT),
   ]);
-  const [profileResult, balanceResult, identityResult, accountsResult, transactionsResult, intentsResult] =
-    await Promise.all([
-      supabase
-        .from('profiles')
-        .select('id,kyc_status')
-        .eq('id', userId)
-        .maybeSingle(),
-      supabase
-        .from('wallet_balance_compatibility_v2')
-        .select(
-          'account_id,user_id,legacy_wallet_id,currency,available_balance_cents,balance_authority,journal_posting_enabled,balance_updated_at',
-        )
-        .eq('user_id', userId)
-        .maybeSingle(),
-      supabase
-        .from('wallet_identity_links')
-        .select('user_id,provider,status,link_mode,linked_at,verified_at')
-        .eq('user_id', userId)
-        .eq('provider', 'privy')
-        .maybeSingle(),
-      supabase
-        .from('wallet_external_accounts')
-        .select(
-          'id,user_id,provider,chain_family,account_kind,address,status,is_primary,legacy_preserved,verified_at,created_at',
-        )
-        .eq('user_id', userId)
-        .order('is_primary', { ascending: false })
-        .order('created_at', { ascending: true }),
-      supabase
-        .from('transactions')
-        .select(
-          'id,user_id,type,method,amount_cents,status,external_reference,crypto_tx_hash,reviewed_at,created_at',
-        )
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(ACTIVITY_FETCH_LIMIT),
-      supabase
-        .from('wallet_intents_v2')
-        .select(
-          'id,user_id,intent_type,status,currency,amount_cents,rail,chain_id,asset_symbol,amount_base_units,destination_address,tx_hash,external_reference,replaced_by_reference,settled_at,expires_at,created_at,updated_at',
-        )
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(ACTIVITY_FETCH_LIMIT),
-    ]);
 
   if (
     profileResult.error ||
