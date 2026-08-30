@@ -122,6 +122,24 @@ assert.equal(approvedSimulation.propagationVerificationAllowed, false);
 assert.equal(approvedSimulation.pilotAuthorizationGranted, false);
 assert.equal(approvedSimulation.livePromotionAllowed, false);
 
+const shallowFrozenBlueprint = Object.freeze(clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT));
+const shallowFrozenSimulation = simulateInvestmentBusinessRulePropagationChangePlan({
+  governance: approvedGovernanceFixture(),
+  blueprint: shallowFrozenBlueprint,
+});
+assert.equal(shallowFrozenSimulation.authoritative, false);
+assert.ok(Object.isFrozen(shallowFrozenSimulation.blueprint));
+assert.ok(Object.isFrozen(shallowFrozenSimulation.blueprint.surfaces));
+assert.ok(Object.isFrozen(shallowFrozenSimulation.blueprint.surfaces[0].tasks));
+assert.ok(Object.isFrozen(shallowFrozenSimulation.blueprint.surfaces[0].tasks[0].targets[0]));
+assert.throws(
+  () => {
+    shallowFrozenSimulation.blueprint.surfaces[0].tasks[0].targets[0].path = '.git/config';
+  },
+  TypeError,
+  'A shallow-frozen caller blueprint must become recursively immutable before it is returned in a plan.',
+);
+
 const alreadyPropagatedSimulation = simulateInvestmentBusinessRulePropagationChangePlan({
   governance: approvedGovernance,
   propagation: verifiedPropagationFixture(),
@@ -235,6 +253,7 @@ assert.match(packageJson.scripts.test, /test-investment-business-rule-propagatio
 assert.match(packageJson.scripts['investment:br:propagation:plan'], /plan-investment-business-rule-propagation\.mjs/);
 assert.match(docsSource, /BLOCKED_AWAITING_CANONICAL_APPROVAL/);
 assert.match(docsSource, /ALREADY_PROPAGATED/);
+assert.match(docsSource, /SIMULATION_\*/);
 assert.match(docsSource, /src\/app\/inversion\/legal\/page\.tsx/);
 assert.match(docsSource, /new immutable migration/i);
 assert.match(docsSource, /does \*\*not\*\* reserve a migration number/i);
@@ -242,5 +261,6 @@ assert.match(plannerCliSource, /buildInvestmentBusinessRulePropagationChangePlan
 assert.match(plannerCliSource, /result\.status === 'INVALID' \? 1 : 0/);
 assert.match(plannerSource, /accepts canonical repository governance only/);
 assert.match(plannerSource, /SIMULATION_APPROVALS_SATISFIED/);
+assert.match(plannerSource, /seen = new WeakSet\(\)/);
 
 console.log('Investment business-rule propagation change planner invariants: PASS');
