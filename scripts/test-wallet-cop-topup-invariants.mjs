@@ -6,8 +6,14 @@ const files = {
   topupMigration: path.join(root, 'supabase/migrations/20260830150000_0081_wallet_cop_topup_trust_boundary.sql'),
   rateMigration: path.join(root, 'supabase/migrations/20260830151000_0082_wallet_topup_rate_limit_scope.sql'),
   route: path.join(root, 'src/app/api/wallet/deposits/route.ts'),
+  qrRoute: path.join(root, 'src/app/api/wallet/payment-qr/route.ts'),
   page: path.join(root, 'src/app/dashboard/depositos/page.tsx'),
   instructions: path.join(root, 'src/lib/payment-instructions.ts'),
+  adminPage: path.join(root, 'src/app/admin/depositos/page.tsx'),
+  adminQueue: path.join(root, 'src/components/admin/WalletTopupReviewQueue.tsx'),
+  adminVerifyRoute: path.join(root, 'src/app/api/admin/wallet-topups/[id]/verify/route.ts'),
+  adminReconcileRoute: path.join(root, 'src/app/api/admin/wallet-topups/[id]/reconcile/route.ts'),
+  adminRejectRoute: path.join(root, 'src/app/api/admin/wallet-topups/[id]/reject/route.ts'),
   rateLimit: path.join(root, 'src/lib/security/api-rate-limit.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
   smoke: path.join(root, 'scripts/wallet-cop-topup-smoke.sql'),
@@ -71,14 +77,25 @@ requireFragments(source.route, 'top-up server route', [
   'createAdminClient()',
   ".from('payment-proofs')",
   ".rpc('submit_wallet_topup_claim_server'",
-  "status: 202",
+  'p_user_id: user.id',
+  'status: 202',
+]);
+
+requireFragments(source.qrRoute, 'wallet Bre-B QR route', [
+  'INVESTMENT_PAYMENT_QR_MATRIX_BASE64',
+  'INVESTMENT_PAYMENT_QR_SIZE',
+  'QR Bancolombia Bre-B para recarga de Saldo CTG',
+  "'Content-Type': 'image/svg+xml; charset=utf-8'",
+  "'Cache-Control': 'public, max-age=31536000, immutable'",
 ]);
 
 requireFragments(source.page, 'deposit dashboard', [
   "fetch('/api/wallet/deposits'",
   "'X-Payment-Reference'",
-  'Enviar claim de recarga',
-  'no acredita saldo por sí mismo',
+  'BRE_B_INSTRUCTIONS.qrImageUrl',
+  'Recargar Saldo CTG',
+  'Enviar comprobante de recarga',
+  'Subir un comprobante no acredita saldo por sí mismo.',
 ]);
 for (const unsafe of [".from('transactions')", ".storage.from('payment-proofs')", 'createClient()']) {
   if (source.page.includes(unsafe)) {
@@ -92,6 +109,46 @@ requireFragments(source.instructions, 'payment rail configuration', [
   'WALLET_MANUAL_COP_TOPUP_CONFIGURED',
   'BANK_TRANSFER_CONFIGURED || BRE_B_CONFIGURED',
   'isWalletManualCopRailConfigured',
+  "WALLET_BRE_B_KEY = '@grupopisaofood'",
+  "WALLET_BRE_B_QR_ASSET = '/api/wallet/payment-qr'",
+  'recipientLabel',
+]);
+
+requireFragments(source.adminPage, 'wallet top-up admin page', [
+  ".from('wallet_topup_claims')",
+  ".in('state', ['submitted', 'verified'])",
+  ".from('payment-proofs')",
+  '.createSignedUrl(',
+  'WalletTopupReviewQueue',
+  'currentAdminId={user.id}',
+]);
+
+requireFragments(source.adminQueue, 'wallet top-up admin queue', [
+  '/api/admin/wallet-topups/${claimId}/${action}',
+  "action: 'verify' | 'reconcile' | 'reject'",
+  "claim.verified_by === currentAdminId",
+  'Verificar pago en banco',
+  'Conciliar y acreditar Saldo CTG',
+  'Se requiere un segundo administrador',
+]);
+if (source.adminQueue.includes('/api/admin/deposits/')) {
+  throw new Error('wallet top-up admin queue regressed to the legacy deposit approval route');
+}
+
+requireFragments(source.adminVerifyRoute, 'wallet top-up verification route', [
+  ".rpc('verify_wallet_topup_claim'",
+  'p_claim_id: id',
+  'p_verification_notes:',
+]);
+requireFragments(source.adminReconcileRoute, 'wallet top-up reconciliation route', [
+  ".rpc('reconcile_wallet_topup_claim'",
+  'p_claim_id: id',
+  'p_admin_notes:',
+]);
+requireFragments(source.adminRejectRoute, 'wallet top-up rejection route', [
+  ".rpc('reject_wallet_topup_claim'",
+  'p_claim_id: id',
+  'p_reason:',
 ]);
 
 requireFragments(source.rateLimit, 'rate-limit TypeScript contract', ["'wallet.topup-proof'"]);
