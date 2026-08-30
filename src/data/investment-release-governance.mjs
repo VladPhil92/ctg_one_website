@@ -1,16 +1,20 @@
 import {
   INVESTMENT_BUSINESS_RULE_GOVERNANCE,
-  derivePendingInvestmentBusinessDecisionIds,
+  INVESTMENT_BUSINESS_RULE_PROPAGATION,
+  deriveBlockingInvestmentBusinessDecisionIds,
 } from './investment-business-rule-governance.mjs';
 
 export const INVESTMENT_RELEASE_TARGET = 'LIVE';
 
-// Business-rule blockers are derived from the validated canonical governance
-// record. Editing this array directly is intentionally impossible: every rule
-// remains blocking until its canonical status is explicitly APPROVED with the
-// required human decision metadata.
+// BR release blockers are derived from the validated canonical governance and
+// propagation records. Even when every BR is explicitly APPROVED, these IDs
+// remain blocking until the accepted candidate has been authoritatively
+// propagated and that propagation is explicitly VERIFIED.
 export const INVESTMENT_REQUIRED_BUSINESS_DECISION_IDS =
-  derivePendingInvestmentBusinessDecisionIds(INVESTMENT_BUSINESS_RULE_GOVERNANCE);
+  deriveBlockingInvestmentBusinessDecisionIds(
+    INVESTMENT_BUSINESS_RULE_GOVERNANCE,
+    INVESTMENT_BUSINESS_RULE_PROPAGATION,
+  );
 
 // A successful Phase 18 production-readiness canary result may be wired here
 // only after the exact deployed commit has been observed on Render. The release
