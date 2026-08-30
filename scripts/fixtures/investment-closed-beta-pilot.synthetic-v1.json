@@ -1,0 +1,37 @@
+{
+  "manifestVersion": "ctg-investment-closed-beta-pilot-manifest-v1",
+  "classification": "synthetic-ci",
+  "preparedAt": "2026-08-30T02:00:00.000Z",
+  "environment": {
+    "origin": "https://ci.invalid",
+    "provider": "ci",
+    "branch": "synthetic",
+    "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "schemaMigration": "0080",
+    "schemaMigrationName": "wallet_shadow_journal_reconciliation",
+    "schemaMigrationCount": 80,
+    "schemaCompatible": true,
+    "productionReadinessVerified": false
+  },
+  "participant": {
+    "profileDigestSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "kycStatus": "VERIFIED",
+    "agreementAccepted": true,
+    "agreementVersion": "closed-beta-v1",
+    "agreementDigestSha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "lot": {
+    "lotDigestSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "formulaVersion": "settlement-preview-v1",
+    "agreementVersion": "closed-beta-v1",
+    "plannedUnits": 120,
+    "serializationPlanVersion": "serialization-v1",
+    "longStopAt": "2026-10-30T02:00:00.000Z",
+    "currency": "COP",
+    "capitalTargetCents": 100000000
+  },
+  "funding": {
+    "rail": "manual-bank",
+    "manualVerificationRequired": true
+  }
+}
