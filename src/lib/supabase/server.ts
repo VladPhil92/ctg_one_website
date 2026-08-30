@@ -1,7 +1,11 @@
 import 'server-only';
 
 import { createServerClient } from '@supabase/ssr';
-import { createClient as createSupabaseClient, type User } from '@supabase/supabase-js';
+import {
+  createClient as createSupabaseClient,
+  type SupabaseClient,
+  type User,
+} from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 export const isSupabaseConfigured =
@@ -36,7 +40,7 @@ export async function createClient() {
 const MAX_BEARER_BYTES = 8192;
 
 export type AuthenticatedRequestContext = {
-  supabase: ReturnType<typeof createSupabaseClient> | Awaited<ReturnType<typeof createClient>>;
+  supabase: SupabaseClient;
   user: User;
   transport: 'bearer' | 'cookie';
 };
@@ -70,7 +74,7 @@ export async function createAuthenticatedRequestContext(
   if (bearer.present) {
     if (!bearer.token) return null;
 
-    const supabase = createSupabaseClient(
+    const supabase: SupabaseClient = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
@@ -91,7 +95,7 @@ export async function createAuthenticatedRequestContext(
     return { supabase, user: data.user, transport: 'bearer' };
   }
 
-  const supabase = await createClient();
+  const supabase: SupabaseClient = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) return null;
   return { supabase, user: data.user, transport: 'cookie' };
