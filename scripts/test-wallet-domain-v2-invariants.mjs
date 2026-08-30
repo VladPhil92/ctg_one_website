@@ -8,6 +8,7 @@ const files = {
   intentAuthorizationMigration: path.join(root, 'supabase/migrations/20260830230000_0085_wallet_intent_authorization_v1.sql'),
   intentRoute: path.join(root, 'src/app/api/wallet/intents/route.ts'),
   intentAuthorizationRoute: path.join(root, 'src/app/api/wallet/intents/[intentId]/authorize/route.ts'),
+  trustedSimulation: path.join(root, 'src/lib/wallet/trusted-simulation.ts'),
   domain: path.join(root, 'src/lib/wallet/domain.ts'),
   readModel: path.join(root, 'src/lib/wallet/read-model.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
@@ -24,6 +25,7 @@ const intentCreationMigration = fs.readFileSync(files.intentCreationMigration, '
 const intentAuthorizationMigration = fs.readFileSync(files.intentAuthorizationMigration, 'utf8');
 const intentRoute = fs.readFileSync(files.intentRoute, 'utf8');
 const intentAuthorizationRoute = fs.readFileSync(files.intentAuthorizationRoute, 'utf8');
+const trustedSimulation = fs.readFileSync(files.trustedSimulation, 'utf8');
 const domain = fs.readFileSync(files.domain, 'utf8');
 const readModel = fs.readFileSync(files.readModel, 'utf8');
 const schema = fs.readFileSync(files.schema, 'utf8');
@@ -159,29 +161,36 @@ requireFragments(intentAuthorizationMigration, 'Wallet Intent V1 authorization m
   'add column if not exists authorized_wallet_address text',
   'add column if not exists simulation_digest_sha256 text',
   'create or replace function public.authorize_wallet_intent_v1_server(',
+  'p_expected_wallet_address text',
+  'p_expected_chain_id bigint',
+  'p_expected_asset_symbol text',
+  'p_expected_amount_base_units text',
+  'p_expected_destination_address text',
   "'wallet.intent-authorize'",
   "interval '5 minutes'",
   'v_rate_row.request_count >= 20',
+  "if v_intent.status = 'authorized' then",
+  "elsif v_intent.status = 'created' then",
+  'WALLET_AUTH_SIMULATION_BINDING_CONFLICT',
+  'WALLET_AUTH_SIGNER_BINDING_CONFLICT',
   "a.provider = 'privy'",
   "a.chain_family = 'evm'",
   "a.account_kind = 'embedded'",
   "a.status = 'verified'",
   'a.is_primary is true',
   "l.status = 'verified'",
-  "if v_intent.status = 'authorized' then",
-  "elsif v_intent.status = 'created' then",
   "set status = 'authorized'",
-  'authorized_wallet_address = v_primary_wallet.address_normalized',
+  'authorized_wallet_address = v_expected_wallet',
   'simulation_digest_sha256 = v_digest',
   "'version', 'ctg-wallet-authorization-v1'",
   'WALLET_AUTH_REPLAY_CONFLICT',
   'WALLET_AUTH_INTENT_EXPIRED',
-  'revoke all on function public.authorize_wallet_intent_v1_server(uuid, uuid, text)',
+  'revoke all on function public.authorize_wallet_intent_v1_server(uuid, uuid, text, text, bigint, text, text, text)',
   'to service_role',
 ]);
 
 for (const unsafe of [
-  'grant execute on function public.authorize_wallet_intent_v1_server(uuid, uuid, text)\n  to authenticated',
+  'grant execute on function public.authorize_wallet_intent_v1_server(uuid, uuid, text, text, bigint, text, text, text)\n  to authenticated',
   'insert into public.wallet_journal_entries_v2',
   'insert into public.wallet_journal_postings_v2',
   'insert into public.wallet_transaction_references_v2',
@@ -222,18 +231,55 @@ for (const unsafe of [
   }
 }
 
+requireFragments(trustedSimulation, 'Wallet trusted simulation boundary', [
+  "import 'server-only'",
+  "process.env.POLYGON_RPC_URL",
+  "WALLET_TRUSTED_SIMULATION_VERSION = 'ctg-wallet-trusted-simulation-v1'",
+  "rpcCall(rpcUrl, 1, 'eth_chainId', [])",
+  "rpcCall(rpcUrl, 2, 'eth_call'",
+  "rpcCall(rpcUrl, 3, 'eth_estimateGas'",
+  "rpcCall(rpcUrl, 4, 'eth_getBalance'",
+  "rpcCall(rpcUrl, 5, 'eth_blockNumber'",
+  "rpcCall(rpcUrl, 6, 'eth_gasPrice'",
+  "createHash('sha256')",
+  "throw new WalletTrustedSimulationError('WALLET_AUTH_TRUSTED_CHAIN_MISMATCH')",
+  "throw new WalletTrustedSimulationError('WALLET_AUTH_TRUSTED_NATIVE_BALANCE_INSUFFICIENT')",
+]);
+
+for (const unsafe of [
+  "'eth_sendTransaction'",
+  'sendTransaction(',
+  'getSigner(',
+  'privateKey',
+]) {
+  if (trustedSimulation.includes(unsafe)) {
+    throw new Error(`Trusted simulation must remain read-only: ${unsafe}`);
+  }
+}
+
 requireFragments(intentAuthorizationRoute, 'Wallet Intent V1 authorization route', [
   "const AUTHORIZATION_VERSION = 'ctg-wallet-authorization-v1' as const",
-  "const ALLOWED_BODY_KEYS = new Set(['version', 'simulationDigestSha256'])",
+  "const ALLOWED_BODY_KEYS = new Set(['version'])",
+  "simulateTrustedWalletIntentV1({",
+  "intent.status === 'authorized'",
+  "intent.status === 'created'",
+  'simulationDigestSha256 = trustedSimulation.simulationDigestSha256',
   "admin.rpc('authorize_wallet_intent_v1_server'",
   'p_user_id: auth.user.id',
-  'p_intent_id: intentId',
-  'p_simulation_digest_sha256: parsed.simulationDigestSha256',
+  'p_intent_id: intent.id',
+  'p_simulation_digest_sha256: simulationDigestSha256',
+  'p_expected_wallet_address: expectedWalletAddress',
+  'p_expected_chain_id: intent.chain_id',
+  'p_expected_asset_symbol: intent.asset_symbol',
+  'p_expected_amount_base_units: intent.amount_base_units',
+  'p_expected_destination_address: intent.destination_address',
   "message.includes('WALLET_AUTH_RATE_LIMITED')",
   "message.includes('WALLET_AUTH_SIGNER_UNAVAILABLE')",
 ]);
 
 for (const unsafe of [
+  "new Set(['version', 'simulationDigestSha256'])",
+  'parsed.simulationDigestSha256',
   'sendTransaction(',
   'eth_sendTransaction',
   'eth_signTransaction',
@@ -243,7 +289,7 @@ for (const unsafe of [
   'txHash:',
 ]) {
   if (intentAuthorizationRoute.includes(unsafe)) {
-    throw new Error(`Wallet authorization route must remain signing/broadcast-free: ${unsafe}`);
+    throw new Error(`Wallet authorization route must remain trusted-simulation and signing/broadcast-free: ${unsafe}`);
   }
 }
 
@@ -265,4 +311,4 @@ if (
   throw new Error('runtime schema contract must include Wallet Intent Authorization V1 migration 0085');
 }
 
-console.log('Wallet Domain V2 + Intent Creation/Authorization V1 invariants: PASS');
+console.log('Wallet Domain V2 + trusted Intent Creation/Authorization V1 invariants: PASS');
