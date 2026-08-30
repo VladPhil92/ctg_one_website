@@ -155,6 +155,7 @@ begin
   if v_intent.intent_type is distinct from 'crypto_send'
      or v_intent.rail is distinct from 'polygon'
      or v_intent.chain_id is distinct from 137
+     or v_intent.asset_symbol is null
      or v_intent.asset_symbol not in ('POL','CTG','USDC','USDT')
      or v_intent.amount_base_units is null
      or v_intent.destination_address is null then
