@@ -1,6 +1,7 @@
 export const CANONICAL_WALLET_IDENTITY = 'supabase-profile' as const;
 export const WALLET_V2_BALANCE_AUTHORITY = 'legacy_wallets' as const;
 export const WALLET_V2_JOURNAL_POSTING_ENABLED = false as const;
+export const WALLET_OVERVIEW_VERSION = 'ctg-wallet-overview-v2' as const;
 
 export type WalletIdentityProvider = 'privy';
 export type WalletIdentityLinkStatus = 'pending' | 'verified' | 'revoked';
@@ -174,6 +175,87 @@ export interface WalletBalanceCompatibilityV2 {
   balanceAuthority: typeof WALLET_V2_BALANCE_AUTHORITY;
   journalPostingEnabled: typeof WALLET_V2_JOURNAL_POSTING_ENABLED;
   balanceUpdatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Authenticated Wallet V2 read model
+// ---------------------------------------------------------------------------
+
+export type WalletKycStatus = 'not_submitted' | 'pending' | 'verified' | 'rejected';
+
+export interface WalletOverviewBalance {
+  accountId: string;
+  currency: string;
+  availableBalanceCents: number;
+  authority: typeof WALLET_V2_BALANCE_AUTHORITY;
+  journalPostingEnabled: typeof WALLET_V2_JOURNAL_POSTING_ENABLED;
+  updatedAt: string;
+}
+
+export interface WalletOverviewIdentity {
+  provider: WalletIdentityProvider;
+  status: WalletIdentityLinkStatus;
+  linkMode: WalletIdentityLinkMode;
+  linkedAt: string | null;
+  verifiedAt: string | null;
+}
+
+export interface WalletOverviewExternalAccount {
+  id: string;
+  provider: WalletExternalAccountProvider;
+  chainFamily: WalletChainFamily;
+  accountKind: WalletExternalAccountKind;
+  address: string;
+  status: WalletExternalAccountStatus;
+  isPrimary: boolean;
+  legacyPreserved: boolean;
+  verifiedAt: string | null;
+}
+
+export type WalletOverviewActivitySource = 'legacy_transaction' | 'wallet_intent';
+
+export interface WalletOverviewActivityItem {
+  id: string;
+  source: WalletOverviewActivitySource;
+  kind: string;
+  rail: string | null;
+  status: string;
+  currency: string;
+  amountCents: number | null;
+  reference: string | null;
+  occurredAt: string;
+  settledAt: string | null;
+}
+
+export interface WalletOverviewCapabilities {
+  copBalanceRead: true;
+  walletIdentityRead: true;
+  activityRead: true;
+  journalPosting: false;
+  moneyMovement: false;
+  blockchainBalances: false;
+  investmentPositions: false;
+}
+
+/**
+ * Read-only aggregate returned by GET /api/wallet/overview.
+ *
+ * This contract intentionally exposes only user-owned, display-safe data. It
+ * does not expose payment proof paths, admin notes, provider secrets,
+ * idempotency keys or Wallet V2 journal mutation capability.
+ */
+export interface WalletOverviewV2 {
+  version: typeof WALLET_OVERVIEW_VERSION;
+  asOf: string;
+  user: {
+    id: string;
+    kycStatus: WalletKycStatus;
+  };
+  balance: WalletOverviewBalance;
+  identity: WalletOverviewIdentity | null;
+  externalAccounts: WalletOverviewExternalAccount[];
+  activity: WalletOverviewActivityItem[];
+  capabilities: WalletOverviewCapabilities;
 }
 
 export function normalizeWalletAddress(
