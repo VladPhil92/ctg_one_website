@@ -18,8 +18,21 @@ export const PSE_INSTRUCTIONS = {
   note: process.env.NEXT_PUBLIC_WALLET_PSE_NOTE ?? PENDING,
 };
 
+// Approved static Bancolombia/Bre-B rail supplied by the operator. The QR
+// payload is versioned in source and is the same immutable banking payload used
+// by the existing CTG payment surface. It is public display material, not a
+// credential, and therefore requires no Bancolombia API integration. Runtime
+// exposure is still independently feature-gated so a deployment cannot start
+// accepting real-money top-ups merely because this code was merged.
+const WALLET_BRE_B_QR_ASSET = '/api/wallet/payment-qr';
+const WALLET_BRE_B_KEY = '@grupopisaofood';
+export const WALLET_STATIC_BRE_B_ENABLED =
+  process.env.NEXT_PUBLIC_WALLET_STATIC_BRE_B_ENABLED === 'true';
+
 export const BRE_B_INSTRUCTIONS = {
-  key: process.env.NEXT_PUBLIC_WALLET_BRE_B_KEY ?? PENDING,
+  key: WALLET_BRE_B_KEY,
+  qrImageUrl: WALLET_BRE_B_QR_ASSET,
+  recipientLabel: 'GRUPO PISAO FOOD',
 };
 
 export const CRYPTO_DEPOSIT_ADDRESSES: Array<{ network: string; asset: string; address: string }> = [
@@ -40,7 +53,11 @@ export const BANK_TRANSFER_CONFIGURED =
   Object.values(BANK_TRANSFER_INSTRUCTIONS).every(configured);
 
 export const PSE_CONFIGURED = configured(PSE_INSTRUCTIONS.note);
-export const BRE_B_CONFIGURED = configured(BRE_B_INSTRUCTIONS.key);
+export const BRE_B_CONFIGURED =
+  WALLET_STATIC_BRE_B_ENABLED &&
+  configured(BRE_B_INSTRUCTIONS.key) &&
+  configured(BRE_B_INSTRUCTIONS.qrImageUrl) &&
+  configured(BRE_B_INSTRUCTIONS.recipientLabel);
 export const CRYPTO_DEPOSIT_CONFIGURED =
   CRYPTO_DEPOSIT_ADDRESSES.length > 0 &&
   CRYPTO_DEPOSIT_ADDRESSES.every((item) =>
