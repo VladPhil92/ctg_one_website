@@ -6,13 +6,20 @@ import {
   isSupabaseConfigured,
 } from '@/lib/supabase/server';
 import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
+import {
+  simulateTrustedWalletIntentV1,
+  WalletTrustedSimulationError,
+} from '@/lib/wallet/trusted-simulation';
 
 const CORS_METHODS = ['POST', 'OPTIONS'] as const;
-const MAX_BODY_BYTES = 1024;
+const MAX_BODY_BYTES = 256;
 const AUTHORIZATION_VERSION = 'ctg-wallet-authorization-v1' as const;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const SHA256_RE = /^[0-9a-f]{64}$/i;
-const ALLOWED_BODY_KEYS = new Set(['version', 'simulationDigestSha256']);
+const SHA256_RE = /^[0-9a-f]{64}$/;
+const EVM_ADDRESS_RE = /^0x[0-9a-f]{40}$/;
+const BASE_UNITS_RE = /^[1-9][0-9]*$/;
+const SUPPORTED_ASSETS = new Set(['POL', 'CTG', 'USDC', 'USDT']);
+const ALLOWED_BODY_KEYS = new Set(['version']);
 
 function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
@@ -34,21 +41,17 @@ function getIntentId(request: Request) {
 }
 
 function parseAuthorizationBody(value: unknown) {
-  if (!isRecord(value)) return null;
-  if (Object.keys(value).some((key) => !ALLOWED_BODY_KEYS.has(key))) return null;
-  if (value.version !== AUTHORIZATION_VERSION) return null;
-  if (typeof value.simulationDigestSha256 !== 'string') return null;
-
-  const simulationDigestSha256 = value.simulationDigestSha256.trim().toLowerCase();
-  if (!SHA256_RE.test(simulationDigestSha256)) return null;
-
-  return { simulationDigestSha256 };
+  if (!isRecord(value)) return false;
+  if (Object.keys(value).some((key) => !ALLOWED_BODY_KEYS.has(key))) return false;
+  return value.version === AUTHORIZATION_VERSION;
 }
 
 function rpcStatus(message: string) {
   if (message.includes('WALLET_AUTH_RATE_LIMITED')) return 429;
   if (message.includes('WALLET_AUTH_INTENT_NOT_FOUND')) return 404;
   if (message.includes('WALLET_AUTH_REPLAY_CONFLICT')) return 409;
+  if (message.includes('WALLET_AUTH_SIMULATION_BINDING_CONFLICT')) return 409;
+  if (message.includes('WALLET_AUTH_SIGNER_BINDING_CONFLICT')) return 409;
   if (message.includes('WALLET_AUTH_SIGNER_UNAVAILABLE')) return 409;
   if (message.includes('WALLET_AUTH_IDENTITY_UNVERIFIED')) return 409;
   if (message.includes('WALLET_AUTH_INTENT_EXPIRED')) return 409;
@@ -56,6 +59,97 @@ function rpcStatus(message: string) {
   if (message.includes('WALLET_AUTH_EXTERNAL_STATE_PRESENT')) return 409;
   if (message.includes('WALLET_AUTH_')) return 400;
   return 503;
+}
+
+function simulationStatus(code: string) {
+  if (
+    code === 'WALLET_AUTH_TRUSTED_NATIVE_BALANCE_INSUFFICIENT'
+    || code === 'WALLET_AUTH_TRUSTED_TOKEN_CALL_REJECTED'
+  ) return 409;
+  if (
+    code === 'WALLET_AUTH_TRUSTED_RPC_UNAVAILABLE'
+    || code === 'WALLET_AUTH_TRUSTED_RPC_INVALID'
+    || code === 'WALLET_AUTH_TRUSTED_RPC_INSECURE'
+    || code === 'WALLET_AUTH_TRUSTED_RPC_FAILED'
+    || code === 'WALLET_AUTH_TRUSTED_RPC_RESPONSE_INVALID'
+    || code === 'WALLET_AUTH_TRUSTED_RPC_REJECTED'
+    || code === 'WALLET_AUTH_TRUSTED_CHAIN_INVALID'
+    || code === 'WALLET_AUTH_TRUSTED_CHAIN_MISMATCH'
+    || code === 'WALLET_AUTH_TRUSTED_GAS_INVALID'
+    || code === 'WALLET_AUTH_TRUSTED_BALANCE_INVALID'
+    || code === 'WALLET_AUTH_TRUSTED_BLOCK_INVALID'
+    || code === 'WALLET_AUTH_TRUSTED_GAS_PRICE_INVALID'
+    || code === 'WALLET_AUTH_TRUSTED_SIMULATION_INVALID'
+  ) return 503;
+  return 400;
+}
+
+type IntentSnapshot = {
+  id: string;
+  user_id: string;
+  status: string;
+  intent_type: string;
+  rail: string | null;
+  chain_id: number | null;
+  asset_symbol: string | null;
+  amount_base_units: string | null;
+  destination_address: string | null;
+  tx_hash: string | null;
+  external_reference: string | null;
+  settled_at: string | null;
+  authorized_at: string | null;
+  authorized_wallet_address: string | null;
+  simulation_digest_sha256: string | null;
+};
+
+function normalizeIntentSnapshot(value: unknown): IntentSnapshot | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.id !== 'string'
+    || typeof value.user_id !== 'string'
+    || typeof value.status !== 'string'
+    || typeof value.intent_type !== 'string'
+  ) return null;
+
+  const rail = typeof value.rail === 'string' ? value.rail : null;
+  const chainId = typeof value.chain_id === 'number' ? value.chain_id : null;
+  const assetSymbol = typeof value.asset_symbol === 'string' ? value.asset_symbol : null;
+  const amountBaseUnits = typeof value.amount_base_units === 'string' ? value.amount_base_units : null;
+  const destinationAddress = typeof value.destination_address === 'string'
+    ? value.destination_address.toLowerCase()
+    : null;
+
+  if (
+    value.intent_type !== 'crypto_send'
+    || rail !== 'polygon'
+    || chainId !== 137
+    || !assetSymbol
+    || !SUPPORTED_ASSETS.has(assetSymbol)
+    || !amountBaseUnits
+    || !BASE_UNITS_RE.test(amountBaseUnits)
+    || !destinationAddress
+    || !EVM_ADDRESS_RE.test(destinationAddress)
+  ) return null;
+
+  const nullableString = (candidate: unknown) => typeof candidate === 'string' ? candidate : null;
+
+  return {
+    id: value.id,
+    user_id: value.user_id,
+    status: value.status,
+    intent_type: value.intent_type,
+    rail,
+    chain_id: chainId,
+    asset_symbol: assetSymbol,
+    amount_base_units: amountBaseUnits,
+    destination_address: destinationAddress,
+    tx_hash: nullableString(value.tx_hash),
+    external_reference: nullableString(value.external_reference),
+    settled_at: nullableString(value.settled_at),
+    authorized_at: nullableString(value.authorized_at),
+    authorized_wallet_address: nullableString(value.authorized_wallet_address)?.toLowerCase() ?? null,
+    simulation_digest_sha256: nullableString(value.simulation_digest_sha256)?.toLowerCase() ?? null,
+  };
 }
 
 export function OPTIONS(request: Request) {
@@ -94,16 +188,128 @@ export async function POST(request: Request) {
     return noStoreJson(request, { error: 'WALLET_AUTH_BODY_INVALID' }, { status: 400 });
   }
 
-  const parsed = parseAuthorizationBody(body);
-  if (!parsed) {
+  if (!parseAuthorizationBody(body)) {
     return noStoreJson(request, { error: 'WALLET_AUTH_REQUEST_INVALID' }, { status: 400 });
   }
 
   const admin = createAdminClient();
+  const { data: rawIntent, error: intentError } = await admin
+    .from('wallet_intents_v2')
+    .select('id,user_id,status,intent_type,rail,chain_id,asset_symbol,amount_base_units,destination_address,tx_hash,external_reference,settled_at,authorized_at,authorized_wallet_address,simulation_digest_sha256')
+    .eq('id', intentId)
+    .eq('user_id', auth.user.id)
+    .maybeSingle();
+
+  if (intentError) {
+    return noStoreJson(request, { error: 'WALLET_AUTH_INTENT_READ_FAILED' }, { status: 503 });
+  }
+  if (!rawIntent) {
+    return noStoreJson(request, { error: 'WALLET_AUTH_INTENT_NOT_FOUND' }, { status: 404 });
+  }
+
+  const intent = normalizeIntentSnapshot(rawIntent);
+  if (!intent || intent.user_id !== auth.user.id) {
+    return noStoreJson(request, { error: 'WALLET_AUTH_INTENT_SHAPE_INVALID' }, { status: 409 });
+  }
+  if (intent.tx_hash || intent.external_reference || intent.settled_at) {
+    return noStoreJson(request, { error: 'WALLET_AUTH_EXTERNAL_STATE_PRESENT' }, { status: 409 });
+  }
+
+  let simulationDigestSha256: string;
+  let expectedWalletAddress: string;
+
+  if (intent.status === 'authorized') {
+    if (
+      !intent.authorized_at
+      || !intent.authorized_wallet_address
+      || !EVM_ADDRESS_RE.test(intent.authorized_wallet_address)
+      || !intent.simulation_digest_sha256
+      || !SHA256_RE.test(intent.simulation_digest_sha256)
+    ) {
+      return noStoreJson(request, { error: 'WALLET_AUTH_REPLAY_EVIDENCE_INVALID' }, { status: 409 });
+    }
+
+    // Durable replay uses only the evidence that was already committed by a
+    // successful trusted simulation. It does not require a fresh RPC call or a
+    // still-unexpired creation TTL because no new authorization occurs.
+    simulationDigestSha256 = intent.simulation_digest_sha256;
+    expectedWalletAddress = intent.authorized_wallet_address;
+  } else if (intent.status === 'created') {
+    const { data: accountRows, error: accountError } = await admin
+      .from('wallet_external_accounts')
+      .select('identity_link_id,address_normalized')
+      .eq('user_id', auth.user.id)
+      .eq('provider', 'privy')
+      .eq('chain_family', 'evm')
+      .eq('account_kind', 'embedded')
+      .eq('status', 'verified')
+      .eq('is_primary', true)
+      .limit(2);
+
+    if (accountError) {
+      return noStoreJson(request, { error: 'WALLET_AUTH_SIGNER_LOOKUP_FAILED' }, { status: 503 });
+    }
+    if (!accountRows || accountRows.length !== 1) {
+      return noStoreJson(request, { error: 'WALLET_AUTH_SIGNER_UNAVAILABLE' }, { status: 409 });
+    }
+
+    const account = accountRows[0];
+    if (
+      typeof account.identity_link_id !== 'string'
+      || typeof account.address_normalized !== 'string'
+      || !EVM_ADDRESS_RE.test(account.address_normalized.toLowerCase())
+    ) {
+      return noStoreJson(request, { error: 'WALLET_AUTH_SIGNER_INVALID' }, { status: 409 });
+    }
+
+    const { data: identity, error: identityError } = await admin
+      .from('wallet_identity_links')
+      .select('id')
+      .eq('id', account.identity_link_id)
+      .eq('user_id', auth.user.id)
+      .eq('provider', 'privy')
+      .eq('status', 'verified')
+      .maybeSingle();
+
+    if (identityError) {
+      return noStoreJson(request, { error: 'WALLET_AUTH_IDENTITY_LOOKUP_FAILED' }, { status: 503 });
+    }
+    if (!identity) {
+      return noStoreJson(request, { error: 'WALLET_AUTH_IDENTITY_UNVERIFIED' }, { status: 409 });
+    }
+
+    expectedWalletAddress = account.address_normalized.toLowerCase();
+
+    try {
+      const trustedSimulation = await simulateTrustedWalletIntentV1({
+        intentId: intent.id,
+        canonicalUserId: intent.user_id,
+        chainId: intent.chain_id,
+        assetSymbol: intent.asset_symbol,
+        amountBaseUnits: intent.amount_base_units,
+        destinationAddress: intent.destination_address,
+        fromAddress: expectedWalletAddress,
+      });
+      simulationDigestSha256 = trustedSimulation.simulationDigestSha256;
+    } catch (error) {
+      if (error instanceof WalletTrustedSimulationError) {
+        return noStoreJson(request, { error: error.code }, { status: simulationStatus(error.code) });
+      }
+      return noStoreJson(request, { error: 'WALLET_AUTH_TRUSTED_SIMULATION_FAILED' }, { status: 503 });
+    }
+  } else {
+    return noStoreJson(request, { error: 'WALLET_AUTH_STATUS_INVALID' }, { status: 409 });
+  }
+
   const { data, error } = await admin.rpc('authorize_wallet_intent_v1_server', {
     p_user_id: auth.user.id,
-    p_intent_id: intentId,
-    p_simulation_digest_sha256: parsed.simulationDigestSha256,
+    p_intent_id: intent.id,
+    p_simulation_digest_sha256: simulationDigestSha256,
+    p_expected_wallet_address: expectedWalletAddress,
+    p_expected_chain_id: intent.chain_id,
+    p_expected_asset_symbol: intent.asset_symbol,
+    p_expected_amount_base_units: intent.amount_base_units,
+    p_expected_destination_address: intent.destination_address,
   });
 
   if (error) {
@@ -121,6 +327,8 @@ export async function POST(request: Request) {
     || typeof data.authorizedAt !== 'string'
     || typeof data.authorizedWalletAddress !== 'string'
     || typeof data.simulationDigestSha256 !== 'string'
+    || data.authorizedWalletAddress.toLowerCase() !== expectedWalletAddress
+    || data.simulationDigestSha256.toLowerCase() !== simulationDigestSha256
     || !isRecord(data.intent)
   ) {
     return noStoreJson(request, { error: 'WALLET_AUTH_RESPONSE_INVALID' }, { status: 503 });
