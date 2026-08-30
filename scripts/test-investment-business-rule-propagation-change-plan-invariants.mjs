@@ -12,6 +12,7 @@ import {
   INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT,
   INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_PLAN_VERSION,
   buildInvestmentBusinessRulePropagationChangePlan,
+  simulateInvestmentBusinessRulePropagationChangePlan,
   validateInvestmentBusinessRulePropagationChangeBlueprint,
 } from '../src/lib/investment/business-rule-propagation-change-plan.mjs';
 
@@ -53,6 +54,7 @@ validateInvestmentBusinessRulePropagationChangeBlueprint(
 const canonicalPlan = buildInvestmentBusinessRulePropagationChangePlan();
 assert.equal(canonicalPlan.version, INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_PLAN_VERSION);
 assert.equal(canonicalPlan.status, 'BLOCKED_AWAITING_CANONICAL_APPROVAL');
+assert.equal(canonicalPlan.authoritative, true);
 assert.deepEqual(canonicalPlan.decisionBlockers, INVESTMENT_REQUIRED_BUSINESS_RULE_IDS);
 assert.equal(canonicalPlan.canonicalApprovalsSatisfied, false);
 assert.equal(canonicalPlan.propagationAlreadyVerified, false);
@@ -66,6 +68,12 @@ assert.equal(canonicalPlan.pilotAuthorizationGranted, false);
 assert.equal(canonicalPlan.livePromotionAllowed, false);
 assert.equal(canonicalPlan.requiredSurfaceCount, 7);
 assert.equal(canonicalPlan.requiredTaskCount, 7);
+
+assert.throws(
+  () => buildInvestmentBusinessRulePropagationChangePlan({ governance: approvedGovernanceFixture() }),
+  /accepts canonical repository governance only/,
+  'The authority-producing builder must reject caller-supplied governance.',
+);
 
 const surfaceIds = canonicalPlan.blueprint.surfaces.map((surface) => surface.id);
 assert.deepEqual(surfaceIds, [
@@ -98,33 +106,32 @@ assert.ok(
 );
 
 const approvedGovernance = approvedGovernanceFixture();
-const readyPlan = buildInvestmentBusinessRulePropagationChangePlan({
+const approvedSimulation = simulateInvestmentBusinessRulePropagationChangePlan({
   governance: approvedGovernance,
 });
-assert.equal(readyPlan.status, 'READY_FOR_REVIEWED_IMPLEMENTATION_PR');
-assert.deepEqual(readyPlan.decisionBlockers, []);
-assert.equal(readyPlan.canonicalApprovalsSatisfied, true);
-assert.equal(readyPlan.propagationAlreadyVerified, false);
-assert.equal(readyPlan.implementationPlanningEligible, true);
-assert.equal(readyPlan.implementationPrEligible, true);
-assert.equal(readyPlan.automaticApprovalAllowed, false);
-assert.equal(readyPlan.automaticMutationAllowed, false);
-assert.equal(readyPlan.runtimeMutationAllowedByPlanner, false);
-assert.equal(readyPlan.propagationVerificationAllowed, false);
-assert.equal(readyPlan.pilotAuthorizationGranted, false);
-assert.equal(readyPlan.livePromotionAllowed, false);
+assert.equal(approvedSimulation.status, 'SIMULATION_APPROVALS_SATISFIED');
+assert.equal(approvedSimulation.authoritative, false);
+assert.equal(approvedSimulation.simulatedApprovalsSatisfied, true);
+assert.equal(approvedSimulation.canonicalApprovalsSatisfied, false);
+assert.equal(approvedSimulation.implementationPlanningEligible, false);
+assert.equal(approvedSimulation.implementationPrEligible, false);
+assert.equal(approvedSimulation.automaticApprovalAllowed, false);
+assert.equal(approvedSimulation.automaticMutationAllowed, false);
+assert.equal(approvedSimulation.runtimeMutationAllowedByPlanner, false);
+assert.equal(approvedSimulation.propagationVerificationAllowed, false);
+assert.equal(approvedSimulation.pilotAuthorizationGranted, false);
+assert.equal(approvedSimulation.livePromotionAllowed, false);
 
-const alreadyPropagatedPlan = buildInvestmentBusinessRulePropagationChangePlan({
+const alreadyPropagatedSimulation = simulateInvestmentBusinessRulePropagationChangePlan({
   governance: approvedGovernance,
   propagation: verifiedPropagationFixture(),
 });
-assert.equal(alreadyPropagatedPlan.status, 'ALREADY_PROPAGATED');
-assert.equal(alreadyPropagatedPlan.propagationAlreadyVerified, true);
-assert.equal(alreadyPropagatedPlan.implementationPlanningEligible, false);
-assert.equal(alreadyPropagatedPlan.implementationPrEligible, false);
-assert.equal(alreadyPropagatedPlan.automaticMutationAllowed, false);
-assert.equal(alreadyPropagatedPlan.runtimeMutationAllowedByPlanner, false);
-assert.equal(alreadyPropagatedPlan.livePromotionAllowed, false);
+assert.equal(alreadyPropagatedSimulation.status, 'SIMULATION_ALREADY_PROPAGATED');
+assert.equal(alreadyPropagatedSimulation.authoritative, false);
+assert.equal(alreadyPropagatedSimulation.propagationAlreadyVerified, true);
+assert.equal(alreadyPropagatedSimulation.implementationPlanningEligible, false);
+assert.equal(alreadyPropagatedSimulation.implementationPrEligible, false);
+assert.equal(alreadyPropagatedSimulation.livePromotionAllowed, false);
 
 const staleCandidate = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
 staleCandidate.candidate.commit = 'a'.repeat(40);
@@ -134,56 +141,54 @@ assert.throws(
   'A propagation plan must never transfer authority to another candidate commit.',
 );
 
-const duplicateTask = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
-duplicateTask.surfaces[1].tasks[0].id = duplicateTask.surfaces[0].tasks[0].id;
+const missingDependency = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
+missingDependency.surfaces.find((surface) => surface.id === 'postgres-runtime').dependsOn = [];
 assert.throws(
-  () => validateInvestmentBusinessRulePropagationChangeBlueprint(duplicateTask),
-  /Duplicate propagation change task id/,
+  () => validateInvestmentBusinessRulePropagationChangeBlueprint(missingDependency),
+  /dependencies must match the canonical contract/,
+  'Required dependency edges cannot be removed from the canonical graph.',
 );
 
 const duplicateDependency = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
-duplicateDependency.surfaces[1].dependsOn = ['business-model', 'business-model'];
+duplicateDependency.surfaces.find((surface) => surface.id === 'financial-model').dependsOn = ['business-model', 'business-model'];
 assert.throws(
   () => validateInvestmentBusinessRulePropagationChangeBlueprint(duplicateDependency),
-  /contains duplicate dependency/,
+  /dependencies must match the canonical contract/,
 );
 
-const sameStageCycle = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
-sameStageCycle.surfaces.find((surface) => surface.id === 'business-model').dependsOn = ['financial-model'];
+const unsafeTarget = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
+unsafeTarget.surfaces.find((surface) => surface.id === 'business-model').tasks[0].targets = [
+  { kind: 'FILE', path: '.git/config' },
+];
 assert.throws(
-  () => validateInvestmentBusinessRulePropagationChangeBlueprint(sameStageCycle),
-  /dependency cycle detected/,
-  'Same-stage dependency cycles must fail closed.',
+  () => validateInvestmentBusinessRulePropagationChangeBlueprint(unsafeTarget),
+  /targets must match the canonical surface contract/,
+  'A surface cannot redirect authority to an unrelated repository path.',
 );
 
-const missingCoverage = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
-missingCoverage.surfaces
-  .find((surface) => surface.id === 'operator-evidence')
-  .tasks[0].ruleIds = ['BR-002', 'BR-003', 'BR-004', 'BR-005'];
+const wrongTargetKind = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
+wrongTargetKind.surfaces.find((surface) => surface.id === 'postgres-runtime').tasks[0].targets = [
+  { kind: 'FILE', path: 'supabase/migrations' },
+];
 assert.throws(
-  () => validateInvestmentBusinessRulePropagationChangeBlueprint(missingCoverage),
-  /BR-001 is missing required propagation coverage on operator-evidence/,
+  () => validateInvestmentBusinessRulePropagationChangeBlueprint(wrongTargetKind),
+  /targets must match the canonical surface contract/,
 );
 
-const remoteTarget = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
-remoteTarget.surfaces[0].tasks[0].targets[0].path = 'https://example.com/business-model.md';
+const wrongAction = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
+wrongAction.surfaces.find((surface) => surface.id === 'postgres-runtime').tasks[0].action = 'MODIFY_EXISTING';
 assert.throws(
-  () => validateInvestmentBusinessRulePropagationChangeBlueprint(remoteTarget),
-  /must not use a URI scheme/,
+  () => validateInvestmentBusinessRulePropagationChangeBlueprint(wrongAction),
+  /action must match the canonical surface contract/,
 );
 
-const traversalTarget = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
-traversalTarget.surfaces[0].tasks[0].targets[0].path = '../BUSINESS_MODEL.md';
+const missingRuleCoverage = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
+missingRuleCoverage.surfaces.find((surface) => surface.id === 'operator-evidence').tasks[0].ruleIds = [
+  'BR-002', 'BR-003', 'BR-004', 'BR-005',
+];
 assert.throws(
-  () => validateInvestmentBusinessRulePropagationChangeBlueprint(traversalTarget),
-  /repository-relative path syntax|cannot traverse directories/,
-);
-
-const laterDependency = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
-laterDependency.surfaces[0].dependsOn = ['postgres-runtime'];
-assert.throws(
-  () => validateInvestmentBusinessRulePropagationChangeBlueprint(laterDependency),
-  /cannot depend on a later-stage surface/,
+  () => validateInvestmentBusinessRulePropagationChangeBlueprint(missingRuleCoverage),
+  /business-rule coverage must match the canonical surface contract/,
 );
 
 const shortCriterion = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
@@ -219,10 +224,11 @@ for (const path of [
   await access(new URL(`../${path}`, import.meta.url));
 }
 
-const [packageSource, docsSource, plannerCliSource] = await Promise.all([
+const [packageSource, docsSource, plannerCliSource, plannerSource] = await Promise.all([
   read('package.json'),
   read('docs/investment/BUSINESS_RULE_PROPAGATION_CHANGE_PLAN.md'),
   read('scripts/plan-investment-business-rule-propagation.mjs'),
+  read('src/lib/investment/business-rule-propagation-change-plan.mjs'),
 ]);
 const packageJson = JSON.parse(packageSource);
 assert.match(packageJson.scripts.test, /test-investment-business-rule-propagation-change-plan-invariants\.mjs/);
@@ -232,6 +238,9 @@ assert.match(docsSource, /ALREADY_PROPAGATED/);
 assert.match(docsSource, /src\/app\/inversion\/legal\/page\.tsx/);
 assert.match(docsSource, /new immutable migration/i);
 assert.match(docsSource, /does \*\*not\*\* reserve a migration number/i);
+assert.match(plannerCliSource, /buildInvestmentBusinessRulePropagationChangePlan\(\)/);
 assert.match(plannerCliSource, /result\.status === 'INVALID' \? 1 : 0/);
+assert.match(plannerSource, /accepts canonical repository governance only/);
+assert.match(plannerSource, /SIMULATION_APPROVALS_SATISFIED/);
 
 console.log('Investment business-rule propagation change planner invariants: PASS');
