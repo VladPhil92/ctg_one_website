@@ -11,6 +11,8 @@ import { isSuccessfulInvestmentProductionReadinessEvidence } from './production-
 
 export const INVESTMENT_CLOSED_BETA_PILOT_MANIFEST_VERSION =
   'ctg-investment-closed-beta-pilot-manifest-v1';
+export const INVESTMENT_CLOSED_BETA_PRODUCTION_FLAG_EVIDENCE_VERSION =
+  'ctg-investment-production-flag-evidence-v1';
 
 export const INVESTMENT_CLOSED_BETA_PILOT_CLASSIFICATIONS = Object.freeze([
   'production-redacted-preflight',
@@ -64,6 +66,44 @@ function validateExpectedSchema(expectedSchema) {
   assertSafeVersion(expectedSchema.name, 'expectedSchema.name');
   assert(Number.isSafeInteger(expectedSchema.count) && expectedSchema.count > 0, 'Expected repository schema count must be a positive safe integer');
   return expectedSchema;
+}
+
+export function validateInvestmentClosedBetaProductionFlagEvidence(evidence, deployment) {
+  assertExactKeys(evidence, [
+    'evidenceVersion',
+    'classification',
+    'capturedAt',
+    'source',
+    'provider',
+    'branch',
+    'commit',
+    'flags',
+    'reviewedBy',
+    'reviewedAt',
+    'evidenceRef',
+  ], 'productionFlagEvidence');
+  assert(
+    evidence.evidenceVersion === INVESTMENT_CLOSED_BETA_PRODUCTION_FLAG_EVIDENCE_VERSION,
+    'Production flag evidence version mismatch',
+  );
+  assert(evidence.classification === 'production-runtime-flags', 'Production flag evidence classification mismatch');
+  assert(evidence.source === 'render-environment-review', 'Production flag evidence must come from a Render environment review');
+  assertIsoTimestamp(evidence.capturedAt, 'productionFlagEvidence.capturedAt');
+  assertIsoTimestamp(evidence.reviewedAt, 'productionFlagEvidence.reviewedAt');
+  assert(typeof evidence.reviewedBy === 'string' && evidence.reviewedBy.trim().length >= 2, 'Production flag evidence reviewedBy is required');
+  assert(typeof evidence.evidenceRef === 'string' && evidence.evidenceRef.trim().length >= 3, 'Production flag evidence evidenceRef is required');
+  assert(evidence.provider === 'render', 'Production flag evidence provider must be render');
+  assert(evidence.branch === 'main', 'Production flag evidence branch must be main');
+  assert(GIT_SHA_RE.test(evidence.commit), 'Production flag evidence commit must be a lowercase full Git SHA');
+  assert(deployment && typeof deployment === 'object' && !Array.isArray(deployment), 'Pilot deployment identity is required for production flag evidence');
+  assert(evidence.provider === deployment.provider, 'Production flag evidence provider does not match deployment');
+  assert(evidence.branch === deployment.branch, 'Production flag evidence branch does not match deployment');
+  assert(evidence.commit === deployment.commit, 'Production flag evidence commit does not match deployment');
+  assertExactKeys(evidence.flags, CLOSED_BETA_SAFETY_FLAG_NAMES, 'productionFlagEvidence.flags');
+  for (const name of CLOSED_BETA_SAFETY_FLAG_NAMES) {
+    assert(typeof evidence.flags[name] === 'boolean', `Production flag evidence ${name} must be explicitly boolean`);
+  }
+  return evidence;
 }
 
 export function validateInvestmentClosedBetaPilotManifest(manifest, { expectedSchema } = {}) {
@@ -179,7 +219,7 @@ export function buildInvestmentClosedBetaPilotPreflight({
   pilotAuthorization,
   productionReadinessCanary,
   deployment,
-  flags,
+  productionFlagEvidence,
 }) {
   validateExpectedSchema(expectedSchema);
   validateInvestmentClosedBetaPilotManifest(manifest, { expectedSchema });
@@ -188,10 +228,6 @@ export function buildInvestmentClosedBetaPilotPreflight({
   validateInvestmentClosedBetaPilotAuthorization(pilotAuthorization);
 
   assert(deployment && typeof deployment === 'object' && !Array.isArray(deployment), 'Pilot deployment identity is required');
-  assert(flags && typeof flags === 'object' && !Array.isArray(flags), 'Pilot safety flags are required');
-  for (const name of CLOSED_BETA_SAFETY_FLAG_NAMES) {
-    assert(typeof flags[name] === 'boolean', `Pilot safety flag ${name} must be explicitly boolean`);
-  }
 
   const businessBlockers = deriveBlockingInvestmentBusinessDecisionIds(
     businessRuleGovernance,
@@ -220,8 +256,20 @@ export function buildInvestmentClosedBetaPilotPreflight({
     && isSuccessfulInvestmentProductionReadinessEvidence(productionReadinessCanary, deployment)
   );
 
-  const unsafeFlagNames = CLOSED_BETA_SAFETY_FLAG_NAMES.filter((name) => flags[name] === true);
-  const exposureSafe = unsafeFlagNames.length === 0;
+  let flagEvidenceValid = false;
+  let unsafeFlagNames = [];
+  if (productionFlagEvidence) {
+    try {
+      validateInvestmentClosedBetaProductionFlagEvidence(productionFlagEvidence, deployment);
+      flagEvidenceValid = true;
+      unsafeFlagNames = CLOSED_BETA_SAFETY_FLAG_NAMES.filter(
+        (name) => productionFlagEvidence.flags[name] === true,
+      );
+    } catch {
+      flagEvidenceValid = false;
+    }
+  }
+  const exposureSafe = productionClassification && flagEvidenceValid && unsafeFlagNames.length === 0;
 
   const gates = Object.freeze([
     gate(
@@ -261,8 +309,10 @@ export function buildInvestmentClosedBetaPilotPreflight({
       'closed-beta-exposure',
       exposureSafe ? 'PASS' : 'BLOCKED',
       exposureSafe
-        ? 'Public funding/payment exposure and automatic money movement remain disabled.'
-        : `Unsafe flags enabled for closed beta: ${unsafeFlagNames.join(', ')}.`,
+        ? 'Reviewed production evidence confirms public funding/payment exposure and automatic money movement are disabled.'
+        : flagEvidenceValid && unsafeFlagNames.length > 0
+          ? `Reviewed production evidence reports unsafe flags enabled: ${unsafeFlagNames.join(', ')}.`
+          : 'Reviewed production feature-flag evidence for the exact deployment is absent, malformed or stale.',
     ),
   ]);
 
