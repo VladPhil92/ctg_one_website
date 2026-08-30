@@ -55,7 +55,7 @@ containing `investment-business-rule-main-provenance.json`.
 
 The JSON file by itself has **no standalone authority**. Its contract permanently keeps `standaloneAuthorityAllowed=false`, `implementationPlanningEligible=false`, `implementationPrEligible=false`, `implementationAuthorityGranted=false`, automatic mutation disabled, pilot authorization false and LIVE promotion false.
 
-A future authorization phase may treat `MERGED_MAIN_PROVENANCE_EVIDENCE_ELIGIBLE` as an input only after independently resolving the GitHub Actions run and verifying the uploaded artifact ID/digest against the exact run/SHA and rechecking the merge transition. Copying or editing the JSON outside that GitHub artifact transport cannot substitute for that verification.
+A future authorization phase may treat `MERGED_MAIN_PROVENANCE_EVIDENCE_ELIGIBLE` as an input only after independently resolving the GitHub Actions run and verifying the uploaded artifact ID and artifact digest against the exact run/SHA and rechecking the merge transition. Copying or editing the JSON outside that GitHub artifact transport cannot substitute for that verification.
 
 ## Data minimization
 
@@ -73,8 +73,8 @@ This phase supplies the missing transport evidence. Even after all five BRs are 
 2. A reviewed governance PR records those exact candidate-bound decisions.
 3. That PR is merged to `main` using a two-parent merge commit.
 4. The real non-forced `main` push automatically triggers this provenance workflow.
-5. The workflow must produce `MERGED_MAIN_PROVENANCE_EVIDENCE_ELIGIBLE` and an uploaded artifact with a verifiable artifact ID and digest.
-6. A separate authorization/review phase verifies the GitHub run, merge transition, artifact ID and digest before an implementation PR may rely on the propagation blueprint.
+5. The workflow must produce `MERGED_MAIN_PROVENANCE_EVIDENCE_ELIGIBLE` and an uploaded artifact with a verifiable artifact ID and artifact digest.
+6. A separate authorization/review phase verifies the GitHub run, merge transition, artifact ID and artifact digest before an implementation PR may rely on the propagation blueprint.
 7. Runtime propagation, propagation verification, pilot authorization, real operating evidence and LIVE approval remain later independent gates.
 
 No result from this phase is legal, tax or regulatory authorization for a real-money transaction.
