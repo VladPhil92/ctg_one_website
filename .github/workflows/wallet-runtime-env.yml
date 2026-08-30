@@ -7,6 +7,14 @@ on:
       - '.env.local.example'
       - 'scripts/test-wallet-runtime-env-invariants.mjs'
       - '.github/workflows/wallet-runtime-env.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'render.yaml'
+      - '.env.local.example'
+      - 'scripts/test-wallet-runtime-env-invariants.mjs'
+      - '.github/workflows/wallet-runtime-env.yml'
   workflow_dispatch:
 
 permissions:
