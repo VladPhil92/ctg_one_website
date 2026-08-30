@@ -68,7 +68,7 @@ BR-001 and BR-002 require business, financial, legal/config, PostgreSQL, Golden 
 
 ## Future runtime boundary
 
-This phase deliberately **does not** reserve a migration number or filename. Parallel development can advance `main`; a migration slot must therefore be allocated only from the exact trusted `main` baseline used by the future reviewed implementation PR.
+This phase deliberately does **not** reserve a migration number or filename. Parallel development can advance `main`; a migration slot must therefore be allocated only from the exact trusted `main` baseline used by the future reviewed implementation PR.
 
 That future implementation must preserve, at minimum:
 
