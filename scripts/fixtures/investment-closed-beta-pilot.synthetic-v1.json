@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0079",
-    "schemaMigrationName": "investment_settlement_preview_v1",
-    "schemaMigrationCount": 79,
+    "schemaMigration": "0080",
+    "schemaMigrationName": "wallet_shadow_journal_reconciliation",
+    "schemaMigrationCount": 80,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
