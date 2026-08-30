@@ -84,6 +84,12 @@ assert.equal(idempotentPlan.alreadyPresent.length, 1);
 assert.equal(idempotentPlan.inserts.length, 1);
 assert.equal(idempotentPlan.conflicts.length, 0);
 
+const rejectedEvidencePlan = planWalletLegacyEvidenceImport(document, {
+  ...emptyDatabase,
+  evidence: [{ ...exactExistingEvidence, status: 'rejected' }],
+});
+assert.equal(rejectedEvidencePlan.conflicts[0].code, 'EXISTING_EVIDENCE_REJECTED');
+
 const differentProvenancePlan = planWalletLegacyEvidenceImport(document, {
   ...emptyDatabase,
   evidence: [{ ...exactExistingEvidence, source_digest_sha256: 'f'.repeat(64) }],
@@ -103,6 +109,32 @@ const privyCollisionPlan = planWalletLegacyEvidenceImport(document, {
 });
 assert.equal(privyCollisionPlan.conflicts[0].code, 'PRIVY_IDENTITY_LINK_CONFLICT');
 
+const revokedLinkPlan = planWalletLegacyEvidenceImport(document, {
+  ...emptyDatabase,
+  identityLinks: [{
+    id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+    user_id: first.canonicalUserId,
+    provider: 'privy',
+    provider_user_id: first.privyUserId,
+    status: 'revoked',
+    link_mode: 'legacy_preserve',
+  }],
+});
+assert.equal(revokedLinkPlan.conflicts[0].code, 'REVOKED_IDENTITY_LINK');
+
+const linkModeConflictPlan = planWalletLegacyEvidenceImport(document, {
+  ...emptyDatabase,
+  identityLinks: [{
+    id: 'ffffffff-ffff-4fff-8fff-ffffffffffff',
+    user_id: first.canonicalUserId,
+    provider: 'privy',
+    provider_user_id: first.privyUserId,
+    status: 'verified',
+    link_mode: 'new',
+  }],
+});
+assert.equal(linkModeConflictPlan.conflicts[0].code, 'IDENTITY_LINK_MODE_CONFLICT');
+
 const addressCollisionPlan = planWalletLegacyEvidenceImport(document, {
   ...emptyDatabase,
   externalAccounts: [{
@@ -110,6 +142,7 @@ const addressCollisionPlan = planWalletLegacyEvidenceImport(document, {
     user_id: document.records[1].canonicalUserId,
     provider: 'privy',
     chain_family: 'evm',
+    account_kind: 'embedded',
     address_normalized: first.normalizedAddress,
     status: 'verified',
     is_primary: true,
@@ -118,6 +151,38 @@ const addressCollisionPlan = planWalletLegacyEvidenceImport(document, {
 });
 assert.equal(addressCollisionPlan.conflicts[0].code, 'EVM_ADDRESS_LINK_CONFLICT');
 
+const revokedAccountPlan = planWalletLegacyEvidenceImport(document, {
+  ...emptyDatabase,
+  externalAccounts: [{
+    id: '12121212-1212-4212-8212-121212121212',
+    user_id: first.canonicalUserId,
+    provider: 'privy',
+    chain_family: 'evm',
+    account_kind: 'embedded',
+    address_normalized: first.normalizedAddress,
+    status: 'revoked',
+    is_primary: false,
+    legacy_preserved: true,
+  }],
+});
+assert.equal(revokedAccountPlan.conflicts[0].code, 'REVOKED_EVM_ACCOUNT');
+
+const associationConflictPlan = planWalletLegacyEvidenceImport(document, {
+  ...emptyDatabase,
+  externalAccounts: [{
+    id: '13131313-1313-4313-8313-131313131313',
+    user_id: first.canonicalUserId,
+    provider: 'external',
+    chain_family: 'evm',
+    account_kind: 'connected',
+    address_normalized: first.normalizedAddress,
+    status: 'verified',
+    is_primary: false,
+    legacy_preserved: false,
+  }],
+});
+assert.equal(associationConflictPlan.conflicts[0].code, 'EVM_ACCOUNT_ASSOCIATION_CONFLICT');
+
 const primaryCollisionPlan = planWalletLegacyEvidenceImport(document, {
   ...emptyDatabase,
   externalAccounts: [{
@@ -125,6 +190,7 @@ const primaryCollisionPlan = planWalletLegacyEvidenceImport(document, {
     user_id: first.canonicalUserId,
     provider: 'privy',
     chain_family: 'evm',
+    account_kind: 'embedded',
     address_normalized: '0x3333333333333333333333333333333333333333',
     status: 'verified',
     is_primary: true,
@@ -140,6 +206,7 @@ for (const fragment of [
   "payload.role !== 'service_role'",
   ".from('wallet_legacy_migration_evidence')",
   '.insert(plan.inserts)',
+  "args.apply && /^synthetic(?:-|$)/i.test(document.source)",
   'DRY_RUN_OK',
   'APPLY_OK',
 ]) {
