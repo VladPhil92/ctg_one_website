@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
-import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
+import { fetchNvetCurrentUser, isNvetAdminRole } from '@/lib/nvetcareapp/user';
 import { fetchNvetVets, NVET_TIER_COMMISSION_PCT, type NvetVerificationStatus } from '@/lib/nvetcareapp/vets';
 import { LogoutButton } from '../logout-button';
 import { TierSelect } from './tier-select';
@@ -43,7 +43,7 @@ export default async function VeterinariansPage({
     redirect('/nvetcareapp/iniciar-sesion');
   }
 
-  const isAdmin = userResult.ok && userResult.user.role === 'ADMIN';
+  const isAdmin = userResult.ok && isNvetAdminRole(userResult.user.role);
 
   const rawOffset = Number((await searchParams).offset);
   const offset = Number.isInteger(rawOffset) && rawOffset > 0 ? rawOffset : 0;
