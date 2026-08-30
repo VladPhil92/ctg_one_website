@@ -31,18 +31,31 @@ jobs:
         with:
           node-version: 22.22.0
 
-      - name: Verify trusted push context
+      - name: Verify trusted push transition
         shell: bash
         run: |
           set -euo pipefail
           test "${GITHUB_ACTIONS}" = 'true'
           test "${GITHUB_EVENT_NAME}" = 'push'
           test "${GITHUB_REF}" = 'refs/heads/main'
-          head_sha="$(git rev-parse HEAD)"
-          test "${head_sha}" = "${GITHUB_SHA}"
-          echo "BR_PROVENANCE_HEAD_SHA=${head_sha}" >> "${GITHUB_ENV}"
 
-      - name: Verify GitHub commit and exact merged PR
+          head_sha="$(git rev-parse HEAD)"
+          event_after="$(jq -r '.after' "${GITHUB_EVENT_PATH}")"
+          event_before="$(jq -r '.before' "${GITHUB_EVENT_PATH}")"
+          event_forced="$(jq -r '.forced' "${GITHUB_EVENT_PATH}")"
+          event_deleted="$(jq -r '.deleted' "${GITHUB_EVENT_PATH}")"
+
+          test "${head_sha}" = "${GITHUB_SHA}"
+          test "${event_after}" = "${GITHUB_SHA}"
+          test "${event_forced}" = 'false'
+          test "${event_deleted}" = 'false'
+          [[ "${event_before}" =~ ^[0-9a-f]{40}$ ]]
+          test "${event_before}" != '0000000000000000000000000000000000000000'
+
+          echo "BR_PROVENANCE_HEAD_SHA=${head_sha}" >> "${GITHUB_ENV}"
+          echo "BR_PROVENANCE_EVENT_BEFORE=${event_before}" >> "${GITHUB_ENV}"
+
+      - name: Verify GitHub commit and exact merged PR transition
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -60,8 +73,12 @@ jobs:
             > "${commit_path}"
 
           jq -e --arg sha "${GITHUB_SHA}" \
-            '.sha == $sha and .commit.verification.verified == true' \
+            '.sha == $sha and .commit.verification.verified == true and (.parents | length) == 2' \
             "${commit_path}" >/dev/null
+
+          first_parent="$(jq -r '.parents[0].sha' "${commit_path}")"
+          second_parent="$(jq -r '.parents[1].sha' "${commit_path}")"
+          test "${first_parent}" = "${BR_PROVENANCE_EVENT_BEFORE}"
 
           curl --fail --silent --show-error \
             -H 'Accept: application/vnd.github+json' \
@@ -70,28 +87,34 @@ jobs:
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
             > "${pulls_path}"
 
-          exact_count="$(jq --arg sha "${GITHUB_SHA}" '[.[] | select(.merged_at != null and .base.ref == "main" and .merge_commit_sha == $sha)] | length' "${pulls_path}")"
+          exact_count="$(jq --arg sha "${GITHUB_SHA}" --arg before "${BR_PROVENANCE_EVENT_BEFORE}" '[.[] | select(.merged_at != null and .base.ref == "main" and .base.sha == $before and .merge_commit_sha == $sha)] | length' "${pulls_path}")"
           test "${exact_count}" = '1'
 
-          jq --arg sha "${GITHUB_SHA}" \
-            '[.[] | select(.merged_at != null and .base.ref == "main" and .merge_commit_sha == $sha)] | .[0] | {
+          jq --arg sha "${GITHUB_SHA}" --arg before "${BR_PROVENANCE_EVENT_BEFORE}" \
+            '[.[] | select(.merged_at != null and .base.ref == "main" and .base.sha == $before and .merge_commit_sha == $sha)] | .[0] | {
               number,
               url: .html_url,
               mergedAt: .merged_at,
               mergeCommitSha: .merge_commit_sha,
               baseRef: .base.ref,
+              baseSha: .base.sha,
               headSha: .head.sha
             }' \
             "${pulls_path}" > "${merged_pr_path}"
 
+          merged_pr_head="$(jq -r '.headSha' "${merged_pr_path}")"
+          merged_pr_base="$(jq -r '.baseSha' "${merged_pr_path}")"
+          test "${second_parent}" = "${merged_pr_head}"
+          test "${first_parent}" = "${merged_pr_base}"
+
           echo "BR_PROVENANCE_COMMIT_METADATA_PATH=${commit_path}" >> "${GITHUB_ENV}"
           echo "BR_PROVENANCE_MERGED_PR_PATH=${merged_pr_path}" >> "${GITHUB_ENV}"
 
-      - name: Verify pinned candidate and governance blobs
+      - name: Verify independently pinned candidate and governance blobs
         shell: bash
         run: |
           set -euo pipefail
-          candidate_json="$(node --input-type=module -e "import { INVESTMENT_BUSINESS_RULE_CANDIDATE as c } from './src/data/investment-business-rule-governance.mjs'; process.stdout.write(JSON.stringify(c));")"
+          candidate_json="$(node --input-type=module -e "import { INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE as c } from './src/data/investment-business-rule-candidate-authority.mjs'; process.stdout.write(JSON.stringify(c));")"
           candidate_commit="$(printf '%s' "${candidate_json}" | jq -r '.commit')"
           candidate_path="$(printf '%s' "${candidate_json}" | jq -r '.path')"
           candidate_expected_blob="$(printf '%s' "${candidate_json}" | jq -r '.blobSha')"
