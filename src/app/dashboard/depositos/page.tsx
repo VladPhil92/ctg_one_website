@@ -302,7 +302,7 @@ function MethodInstructions({ method }: { method: TransactionMethod }) {
     <div className="accountInstruction">
       <p className="accountMicro mb-2"><QrCode size={11} /> Bancolombia / Bre-B</p>
       <p className="instructionTitle">Escanea el QR desde la app de tu banco</p>
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
+      <div className="my-4 flex justify-center">
         <Image
           src={BRE_B_INSTRUCTIONS.qrImageUrl}
           alt="QR Bancolombia Bre-B para recargar Saldo CTG"
@@ -310,7 +310,7 @@ function MethodInstructions({ method }: { method: TransactionMethod }) {
           height={360}
           unoptimized
           priority
-          style={{ width: 'min(100%, 360px)', height: 'auto', background: '#fff', padding: 12, borderRadius: 12 }}
+          className="h-auto w-full max-w-[360px] rounded-xl bg-white p-3"
         />
       </div>
       <p>Destinatario: <strong>{BRE_B_INSTRUCTIONS.recipientLabel}</strong></p>
