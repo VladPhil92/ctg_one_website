@@ -28,22 +28,15 @@ import type { TransactionMethod } from '@/types/domain';
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 
 const METHODS: Array<{ value: TransactionMethod; label: string }> = [
-  ...(BRE_B_CONFIGURED
-    ? [{ value: 'bre_b_qr' as TransactionMethod, label: 'QR / Bre-B' }]
-    : []),
-  ...(BANK_TRANSFER_CONFIGURED
-    ? [{ value: 'bank_transfer' as TransactionMethod, label: 'Transferencia' }]
-    : []),
+  ...(BRE_B_CONFIGURED ? [{ value: 'bre_b_qr' as TransactionMethod, label: 'QR / Bre-B' }] : []),
+  ...(BANK_TRANSFER_CONFIGURED ? [{ value: 'bank_transfer' as TransactionMethod, label: 'Transferencia' }] : []),
 ];
 
-const DEFAULT_METHOD: TransactionMethod = BRE_B_CONFIGURED
-  ? 'bre_b_qr'
-  : 'bank_transfer';
+const DEFAULT_METHOD: TransactionMethod = BRE_B_CONFIGURED ? 'bre_b_qr' : 'bank_transfer';
 
 export default function DepositosPage() {
   const { userId, profile, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
-
   const [method, setMethod] = useState<TransactionMethod>(DEFAULT_METHOD);
   const [amount, setAmount] = useState('');
   const [externalReference, setExternalReference] = useState('');
@@ -53,24 +46,19 @@ export default function DepositosPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      router.replace('/iniciar-sesion?next=/dashboard/depositos');
-    }
+    if (!isAuthLoading && !isAuthenticated) router.replace('/iniciar-sesion?next=/dashboard/depositos');
   }, [isAuthenticated, isAuthLoading, router]);
 
   const handleSubmit = async () => {
     setError(null);
-
     if (!WALLET_MANUAL_COP_TOPUP_CONFIGURED) {
       setError('Las recargas de Saldo CTG están temporalmente deshabilitadas.');
       return;
     }
-
     if (!isSupabaseConfigured || !userId) {
       setError('Las recargas no están disponibles todavía.');
       return;
     }
-
     if (method !== 'bank_transfer' && method !== 'bre_b_qr') {
       setError('Selecciona un canal COP habilitado.');
       return;
@@ -87,7 +75,6 @@ export default function DepositosPage() {
       setError('Ingresa la referencia que aparece en el comprobante para evitar acreditaciones duplicadas.');
       return;
     }
-
     if (!proofFile) {
       setError('Sube el comprobante de la transferencia.');
       return;
@@ -114,12 +101,8 @@ export default function DepositosPage() {
         },
         body: proofFile,
       });
-
       const payload = await response.json().catch(() => null) as { error?: string } | null;
-      if (!response.ok) {
-        throw new Error(payload?.error ?? 'No se pudo registrar la solicitud de recarga');
-      }
-
+      if (!response.ok) throw new Error(payload?.error ?? 'No se pudo registrar la solicitud de recarga');
       setSubmitted(true);
       setProofFile(null);
     } catch (err) {
@@ -133,13 +116,7 @@ export default function DepositosPage() {
 
   if (!WALLET_MANUAL_COP_TOPUP_CONFIGURED) {
     return (
-      <AccountSurface
-        code="FIN-02"
-        eyebrow="Cuenta & Capital"
-        title="Recargar Saldo CTG"
-        description="Registra un ingreso COP desde una superficie protegida del Personal OS."
-        icon={<WalletCards size={20} />}
-      >
+      <AccountSurface code="FIN-02" eyebrow="Saldo CTG" title="Recargar Saldo CTG" description="Registra un ingreso COP desde una superficie protegida del Personal OS." icon={<WalletCards size={20} />}>
         <section className="accountPanel">
           <div className="accountPanelHeader">
             <div>
@@ -153,7 +130,7 @@ export default function DepositosPage() {
             <ShieldCheck size={17} />
             <div>
               <strong>Recargas temporalmente deshabilitadas</strong>
-              <p>Los datos bancarios permanecen ocultos mientras termina la configuración operativa. PSE y cripto continúan fuera de este primer rail de recarga COP.</p>
+              <p>Los datos bancarios permanecen ocultos mientras termina la configuración operativa. El ledger de Saldo CTG permanece protegido y no acredita comprobantes sin conciliación.</p>
             </div>
           </div>
           <Button href="/dashboard" variant="secondary" size="sm">Volver al panel</Button>
@@ -165,16 +142,24 @@ export default function DepositosPage() {
   return (
     <AccountSurface
       code="FIN-02"
-      eyebrow="Cuenta & Capital"
+      eyebrow="Saldo CTG"
       title="Recargar Saldo CTG"
-      description="Paga por Bre-B o transferencia y adjunta el comprobante. El saldo solo se acredita después de validar la operación bancaria."
+      description="Paga por Bre-B o transferencia y adjunta el comprobante. El saldo solo cambia cuando la operación bancaria es verificada y conciliada."
       icon={<WalletCards size={20} />}
     >
       <div className="accountNotice">
         <ShieldCheck size={17} />
         <div>
-          <strong>Saldo interno, conciliado contra pagos reales</strong>
-          <p>El dinero se recibe en la cuenta bancaria indicada. CTG One registra un Saldo CTG asociado a tu usuario únicamente después de que Finanzas comprueba y concilia el pago. Subir un comprobante no acredita saldo por sí mismo.</p>
+          <strong>Saldo CTG respaldado por movimientos conciliados</strong>
+          <p>Los pesos reales llegan a la cuenta bancaria indicada. CTG One registra un crédito en el ledger canónico asociado a tu usuario únicamente después de la verificación y conciliación administrativa.</p>
+        </div>
+      </div>
+
+      <div className="accountNotice">
+        <CircleDollarSign size={17} />
+        <div>
+          <strong>Tu saldo no es un número editable</strong>
+          <p>Saldo CTG se deriva de movimientos publicados en el ledger: recargas conciliadas suman y consumos autorizados restan. Subir un comprobante, recargar la página o modificar el cliente nunca cambia por sí solo el saldo financiero.</p>
         </div>
       </div>
 
@@ -194,7 +179,7 @@ export default function DepositosPage() {
           <CheckCircle2 size={17} />
           <div>
             <strong>Solicitud de recarga recibida</strong>
-            <p>El comprobante quedó asociado a tu usuario y pendiente de validación bancaria. Cuando la operación sea verificada y conciliada, el Saldo CTG se actualizará en el dashboard y en Wallet V2.</p>
+            <p>El comprobante quedó asociado a tu usuario. Aún no es saldo disponible: cuando Finanzas verifique el pago y un segundo control lo concilie, CTG One publicará el crédito en el ledger y Wallet V2 mostrará el nuevo Saldo CTG.</p>
           </div>
         </div>
       )}
@@ -205,7 +190,7 @@ export default function DepositosPage() {
             <div>
               <p className="accountMicro">Manual COP top-up</p>
               <h2>Registrar una recarga</h2>
-              <p>Realiza el pago, conserva la referencia bancaria y adjunta el comprobante desde esta misma sesión.</p>
+              <p>Realiza el pago, conserva la referencia bancaria y adjunta el comprobante desde esta misma sesión autenticada.</p>
             </div>
             <div className="accountNode"><CircleDollarSign size={17} /></div>
           </div>
@@ -213,13 +198,7 @@ export default function DepositosPage() {
           <form onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }}>
             <div className="accountSegments" aria-label="Método de recarga">
               {METHODS.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => setMethod(item.value)}
-                  className={`accountSegment ${method === item.value ? 'active' : ''}`}
-                  aria-pressed={method === item.value}
-                >
+                <button key={item.value} type="button" onClick={() => setMethod(item.value)} className={`accountSegment ${method === item.value ? 'active' : ''}`} aria-pressed={method === item.value}>
                   {item.label}
                 </button>
               ))}
@@ -229,56 +208,21 @@ export default function DepositosPage() {
 
             <label className="accountField">
               <span className="accountFieldLabel">Monto pagado (COP)</span>
-              <input
-                type="number"
-                min="1"
-                inputMode="decimal"
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                className="accountInput"
-                placeholder="Ej. 500000"
-                required
-              />
+              <input type="number" min="1" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} className="accountInput" placeholder="Ej. 500000" required />
             </label>
 
             <label className="accountField">
               <span className="accountFieldLabel">Referencia de la transferencia</span>
-              <input
-                type="text"
-                value={externalReference}
-                onChange={(event) => setExternalReference(event.target.value)}
-                className="accountInput"
-                autoComplete="off"
-                minLength={4}
-                maxLength={180}
-                placeholder="Número o referencia que muestra tu banco"
-                required
-              />
+              <input type="text" value={externalReference} onChange={(event) => setExternalReference(event.target.value)} className="accountInput" autoComplete="off" minLength={4} maxLength={180} placeholder="Número o referencia que muestra tu banco" required />
             </label>
 
             <label className="accountField">
               <span className="accountFieldLabel">Comprobante</span>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,application/pdf"
-                onChange={(event) => setProofFile(event.target.files?.[0] ?? null)}
-                className="accountFile"
-                required
-              />
+              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(event) => setProofFile(event.target.files?.[0] ?? null)} className="accountFile" required />
             </label>
 
             {error && <p className="accountError" role="alert">{error}</p>}
-
-            <Button
-              type="submit"
-              loading={isSubmitting}
-              variant="primary"
-              size="md"
-              icon={<UploadCloud size={16} />}
-              iconPosition="left"
-            >
-              Enviar comprobante de recarga
-            </Button>
+            <Button type="submit" loading={isSubmitting} variant="primary" size="md" icon={<UploadCloud size={16} />} iconPosition="left">Enviar comprobante de recarga</Button>
           </form>
         </section>
       )}
@@ -303,15 +247,7 @@ function MethodInstructions({ method }: { method: TransactionMethod }) {
       <p className="accountMicro mb-2"><QrCode size={11} /> Bancolombia / Bre-B</p>
       <p className="instructionTitle">Escanea el QR desde la app de tu banco</p>
       <div className="my-4 flex justify-center">
-        <Image
-          src={BRE_B_INSTRUCTIONS.qrImageUrl}
-          alt="QR Bancolombia Bre-B para recargar Saldo CTG"
-          width={360}
-          height={360}
-          unoptimized
-          priority
-          className="h-auto w-full max-w-[360px] rounded-xl bg-white p-3"
-        />
+        <Image src={BRE_B_INSTRUCTIONS.qrImageUrl} alt="QR Bancolombia Bre-B para recargar Saldo CTG" width={360} height={360} unoptimized priority className="h-auto w-full max-w-[360px] rounded-xl bg-white p-3" />
       </div>
       <p>Destinatario: <strong>{BRE_B_INSTRUCTIONS.recipientLabel}</strong></p>
       <p>Llave: <span className="mono">{BRE_B_INSTRUCTIONS.key}</span></p>
