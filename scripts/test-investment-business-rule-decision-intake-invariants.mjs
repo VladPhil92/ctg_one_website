@@ -210,18 +210,25 @@ assert.throws(
   /cannot predate a required surface verification/,
 );
 
-const propagationBeforeApproval = verifiedPropagationManifest();
-propagationBeforeApproval.preparedAt = '2026-08-30T05:20:00.000Z';
-propagationBeforeApproval.surfaces = propagationBeforeApproval.surfaces.map((surface, index) => ({
+const surfaceBeforeApproval = verifiedPropagationManifest();
+surfaceBeforeApproval.preparedAt = '2026-08-30T06:10:00.000Z';
+surfaceBeforeApproval.surfaces = surfaceBeforeApproval.surfaces.map((surface, index) => ({
   ...surface,
   verifiedAt: `2026-08-30T05:${30 + index}:00.000Z`,
 }));
-propagationBeforeApproval.overallReview.reviewedAt = '2026-08-30T06:03:00.000Z';
-validateInvestmentBusinessRulePropagationManifest(propagationBeforeApproval);
+surfaceBeforeApproval.overallReview.reviewedAt = '2026-08-30T06:50:00.000Z';
+validateInvestmentBusinessRulePropagationManifest(surfaceBeforeApproval);
 assert.throws(
-  () => buildInvestmentBusinessRulePropagationReadiness({ intake: approved, manifest: propagationBeforeApproval }),
-  /must postdate the latest BR approval decision/,
-  'Propagation review evidence created before the latest approval must not be reusable.',
+  () => buildInvestmentBusinessRulePropagationReadiness({ intake: approved, manifest: surfaceBeforeApproval }),
+  /verification must postdate the latest BR approval decision/,
+  'Surface verification created before the latest approval must not be reusable.',
+);
+
+const manifestBeforeApproval = verifiedPropagationManifest();
+manifestBeforeApproval.preparedAt = '2026-08-30T06:03:00.000Z';
+assert.throws(
+  () => buildInvestmentBusinessRulePropagationReadiness({ intake: approved, manifest: manifestBeforeApproval }),
+  /manifest must be prepared after the latest BR approval decision/,
 );
 
 const stalePropagationCandidate = verifiedPropagationManifest();
