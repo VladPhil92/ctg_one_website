@@ -158,7 +158,7 @@ function rowsBy(rows, keyFn) {
 }
 
 function sameEvidence(existing, document, record) {
-  return existing.user_id === record.canonicalUserId &&
+  return String(existing.user_id).toLowerCase() === record.canonicalUserId &&
     existing.provider === 'privy' &&
     existing.provider_user_id === record.privyUserId &&
     existing.expected_address_normalized === record.normalizedAddress &&
@@ -202,6 +202,7 @@ export function planWalletLegacyEvidenceImport(document, database) {
       continue;
     }
 
+    let exactExistingEvidence = null;
     const existingEvidence = evidenceByUser.get(record.canonicalUserId) ?? [];
     if (existingEvidence.length > 1) {
       conflict('AMBIGUOUS_EXISTING_EVIDENCE', 'More than one legacy evidence row exists for the canonical user.');
@@ -209,21 +210,20 @@ export function planWalletLegacyEvidenceImport(document, database) {
     }
     if (existingEvidence.length === 1) {
       const existing = existingEvidence[0];
-      if (sameEvidence(existing, document, record)) {
-        if (existing.status === 'rejected') {
-          conflict('EXISTING_EVIDENCE_REJECTED', 'Matching immutable legacy evidence is rejected and requires operator review.', {
-            evidenceId: existing.id,
-          });
-          continue;
-        }
-        alreadyPresent.push({ record, status: existing.status, evidenceId: existing.id });
+      if (!sameEvidence(existing, document, record)) {
+        conflict('EXISTING_EVIDENCE_PROVENANCE_DIFFERS', 'Existing immutable legacy evidence differs from this source artifact.', {
+          evidenceId: existing.id,
+          status: existing.status,
+        });
         continue;
       }
-      conflict('EXISTING_EVIDENCE_PROVENANCE_DIFFERS', 'Existing immutable legacy evidence differs from this source artifact.', {
-        evidenceId: existing.id,
-        status: existing.status,
-      });
-      continue;
+      if (existing.status === 'rejected') {
+        conflict('EXISTING_EVIDENCE_REJECTED', 'Matching immutable legacy evidence is rejected and requires operator review.', {
+          evidenceId: existing.id,
+        });
+        continue;
+      }
+      exactExistingEvidence = existing;
     }
 
     const providerEvidence = evidenceByPrivy.get(record.privyUserId) ?? [];
@@ -275,6 +275,15 @@ export function planWalletLegacyEvidenceImport(document, database) {
     const primaryAccounts = primaryAccountsByUser.get(record.canonicalUserId) ?? [];
     if (primaryAccounts.some((row) => row.address_normalized !== record.normalizedAddress)) {
       conflict('PRIMARY_EVM_WALLET_CONFLICT', 'Canonical CTG user already has a different active primary EVM wallet.');
+      continue;
+    }
+
+    if (exactExistingEvidence) {
+      alreadyPresent.push({
+        record,
+        status: exactExistingEvidence.status,
+        evidenceId: exactExistingEvidence.id,
+      });
       continue;
     }
 
