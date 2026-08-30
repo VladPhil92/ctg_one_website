@@ -27,10 +27,12 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function deepFreeze(value) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
-  Object.freeze(value);
-  for (const child of Object.values(value)) deepFreeze(child);
+function deepFreeze(value, seen = new WeakSet()) {
+  if (!value || typeof value !== 'object') return value;
+  if (seen.has(value)) return value;
+  seen.add(value);
+  for (const child of Object.values(value)) deepFreeze(child, seen);
+  if (!Object.isFrozen(value)) Object.freeze(value);
   return value;
 }
 
