@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
+import { readPolygonPortfolio } from '@/lib/wallet/polygon-portfolio';
 import {
   WalletReadModelError,
   buildWalletOverviewV2,
@@ -111,7 +112,30 @@ export async function GET() {
       intents: (intentsResult.data ?? []) as WalletOverviewIntentRow[],
     });
 
-    return noStoreJson(overview);
+    // The server chooses the address exclusively from the verified canonical
+    // registry. A browser request cannot substitute an arbitrary EVM address.
+    const primaryVerifiedEvmAccount =
+      identityResult.data?.status === 'verified'
+        ? (accountsResult.data ?? []).find(
+            (account) =>
+              account.chain_family === 'evm' &&
+              account.status === 'verified' &&
+              account.is_primary === true,
+          )
+        : undefined;
+
+    const blockchain = await readPolygonPortfolio(primaryVerifiedEvmAccount?.address ?? null);
+    const blockchainBalances =
+      blockchain.status === 'available' || blockchain.status === 'degraded';
+
+    return noStoreJson({
+      ...overview,
+      blockchain,
+      capabilities: {
+        ...overview.capabilities,
+        blockchainBalances,
+      },
+    });
   } catch (error) {
     if (error instanceof WalletReadModelError) {
       return noStoreJson({ error: 'WALLET_READ_CONTRACT_VIOLATION' }, { status: 503 });
