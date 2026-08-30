@@ -326,7 +326,6 @@ export function buildWalletOverviewV2(params: {
       currency: requireIntentDisplayUnit(intent),
       amountCents: optionalSafeCents(intent.amount_cents, 'wallet intent amount'),
       direction: null,
-      reference: intent.external_reference,
       reference: intent.tx_hash ?? intent.external_reference,
       occurredAt: intent.created_at,
       settledAt: intent.status === 'reconciled' ? (intent.settled_at ?? intent.updated_at) : null,
