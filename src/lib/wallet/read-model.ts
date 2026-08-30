@@ -10,22 +10,19 @@ import {
   type WalletIdentityLinkMode,
   type WalletIdentityLinkStatus,
   type WalletKycStatus,
+  type WalletOverviewActivityDirection,
   type WalletOverviewActivityItem,
   type WalletOverviewV2,
 } from '@/lib/wallet/domain';
 
-const KYC_STATUSES = new Set<WalletKycStatus>([
-  'not_submitted',
-  'pending',
-  'verified',
-  'rejected',
-]);
+const KYC_STATUSES = new Set<WalletKycStatus>(['not_submitted', 'pending', 'verified', 'rejected']);
 const IDENTITY_STATUSES = new Set<WalletIdentityLinkStatus>(['pending', 'verified', 'revoked']);
 const IDENTITY_LINK_MODES = new Set<WalletIdentityLinkMode>(['new', 'legacy_preserve']);
 const ACCOUNT_PROVIDERS = new Set<WalletExternalAccountProvider>(['privy', 'external']);
 const CHAIN_FAMILIES = new Set<WalletChainFamily>(['evm', 'bitcoin']);
 const ACCOUNT_KINDS = new Set<WalletExternalAccountKind>(['embedded', 'external', 'watch_only']);
 const ACCOUNT_STATUSES = new Set<WalletExternalAccountStatus>(['pending', 'verified', 'revoked']);
+const LEDGER_DIRECTIONS = new Set<Exclude<WalletOverviewActivityDirection, null>>(['credit', 'debit']);
 const MAX_ACTIVITY_ITEMS = 20;
 
 export class WalletReadModelError extends Error {
@@ -38,10 +35,7 @@ export class WalletReadModelError extends Error {
   }
 }
 
-export type WalletOverviewProfileRow = {
-  id: string;
-  kyc_status: string;
-};
+export type WalletOverviewProfileRow = { id: string; kyc_status: string };
 
 export type WalletOverviewBalanceRow = {
   account_id: string;
@@ -103,11 +97,23 @@ export type WalletOverviewIntentRow = {
   updated_at: string;
 };
 
+export type WalletOverviewLedgerActivityRow = {
+  id: string;
+  user_id: string;
+  event_type: string;
+  status: string;
+  currency: string;
+  amount_cents: number | string;
+  direction: string;
+  source_type: string | null;
+  source_id: string | null;
+  external_reference: string | null;
+  occurred_at: string;
+  posted_at: string | null;
+};
+
 function ownerMismatch(label: string): never {
-  throw new WalletReadModelError(
-    'WALLET_OWNER_MISMATCH',
-    `${label} does not belong to the authenticated CTG user.`,
-  );
+  throw new WalletReadModelError('WALLET_OWNER_MISMATCH', `${label} does not belong to the authenticated CTG user.`);
 }
 
 function requireOwned(actualUserId: string, expectedUserId: string, label: string) {
@@ -117,10 +123,7 @@ function requireOwned(actualUserId: string, expectedUserId: string, label: strin
 function requireSafeCents(value: number | string, label: string): number {
   const parsed = typeof value === 'number' ? value : Number(value);
   if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new WalletReadModelError(
-      'INVALID_WALLET_READ_MODEL',
-      `${label} is outside the safe non-negative integer range.`,
-    );
+    throw new WalletReadModelError('INVALID_WALLET_READ_MODEL', `${label} is outside the safe non-negative integer range.`);
   }
   return parsed;
 }
@@ -185,6 +188,13 @@ function requireAccountStatus(value: string): WalletExternalAccountStatus {
   return value as WalletExternalAccountStatus;
 }
 
+function requireLedgerDirection(value: string): Exclude<WalletOverviewActivityDirection, null> {
+  if (!LEDGER_DIRECTIONS.has(value as Exclude<WalletOverviewActivityDirection, null>)) {
+    throw new WalletReadModelError('INVALID_WALLET_READ_MODEL', 'Ledger activity direction is invalid.');
+  }
+  return value as Exclude<WalletOverviewActivityDirection, null>;
+}
+
 export function buildWalletOverviewV2(params: {
   authenticatedUserId: string;
   asOf: string;
@@ -194,6 +204,7 @@ export function buildWalletOverviewV2(params: {
   externalAccounts: WalletOverviewExternalAccountRow[];
   legacyTransactions: WalletOverviewLegacyTransactionRow[];
   intents: WalletOverviewIntentRow[];
+  ledgerActivity: WalletOverviewLedgerActivityRow[];
 }): WalletOverviewV2 {
   const {
     authenticatedUserId,
@@ -204,22 +215,17 @@ export function buildWalletOverviewV2(params: {
     externalAccounts,
     legacyTransactions,
     intents,
+    ledgerActivity,
   } = params;
 
   requireOwned(profile.id, authenticatedUserId, 'profile');
   requireOwned(balance.user_id, authenticatedUserId, 'balance');
 
   if (balance.balance_authority !== WALLET_V2_BALANCE_AUTHORITY) {
-    throw new WalletReadModelError(
-      'INVALID_WALLET_READ_MODEL',
-      'Wallet balance authority changed without a reviewed API contract update.',
-    );
+    throw new WalletReadModelError('INVALID_WALLET_READ_MODEL', 'Wallet balance authority changed without a reviewed API contract update.');
   }
   if (balance.journal_posting_enabled !== WALLET_V2_JOURNAL_POSTING_ENABLED) {
-    throw new WalletReadModelError(
-      'INVALID_WALLET_READ_MODEL',
-      'Wallet journal posting state changed without a reviewed API contract update.',
-    );
+    throw new WalletReadModelError('INVALID_WALLET_READ_MODEL', 'Wallet journal posting state changed without a reviewed API contract update.');
   }
 
   if (identity) {
@@ -247,8 +253,12 @@ export function buildWalletOverviewV2(params: {
 
   const activity: WalletOverviewActivityItem[] = [];
 
+  // Approved deposits are represented by the authoritative ledger.topup entry.
+  // Pending/rejected evidence remains visible through the legacy transaction
+  // lifecycle so users can still follow manual proof review without duplicates.
   for (const transaction of legacyTransactions) {
     requireOwned(transaction.user_id, authenticatedUserId, 'legacy transaction');
+    if (transaction.type === 'deposit' && transaction.status === 'approved') continue;
     activity.push({
       id: transaction.id,
       source: 'legacy_transaction',
@@ -257,9 +267,10 @@ export function buildWalletOverviewV2(params: {
       status: transaction.status,
       currency: requireCurrency(balance.currency, 'wallet balance currency'),
       amountCents: requireSafeCents(transaction.amount_cents, 'legacy transaction amount'),
+      direction: null,
       reference: transaction.crypto_tx_hash ?? transaction.external_reference,
       occurredAt: transaction.created_at,
-      settledAt: transaction.status === 'approved' ? transaction.reviewed_at : null,
+      settledAt: null,
     });
   }
 
@@ -273,9 +284,27 @@ export function buildWalletOverviewV2(params: {
       status: intent.status,
       currency: requireCurrency(intent.currency, 'wallet intent currency'),
       amountCents: optionalSafeCents(intent.amount_cents, 'wallet intent amount'),
+      direction: null,
       reference: intent.external_reference,
       occurredAt: intent.created_at,
       settledAt: intent.status === 'reconciled' ? intent.updated_at : null,
+    });
+  }
+
+  for (const entry of ledgerActivity) {
+    requireOwned(entry.user_id, authenticatedUserId, 'ledger activity');
+    activity.push({
+      id: entry.id,
+      source: 'ledger_entry',
+      kind: entry.event_type,
+      rail: entry.source_type,
+      status: entry.status,
+      currency: requireCurrency(entry.currency, 'ledger activity currency'),
+      amountCents: requireSafeCents(entry.amount_cents, 'ledger activity amount'),
+      direction: requireLedgerDirection(entry.direction),
+      reference: entry.external_reference ?? entry.source_id,
+      occurredAt: entry.occurred_at,
+      settledAt: entry.posted_at,
     });
   }
 
@@ -291,10 +320,7 @@ export function buildWalletOverviewV2(params: {
     balance: {
       accountId: balance.account_id,
       currency: requireCurrency(balance.currency, 'wallet balance currency'),
-      availableBalanceCents: requireSafeCents(
-        balance.available_balance_cents,
-        'wallet available balance',
-      ),
+      availableBalanceCents: requireSafeCents(balance.available_balance_cents, 'wallet available balance'),
       authority: WALLET_V2_BALANCE_AUTHORITY,
       journalPostingEnabled: WALLET_V2_JOURNAL_POSTING_ENABLED,
       updatedAt: balance.balance_updated_at,
@@ -314,7 +340,7 @@ export function buildWalletOverviewV2(params: {
       copBalanceRead: true,
       walletIdentityRead: true,
       activityRead: true,
-      journalPosting: false,
+      journalPosting: true,
       moneyMovement: false,
       blockchainBalances: false,
       investmentPositions: false,
