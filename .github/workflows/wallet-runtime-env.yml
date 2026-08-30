@@ -1,0 +1,36 @@
+name: Wallet Runtime Environment Contract
+
+on:
+  pull_request:
+    paths:
+      - 'render.yaml'
+      - '.env.local.example'
+      - 'scripts/test-wallet-runtime-env-invariants.mjs'
+      - '.github/workflows/wallet-runtime-env.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'render.yaml'
+      - '.env.local.example'
+      - 'scripts/test-wallet-runtime-env-invariants.mjs'
+      - '.github/workflows/wallet-runtime-env.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Runtime env fail-closed contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22.22.0'
+      - name: Verify wallet runtime environment invariants
+        run: node scripts/test-wallet-runtime-env-invariants.mjs

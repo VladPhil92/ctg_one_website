@@ -18,6 +18,17 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      # CTG One Wallet identity + read-only Polygon runtime. Values stay in
+      # Render configuration; no provider key, RPC URL or token address is
+      # committed to source. Wallet features fail closed while unset.
+      - key: NEXT_PUBLIC_PRIVY_APP_ID
+        sync: false
+      - key: PRIVY_JWT_VERIFICATION_KEY
+        sync: false
+      - key: POLYGON_RPC_URL
+        sync: false
+      - key: CTG_TOKEN_POLYGON_ADDRESS
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_EMBEDDING_MODEL
