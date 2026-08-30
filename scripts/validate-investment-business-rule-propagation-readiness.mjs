@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import process from 'node:process';
+import { INVESTMENT_BUSINESS_RULE_GOVERNANCE } from '../src/data/investment-business-rule-governance.mjs';
 import {
   buildInvestmentBusinessRulePropagationReadiness,
   validateInvestmentBusinessRuleDecisionIntake,
@@ -62,7 +63,11 @@ try {
   validateInvestmentBusinessRulePropagationManifest(manifest);
   const repositoryEvidence = verifyRepositoryEvidence(manifest);
   result = {
-    ...buildInvestmentBusinessRulePropagationReadiness({ intake, manifest }),
+    ...buildInvestmentBusinessRulePropagationReadiness({
+      intake,
+      canonicalGovernance: INVESTMENT_BUSINESS_RULE_GOVERNANCE,
+      manifest,
+    }),
     repositoryEvidenceVerified: true,
     repositoryEvidence,
   };
