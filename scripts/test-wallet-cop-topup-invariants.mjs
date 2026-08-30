@@ -5,8 +5,8 @@ const root = process.cwd();
 const files = {
   topupMigration: path.join(root, 'supabase/migrations/20260830150000_0081_wallet_cop_topup_trust_boundary.sql'),
   rateMigration: path.join(root, 'supabase/migrations/20260830151000_0082_wallet_topup_rate_limit_scope.sql'),
-  ledgerMigration: path.join(root, 'supabase/migrations/20260830215500_0084_wallet_canonical_cop_ledger_authority.sql'),
-  ledgerHardeningMigration: path.join(root, 'supabase/migrations/20260830220500_0085_wallet_canonical_cop_ledger_balance_hardening.sql'),
+  ledgerMigration: path.join(root, 'supabase/migrations/20260830231000_0086_wallet_canonical_cop_ledger_authority.sql'),
+  ledgerHardeningMigration: path.join(root, 'supabase/migrations/20260830232000_0087_wallet_canonical_cop_ledger_balance_hardening.sql'),
   route: path.join(root, 'src/app/api/wallet/deposits/route.ts'),
   qrRoute: path.join(root, 'src/app/api/wallet/payment-qr/route.ts'),
   page: path.join(root, 'src/app/dashboard/depositos/page.tsx'),
@@ -41,7 +41,7 @@ function requireFragments(text, label, fragments) {
 }
 
 // 0081 remains immutable evidence of the two-human trust boundary that existed
-// before ledger authority. 0084 replaces only the reconciliation implementation.
+// before ledger authority. 0086 replaces only the reconciliation implementation.
 requireFragments(source.topupMigration, 'top-up trust-boundary migration', [
   'create table public.wallet_topup_claims',
   "check (state in ('submitted','verified','rejected','reconciled'))",
@@ -205,8 +205,8 @@ requireFragments(source.securityGuard, 'SECURITY DEFINER config guard', [
 
 const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(source.schema);
 const schemaCount = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(source.schema);
-if (!schemaMigration || Number(schemaMigration[1]) < 85 || !schemaCount || Number(schemaCount[1]) < 85) {
-  throw new Error('runtime schema contract must include canonical Saldo CTG ledger hardening through 0085');
+if (!schemaMigration || Number(schemaMigration[1]) < 87 || !schemaCount || Number(schemaCount[1]) < 87) {
+  throw new Error('runtime schema contract must include canonical Saldo CTG ledger hardening through 0087');
 }
 
 requireFragments(source.smoke, 'PostgreSQL smoke contract', [
