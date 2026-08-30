@@ -2,10 +2,10 @@
 
 -- CTG One — RLS permission-call hoisting contract (whole `public` schema)
 --
--- Migrations 0070 (investment tables) and 0071 (accounts and knowledge tables)
--- hoisted every row-independent permission call in the RLS policies into a
--- `(select ...)` InitPlan, so Postgres evaluates it once per query instead of
--- once per candidate row.
+-- Migrations 0070 (investment tables), 0071 (accounts and knowledge tables),
+-- and 0083 (wallet top-up claims) hoist every row-independent permission call
+-- in the reviewed RLS policies into a `(select ...)` InitPlan, so Postgres
+-- evaluates it once per query instead of once per candidate row.
 --
 -- Two things must stay true, and they pull against each other:
 --   1. no policy may go back to calling a permission function per row
@@ -71,6 +71,7 @@ declare
     'profiles.profiles_select',
     'transactions.transactions_select',
     'wallet_identity_audit_log.wallet_identity_audit_log_read_own_or_admin',
+    'wallet_topup_claims.wallet_topup_claims_read_own_or_admin',
     'wallets.wallets_select'
   ];
   v_actual text[];
