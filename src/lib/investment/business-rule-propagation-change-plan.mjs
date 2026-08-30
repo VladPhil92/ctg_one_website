@@ -401,7 +401,7 @@ export function validateInvestmentBusinessRulePropagationChangeBlueprint(bluepri
   return blueprint;
 }
 
-function deriveCanonicalPlanState(governance, propagation) {
+function deriveRepositoryContentPlanState(governance, propagation) {
   validateInvestmentBusinessRuleGovernance(governance);
   validateInvestmentBusinessRulePropagation(governance, propagation);
   validateInvestmentBusinessRulePropagationChangeBlueprint(
@@ -410,24 +410,28 @@ function deriveCanonicalPlanState(governance, propagation) {
 
   const blockers = [...derivePendingInvestmentBusinessDecisionIds(governance)];
   const approved = areInvestmentBusinessRulesApproved(governance);
-  const alreadyPropagated = propagation.status === 'VERIFIED';
-  const implementationEligible = approved && !alreadyPropagated;
-  const status = alreadyPropagated
-    ? 'ALREADY_PROPAGATED'
-    : implementationEligible
-      ? 'READY_FOR_REVIEWED_IMPLEMENTATION_PR'
+  const propagationRecordedVerified = propagation.status === 'VERIFIED';
+  const provenanceRequired = approved || propagationRecordedVerified;
+  const status = propagationRecordedVerified
+    ? 'PROPAGATION_RECORDED_REQUIRES_MERGED_MAIN_PROVENANCE'
+    : approved
+      ? 'APPROVALS_RECORDED_REQUIRES_MERGED_MAIN_PROVENANCE'
       : 'BLOCKED_AWAITING_CANONICAL_APPROVAL';
 
   return deepFreeze({
     version: INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_PLAN_VERSION,
     status,
-    authoritative: true,
+    authoritative: false,
+    blueprintAuthoritative: true,
+    governanceProvenanceVerified: false,
+    mergedMainProvenanceRequired: provenanceRequired,
     candidate: { ...INVESTMENT_BUSINESS_RULE_CANDIDATE },
     decisionBlockers: blockers,
-    canonicalApprovalsSatisfied: approved,
-    propagationAlreadyVerified: alreadyPropagated,
-    implementationPlanningEligible: implementationEligible,
-    implementationPrEligible: implementationEligible,
+    approvalsRecordedInCheckout: approved,
+    propagationRecordedVerifiedInCheckout: propagationRecordedVerified,
+    implementationPlanningEligible: false,
+    implementationPrEligible: false,
+    implementationAuthorityGranted: false,
     automaticApprovalAllowed: false,
     automaticMutationAllowed: false,
     runtimeMutationAllowedByPlanner: false,
@@ -440,19 +444,19 @@ function deriveCanonicalPlanState(governance, propagation) {
   });
 }
 
-// Authority-producing entry point. It intentionally accepts no caller-supplied
-// governance/propagation state: only the committed canonical repository record
-// may make an implementation PR eligible.
+// Canonical repository-content evaluator. It accepts no caller-supplied state,
+// but intentionally grants no implementation authority because a local checkout
+// cannot prove that its governance values were merged into trusted main.
 export function buildInvestmentBusinessRulePropagationChangePlan(...args) {
-  assert(args.length === 0, 'Authoritative propagation change planning accepts canonical repository governance only');
-  return deriveCanonicalPlanState(
+  assert(args.length === 0, 'Propagation change planning accepts repository governance only');
+  return deriveRepositoryContentPlanState(
     INVESTMENT_BUSINESS_RULE_GOVERNANCE,
     INVESTMENT_BUSINESS_RULE_PROPAGATION,
   );
 }
 
 // Non-authoritative helper for invariant tests and design previews. A simulated
-// approval can never emit implementation authority or a canonical READY state.
+// approval or propagation state can never emit implementation authority.
 export function simulateInvestmentBusinessRulePropagationChangePlan({
   governance,
   propagation = INVESTMENT_BUSINESS_RULE_PROPAGATION,
@@ -464,9 +468,9 @@ export function simulateInvestmentBusinessRulePropagationChangePlan({
 
   const blockers = [...derivePendingInvestmentBusinessDecisionIds(governance)];
   const approved = areInvestmentBusinessRulesApproved(governance);
-  const alreadyPropagated = propagation.status === 'VERIFIED';
-  const status = alreadyPropagated
-    ? 'SIMULATION_ALREADY_PROPAGATED'
+  const propagationRecordedVerified = propagation.status === 'VERIFIED';
+  const status = propagationRecordedVerified
+    ? 'SIMULATION_PROPAGATION_VERIFIED'
     : approved
       ? 'SIMULATION_APPROVALS_SATISFIED'
       : 'SIMULATION_BLOCKED';
@@ -475,13 +479,16 @@ export function simulateInvestmentBusinessRulePropagationChangePlan({
     version: INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_PLAN_VERSION,
     status,
     authoritative: false,
+    blueprintAuthoritative: false,
+    governanceProvenanceVerified: false,
+    mergedMainProvenanceRequired: false,
     candidate: { ...INVESTMENT_BUSINESS_RULE_CANDIDATE },
     decisionBlockers: blockers,
-    canonicalApprovalsSatisfied: false,
     simulatedApprovalsSatisfied: approved,
-    propagationAlreadyVerified: alreadyPropagated,
+    simulatedPropagationVerified: propagationRecordedVerified,
     implementationPlanningEligible: false,
     implementationPrEligible: false,
+    implementationAuthorityGranted: false,
     automaticApprovalAllowed: false,
     automaticMutationAllowed: false,
     runtimeMutationAllowedByPlanner: false,
