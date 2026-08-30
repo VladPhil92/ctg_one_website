@@ -4,6 +4,7 @@ import {
   createAuthenticatedRequestContext,
   isSupabaseConfigured,
 } from '@/lib/supabase/server';
+import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
 import { buildWalletCopTopUpCapability } from '@/lib/wallet/cop-topup-capability';
 import { readPolygonPortfolio } from '@/lib/wallet/polygon-portfolio';
 import {
@@ -18,23 +19,28 @@ import {
 } from '@/lib/wallet/read-model';
 
 const ACTIVITY_FETCH_LIMIT = 20;
+const CORS_METHODS = ['GET', 'OPTIONS'] as const;
 
-function noStoreJson(body: unknown, init: ResponseInit = {}) {
+function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
   headers.set('Cache-Control', 'no-store');
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('Referrer-Policy', 'no-referrer');
-  return NextResponse.json(body, { ...init, headers });
+  return applyWalletCors(request, NextResponse.json(body, { ...init, headers }), CORS_METHODS);
+}
+
+export function OPTIONS(request: Request) {
+  return walletCorsPreflight(request, CORS_METHODS);
 }
 
 export async function GET(request: Request) {
   if (!isSupabaseConfigured) {
-    return noStoreJson({ error: 'WALLET_READ_UNAVAILABLE' }, { status: 503 });
+    return noStoreJson(request, { error: 'WALLET_READ_UNAVAILABLE' }, { status: 503 });
   }
 
   const auth = await createAuthenticatedRequestContext(request);
   if (!auth) {
-    return noStoreJson({ error: 'UNAUTHENTICATED' }, { status: 401 });
+    return noStoreJson(request, { error: 'UNAUTHENTICATED' }, { status: 401 });
   }
 
   const { supabase, user } = auth;
@@ -93,11 +99,11 @@ export async function GET(request: Request) {
     transactionsResult.error ||
     intentsResult.error
   ) {
-    return noStoreJson({ error: 'WALLET_READ_UNAVAILABLE' }, { status: 503 });
+    return noStoreJson(request, { error: 'WALLET_READ_UNAVAILABLE' }, { status: 503 });
   }
 
   if (!profileResult.data || !balanceResult.data) {
-    return noStoreJson({ error: 'WALLET_ACCOUNT_INCOMPLETE' }, { status: 409 });
+    return noStoreJson(request, { error: 'WALLET_ACCOUNT_INCOMPLETE' }, { status: 409 });
   }
 
   try {
@@ -127,7 +133,7 @@ export async function GET(request: Request) {
       blockchain.status === 'available' || blockchain.status === 'degraded';
     const copTopUp = buildWalletCopTopUpCapability(overview.user.kycStatus);
 
-    return noStoreJson({
+    return noStoreJson(request, {
       ...overview,
       blockchain,
       ...(copTopUp.action ? { copTopUp: copTopUp.action } : {}),
@@ -139,8 +145,8 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     if (error instanceof WalletReadModelError) {
-      return noStoreJson({ error: 'WALLET_READ_CONTRACT_VIOLATION' }, { status: 503 });
+      return noStoreJson(request, { error: 'WALLET_READ_CONTRACT_VIOLATION' }, { status: 503 });
     }
-    return noStoreJson({ error: 'WALLET_READ_UNAVAILABLE' }, { status: 503 });
+    return noStoreJson(request, { error: 'WALLET_READ_UNAVAILABLE' }, { status: 503 });
   }
 }
