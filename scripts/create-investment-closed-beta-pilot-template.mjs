@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import process from 'node:process';
 import { INVESTMENT_CLOSED_BETA_PILOT_MANIFEST_VERSION } from '../src/lib/investment/closed-beta-pilot-preflight.mjs';
 
@@ -67,5 +68,6 @@ const manifest = {
   },
 };
 
+mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
 console.error(`Closed-beta pilot manifest template ${randomBytes(4).toString('hex')} written to ${outputPath}. It is intentionally BLOCKED until placeholders are replaced with redacted facts and every independent governance/readiness gate is satisfied.`);
