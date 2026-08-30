@@ -77,23 +77,40 @@ export type WalletIntentStatus =
   | 'created'
   | 'authorized'
   | 'submitted'
+  | 'pending_external'
+  | 'confirmed_external'
   | 'reconciled'
   | 'failed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'replaced';
 
+/**
+ * A wallet intent represents what an authenticated CTG user asked the system to
+ * do. It is not proof that money moved and is never an authoritative balance.
+ * Creation is deliberately separate from authorization, signing, broadcast and
+ * reconciliation.
+ */
 export interface WalletIntent {
   id: string;
   userId: string;
   intentType: string;
   idempotencyKey: string;
   status: WalletIntentStatus;
-  currency: string;
+  currency: string | null;
   amountCents: number | null;
+  rail: string | null;
+  chainId: number | null;
+  assetSymbol: string | null;
+  amountBaseUnits: string | null;
+  destinationAddress: string | null;
+  txHash: string | null;
   externalReference: string | null;
+  replacedByReference: string | null;
   metadata: Record<string, unknown>;
   expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
+  settledAt: string | null;
 }
 
 export type WalletJournalEntryStatus = 'staged' | 'posted' | 'reversed';
