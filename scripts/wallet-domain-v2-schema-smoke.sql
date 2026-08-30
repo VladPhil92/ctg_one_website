@@ -42,7 +42,7 @@ begin
   where user_id = v_user;
 
   if v_wallet_id is null then
-    raise exception 'legacy wallet trigger contract regressed';
+    raise exception 'legacy wallet compatibility cache trigger contract regressed';
   end if;
 
   select id into v_account_id
@@ -60,6 +60,8 @@ begin
     raise exception 'new CTG user received duplicate V2 accounts';
   end if;
 
+  -- Deliberately drift the legacy compatibility cache. After the 0086 cutover
+  -- this mutation must not change the authoritative Saldo CTG projection.
   update public.wallets
   set balance_cents = 123456, updated_at = now()
   where user_id = v_user;
@@ -70,11 +72,11 @@ begin
     where user_id = v_user
       and account_id = v_account_id
       and legacy_wallet_id = v_wallet_id
-      and available_balance_cents = 123456
-      and balance_authority = 'legacy_wallets'
-      and journal_posting_enabled is false
+      and available_balance_cents = 0
+      and balance_authority = 'ctg_ledger_v2'
+      and journal_posting_enabled is true
   ) then
-    raise exception 'V2 compatibility projection stopped reflecting the authoritative legacy wallet';
+    raise exception 'V2 compatibility projection stopped honoring canonical CTG ledger authority';
   end if;
 end $$;
 
@@ -98,7 +100,7 @@ begin
     if has_table_privilege('service_role', v_table, 'INSERT')
        or has_table_privilege('service_role', v_table, 'UPDATE')
        or has_table_privilege('service_role', v_table, 'DELETE') then
-      raise exception 'service_role gained premature Wallet Domain V2 mutation privilege on %', v_table;
+      raise exception 'service_role gained direct Wallet Domain V2 table mutation privilege on %', v_table;
     end if;
 
     if not has_table_privilege('authenticated', v_table, 'SELECT')
@@ -124,7 +126,7 @@ begin
     where n.nspname = 'public'
       and p.proname = 'post_wallet_journal_entry'
   ) then
-    raise exception 'Wallet Domain V2 authoritative journal posting RPC must remain disabled';
+    raise exception 'generic Wallet Domain V2 authoritative journal posting RPC must remain disabled';
   end if;
 end $$;
 
@@ -210,16 +212,17 @@ begin
   end;
 end $$;
 
--- Later migrations may populate only explicitly non-authoritative shadow journal
--- rows. The historical foundation invariant remains: no authoritative posting
--- RPC and no unmarked money rows may appear through this compatibility test.
+-- This fixture starts at zero authoritative COP balance. The canonical posting
+-- paths are exercised by the dedicated ledger/top-up contracts; this foundation
+-- smoke still rejects unexpected unmarked journal rows and verifies any retained
+-- historical shadow evidence remains balanced.
 do $$
 begin
   if exists (
     select 1 from public.wallet_journal_entries_v2 e
     where coalesce(e.metadata ->> 'shadow', 'false') <> 'true'
   ) then
-    raise exception 'Wallet Domain V2 contains unexpected non-shadow journal rows';
+    raise exception 'Wallet Domain V2 zero-balance fixture contains unexpected canonical journal rows';
   end if;
 
   if exists (
