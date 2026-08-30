@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0079",
-  "expectedMigrationName": "investment_settlement_preview_v1",
-  "expectedMigrationCount": 79,
+  "expectedMigration": "0080",
+  "expectedMigrationName": "wallet_shadow_journal_reconciliation",
+  "expectedMigrationCount": 80,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
