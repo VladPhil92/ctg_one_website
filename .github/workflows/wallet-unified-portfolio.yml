@@ -1,0 +1,29 @@
+name: Wallet Unified Portfolio Contract
+
+on:
+  pull_request:
+    paths:
+      - 'src/app/dashboard/wallet/**'
+      - 'src/app/api/wallet/overview/**'
+      - 'src/lib/wallet/**'
+      - 'scripts/test-wallet-unified-portfolio-invariants.mjs'
+      - '.github/workflows/wallet-unified-portfolio.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Unified portfolio read-only contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22.22.0'
+      - name: Verify unified wallet portfolio invariants
+        run: node scripts/test-wallet-unified-portfolio-invariants.mjs
