@@ -1,6 +1,6 @@
 import { getNvetApiUrl } from './session';
 
-export type NvetUserRole = 'ADMIN' | 'VET' | 'CLIENT';
+export type NvetUserRole = 'SUPERADMIN' | 'ADMIN' | 'VET' | 'CLIENT';
 
 export interface NvetCurrentUser {
   id: string;
@@ -13,6 +13,10 @@ export interface NvetCurrentUser {
 export type NvetCurrentUserResult =
   | { ok: true; user: NvetCurrentUser }
   | { ok: false; status: number };
+
+export function isNvetAdminRole(role: NvetUserRole): boolean {
+  return role === 'ADMIN' || role === 'SUPERADMIN';
+}
 
 /**
  * Calls NestJS GET /api/auth/me server-to-server with the caller's bearer
