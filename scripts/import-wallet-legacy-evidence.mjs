@@ -12,7 +12,7 @@ const SELECTS = Object.freeze({
   profiles: 'id',
   evidence: 'id,user_id,provider,provider_user_id,expected_address_normalized,source_digest_sha256,evidence_captured_at,status',
   identityLinks: 'id,user_id,provider,provider_user_id,status,link_mode',
-  externalAccounts: 'id,user_id,provider,chain_family,address_normalized,status,is_primary,legacy_preserved',
+  externalAccounts: 'id,user_id,provider,chain_family,account_kind,address_normalized,status,is_primary,legacy_preserved',
 });
 
 function usage() {
@@ -161,6 +161,11 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const rawBytes = await readFile(args.input);
   const document = parseWalletLegacyEvidence(rawBytes);
+
+  if (args.apply && /^synthetic(?:-|$)/i.test(document.source)) {
+    throw new Error('Synthetic legacy evidence artifacts cannot be applied to a database.');
+  }
+
   const config = getPrivilegedSupabaseConfig();
   const supabase = createClient(config.url, config.key, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
