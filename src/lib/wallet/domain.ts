@@ -1,6 +1,6 @@
 export const CANONICAL_WALLET_IDENTITY = 'supabase-profile' as const;
-export const WALLET_V2_BALANCE_AUTHORITY = 'legacy_wallets' as const;
-export const WALLET_V2_JOURNAL_POSTING_ENABLED = false as const;
+export const WALLET_V2_BALANCE_AUTHORITY = 'ctg_ledger_v2' as const;
+export const WALLET_V2_JOURNAL_POSTING_ENABLED = true as const;
 export const WALLET_OVERVIEW_VERSION = 'ctg-wallet-overview-v2' as const;
 
 export type WalletIdentityProvider = 'privy';
@@ -11,12 +11,6 @@ export type WalletExternalAccountProvider = 'privy' | 'external';
 export type WalletExternalAccountKind = 'embedded' | 'external' | 'watch_only';
 export type WalletExternalAccountStatus = 'pending' | 'verified' | 'revoked';
 
-/**
- * Canonical CTG One identity.
- *
- * userId is always public.profiles.id / auth.users.id. Provider-specific IDs
- * are linked metadata and must never replace the canonical user identifier.
- */
 export interface CanonicalWalletIdentity {
   userId: string;
   provider: WalletIdentityProvider;
@@ -27,11 +21,6 @@ export interface CanonicalWalletIdentity {
   verifiedAt: string | null;
 }
 
-/**
- * A blockchain account associated with the canonical CTG identity.
- * Crypto balances remain authoritative on-chain; this record only captures
- * verified association, migration provenance and product-level preferences.
- */
 export interface WalletExternalAccount {
   id: string;
   userId: string;
@@ -92,10 +81,6 @@ export type WalletIntentStatus =
   | 'failed'
   | 'cancelled';
 
-/**
- * A wallet intent represents what an authenticated CTG user asked the system to
- * do. It is not proof that money moved and is never an authoritative balance.
- */
 export interface WalletIntent {
   id: string;
   userId: string;
@@ -113,10 +98,6 @@ export interface WalletIntent {
 
 export type WalletJournalEntryStatus = 'staged' | 'posted' | 'reversed';
 
-/**
- * Journal entries/postings are schema-only in migration 0078. Posting remains
- * fail-closed until opening balances and a trusted posting RPC are introduced.
- */
 export interface WalletJournalEntry {
   id: string;
   subjectUserId: string | null;
@@ -162,9 +143,9 @@ export interface WalletTransactionReference {
 }
 
 /**
- * Transitional balance projection. availableBalanceCents is still read from
- * public.wallets.balance_cents. Consumers must not infer that the V2 journal is
- * live from the presence of a V2 account row.
+ * Compatibility projection name retained for API stability. The value is now
+ * derived from posted authoritative journal entries; public.wallets is only a
+ * compatibility cache and no longer the financial source of truth.
  */
 export interface WalletBalanceCompatibilityV2 {
   accountId: string;
@@ -240,11 +221,6 @@ export interface WalletOverviewBlockchainPosition {
   formattedBalance: string;
 }
 
-/**
- * Read-only on-chain projection. Account ownership is resolved from the trusted
- * wallet_external_accounts registry; the browser never chooses the address that
- * is associated with the canonical CTG user.
- */
 export interface WalletOverviewBlockchainPortfolio {
   network: 'polygon';
   chainId: 137;
@@ -255,7 +231,8 @@ export interface WalletOverviewBlockchainPortfolio {
   asOf: string;
 }
 
-export type WalletOverviewActivitySource = 'legacy_transaction' | 'wallet_intent';
+export type WalletOverviewActivitySource = 'legacy_transaction' | 'wallet_intent' | 'ledger_entry';
+export type WalletOverviewActivityDirection = 'credit' | 'debit' | null;
 
 export interface WalletOverviewActivityItem {
   id: string;
@@ -265,6 +242,7 @@ export interface WalletOverviewActivityItem {
   status: string;
   currency: string;
   amountCents: number | null;
+  direction: WalletOverviewActivityDirection;
   reference: string | null;
   occurredAt: string;
   settledAt: string | null;
@@ -274,22 +252,16 @@ export interface WalletOverviewCapabilities {
   copBalanceRead: true;
   walletIdentityRead: true;
   activityRead: true;
-  journalPosting: false;
+  journalPosting: true;
   moneyMovement: false;
   blockchainBalances: boolean;
   investmentPositions: false;
 }
 
 /**
- * Read-only aggregate returned by GET /api/wallet/overview.
- *
- * This contract intentionally exposes only user-owned, display-safe data. It
- * does not expose payment proof paths, admin notes, provider secrets,
- * idempotency keys or Wallet V2 journal mutation capability.
- *
- * blockchain is additive/optional during the two-repository convergence window
- * so older clients can continue to consume the V2 response while CTG-Wallet is
- * upgraded to the canonical contract.
+ * Read-only aggregate returned by GET /api/wallet/overview. `journalPosting`
+ * means the server-side canonical ledger is live; it does not grant the browser
+ * any money-movement capability. Browser money movement remains false.
  */
 export interface WalletOverviewV2 {
   version: typeof WALLET_OVERVIEW_VERSION;
