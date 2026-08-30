@@ -5,10 +5,14 @@ on:
     branches: [main]
     paths:
       - 'supabase/migrations/**wallet_domain_v2**'
+      - 'supabase/migrations/**wallet_intent_creation**'
+      - 'supabase/migrations/**wallet_intent_authorization**'
+      - 'src/app/api/wallet/intents/**'
       - 'src/lib/wallet/domain.ts'
       - 'src/lib/observability/schema-version.ts'
       - 'scripts/test-wallet-domain-v2-invariants.mjs'
       - 'scripts/wallet-domain-v2-schema-smoke.sql'
+      - 'scripts/wallet-intent-authorization-schema-smoke.sql'
       - 'scripts/fixtures/investment-operating-evidence.synthetic-v1.json'
       - 'scripts/fixtures/investment-production-readiness-canary.synthetic-v1.json'
       - '.github/workflows/wallet-domain-v2.yml'
@@ -17,10 +21,14 @@ on:
     branches: [main]
     paths:
       - 'supabase/migrations/**wallet_domain_v2**'
+      - 'supabase/migrations/**wallet_intent_creation**'
+      - 'supabase/migrations/**wallet_intent_authorization**'
+      - 'src/app/api/wallet/intents/**'
       - 'src/lib/wallet/domain.ts'
       - 'src/lib/observability/schema-version.ts'
       - 'scripts/test-wallet-domain-v2-invariants.mjs'
       - 'scripts/wallet-domain-v2-schema-smoke.sql'
+      - 'scripts/wallet-intent-authorization-schema-smoke.sql'
       - 'scripts/fixtures/investment-operating-evidence.synthetic-v1.json'
       - 'scripts/fixtures/investment-production-readiness-canary.synthetic-v1.json'
       - '.github/workflows/wallet-domain-v2.yml'
@@ -88,3 +96,9 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:55434/postgres" \
             -v ON_ERROR_STOP=1 \
             -f scripts/wallet-domain-v2-schema-smoke.sql
+
+      - name: Wallet Intent Authorization V1 PostgreSQL contract
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:55434/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -f scripts/wallet-intent-authorization-schema-smoke.sql
