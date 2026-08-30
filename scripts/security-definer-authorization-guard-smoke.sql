@@ -94,7 +94,10 @@ BEGIN
   WHERE a.body_sha256 IS DISTINCT FROM r.body_sha256;
 
   -- Freeze exact reviewed search_path values. The migration-health RPC is the
-  -- only reviewed exception because it intentionally needs pg_catalog explicit.
+  -- only historical exception because it intentionally needs pg_catalog explicit.
+  -- Wallet COP top-up administration uses an empty search_path deliberately:
+  -- every application object is schema-qualified and only pg_catalog remains
+  -- implicitly visible, which is stricter than the legacy public-only policy.
   SELECT coalesce(array_agg(a.signature ORDER BY a.signature), ARRAY[]::text[])
   INTO v_bad_config
   FROM actual_authenticated_security_definer_bodies a
@@ -102,6 +105,13 @@ BEGIN
     CASE
       WHEN a.signature = 'public.get_system_migration_health()'
         THEN ARRAY['search_path=public, pg_catalog']::text[]
+      WHEN a.signature IN (
+        'public.approve_deposit(p_transaction_id uuid, p_admin_notes text)',
+        'public.reconcile_wallet_topup_claim(p_claim_id uuid, p_admin_notes text)',
+        'public.reject_wallet_topup_claim(p_claim_id uuid, p_reason text)',
+        'public.verify_wallet_topup_claim(p_claim_id uuid, p_verification_notes text)'
+      )
+        THEN ARRAY['search_path=""']::text[]
       ELSE ARRAY['search_path=public']::text[]
     END;
 

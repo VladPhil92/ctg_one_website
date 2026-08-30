@@ -29,6 +29,21 @@ services:
         sync: false
       - key: CTG_TOKEN_POLYGON_ADDRESS
         sync: false
+      # CTG One Wallet manual COP top-up rails. These are public display values,
+      # not credentials. Bank transfer requires the complete bank tuple; Bre-B
+      # can be enabled independently. All remain fail-closed while unset.
+      - key: NEXT_PUBLIC_WALLET_BANK_NAME
+        sync: false
+      - key: NEXT_PUBLIC_WALLET_BANK_ACCOUNT_TYPE
+        sync: false
+      - key: NEXT_PUBLIC_WALLET_BANK_ACCOUNT_NUMBER
+        sync: false
+      - key: NEXT_PUBLIC_WALLET_BANK_ACCOUNT_HOLDER
+        sync: false
+      - key: NEXT_PUBLIC_WALLET_BANK_ACCOUNT_HOLDER_NIT
+        sync: false
+      - key: NEXT_PUBLIC_WALLET_BRE_B_KEY
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_EMBEDDING_MODEL

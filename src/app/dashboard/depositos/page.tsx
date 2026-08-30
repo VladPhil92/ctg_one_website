@@ -14,35 +14,39 @@ import {
 import { Button } from '@/components/ui/Button';
 import { AccountSurface } from '@/components/dashboard/AccountSurface';
 import { useAuth } from '@/contexts/AuthContext';
-import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 import {
+  BANK_TRANSFER_CONFIGURED,
   BANK_TRANSFER_INSTRUCTIONS,
+  BRE_B_CONFIGURED,
   BRE_B_INSTRUCTIONS,
-  CRYPTO_DEPOSIT_ADDRESSES,
-  PAYMENT_INSTRUCTIONS_CONFIGURED,
+  WALLET_MANUAL_COP_TOPUP_CONFIGURED,
 } from '@/lib/payment-instructions';
 import type { TransactionMethod } from '@/types/domain';
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 
 const METHODS: Array<{ value: TransactionMethod; label: string }> = [
-  { value: 'bank_transfer', label: 'Transferencia' },
-  { value: 'pse', label: 'PSE' },
-  { value: 'bre_b_qr', label: 'QR / Bre-B' },
-  { value: 'crypto', label: 'Cripto' },
+  ...(BANK_TRANSFER_CONFIGURED
+    ? [{ value: 'bank_transfer' as TransactionMethod, label: 'Transferencia' }]
+    : []),
+  ...(BRE_B_CONFIGURED
+    ? [{ value: 'bre_b_qr' as TransactionMethod, label: 'QR / Bre-B' }]
+    : []),
 ];
+
+const DEFAULT_METHOD: TransactionMethod = BANK_TRANSFER_CONFIGURED
+  ? 'bank_transfer'
+  : 'bre_b_qr';
 
 export default function DepositosPage() {
   const { userId, profile, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
 
-  const [method, setMethod] = useState<TransactionMethod>('bank_transfer');
+  const [method, setMethod] = useState<TransactionMethod>(DEFAULT_METHOD);
   const [amount, setAmount] = useState('');
   const [externalReference, setExternalReference] = useState('');
   const [proofFile, setProofFile] = useState<File | null>(null);
-  const [cryptoNetwork] = useState(CRYPTO_DEPOSIT_ADDRESSES[0]?.network ?? '');
-  const [cryptoAsset] = useState(CRYPTO_DEPOSIT_ADDRESSES[0]?.asset ?? '');
-  const [cryptoTxHash, setCryptoTxHash] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -56,8 +60,8 @@ export default function DepositosPage() {
   const handleSubmit = async () => {
     setError(null);
 
-    if (!PAYMENT_INSTRUCTIONS_CONFIGURED) {
-      setError('Las recargas están temporalmente deshabilitadas mientras configuramos los canales de pago.');
+    if (!WALLET_MANUAL_COP_TOPUP_CONFIGURED) {
+      setError('Las recargas COP están temporalmente deshabilitadas mientras configuramos Bancolombia/Bre-B.');
       return;
     }
 
@@ -66,54 +70,57 @@ export default function DepositosPage() {
       return;
     }
 
+    if (method !== 'bank_transfer' && method !== 'bre_b_qr') {
+      setError('Selecciona un canal COP habilitado.');
+      return;
+    }
+
     const amountCop = Math.round(Number(amount) * 100);
-    if (!amountCop || amountCop <= 0) {
+    if (!Number.isSafeInteger(amountCop) || amountCop <= 0) {
       setError('Ingresa un monto válido.');
       return;
     }
 
-    if (method === 'crypto') {
-      if (!cryptoTxHash.trim()) {
-        setError('Ingresa el hash de la transacción.');
-        return;
-      }
-    } else {
-      if (!proofFile) {
-        setError('Sube el comprobante de la transferencia.');
-        return;
-      }
-      if (proofFile.size > MAX_FILE_BYTES) {
-        setError('El comprobante debe pesar menos de 8MB.');
-        return;
-      }
+    const reference = externalReference.trim();
+    if (reference.length < 4) {
+      setError('Ingresa la referencia de la transferencia para evitar acreditaciones duplicadas.');
+      return;
+    }
+
+    if (!proofFile) {
+      setError('Sube el comprobante de la transferencia.');
+      return;
+    }
+    if (proofFile.size > MAX_FILE_BYTES) {
+      setError('El comprobante debe pesar menos de 8MB.');
+      return;
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(proofFile.type)) {
+      setError('El comprobante debe ser JPG, PNG, WebP o PDF.');
+      return;
     }
 
     setIsSubmitting(true);
     try {
-      const supabase = createClient();
+      const response = await fetch('/api/wallet/deposits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': proofFile.type,
+          'X-File-Name': encodeURIComponent(proofFile.name),
+          'X-Payment-Rail': method,
+          'X-Payment-Reference': reference,
+          'X-Wallet-Topup-Amount-Cents': String(amountCop),
+        },
+        body: proofFile,
+      });
 
-      let proofStoragePath: string | null = null;
-      if (proofFile) {
-        const path = `${userId}/${Date.now()}-${proofFile.name}`;
-        const { error: uploadError } = await supabase.storage.from('payment-proofs').upload(path, proofFile);
-        if (uploadError) throw uploadError;
-        proofStoragePath = path;
+      const payload = await response.json().catch(() => null) as { error?: string } | null;
+      if (!response.ok) {
+        throw new Error(payload?.error ?? 'No se pudo registrar la solicitud de recarga');
       }
 
-      const { error: insertError } = await supabase.from('transactions').insert({
-        user_id: userId,
-        type: 'deposit',
-        method,
-        amount_cents: amountCop,
-        proof_storage_path: proofStoragePath,
-        external_reference: method === 'crypto' ? null : externalReference.trim() || null,
-        crypto_network: method === 'crypto' ? cryptoNetwork : null,
-        crypto_asset: method === 'crypto' ? cryptoAsset : null,
-        crypto_tx_hash: method === 'crypto' ? cryptoTxHash.trim() : null,
-      });
-      if (insertError) throw insertError;
-
       setSubmitted(true);
+      setProofFile(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo enviar tu solicitud de recarga');
     } finally {
@@ -123,7 +130,7 @@ export default function DepositosPage() {
 
   if (isAuthLoading || !isAuthenticated) return null;
 
-  if (!PAYMENT_INSTRUCTIONS_CONFIGURED) {
+  if (!WALLET_MANUAL_COP_TOPUP_CONFIGURED) {
     return (
       <AccountSurface
         code="FIN-02"
@@ -135,9 +142,9 @@ export default function DepositosPage() {
         <section className="accountPanel">
           <div className="accountPanelHeader">
             <div>
-              <p className="accountMicro">Payment rails</p>
-              <h2>Canales en configuración</h2>
-              <p>No publicaremos instrucciones de pago hasta que cada canal haya sido verificado para producción.</p>
+              <p className="accountMicro">COP payment rails</p>
+              <h2>Bancolombia/Bre-B en configuración</h2>
+              <p>No publicaremos instrucciones de pago hasta que al menos un canal COP haya sido verificado para producción.</p>
             </div>
             <div className="accountNode"><Landmark size={17} /></div>
           </div>
@@ -145,7 +152,7 @@ export default function DepositosPage() {
             <ShieldCheck size={17} />
             <div>
               <strong>Recargas temporalmente deshabilitadas</strong>
-              <p>Los datos bancarios, PSE, Llave Bre-B y direcciones de wallet permanecen ocultos mientras termina la configuración operativa.</p>
+              <p>Los datos bancarios y la Llave Bre-B permanecen ocultos mientras termina la configuración operativa. PSE y cripto continúan fuera de este primer rail de recarga COP.</p>
             </div>
           </div>
           <Button href="/dashboard" variant="secondary" size="sm">Volver al panel</Button>
@@ -159,7 +166,7 @@ export default function DepositosPage() {
       code="FIN-02"
       eyebrow="Cuenta & Capital"
       title="Recargar cuenta"
-      description="Registra una transferencia o depósito y sigue el proceso de validación antes de que el saldo quede disponible."
+      description="Registra una transferencia COP. La evidencia debe ser verificada y conciliada antes de que el saldo quede disponible."
       icon={<WalletCards size={20} />}
     >
       {profile && profile.kyc_status !== 'verified' && (
@@ -177,8 +184,8 @@ export default function DepositosPage() {
         <div className="accountNotice success" role="status" aria-live="polite">
           <CheckCircle2 size={17} />
           <div>
-            <strong>Solicitud enviada</strong>
-            <p>Finanzas revisará la evidencia. El saldo se reflejará únicamente después de la aprobación.</p>
+            <strong>Claim de recarga recibido</strong>
+            <p>El comprobante quedó pendiente de verificación y conciliación independiente. Enviar la evidencia no acredita saldo por sí mismo.</p>
           </div>
         </div>
       )}
@@ -187,9 +194,9 @@ export default function DepositosPage() {
         <section className="accountPanel">
           <div className="accountPanelHeader">
             <div>
-              <p className="accountMicro">Deposit command</p>
+              <p className="accountMicro">COP top-up claim</p>
               <h2>Registrar ingreso de fondos</h2>
-              <p>Selecciona el canal utilizado y adjunta la evidencia necesaria para conciliación.</p>
+              <p>Selecciona Bancolombia o Bre-B y adjunta la evidencia que Finanzas conciliará antes de acreditar el saldo.</p>
             </div>
             <div className="accountNode"><CircleDollarSign size={17} /></div>
           </div>
@@ -225,42 +232,30 @@ export default function DepositosPage() {
               />
             </label>
 
-            {method === 'crypto' ? (
-              <label className="accountField">
-                <span className="accountFieldLabel">Hash de la transacción</span>
-                <input
-                  type="text"
-                  value={cryptoTxHash}
-                  onChange={(event) => setCryptoTxHash(event.target.value)}
-                  className="accountInput font-mono"
-                  autoComplete="off"
-                  required
-                />
-              </label>
-            ) : (
-              <>
-                <label className="accountField">
-                  <span className="accountFieldLabel">Referencia de la transferencia (opcional)</span>
-                  <input
-                    type="text"
-                    value={externalReference}
-                    onChange={(event) => setExternalReference(event.target.value)}
-                    className="accountInput"
-                    autoComplete="off"
-                  />
-                </label>
-                <label className="accountField">
-                  <span className="accountFieldLabel">Comprobante</span>
-                  <input
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={(event) => setProofFile(event.target.files?.[0] ?? null)}
-                    className="accountFile"
-                    required
-                  />
-                </label>
-              </>
-            )}
+            <label className="accountField">
+              <span className="accountFieldLabel">Referencia de la transferencia</span>
+              <input
+                type="text"
+                value={externalReference}
+                onChange={(event) => setExternalReference(event.target.value)}
+                className="accountInput"
+                autoComplete="off"
+                minLength={4}
+                maxLength={180}
+                required
+              />
+            </label>
+
+            <label className="accountField">
+              <span className="accountFieldLabel">Comprobante</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                onChange={(event) => setProofFile(event.target.files?.[0] ?? null)}
+                className="accountFile"
+                required
+              />
+            </label>
 
             {error && <p className="accountError" role="alert">{error}</p>}
 
@@ -272,7 +267,7 @@ export default function DepositosPage() {
               icon={<UploadCloud size={16} />}
               iconPosition="left"
             >
-              Enviar solicitud
+              Enviar claim de recarga
             </Button>
           </form>
         </section>
@@ -293,30 +288,10 @@ function MethodInstructions({ method }: { method: TransactionMethod }) {
     );
   }
 
-  if (method === 'pse') {
-    return (
-      <div className="accountInstruction">
-        <p className="accountMicro mb-2"><CircleDollarSign size={11} /> PSE</p>
-        <p>{BANK_TRANSFER_INSTRUCTIONS.bankName}. NIT {BANK_TRANSFER_INSTRUCTIONS.nit}.</p>
-      </div>
-    );
-  }
-
-  if (method === 'bre_b_qr') {
-    return (
-      <div className="accountInstruction">
-        <p className="accountMicro mb-2"><QrCode size={11} /> Llave Bre-B</p>
-        <p>Llave: <span className="mono">{BRE_B_INSTRUCTIONS.key}</span></p>
-      </div>
-    );
-  }
-
   return (
     <div className="accountInstruction">
-      <p className="accountMicro mb-2"><WalletCards size={11} /> Cripto</p>
-      {CRYPTO_DEPOSIT_ADDRESSES.map((item) => (
-        <p key={item.network} className="mono">{item.asset} ({item.network}): {item.address}</p>
-      ))}
+      <p className="accountMicro mb-2"><QrCode size={11} /> Llave Bre-B</p>
+      <p>Llave: <span className="mono">{BRE_B_INSTRUCTIONS.key}</span></p>
     </div>
   );
 }

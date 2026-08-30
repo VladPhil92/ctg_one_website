@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0080",
-    "schemaMigrationName": "wallet_shadow_journal_reconciliation",
-    "schemaMigrationCount": 80,
+    "schemaMigration": "0083",
+    "schemaMigrationName": "wallet_topup_rls_permission_hoisting",
+    "schemaMigrationCount": 83,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
