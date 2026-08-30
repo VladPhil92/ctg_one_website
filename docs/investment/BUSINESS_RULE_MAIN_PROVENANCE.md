@@ -8,7 +8,7 @@ This phase proves whether the repository bytes containing the CTG Craft Beer Inv
 
 A local checkout, an environment variable, a branch named `main`, or an in-memory governance fixture can all be forged or edited. They are therefore insufficient to prove that five business-rule approvals were merged into the repository's trusted mainline.
 
-The provenance boundary is instead anchored to GitHub Actions transport. `.github/workflows/investment-br-merged-main-provenance.yml` has only one trigger:
+The provenance boundary is anchored to GitHub Actions transport. `.github/workflows/investment-br-merged-main-provenance.yml` has only one trigger:
 
 ```text
 push → main
@@ -21,14 +21,17 @@ There is intentionally no `workflow_dispatch` and no `pull_request` trigger. A u
 For each real push to `main`, the workflow fails closed unless all transport checks pass:
 
 1. `GITHUB_ACTIONS=true`, `GITHUB_EVENT_NAME=push` and `GITHUB_REF=refs/heads/main`.
-2. The checked-out Git `HEAD` exactly equals `GITHUB_SHA`.
-3. GitHub's commit API reports the exact commit with `commit.verification.verified=true`.
-4. GitHub's commit-to-pulls API resolves exactly one merged PR whose base is `main` and whose `merge_commit_sha` equals `GITHUB_SHA`.
-5. The immutable BR candidate commit/path resolves to the pinned candidate blob `2173e134a9eb2c1a73fbfc98e2fb4f48bd48e0d5`.
-6. The governance blob is calculated directly from `HEAD:src/data/investment-business-rule-governance.mjs`.
-7. The emitted JSON evidence passes the repository provenance contract validator before upload.
+2. The checked-out Git `HEAD` and `event.after` both exactly equal `GITHUB_SHA`.
+3. The push is not forced, does not delete `main`, and `event.before` is a non-zero full Git SHA.
+4. GitHub's commit API reports the exact commit with `commit.verification.verified=true` and exactly two parents.
+5. `event.before` equals the merge commit's first parent.
+6. GitHub's commit-to-pulls API resolves exactly one merged PR whose base is `main`, whose `base.sha` equals `event.before`, and whose `merge_commit_sha` equals `GITHUB_SHA`.
+7. The merge commit's second parent equals that PR's exact `head.sha`.
+8. The immutable BR candidate is read from the independent `investment-business-rule-candidate-authority.mjs` pin and its commit/path resolves to blob `2173e134a9eb2c1a73fbfc98e2fb4f48bd48e0d5`.
+9. The governance blob is calculated directly from `HEAD:src/data/investment-business-rule-governance.mjs`.
+10. The emitted JSON records the validated before/after and merge-parent transition and passes the repository provenance contract validator before upload.
 
-A direct push, unsigned/unverified commit, wrong ref, wrong merge SHA, candidate drift or malformed governance evidence fails the workflow.
+These checks bind provenance to the actual merge transition rather than merely proving that a SHA was historically associated with some merged PR. Replaying an old merge SHA with a direct or forced update of `main` therefore fails closed. The contract intentionally requires a two-parent merge commit for governance provenance; squash/rebase-only transitions do not satisfy this gate.
 
 ## Evidence states
 
@@ -52,25 +55,26 @@ containing `investment-business-rule-main-provenance.json`.
 
 The JSON file by itself has **no standalone authority**. Its contract permanently keeps `standaloneAuthorityAllowed=false`, `implementationPlanningEligible=false`, `implementationPrEligible=false`, `implementationAuthorityGranted=false`, automatic mutation disabled, pilot authorization false and LIVE promotion false.
 
-A future authorization phase may treat `MERGED_MAIN_PROVENANCE_EVIDENCE_ELIGIBLE` as an input only after independently resolving the GitHub Actions run and verifying the uploaded artifact digest against the exact run/SHA. Copying or editing the JSON outside that GitHub artifact transport cannot substitute for that verification.
+A future authorization phase may treat `MERGED_MAIN_PROVENANCE_EVIDENCE_ELIGIBLE` as an input only after independently resolving the GitHub Actions run and verifying the uploaded artifact ID and artifact digest against the exact run/SHA and rechecking the merge transition. Copying or editing the JSON outside that GitHub artifact transport cannot substitute for that verification.
 
 ## Data minimization
 
-The artifact contains only the information required for governance provenance: repository/ref, trusted main SHA, governance blob SHA, BR identifiers/statuses, pinned candidate identity, merged PR metadata and workflow run identity. It does not copy `decidedBy`, KYC data, participant identities, payment evidence, credentials, secrets or raw operating evidence.
+The artifact contains only the information required for governance provenance: repository/ref, trusted main SHA, validated merge transition, governance blob SHA, BR identifiers/statuses, pinned candidate identity, merged PR metadata and workflow run identity. It does not copy `decidedBy`, KYC data, participant identities, payment evidence, credentials, secrets or raw operating evidence.
 
 ## Relationship to the propagation planner
 
 `BUSINESS_RULE_PROPAGATION_CHANGE_PLAN.md` defines what must eventually change across the seven authority surfaces. It deliberately grants no implementation authority because a checkout cannot prove mainline provenance.
 
-This phase supplies the missing transport evidence. Even after all five BRs are approved, the planner remains non-authorizing; only a GitHub Actions provenance artifact from a real merged-main push can become eligible input to a separate human-reviewed implementation-authorization gate.
+This phase supplies the missing transport evidence. Even after all five BRs are approved, the planner remains non-authorizing; only a GitHub Actions provenance artifact from a real merged-main transition can become eligible input to a separate human-reviewed implementation-authorization gate.
 
 ## Sequence after future business approval
 
 1. An authorized human decides BR-001..BR-005 against the immutable candidate.
 2. A reviewed governance PR records those exact candidate-bound decisions.
-3. Merging that PR to `main` automatically triggers this provenance workflow.
-4. The workflow must produce `MERGED_MAIN_PROVENANCE_EVIDENCE_ELIGIBLE` and an uploaded artifact with a verifiable artifact digest.
-5. A separate authorization/review phase verifies that GitHub run and digest before an implementation PR may rely on the propagation blueprint.
-6. Runtime propagation, propagation verification, pilot authorization, real operating evidence and LIVE approval remain later independent gates.
+3. That PR is merged to `main` using a two-parent merge commit.
+4. The real non-forced `main` push automatically triggers this provenance workflow.
+5. The workflow must produce `MERGED_MAIN_PROVENANCE_EVIDENCE_ELIGIBLE` and an uploaded artifact with a verifiable artifact ID and artifact digest.
+6. A separate authorization/review phase verifies the GitHub run, merge transition, artifact ID and artifact digest before an implementation PR may rely on the propagation blueprint.
+7. Runtime propagation, propagation verification, pilot authorization, real operating evidence and LIVE approval remain later independent gates.
 
 No result from this phase is legal, tax or regulatory authorization for a real-money transaction.
