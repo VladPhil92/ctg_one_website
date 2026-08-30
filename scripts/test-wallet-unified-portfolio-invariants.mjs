@@ -19,7 +19,10 @@ for (const fragment of [
   'overview.balance.availableBalanceCents',
   'overview?.blockchain?.positions',
   'overview?.activity.slice(0, 20)',
-  "account.chainFamily === 'evm' && account.isPrimary",
+  "overview?.identity?.status === 'verified'",
+  "account.chainFamily === 'evm'",
+  "account.status === 'verified'",
+  'account.isPrimary',
   "router.replace('/iniciar-sesion?next=/dashboard/wallet')",
   'Esta fase es de lectura',
 ]) {
