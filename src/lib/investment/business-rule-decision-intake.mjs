@@ -235,8 +235,16 @@ export function buildInvestmentBusinessRulePropagationReadiness({ intake, manife
   const pendingSurfaces = manifest.surfaces.filter((surface) => surface.status !== 'VERIFIED').map((surface) => surface.id);
   const allSurfacesVerified = pendingSurfaces.length === 0;
   const overallVerified = manifest.overallReview.status === 'VERIFIED';
-  if (intakeSummary.propagationPlanningEligible && overallVerified) {
+  if (intakeSummary.propagationPlanningEligible && allSurfacesVerified && overallVerified) {
     const latestDecisionEpoch = Math.max(...intake.decisions.map((decision) => Date.parse(decision.decidedAt)));
+    const preparedEpoch = Date.parse(manifest.preparedAt);
+    assert(preparedEpoch > latestDecisionEpoch, 'Propagation manifest must be prepared after the latest BR approval decision');
+    for (const surface of manifest.surfaces) {
+      assert(
+        Date.parse(surface.verifiedAt) > latestDecisionEpoch,
+        `${surface.id} verification must postdate the latest BR approval decision`,
+      );
+    }
     const overallReviewEpoch = Date.parse(manifest.overallReview.reviewedAt);
     assert(overallReviewEpoch > latestDecisionEpoch, 'Propagation overall review must postdate the latest BR approval decision');
   }
