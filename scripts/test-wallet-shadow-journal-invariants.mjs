@@ -5,6 +5,7 @@ const root = process.cwd();
 const files = {
   shadowMigration: path.join(root, 'supabase/migrations/20260830014000_0080_wallet_shadow_journal_reconciliation.sql'),
   ledgerMigration: path.join(root, 'supabase/migrations/20260830215500_0084_wallet_canonical_cop_ledger_authority.sql'),
+  ledgerHardeningMigration: path.join(root, 'supabase/migrations/20260830220500_0085_wallet_canonical_cop_ledger_balance_hardening.sql'),
   contract: path.join(root, 'src/lib/wallet/shadow-journal.ts'),
   domain: path.join(root, 'src/lib/wallet/domain.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
@@ -17,6 +18,7 @@ for (const [label, file] of Object.entries(files)) {
 
 const shadow = fs.readFileSync(files.shadowMigration, 'utf8');
 const ledger = fs.readFileSync(files.ledgerMigration, 'utf8');
+const ledgerHardening = fs.readFileSync(files.ledgerHardeningMigration, 'utf8');
 const contract = fs.readFileSync(files.contract, 'utf8');
 const domain = fs.readFileSync(files.domain, 'utf8');
 const schema = fs.readFileSync(files.schema, 'utf8');
@@ -76,12 +78,24 @@ requireFragments(ledger, 'canonical ledger cutover', [
   'to service_role',
 ]);
 
+// 0085 makes the helper immune to historical shadow postings.
+requireFragments(ledgerHardening, 'canonical ledger balance hardening', [
+  'create or replace function public._wallet_ledger_balance_cents',
+  'join public.wallet_journal_postings_v2 p on p.account_id = a.id',
+  'join public.wallet_journal_entries_v2 e on e.id = p.entry_id',
+  "e.status = 'posted'",
+  "e.metadata ->> 'authoritative' = 'true'",
+  'shadow evidence is excluded',
+]);
+
 for (const forbidden of [
   'grant execute on function public.consume_wallet_cop_balance_server(uuid,bigint,text,text,text) to authenticated',
   'grant insert on public.wallet_journal_entries_v2 to authenticated',
   'grant insert on public.wallet_journal_postings_v2 to authenticated',
 ]) {
-  if (ledger.includes(forbidden)) throw new Error(`canonical ledger widened browser financial authority: ${forbidden}`);
+  if (ledger.includes(forbidden) || ledgerHardening.includes(forbidden)) {
+    throw new Error(`canonical ledger widened browser financial authority: ${forbidden}`);
+  }
 }
 
 requireFragments(domain, 'canonical ledger domain', [
@@ -93,15 +107,22 @@ requireFragments(domain, 'canonical ledger domain', [
 
 const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
 const schemaCount = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(schema);
-if (!schemaMigration || !schemaCount || Number(schemaMigration[1]) < 84 || Number(schemaCount[1]) < 84) {
-  throw new Error('runtime schema contract must include canonical COP ledger migration 0084 or later');
+if (!schemaMigration || !schemaCount || Number(schemaMigration[1]) < 85 || Number(schemaCount[1]) < 85) {
+  throw new Error('runtime schema contract must include canonical COP ledger hardening migration 0085 or later');
 }
 
-requireFragments(smoke, 'shadow PostgreSQL contract', [
-  'wallet_shadow_reconciliation_v2',
-  'shadow journal failed to mirror positive legacy delta',
-  'shadow journal failed to mirror negative legacy delta',
-  'shadow drift detector failed to expose capture loss',
+requireFragments(smoke, 'canonical ledger PostgreSQL contract', [
+  'retired shadow trigger still active after canonical cutover',
+  'balance_authority = \'ctg_ledger_v2\'',
+  'authenticated role can execute canonical consumption debit',
+  'service role cannot execute canonical consumption debit',
+  'zero-balance consumption unexpectedly succeeded',
+  "'ledger.smoke_credit'",
+  'canonical consumption replay was not idempotent',
+  'canonical ledger activity did not expose consumption debit',
+  'overdraft consumption unexpectedly succeeded',
+  'canonical reconciliation drifted after consumption debit',
+  'Wallet canonical Saldo CTG ledger PostgreSQL contract: PASS',
 ]);
 
 console.log('Wallet shadow-to-canonical-ledger invariants: PASS');
