@@ -50,7 +50,7 @@ create policy wallet_shadow_opening_snapshots_v2_read_own
   on public.wallet_shadow_opening_snapshots_v2
   for select
   to authenticated
-  using (user_id = auth.uid());
+  using (user_id = (select auth.uid()));
 
 revoke all on public.wallet_shadow_opening_snapshots_v2
   from public, anon, authenticated, service_role;
@@ -64,7 +64,7 @@ grant select on public.wallet_shadow_opening_snapshots_v2
 -- ---------------------------------------------------------------------------
 create table public.wallet_shadow_capture_failures_v2 (
   id uuid primary key default gen_random_uuid(),
-  phase text not null check (phase in ('opening_initialize','account_initialize','balance_delta')),
+  phase text not null check (phase in ('account_initialize','balance_delta')),
   user_id uuid,
   wallet_id uuid,
   old_balance_cents bigint,
@@ -264,24 +264,6 @@ revoke all on function public._wallet_shadow_initialize_user(uuid)
   from public, anon, authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
--- Freeze authoritative wallet writes while the baseline is captured and the
--- AFTER UPDATE mirror trigger is installed. Reads remain available.
--- ---------------------------------------------------------------------------
-lock table public.wallets in share row exclusive mode;
-
-do $$
-declare
-  v_user_id uuid;
-begin
-  for v_user_id in
-    select w.user_id from public.wallets w order by w.user_id
-  loop
-    perform public._wallet_shadow_initialize_user(v_user_id);
-  end loop;
-end;
-$$;
-
--- ---------------------------------------------------------------------------
 -- Fail-open shadow delta capture.
 --
 -- A successful legacy balance UPDATE is always the authority. Shadow failures
@@ -414,11 +396,31 @@ $$;
 revoke all on function public._wallet_shadow_capture_balance_delta()
   from public, anon, authenticated, service_role;
 
-create trigger wallet_shadow_capture_balance_delta_v2
-after update of balance_cents on public.wallets
-for each row
-when (new.balance_cents is distinct from old.balance_cents)
-execute function public._wallet_shadow_capture_balance_delta();
+-- Install the AFTER UPDATE mirror and capture the opening baseline while holding
+-- one table lock inside this DO statement's transaction. This closes the race
+-- between baseline capture and trigger installation without relying on a
+-- top-level LOCK statement (Supabase executes migration statements separately).
+do $$
+declare
+  v_user_id uuid;
+begin
+  lock table public.wallets in share row exclusive mode;
+
+  execute $trigger$
+    create trigger wallet_shadow_capture_balance_delta_v2
+    after update of balance_cents on public.wallets
+    for each row
+    when (new.balance_cents is distinct from old.balance_cents)
+    execute function public._wallet_shadow_capture_balance_delta()
+  $trigger$;
+
+  for v_user_id in
+    select w.user_id from public.wallets w order by w.user_id
+  loop
+    perform public._wallet_shadow_initialize_user(v_user_id);
+  end loop;
+end;
+$$;
 
 -- Future users receive a zero/current opening snapshot immediately after their
 -- Wallet V2 available account exists. Failure is non-blocking for user creation.
