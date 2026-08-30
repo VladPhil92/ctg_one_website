@@ -22,6 +22,10 @@ const mergedPullRequest = JSON.parse(
 const commitMetadata = JSON.parse(
   readFileSync(requiredEnv('BR_PROVENANCE_COMMIT_METADATA_PATH'), 'utf8'),
 );
+const parents = commitMetadata?.parents;
+if (!Array.isArray(parents) || parents.length !== 2) {
+  throw new Error('Merged-main provenance requires an exact two-parent merge commit');
+}
 
 const evidence = createInvestmentBusinessRuleMainProvenanceEvidence({
   repository: requiredEnv('GITHUB_REPOSITORY'),
@@ -29,6 +33,9 @@ const evidence = createInvestmentBusinessRuleMainProvenanceEvidence({
   ref: requiredEnv('GITHUB_REF'),
   sha: requiredEnv('GITHUB_SHA'),
   headSha: requiredEnv('BR_PROVENANCE_HEAD_SHA'),
+  eventBefore: requiredEnv('BR_PROVENANCE_EVENT_BEFORE'),
+  mergeFirstParentSha: parents[0]?.sha,
+  mergeSecondParentSha: parents[1]?.sha,
   commitVerified: commitMetadata?.commit?.verification?.verified === true,
   governanceBlobSha: requiredEnv('BR_PROVENANCE_GOVERNANCE_BLOB_SHA'),
   candidateBlobSha: requiredEnv('BR_PROVENANCE_CANDIDATE_BLOB_SHA'),
@@ -47,6 +54,7 @@ writeFileSync(outputPath, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
 console.log(JSON.stringify({
   status: evidence.status,
   trustedMainSha: evidence.trustedMainSha,
+  beforeSha: evidence.transition.beforeSha,
   governanceBlobSha: evidence.governance.blobSha,
   mergePr: evidence.mergePullRequest.number,
   workflowEvidenceCandidateEligible: evidence.workflowEvidenceCandidateEligible,
