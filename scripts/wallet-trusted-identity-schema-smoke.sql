@@ -64,6 +64,22 @@ begin
     raise exception 'service_role must execute link_verified_wallet_identity';
   end if;
 
+  if has_function_privilege(
+    'authenticated',
+    'public.consume_wallet_identity_link_rate_limit(uuid)',
+    'EXECUTE'
+  ) then
+    raise exception 'authenticated browser role must not execute the trusted identity-link rate limiter';
+  end if;
+
+  if not has_function_privilege(
+    'service_role',
+    'public.consume_wallet_identity_link_rate_limit(uuid)',
+    'EXECUTE'
+  ) then
+    raise exception 'service_role must execute the trusted identity-link rate limiter';
+  end if;
+
   if has_table_privilege('authenticated', 'public.wallet_identity_links', 'INSERT')
      or has_table_privilege('authenticated', 'public.wallet_identity_links', 'UPDATE')
      or has_table_privilege('authenticated', 'public.wallet_external_accounts', 'INSERT')
@@ -76,6 +92,13 @@ begin
      or has_table_privilege('authenticated', 'public.wallet_legacy_migration_evidence', 'UPDATE')
      or has_table_privilege('authenticated', 'public.wallet_legacy_migration_evidence', 'DELETE') then
     raise exception 'authenticated role gained access to trusted legacy migration evidence';
+  end if;
+
+  if not has_table_privilege('service_role', 'public.wallet_legacy_migration_evidence', 'SELECT')
+     or not has_table_privilege('service_role', 'public.wallet_legacy_migration_evidence', 'INSERT')
+     or not has_table_privilege('service_role', 'public.wallet_legacy_migration_evidence', 'UPDATE')
+     or has_table_privilege('service_role', 'public.wallet_legacy_migration_evidence', 'DELETE') then
+    raise exception 'service_role legacy migration evidence privileges are not least-privilege';
   end if;
 
   if has_table_privilege('authenticated', 'public.wallet_identity_audit_log', 'INSERT')
@@ -197,6 +220,20 @@ begin
   );
 
   begin
+    update public.wallet_legacy_migration_evidence
+    set expected_address = v_address_a
+    where user_id = v_user_b;
+    raise exception 'TEST_EXPECTED_PROVENANCE_IMMUTABILITY';
+  exception when others then
+    if sqlerrm = 'TEST_EXPECTED_PROVENANCE_IMMUTABILITY' then
+      raise;
+    end if;
+    if position('legacy wallet migration provenance is immutable' in sqlerrm) = 0 then
+      raise exception 'unexpected legacy provenance immutability error: %', sqlerrm;
+    end if;
+  end;
+
+  begin
     perform public.link_verified_wallet_identity(
       v_user_b,
       'did:privy:ctg-wallet-b',
@@ -264,6 +301,20 @@ begin
      or (select consumed_at is not null from public.wallet_legacy_migration_evidence where user_id = v_user_b) is not true then
     raise exception 'successful legacy migration did not consume authoritative evidence';
   end if;
+
+  begin
+    update public.wallet_legacy_migration_evidence
+    set status = 'pending', consumed_at = null
+    where user_id = v_user_b;
+    raise exception 'TEST_EXPECTED_TERMINAL_STATUS_IMMUTABILITY';
+  exception when others then
+    if sqlerrm = 'TEST_EXPECTED_TERMINAL_STATUS_IMMUTABILITY' then
+      raise;
+    end if;
+    if position('terminal legacy migration evidence status cannot change' in sqlerrm) = 0 then
+      raise exception 'unexpected terminal evidence status error: %', sqlerrm;
+    end if;
+  end;
 
   v_second := public.link_verified_wallet_identity(
     v_user_b,
