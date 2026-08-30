@@ -34,7 +34,7 @@ Iteración
 - **Validation:** Zod
 - **Data:** TanStack React Query donde aplica
 - **AI:** CTG Knowledge como beta controlada; la capa general de IA permanece gobernada por su estado de madurez
-- **Web3:** librerías presentes; CTGO permanece ROADMAP hasta existir evidencia productiva verificable
+- **Web3:** Privy/Polygon integrados bajo identidad canónica; CTGO permanece ROADMAP hasta existir evidencia productiva verificable
 - **Production hosting:** Render Web Service
 - **Source control / CI:** GitHub + GitHub Actions
 - **Browser E2E:** Playwright / Chromium
@@ -85,9 +85,38 @@ Una capacidad no pasa a `LIVE` por existir una descripción, dependencia, pantal
 - perfiles
 - KYC
 - documentos privados
-- wallet/account transactions
 - rutas protegidas
 - administración y auditoría
+
+### Wallet / Saldo CTG
+
+CTG One es la autoridad de identidad y del saldo COP que consume `CTG-Wallet`. El dominio utiliza cuentas internas y un journal append-only de doble entrada para que cada crédito y débito tenga evidencia transaccional y el navegador nunca pueda editar el saldo directamente.
+
+Flujo de recarga operativo:
+
+```text
+Usuario autenticado + KYC
+        ↓
+/dashboard/depositos
+        ↓
+QR Bre-B / transferencia
+        ↓
+Pago real a cuenta bancaria
+        ↓
+Comprobante asociado al usuario
+        ↓
+Verificación administrativa
+        ↓
+Conciliación independiente
+        ↓
+ledger.topup (crédito Saldo CTG)
+        ↓
+Wallet V2 balance + activity
+```
+
+La cuenta bancaria mantiene los pesos reales. El **Saldo CTG** es el registro interno reconciliado que permite operar dentro del perímetro habilitado del ecosistema. La carga de un comprobante nunca acredita dinero por sí sola.
+
+La autoridad objetivo es `ctg_ledger_v2`. `public.wallets.balance_cents` se conserva únicamente como caché de compatibilidad durante la transición; el saldo canónico se deriva de postings autoritativos publicados. El backend incluye un débito atómico service-role-only para consumo futuro del ecosistema, con idempotencia, control de saldo insuficiente y doble entrada. Este límite no habilita retiro libre de COP, P2P ni débitos de inversión desde el navegador.
 
 ### CTG Craft Beer Investment
 
@@ -122,7 +151,8 @@ Beta controlada de conocimiento institucional con ingestión, chunking, retrieva
 | `/knowledge` | CTG Knowledge beta |
 | `/rewards` | CTG Rewards roadmap |
 | `/token` | CTGO Web3 roadmap |
-| `/dashboard` | Personal OS protegido |
+| `/dashboard` | Personal OS protegido con Saldo CTG, identidad y capital |
+| `/dashboard/depositos` | Recarga manual Bre-B/banco + comprobante + conciliación |
 | `/dashboard/inversion` | Investment experience integrada |
 | `/admin` | Admin OS protegido |
 | `/admin/operations` | Production / Traceability / Sales OS |
@@ -148,6 +178,10 @@ Las migraciones aplicadas son inmutables. Una corrección de schema se realiza m
 ## Principios financieros y operacionales
 
 - dinero representado en centavos enteros (`bigint`) cuando aplica
+- Saldo CTG derivado de journal append-only de doble entrada
+- postings autoritativos server/database-side; nunca mutación financiera desde browser
+- idempotencia obligatoria en recargas y consumos
+- compatibilidad legacy reconciliada contra el ledger canónico
 - snapshots económicos históricos por lote
 - participant ledger append-only
 - settlement único y reconciliado por lote
@@ -211,7 +245,22 @@ NEXT_PUBLIC_SITE_URL=https://ctgone.com
 
 Nunca almacenar secretos productivos en Git.
 
-## Closed Loop actual
+## Closed Loop — Saldo CTG
+
+```text
+Identity / KYC
+→ Bre-B o transferencia
+→ Payment Evidence
+→ Admin Verification
+→ Independent Reconciliation
+→ Canonical Ledger Credit
+→ Wallet V2 Balance / Activity
+→ Trusted Ecosystem Consumption
+→ Atomic Ledger Debit
+→ Reconciliation
+```
+
+## Closed Loop — Investment
 
 ```text
 Identity
@@ -231,7 +280,7 @@ Identity
 → Withdrawal / Reinvestment
 ```
 
-El circuito base cuenta con invariantes transaccionales en PostgreSQL y contratos de reconstrucción limpia en CI. Las capacidades futuras se añaden por incrementos versionados y no deben anticiparse en documentación como si ya fueran productivas.
+Los circuitos cuentan con invariantes transaccionales en PostgreSQL y contratos de reconstrucción limpia en CI. Las capacidades futuras se añaden por incrementos versionados y no deben anticiparse en documentación como si ya fueran productivas.
 
 ## Documentación autoritativa
 

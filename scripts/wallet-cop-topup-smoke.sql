@@ -58,6 +58,10 @@ begin
     raise exception 'proof submission credited money before reconciliation';
   end if;
 
+  if public._wallet_ledger_balance_cents('22000000-0000-0000-0000-000000000001') <> 0 then
+    raise exception 'proof submission posted canonical ledger money before reconciliation';
+  end if;
+
   if not exists (
     select 1
     from public.wallet_topup_claims c
@@ -84,7 +88,8 @@ select public.verify_wallet_topup_claim(
 
 do $$
 begin
-  if (select balance_cents from public.wallets where user_id = '22000000-0000-0000-0000-000000000001') <> 0 then
+  if (select balance_cents from public.wallets where user_id = '22000000-0000-0000-0000-000000000001') <> 0
+     or public._wallet_ledger_balance_cents('22000000-0000-0000-0000-000000000001') <> 0 then
     raise exception 'verification credited money before reconciliation';
   end if;
 end $$;
@@ -115,16 +120,32 @@ select public.reconcile_wallet_topup_claim(
   'Independent finance reconciliation smoke'
 );
 
--- Replay is idempotent and must not double-credit.
+-- Replay is idempotent and must not double-credit or double-post.
 select public.reconcile_wallet_topup_claim(
   (select id from public.wallet_topup_claims where normalized_reference = 'BANCOABC1234'),
   'Replay'
 );
 
 do $$
+declare
+  v_user uuid := '22000000-0000-0000-0000-000000000001';
+  v_topup_entries bigint;
 begin
-  if (select balance_cents from public.wallets where user_id = '22000000-0000-0000-0000-000000000001') <> 100000 then
-    raise exception 'independent reconciliation did not credit exactly once';
+  if (select balance_cents from public.wallets where user_id = v_user) <> 100000 then
+    raise exception 'independent reconciliation did not credit compatibility cache exactly once';
+  end if;
+
+  if public._wallet_ledger_balance_cents(v_user) <> 100000 then
+    raise exception 'independent reconciliation did not credit canonical ledger exactly once';
+  end if;
+
+  select count(*) into v_topup_entries
+  from public.wallet_journal_entries_v2
+  where subject_user_id = v_user
+    and event_type = 'ledger.topup'
+    and metadata ->> 'authoritative' = 'true';
+  if v_topup_entries <> 1 then
+    raise exception 'reconciled top-up created duplicate canonical journal entries';
   end if;
 
   if not exists (
@@ -139,15 +160,27 @@ begin
   end if;
 
   if not exists (
-    select 1 from public.wallet_shadow_reconciliation_v2
-    where user_id = '22000000-0000-0000-0000-000000000001'
-      and legacy_balance_cents = 100000
-      and shadow_balance_cents = 100000
+    select 1 from public.wallet_ledger_activity_v2
+    where user_id = v_user
+      and event_type = 'ledger.topup'
+      and status = 'posted'
+      and direction = 'credit'
+      and amount_cents = 100000
+      and external_reference = 'BANCOABC1234'
+  ) then
+    raise exception 'wallet ledger did not expose reconciled COP credit';
+  end if;
+
+  if not exists (
+    select 1 from public.wallet_ledger_reconciliation_v2
+    where user_id = v_user
+      and ledger_balance_cents = 100000
+      and legacy_cache_balance_cents = 100000
       and drift_cents = 0
       and in_sync
-      and shadow_authoritative is false
+      and balance_authority = 'ctg_ledger_v2'
   ) then
-    raise exception 'wallet shadow did not mirror reconciled COP credit';
+    raise exception 'wallet ledger/cache reconciliation failed after COP credit';
   end if;
 end $$;
 
@@ -206,7 +239,15 @@ begin
   ) then
     raise exception 'service_role cannot execute top-up submission RPC';
   end if;
+
+  if has_function_privilege(
+    'authenticated',
+    'public.consume_wallet_cop_balance_server(uuid,bigint,text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'authenticated can execute server-only Saldo CTG consumption RPC';
+  end if;
 end $$;
 
 rollback;
-select 'Wallet COP top-up PostgreSQL contract: PASS' as result;
+select 'Wallet COP top-up canonical ledger PostgreSQL contract: PASS' as result;

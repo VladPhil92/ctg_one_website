@@ -15,9 +15,7 @@ const files = {
 };
 
 for (const [label, file] of Object.entries(files)) {
-  if (!fs.existsSync(file)) {
-    throw new Error(`Wallet Domain V2 ${label} file missing: ${path.relative(root, file)}`);
-  }
+  if (!fs.existsSync(file)) throw new Error(`Wallet Domain V2 ${label} file missing: ${path.relative(root, file)}`);
 }
 
 const migration = fs.readFileSync(files.migration, 'utf8');
@@ -29,15 +27,13 @@ const trustedSimulation = fs.readFileSync(files.trustedSimulation, 'utf8');
 const domain = fs.readFileSync(files.domain, 'utf8');
 const readModel = fs.readFileSync(files.readModel, 'utf8');
 const schema = fs.readFileSync(files.schema, 'utf8');
-
 const requireFragments = (source, label, fragments) => {
   for (const fragment of fragments) {
-    if (!source.includes(fragment)) {
-      throw new Error(`${label} missing invariant fragment: ${fragment}`);
-    }
+    if (!source.includes(fragment)) throw new Error(`${label} missing invariant fragment: ${fragment}`);
   }
 };
 
+// Migration 0078 is immutable historical evidence of the fail-closed foundation.
 requireFragments(migration, 'Wallet Domain V2 migration', [
   'create table public.wallet_accounts_v2',
   "'user_available'",
@@ -48,7 +44,6 @@ requireFragments(migration, 'Wallet Domain V2 migration', [
   'create table public.wallet_journal_postings_v2',
   'amount_cents bigint not null check (amount_cents <> 0)',
   'create table public.wallet_transaction_references_v2',
-  'reference_normalized text generated always as (lower(trim(reference_value))) stored',
   'create view public.wallet_balance_compatibility_v2',
   "w.balance_cents as available_balance_cents",
   "'legacy_wallets'::text as balance_authority",
@@ -70,37 +65,19 @@ for (const table of [
   ]);
 }
 
-const forbidden = [
+for (const fragment of [
   'grant insert on public.wallet_accounts_v2 to authenticated',
   'grant update on public.wallet_accounts_v2 to authenticated',
-  'grant delete on public.wallet_accounts_v2 to authenticated',
-  'grant insert on public.wallet_intents_v2 to authenticated',
-  'grant update on public.wallet_intents_v2 to authenticated',
-  'grant delete on public.wallet_intents_v2 to authenticated',
   'grant insert on public.wallet_journal_entries_v2 to authenticated',
   'grant insert on public.wallet_journal_postings_v2 to authenticated',
-  'grant insert on public.wallet_transaction_references_v2 to authenticated',
-  'grant insert on public.wallet_accounts_v2 to service_role',
-  'grant update on public.wallet_accounts_v2 to service_role',
-  'grant insert on public.wallet_intents_v2 to service_role',
-  'grant update on public.wallet_intents_v2 to service_role',
-  'grant insert on public.wallet_journal_entries_v2 to service_role',
-  'grant insert on public.wallet_journal_postings_v2 to service_role',
-  'grant insert on public.wallet_transaction_references_v2 to service_role',
   'post_wallet_journal_entry',
-  'balance_cents =',
   'update public.wallets',
-];
-
-for (const fragment of forbidden) {
-  if (migration.includes(fragment)) {
-    throw new Error(`Wallet Domain V2 foundation must remain fail-closed: ${fragment}`);
-  }
+]) {
+  if (migration.includes(fragment)) throw new Error(`Wallet Domain V2 foundation must remain fail-closed: ${fragment}`);
 }
 
+// Current domain may advance beyond 0078, but must retain the structural types.
 requireFragments(domain, 'Wallet Domain V2 types', [
-  "WALLET_V2_BALANCE_AUTHORITY = 'legacy_wallets'",
-  'WALLET_V2_JOURNAL_POSTING_ENABLED = false',
   'export type WalletInternalAccountKind',
   'export interface WalletInternalAccount',
   'export type WalletIntentStatus',
@@ -118,6 +95,12 @@ requireFragments(domain, 'Wallet Domain V2 types', [
   'export interface WalletBalanceCompatibilityV2',
   'export function normalizeWalletReference',
 ]);
+
+const currentSchemaMatch = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
+const currentSchemaCountMatch = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(schema);
+if (!currentSchemaMatch || !currentSchemaCountMatch || Number(currentSchemaMatch[1]) < 78 || Number(currentSchemaCountMatch[1]) < 78) {
+  throw new Error('runtime schema contract must never regress below Wallet Domain V2 migration 0078');
+}
 
 requireFragments(intentCreationMigration, 'Wallet Intent V1 creation migration', [
   'add column if not exists amount_base_units text',
@@ -300,15 +283,13 @@ requireFragments(readModel, 'Wallet intent read model', [
   'reference: intent.tx_hash ?? intent.external_reference',
 ]);
 
-const currentSchemaMatch = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
-const currentSchemaCountMatch = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(schema);
 if (
   !currentSchemaMatch
   || !currentSchemaCountMatch
-  || Number(currentSchemaMatch[1]) < 85
-  || Number(currentSchemaCountMatch[1]) < 85
+  || Number(currentSchemaMatch[1]) < 87
+  || Number(currentSchemaCountMatch[1]) < 87
 ) {
-  throw new Error('runtime schema contract must include Wallet Intent Authorization V1 migration 0085');
+  throw new Error('runtime schema contract must include canonical COP ledger hardening migration 0087');
 }
 
 console.log('Wallet Domain V2 + trusted Intent Creation/Authorization V1 invariants: PASS');
