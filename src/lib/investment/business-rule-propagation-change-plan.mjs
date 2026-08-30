@@ -1,10 +1,12 @@
 import {
   INVESTMENT_BUSINESS_RULE_CANDIDATE,
   INVESTMENT_BUSINESS_RULE_GOVERNANCE,
+  INVESTMENT_BUSINESS_RULE_PROPAGATION,
   INVESTMENT_REQUIRED_BUSINESS_RULE_IDS,
   areInvestmentBusinessRulesApproved,
   derivePendingInvestmentBusinessDecisionIds,
   validateInvestmentBusinessRuleGovernance,
+  validateInvestmentBusinessRulePropagation,
 } from '../../data/investment-business-rule-governance.mjs';
 import { INVESTMENT_BUSINESS_RULE_PROPAGATION_SURFACE_IDS } from './business-rule-decision-intake.mjs';
 
@@ -194,9 +196,11 @@ export const INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT = deepFreeze(
           targets: [
             { kind: 'FILE', path: 'docs/investment/LEGAL_CONFIGURATION.md' },
             { kind: 'FILE', path: 'src/lib/investment/config.ts' },
+            { kind: 'FILE', path: 'src/app/inversion/legal/page.tsx' },
           ],
           acceptanceCriteria: [
             'Bind the approved rule set to an explicit agreement/formula version without inventing a legal classification.',
+            'Propagate the approved participant-facing terms into the actual /inversion/legal instrument that agreement acceptance references.',
             'Preserve separate legal, tax and regulatory authorization requirements for any real-money closed-beta transaction.',
             'Ensure participant-facing copy contains no guaranteed-capital or guaranteed-return language.',
             'Require any future substantive rule change to create a new version instead of mutating historical accepted terms.',
@@ -309,9 +313,12 @@ export function validateInvestmentBusinessRulePropagationChangeBlueprint(bluepri
     surfaceIds.add(surface.id);
     assert(stageIds.has(surface.stage), `${surface.id} references unknown stage: ${surface.stage}`);
     assert(Array.isArray(surface.dependsOn), `${surface.id}.dependsOn must be an array`);
+    const seenDependencies = new Set();
     for (const dependency of surface.dependsOn) {
       assert(INVESTMENT_BUSINESS_RULE_PROPAGATION_SURFACE_IDS.includes(dependency), `${surface.id} has unknown dependency: ${dependency}`);
       assert(dependency !== surface.id, `${surface.id} cannot depend on itself`);
+      assert(!seenDependencies.has(dependency), `${surface.id} contains duplicate dependency: ${dependency}`);
+      seenDependencies.add(dependency);
     }
     assert(Array.isArray(surface.tasks) && surface.tasks.length > 0, `${surface.id} requires at least one task`);
 
@@ -357,27 +364,46 @@ export function validateInvestmentBusinessRulePropagationChangeBlueprint(bluepri
 
   const stageOrder = new Map(blueprint.stages.map((stage) => [stage.id, stage.order]));
   const surfaceStageOrder = new Map(blueprint.surfaces.map((surface) => [surface.id, stageOrder.get(surface.stage)]));
+  const dependenciesBySurface = new Map(blueprint.surfaces.map((surface) => [surface.id, surface.dependsOn]));
   for (const surface of blueprint.surfaces) {
     for (const dependency of surface.dependsOn) {
       assert(surfaceStageOrder.get(dependency) <= surfaceStageOrder.get(surface.id), `${surface.id} cannot depend on a later-stage surface: ${dependency}`);
     }
   }
 
+  const visiting = new Set();
+  const visited = new Set();
+  function visit(surfaceId) {
+    if (visited.has(surfaceId)) return;
+    assert(!visiting.has(surfaceId), `Propagation change dependency cycle detected at ${surfaceId}`);
+    visiting.add(surfaceId);
+    for (const dependency of dependenciesBySurface.get(surfaceId) ?? []) visit(dependency);
+    visiting.delete(surfaceId);
+    visited.add(surfaceId);
+  }
+  for (const surfaceId of surfaceIds) visit(surfaceId);
+
   return blueprint;
 }
 
 export function buildInvestmentBusinessRulePropagationChangePlan({
   governance = INVESTMENT_BUSINESS_RULE_GOVERNANCE,
+  propagation = INVESTMENT_BUSINESS_RULE_PROPAGATION,
   blueprint = INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT,
 } = {}) {
   validateInvestmentBusinessRuleGovernance(governance);
+  validateInvestmentBusinessRulePropagation(governance, propagation);
   validateInvestmentBusinessRulePropagationChangeBlueprint(blueprint);
 
   const blockers = [...derivePendingInvestmentBusinessDecisionIds(governance)];
   const approved = areInvestmentBusinessRulesApproved(governance);
-  const status = approved
-    ? 'READY_FOR_REVIEWED_IMPLEMENTATION_PR'
-    : 'BLOCKED_AWAITING_CANONICAL_APPROVAL';
+  const alreadyPropagated = propagation.status === 'VERIFIED';
+  const implementationEligible = approved && !alreadyPropagated;
+  const status = alreadyPropagated
+    ? 'ALREADY_PROPAGATED'
+    : approved
+      ? 'READY_FOR_REVIEWED_IMPLEMENTATION_PR'
+      : 'BLOCKED_AWAITING_CANONICAL_APPROVAL';
 
   return deepFreeze({
     version: INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_PLAN_VERSION,
@@ -385,8 +411,9 @@ export function buildInvestmentBusinessRulePropagationChangePlan({
     candidate: { ...INVESTMENT_BUSINESS_RULE_CANDIDATE },
     decisionBlockers: blockers,
     canonicalApprovalsSatisfied: approved,
-    implementationPlanningEligible: approved,
-    implementationPrEligible: approved,
+    propagationAlreadyVerified: alreadyPropagated,
+    implementationPlanningEligible: implementationEligible,
+    implementationPrEligible: implementationEligible,
     automaticApprovalAllowed: false,
     automaticMutationAllowed: false,
     runtimeMutationAllowedByPlanner: false,
