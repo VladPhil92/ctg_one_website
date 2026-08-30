@@ -103,6 +103,14 @@ assert.equal(propagated.status, 'PROPAGATION_ALREADY_VERIFIED');
 assert.equal(propagated.workflowEvidenceCandidateEligible, false);
 assert.equal(propagated.implementationPrEligible, false);
 
+const inconsistentVerifiedEvidence = structuredClone(propagated);
+inconsistentVerifiedEvidence.governance.ruleStatuses[0].status = 'PENDING';
+inconsistentVerifiedEvidence.governance.approvalsSatisfied = false;
+assert.throws(
+  () => validateInvestmentBusinessRuleMainProvenanceEvidence(inconsistentVerifiedEvidence),
+  /requires five approved business rules/i,
+);
+
 for (const [label, override, expected] of [
   ['wrong repository', { repository: 'someone/else' }, /repository mismatch/i],
   ['manual event', { eventName: 'workflow_dispatch' }, /requires a GitHub push event/i],
@@ -141,6 +149,8 @@ assert.match(workflowSource, /test "\$\{exact_count\}" = '1'/);
 assert.match(workflowSource, /git rev-parse "\$\{candidate_commit\}:\$\{candidate_path\}"/);
 assert.match(workflowSource, /HEAD:src\/data\/investment-business-rule-governance\.mjs/);
 assert.match(workflowSource, /actions\/upload-artifact@v7/);
+assert.match(workflowSource, /id:\s*provenance-artifact/);
+assert.match(workflowSource, /artifact-digest/);
 assert.match(workflowSource, /investment-br-main-provenance-\$\{\{ github\.sha \}\}/);
 
 const emitterSource = await read('scripts/create-investment-business-rule-main-provenance-evidence.mjs');
