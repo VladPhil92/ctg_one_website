@@ -84,7 +84,7 @@ export async function GET(request: Request) {
       supabase
         .from('wallet_intents_v2')
         .select(
-          'id,user_id,intent_type,status,currency,amount_cents,external_reference,expires_at,created_at,updated_at',
+          'id,user_id,intent_type,status,currency,amount_cents,rail,chain_id,asset_symbol,amount_base_units,destination_address,tx_hash,external_reference,replaced_by_reference,settled_at,expires_at,created_at,updated_at',
         )
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
