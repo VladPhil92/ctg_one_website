@@ -110,9 +110,10 @@ for (const [name, source] of [['deposits', deposits], ['kyc', kyc]]) {
 }
 
 assert.match(deposits, /next=\/dashboard\/depositos/, 'Deposit auth continuation must return the user to the deposit workflow.');
-assert.match(deposits, /PAYMENT_INSTRUCTIONS_CONFIGURED/, 'Deposit UI must retain the payment-rail configuration gate.');
+assert.match(deposits, /WALLET_MANUAL_COP_TOPUP_CONFIGURED/, 'Deposit UI must retain the dedicated manual COP rail configuration gate.');
 assert.match(deposits, /profile\?\.kyc_status === 'verified'/, 'Deposit submission must remain gated by verified account KYC.');
-assert.match(deposits, /\.from\('transactions'\)\.insert/, 'Deposit UI must retain the canonical transaction write path.');
+assert.match(deposits, /fetch\('\/api\/wallet\/deposits'/, 'Deposit UI must submit evidence through the canonical server trust boundary.');
+assert.doesNotMatch(deposits, /\.from\('transactions'\)[\s\S]*?\.insert\(/, 'Deposit UI must never regain a browser-authoritative transaction insert path.');
 assert.match(deposits, /aria-pressed=\{method === item\.value\}/, 'Deposit rail selection must expose pressed state semantics.');
 
 assert.match(kyc, /next=\/dashboard\/kyc/, 'KYC auth continuation must return the user to the identity workflow.');
