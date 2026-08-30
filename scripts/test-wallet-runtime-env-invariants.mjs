@@ -12,18 +12,28 @@ const keys = [
   'CTG_TOKEN_POLYGON_ADDRESS',
 ];
 
+function envBlockFor(key) {
+  const marker = `      - key: ${key}\n`;
+  const start = render.indexOf(marker);
+  if (start < 0) return null;
+
+  const next = render.indexOf('      - key: ', start + marker.length);
+  return render.slice(start, next < 0 ? render.length : next);
+}
+
 for (const key of keys) {
   if (!example.includes(`${key}=`)) {
     throw new Error(`wallet runtime env missing from .env.local.example: ${key}`);
   }
 
-  const declaration = new RegExp(`- key: ${key}\\n\\s+sync: false`);
-  if (!declaration.test(render)) {
+  const block = envBlockFor(key);
+  if (!block) {
+    throw new Error(`wallet runtime env missing from render.yaml: ${key}`);
+  }
+  if (!/^\s*sync:\s*false\s*$/m.test(block)) {
     throw new Error(`wallet runtime env must be declared sync:false in render.yaml: ${key}`);
   }
-
-  const literalValue = new RegExp(`- key: ${key}\\n\\s+value:`);
-  if (literalValue.test(render)) {
+  if (/^\s*value\s*:/m.test(block)) {
     throw new Error(`wallet runtime env must not commit a production value: ${key}`);
   }
 }
