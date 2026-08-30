@@ -28,6 +28,8 @@ const OVERALL_REVIEW_STATUSES = new Set(['PENDING', 'VERIFIED']);
 const FULL_SHA_RE = /^[0-9a-f]{40}$/;
 const ISO_INSTANT_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 const SAFE_REF_RE = /^[A-Za-z0-9][A-Za-z0-9._:/#@-]{2,239}$/;
+const URI_SCHEME_RE = /^[A-Za-z][A-Za-z0-9+.-]*:/;
+const REPOSITORY_PATH_RE = /^[A-Za-z0-9._@+-]+(?:\/[A-Za-z0-9._@+-]+)*$/;
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -56,6 +58,12 @@ function validateCandidate(candidate, path = 'candidate') {
 
 function assertIsoInstant(value, path) {
   assert(typeof value === 'string' && ISO_INSTANT_RE.test(value), `${path} must be an ISO UTC instant`);
+  const epoch = Date.parse(value);
+  assert(Number.isFinite(epoch), `${path} must contain a valid calendar instant`);
+  const canonical = new Date(epoch).toISOString();
+  const normalized = value.includes('.') ? value : value.replace(/Z$/, '.000Z');
+  assert(canonical === normalized, `${path} must contain a valid round-tripping UTC instant`);
+  return epoch;
 }
 
 function assertEvidenceRef(value, path) {
@@ -147,8 +155,12 @@ export function summarizeInvestmentBusinessRuleDecisionIntake(intake) {
 
 function validateArtifactRef(value, path) {
   assert(typeof value === 'string' && value.length >= 3 && value.length <= 240, `${path} must be a repository-relative artifact reference`);
-  assert(!value.startsWith('/') && !value.includes('..') && !value.includes('\\'), `${path} must be repository-relative and cannot traverse directories`);
-  assert(!/^https?:/i.test(value), `${path} must not be a remote URL`);
+  assert(!URI_SCHEME_RE.test(value), `${path} must not use a URI scheme`);
+  assert(!value.startsWith('/') && !value.includes('\\'), `${path} must be repository-relative`);
+  assert(REPOSITORY_PATH_RE.test(value), `${path} must use safe repository-relative path syntax`);
+  for (const component of value.split('/')) {
+    assert(component !== '.' && component !== '..', `${path} cannot traverse directories`);
+  }
 }
 
 function validateSurface(surface) {
@@ -205,8 +217,10 @@ export function validateInvestmentBusinessRulePropagationManifest(manifest) {
   } else {
     assert(manifest.surfaces.every((surface) => surface.status === 'VERIFIED'), 'Overall propagation review cannot be VERIFIED before every required surface is VERIFIED');
     assert(typeof manifest.overallReview.reviewedBy === 'string' && manifest.overallReview.reviewedBy.trim().length >= 2, 'overallReview.reviewedBy is required');
-    assertIsoInstant(manifest.overallReview.reviewedAt, 'overallReview.reviewedAt');
+    const overallEpoch = assertIsoInstant(manifest.overallReview.reviewedAt, 'overallReview.reviewedAt');
     assertEvidenceRef(manifest.overallReview.evidenceRef, 'overallReview.evidenceRef');
+    const latestSurfaceEpoch = Math.max(...manifest.surfaces.map((surface) => Date.parse(surface.verifiedAt)));
+    assert(overallEpoch >= latestSurfaceEpoch, 'Overall propagation review cannot predate a required surface verification');
   }
 
   return manifest;
@@ -221,6 +235,11 @@ export function buildInvestmentBusinessRulePropagationReadiness({ intake, manife
   const pendingSurfaces = manifest.surfaces.filter((surface) => surface.status !== 'VERIFIED').map((surface) => surface.id);
   const allSurfacesVerified = pendingSurfaces.length === 0;
   const overallVerified = manifest.overallReview.status === 'VERIFIED';
+  if (intakeSummary.propagationPlanningEligible && overallVerified) {
+    const latestDecisionEpoch = Math.max(...intake.decisions.map((decision) => Date.parse(decision.decidedAt)));
+    const overallReviewEpoch = Date.parse(manifest.overallReview.reviewedAt);
+    assert(overallReviewEpoch > latestDecisionEpoch, 'Propagation overall review must postdate the latest BR approval decision');
+  }
   const ready = intakeSummary.propagationPlanningEligible && allSurfacesVerified && overallVerified;
 
   const proposedPropagationRecord = ready
