@@ -212,6 +212,49 @@ export interface WalletOverviewExternalAccount {
   verifiedAt: string | null;
 }
 
+export type WalletOverviewBlockchainStatus =
+  | 'not_linked'
+  | 'available'
+  | 'degraded'
+  | 'unavailable';
+
+export type WalletOverviewBlockchainReason =
+  | 'NO_VERIFIED_EVM_ACCOUNT'
+  | 'INVALID_VERIFIED_EVM_ACCOUNT'
+  | 'RPC_NOT_CONFIGURED'
+  | 'RPC_READ_FAILED'
+  | 'CTG_TOKEN_CONFIG_INVALID'
+  | 'CTG_TOKEN_READ_FAILED'
+  | null;
+
+export interface WalletOverviewBlockchainPosition {
+  authority: 'blockchain';
+  network: 'polygon';
+  chainId: 137;
+  accountAddress: string;
+  assetKind: 'native' | 'erc20';
+  assetAddress: string | null;
+  symbol: string;
+  decimals: number;
+  rawBalance: string;
+  formattedBalance: string;
+}
+
+/**
+ * Read-only on-chain projection. Account ownership is resolved from the trusted
+ * wallet_external_accounts registry; the browser never chooses the address that
+ * is associated with the canonical CTG user.
+ */
+export interface WalletOverviewBlockchainPortfolio {
+  network: 'polygon';
+  chainId: 137;
+  accountAddress: string | null;
+  status: WalletOverviewBlockchainStatus;
+  reason: WalletOverviewBlockchainReason;
+  positions: WalletOverviewBlockchainPosition[];
+  asOf: string;
+}
+
 export type WalletOverviewActivitySource = 'legacy_transaction' | 'wallet_intent';
 
 export interface WalletOverviewActivityItem {
@@ -233,7 +276,7 @@ export interface WalletOverviewCapabilities {
   activityRead: true;
   journalPosting: false;
   moneyMovement: false;
-  blockchainBalances: false;
+  blockchainBalances: boolean;
   investmentPositions: false;
 }
 
@@ -243,6 +286,10 @@ export interface WalletOverviewCapabilities {
  * This contract intentionally exposes only user-owned, display-safe data. It
  * does not expose payment proof paths, admin notes, provider secrets,
  * idempotency keys or Wallet V2 journal mutation capability.
+ *
+ * blockchain is additive/optional during the two-repository convergence window
+ * so older clients can continue to consume the V2 response while CTG-Wallet is
+ * upgraded to the canonical contract.
  */
 export interface WalletOverviewV2 {
   version: typeof WALLET_OVERVIEW_VERSION;
@@ -254,6 +301,7 @@ export interface WalletOverviewV2 {
   balance: WalletOverviewBalance;
   identity: WalletOverviewIdentity | null;
   externalAccounts: WalletOverviewExternalAccount[];
+  blockchain?: WalletOverviewBlockchainPortfolio;
   activity: WalletOverviewActivityItem[];
   capabilities: WalletOverviewCapabilities;
 }
