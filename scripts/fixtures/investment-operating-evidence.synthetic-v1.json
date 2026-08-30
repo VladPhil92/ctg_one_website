@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0076",
-    "schemaMigrationName": "wallet_identity_bridge",
-    "schemaMigrationCount": 76,
+    "schemaMigration": "0077",
+    "schemaMigrationName": "trusted_wallet_identity_linking",
+    "schemaMigrationCount": 77,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

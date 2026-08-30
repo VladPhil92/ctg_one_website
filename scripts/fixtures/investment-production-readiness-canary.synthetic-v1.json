@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0076",
-  "expectedMigrationName": "wallet_identity_bridge",
-  "expectedMigrationCount": 76,
+  "expectedMigration": "0077",
+  "expectedMigrationName": "trusted_wallet_identity_linking",
+  "expectedMigrationCount": 77,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

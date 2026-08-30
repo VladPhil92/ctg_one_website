@@ -70,6 +70,7 @@ declare
     'kyc_submissions.kyc_submissions_select',
     'profiles.profiles_select',
     'transactions.transactions_select',
+    'wallet_identity_audit_log.wallet_identity_audit_log_read_own_or_admin',
     'wallets.wallets_select'
   ];
   v_actual text[];

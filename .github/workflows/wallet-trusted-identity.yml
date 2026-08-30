@@ -1,0 +1,91 @@
+name: Wallet Trusted Identity Boundary
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**wallet_identity**'
+      - 'supabase/migrations/**trusted_wallet_identity**'
+      - 'src/app/api/wallet/identity/**'
+      - 'src/lib/wallet/**'
+      - 'src/lib/security/api-rate-limit.ts'
+      - 'src/lib/observability/schema-version.ts'
+      - 'scripts/test-wallet-trusted-identity-invariants.mjs'
+      - 'scripts/wallet-trusted-identity-schema-smoke.sql'
+      - '.github/workflows/wallet-trusted-identity.yml'
+      - 'package.json'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**wallet_identity**'
+      - 'supabase/migrations/**trusted_wallet_identity**'
+      - 'src/app/api/wallet/identity/**'
+      - 'src/lib/wallet/**'
+      - 'src/lib/security/api-rate-limit.ts'
+      - 'src/lib/observability/schema-version.ts'
+      - 'scripts/test-wallet-trusted-identity-invariants.mjs'
+      - 'scripts/wallet-trusted-identity-schema-smoke.sql'
+      - '.github/workflows/wallet-trusted-identity.yml'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wallet-trusted-identity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trusted-identity-contract:
+    name: Trusted identity contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify migration and source invariants
+        run: |
+          node scripts/test-migration-integrity.mjs
+          node scripts/test-wallet-unification-invariants.mjs
+          node scripts/test-wallet-trusted-identity-invariants.mjs
+
+      - name: Typecheck trusted server boundary
+        run: npx tsc --noEmit
+
+      - name: Set up pinned Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.111.0
+
+      - name: Configure isolated database port
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('supabase/config.toml')
+          source = path.read_text()
+          marker = '[db]\n# Port to use for the local database URL.\nport = 54322'
+          replacement = '[db]\n# Port to use for the local database URL.\nport = 55432'
+          if marker not in source:
+              raise SystemExit('Expected Supabase database port stanza was not found')
+          path.write_text(source.replace(marker, replacement, 1))
+          PY
+
+      - name: Start isolated Supabase database
+        run: supabase db start
+
+      - name: Trusted wallet identity PostgreSQL contract
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:55432/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -f scripts/wallet-trusted-identity-schema-smoke.sql
