@@ -6,6 +6,8 @@ const files = {
   migration: path.join(root, 'supabase/migrations/20260829234000_0077_trusted_wallet_identity_linking.sql'),
   verifier: path.join(root, 'src/lib/wallet/privy-identity-token.ts'),
   route: path.join(root, 'src/app/api/wallet/identity/link/route.ts'),
+  serverAuth: path.join(root, 'src/lib/supabase/server.ts'),
+  cors: path.join(root, 'src/lib/wallet/cors.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
   env: path.join(root, '.env.local.example'),
 };
@@ -19,6 +21,8 @@ for (const [label, file] of Object.entries(files)) {
 const migration = fs.readFileSync(files.migration, 'utf8');
 const verifier = fs.readFileSync(files.verifier, 'utf8');
 const route = fs.readFileSync(files.route, 'utf8');
+const serverAuth = fs.readFileSync(files.serverAuth, 'utf8');
+const cors = fs.readFileSync(files.cors, 'utf8');
 const schema = fs.readFileSync(files.schema, 'utf8');
 const env = fs.readFileSync(files.env, 'utf8');
 
@@ -111,8 +115,27 @@ requireFragments(verifier, 'Privy identity-token verifier', [
   'MAX_TOKEN_AGE_SECONDS',
 ]);
 
+requireFragments(serverAuth, 'canonical wallet request authentication', [
+  'export async function createAuthenticatedRequestContext(',
+  'const bearer = parseBearerToken(request);',
+  'if (bearer.present) {',
+  'if (!bearer.token) return null;',
+  'supabase.auth.getUser(bearer.token)',
+  "return { supabase, user: data.user, transport: 'bearer' }",
+  "return { supabase, user: data.user, transport: 'cookie' }",
+]);
+
+requireFragments(cors, 'wallet CORS boundary', [
+  'export function isAllowedWalletOrigin',
+  'export function applyWalletCors(',
+  'export function walletCorsPreflight(',
+  "headers.set('Access-Control-Allow-Origin', origin)",
+  "headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type, Privy-ID-Token')",
+]);
+
 requireFragments(route, 'trusted identity-link route', [
-  'supabase.auth.getUser()',
+  'createAuthenticatedRequestContext(request)',
+  'isSupabaseConfigured',
   'const serviceRole = createAdminClient()',
   "serviceRole.rpc(\n    'consume_wallet_identity_link_rate_limit'",
   "request.headers.get('privy-id-token')",
@@ -128,19 +151,25 @@ requireFragments(route, 'trusted identity-link route', [
   'p_evm_address: verifiedIdentity.embeddedEvmAddress',
   'p_link_mode: body.linkMode',
   'MAX_REQUEST_BYTES',
+  "const CORS_METHODS = ['POST', 'OPTIONS'] as const",
+  'return walletCorsPreflight(request, CORS_METHODS)',
+  'return applyWalletCors(',
   "headers.set('Cache-Control', 'no-store')",
+  "headers.set('Referrer-Policy', 'no-referrer')",
 ]);
 
 if (
   /walletAddress\s*:/i.test(route) ||
   /evmAddress\s*:/i.test(route) ||
   route.includes('expectedLegacyWalletAddress') ||
-  route.includes('consumeAuthenticatedRateLimit')
+  route.includes('consumeAuthenticatedRateLimit') ||
+  route.includes('supabase.auth.getUser()') ||
+  route.includes('createClient()')
 ) {
-  throw new Error('identity-link route must not trust browser wallet provenance or widen the authenticated rate-limit RPC');
+  throw new Error('identity-link route must not trust browser wallet provenance, regress to cookie-only auth, or widen the authenticated rate-limit RPC');
 }
 
-const authIndex = route.indexOf('supabase.auth.getUser()');
+const authIndex = route.indexOf('createAuthenticatedRequestContext(request)');
 const adminIndex = route.indexOf('const serviceRole = createAdminClient()');
 const rateIndex = route.indexOf("'consume_wallet_identity_link_rate_limit'");
 const evidenceIndex = route.indexOf(".from('wallet_legacy_migration_evidence')");
@@ -148,6 +177,14 @@ const verifyIndex = route.indexOf('verifyPrivyIdentityToken({');
 const rpcIndex = route.indexOf("serviceRole.rpc('link_verified_wallet_identity'");
 if (!(authIndex >= 0 && adminIndex > authIndex && rateIndex > adminIndex && evidenceIndex > rateIndex && verifyIndex > evidenceIndex && rpcIndex > verifyIndex)) {
   throw new Error('trusted linking must authenticate, rate-limit, load provenance, verify Privy, then mutate');
+}
+
+const bearerBranchIndex = serverAuth.indexOf('if (bearer.present) {');
+const bearerRejectIndex = serverAuth.indexOf('if (!bearer.token) return null;', bearerBranchIndex);
+const bearerVerifyIndex = serverAuth.indexOf('supabase.auth.getUser(bearer.token)', bearerBranchIndex);
+const cookieVerifyIndex = serverAuth.indexOf('supabase.auth.getUser()', bearerBranchIndex);
+if (!(bearerBranchIndex >= 0 && bearerRejectIndex > bearerBranchIndex && bearerVerifyIndex > bearerRejectIndex && cookieVerifyIndex > bearerVerifyIndex)) {
+  throw new Error('invalid bearer authentication must fail closed before any cookie fallback');
 }
 
 const currentSchemaMatch = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
