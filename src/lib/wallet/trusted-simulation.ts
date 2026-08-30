@@ -259,12 +259,13 @@ export async function simulateTrustedWalletIntentV1(
   const nativeBalance = parseRpcQuantity(balanceRaw, 'WALLET_AUTH_TRUSTED_BALANCE_INVALID');
   const blockNumber = parseRpcQuantity(blockRaw, 'WALLET_AUTH_TRUSTED_BLOCK_INVALID');
   const gasPrice = parseRpcQuantity(gasPriceRaw, 'WALLET_AUTH_TRUSTED_GAS_PRICE_INVALID');
+  const zero = BigInt(0);
 
-  if (estimatedGas <= 0n || blockNumber <= 0n || gasPrice <= 0n) {
+  if (estimatedGas <= zero || blockNumber <= zero || gasPrice <= zero) {
     throw new WalletTrustedSimulationError('WALLET_AUTH_TRUSTED_SIMULATION_INVALID');
   }
 
-  const nativeValue = input.assetSymbol === 'POL' ? BigInt(input.amountBaseUnits) : 0n;
+  const nativeValue = input.assetSymbol === 'POL' ? BigInt(input.amountBaseUnits) : zero;
   const requiredNativeReserve = nativeValue + (estimatedGas * gasPrice);
   if (nativeBalance < requiredNativeReserve) {
     throw new WalletTrustedSimulationError('WALLET_AUTH_TRUSTED_NATIVE_BALANCE_INSUFFICIENT');
