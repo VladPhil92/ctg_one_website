@@ -30,7 +30,17 @@ npm run investment:br:propagation:plan -- \
   --out .private-evidence/investment-br-propagation-change-plan.json
 ```
 
-The planner treats `BLOCKED_AWAITING_CANONICAL_APPROVAL` as a valid planning result. It exits non-zero only when the blueprint itself is malformed. This is intentional: planning may occur before approval, but implementation authority may not.
+The planner treats a valid blocked or already-completed lifecycle state as a successful planning evaluation. It exits non-zero only when the blueprint itself is malformed. This is intentional: planning may occur before approval, while implementation authority remains fail-closed.
+
+## Planner lifecycle
+
+The planner has three valid lifecycle states:
+
+- `BLOCKED_AWAITING_CANONICAL_APPROVAL`: one or more BRs are not canonically `APPROVED`; implementation planning and an implementation PR remain ineligible.
+- `READY_FOR_REVIEWED_IMPLEMENTATION_PR`: all five exact candidate-bound approvals are canonical and propagation is still `PENDING`; a reviewed implementation PR may be prepared, but no automatic mutation or release authority is granted.
+- `ALREADY_PROPAGATED`: the canonical propagation record is already `VERIFIED`; the planner must not suggest another implementation PR for the same candidate.
+
+Every lifecycle state keeps `automaticApprovalAllowed`, `automaticMutationAllowed`, `runtimeMutationAllowedByPlanner`, `propagationVerificationAllowed`, `pilotAuthorizationGranted` and `livePromotionAllowed` false.
 
 ## Current expected result
 
@@ -39,6 +49,7 @@ While canonical BR-001..BR-005 remain `PENDING`, the result must contain:
 - `status = BLOCKED_AWAITING_CANONICAL_APPROVAL`;
 - all five BR identifiers in `decisionBlockers`;
 - `canonicalApprovalsSatisfied = false`;
+- `propagationAlreadyVerified = false`;
 - `implementationPlanningEligible = false`;
 - `implementationPrEligible = false`;
 - `automaticApprovalAllowed = false`;
@@ -57,18 +68,18 @@ The blueprint requires exactly these surfaces and preserves their dependency ord
 1. `business-model` — make the approved BR set authoritative in `BUSINESS_MODEL.md`.
 2. `financial-model` — specify cost classification, `LotAvailable`, capital recovery, loss/write-off treatment and exact cent reconciliation.
 3. `lot-inventory-state-machine` — define deterministic long-stop, extension and terminal inventory disposition semantics.
-4. `agreement-legal-config` — bind the approved rule set to versioned terms/configuration without inventing legal classification.
+4. `agreement-legal-config` — bind the approved rule set to versioned terms/configuration and to the actual participant-facing instrument at `src/app/inversion/legal/page.tsx`, without inventing legal classification.
 5. `postgres-runtime` — implement the rule set through a **new immutable migration** assigned from the then-current `main` migration baseline.
 6. `golden-path-tests` — prove the approved economics and state transitions on a clean migration-materialized database.
 7. `operator-evidence` — prove a future controlled real cycle reconciles to the approved rules using redacted first-party aggregates only.
 
-Dependencies are fail-closed. Runtime implementation depends on the authoritative specification surfaces; contract verification depends on runtime implementation; operator evidence depends on the contract tests.
+Dependencies are fail-closed. Runtime implementation depends on the authoritative specification surfaces; contract verification depends on runtime implementation; operator evidence depends on the contract tests. Duplicate dependencies, dependencies on later stages and dependency cycles are invalid.
 
 ## BR coverage
 
 BR-001 and BR-002 must propagate through business, financial, legal/config, PostgreSQL, Golden Path and operator-evidence surfaces. BR-003, BR-004 and BR-005 additionally require the lot/inventory state-machine surface.
 
-The blueprint validator rejects missing required coverage, duplicate task IDs, unknown BRs or surfaces, unsafe repository paths, missing acceptance criteria and dependencies that point to a later stage.
+The blueprint validator rejects missing required coverage, duplicate task IDs, duplicate/cyclic dependencies, unknown BRs or surfaces, unsafe repository paths, missing acceptance criteria and dependencies that point to a later stage.
 
 ## Runtime implementation boundary
 
@@ -91,7 +102,7 @@ The future runtime implementation must, at minimum, preserve these constraints f
 
 1. Record all five explicit candidate-bound approvals in canonical governance through a reviewed PR.
 2. Re-run the planner and require `READY_FOR_REVIEWED_IMPLEMENTATION_PR`.
-3. Update authoritative business, financial, state-machine and legal/config specification.
+3. Update authoritative business, financial, state-machine and legal/config specification, including the actual `/inversion/legal` instrument.
 4. Allocate the next migration from the then-current `main` baseline and implement the approved PostgreSQL/runtime rules.
 5. Extend Golden Path and invariant coverage.
 6. Extend redacted operator/evidence tooling.
