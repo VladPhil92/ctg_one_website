@@ -54,12 +54,16 @@ validateInvestmentBusinessRulePropagationChangeBlueprint(
 const canonicalPlan = buildInvestmentBusinessRulePropagationChangePlan();
 assert.equal(canonicalPlan.version, INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_PLAN_VERSION);
 assert.equal(canonicalPlan.status, 'BLOCKED_AWAITING_CANONICAL_APPROVAL');
-assert.equal(canonicalPlan.authoritative, true);
+assert.equal(canonicalPlan.authoritative, false);
+assert.equal(canonicalPlan.blueprintAuthoritative, true);
+assert.equal(canonicalPlan.governanceProvenanceVerified, false);
+assert.equal(canonicalPlan.mergedMainProvenanceRequired, false);
 assert.deepEqual(canonicalPlan.decisionBlockers, INVESTMENT_REQUIRED_BUSINESS_RULE_IDS);
-assert.equal(canonicalPlan.canonicalApprovalsSatisfied, false);
-assert.equal(canonicalPlan.propagationAlreadyVerified, false);
+assert.equal(canonicalPlan.approvalsRecordedInCheckout, false);
+assert.equal(canonicalPlan.propagationRecordedVerifiedInCheckout, false);
 assert.equal(canonicalPlan.implementationPlanningEligible, false);
 assert.equal(canonicalPlan.implementationPrEligible, false);
+assert.equal(canonicalPlan.implementationAuthorityGranted, false);
 assert.equal(canonicalPlan.automaticApprovalAllowed, false);
 assert.equal(canonicalPlan.automaticMutationAllowed, false);
 assert.equal(canonicalPlan.runtimeMutationAllowedByPlanner, false);
@@ -71,8 +75,8 @@ assert.equal(canonicalPlan.requiredTaskCount, 7);
 
 assert.throws(
   () => buildInvestmentBusinessRulePropagationChangePlan({ governance: approvedGovernanceFixture() }),
-  /accepts canonical repository governance only/,
-  'The authority-producing builder must reject caller-supplied governance.',
+  /accepts repository governance only/,
+  'The repository-content planner must reject caller-supplied governance.',
 );
 
 const surfaceIds = canonicalPlan.blueprint.surfaces.map((surface) => surface.id);
@@ -111,10 +115,12 @@ const approvedSimulation = simulateInvestmentBusinessRulePropagationChangePlan({
 });
 assert.equal(approvedSimulation.status, 'SIMULATION_APPROVALS_SATISFIED');
 assert.equal(approvedSimulation.authoritative, false);
+assert.equal(approvedSimulation.blueprintAuthoritative, false);
+assert.equal(approvedSimulation.governanceProvenanceVerified, false);
 assert.equal(approvedSimulation.simulatedApprovalsSatisfied, true);
-assert.equal(approvedSimulation.canonicalApprovalsSatisfied, false);
 assert.equal(approvedSimulation.implementationPlanningEligible, false);
 assert.equal(approvedSimulation.implementationPrEligible, false);
+assert.equal(approvedSimulation.implementationAuthorityGranted, false);
 assert.equal(approvedSimulation.automaticApprovalAllowed, false);
 assert.equal(approvedSimulation.automaticMutationAllowed, false);
 assert.equal(approvedSimulation.runtimeMutationAllowedByPlanner, false);
@@ -140,16 +146,17 @@ assert.throws(
   'A shallow-frozen caller blueprint must become recursively immutable before it is returned in a plan.',
 );
 
-const alreadyPropagatedSimulation = simulateInvestmentBusinessRulePropagationChangePlan({
+const propagatedSimulation = simulateInvestmentBusinessRulePropagationChangePlan({
   governance: approvedGovernance,
   propagation: verifiedPropagationFixture(),
 });
-assert.equal(alreadyPropagatedSimulation.status, 'SIMULATION_ALREADY_PROPAGATED');
-assert.equal(alreadyPropagatedSimulation.authoritative, false);
-assert.equal(alreadyPropagatedSimulation.propagationAlreadyVerified, true);
-assert.equal(alreadyPropagatedSimulation.implementationPlanningEligible, false);
-assert.equal(alreadyPropagatedSimulation.implementationPrEligible, false);
-assert.equal(alreadyPropagatedSimulation.livePromotionAllowed, false);
+assert.equal(propagatedSimulation.status, 'SIMULATION_PROPAGATION_VERIFIED');
+assert.equal(propagatedSimulation.authoritative, false);
+assert.equal(propagatedSimulation.simulatedPropagationVerified, true);
+assert.equal(propagatedSimulation.implementationPlanningEligible, false);
+assert.equal(propagatedSimulation.implementationPrEligible, false);
+assert.equal(propagatedSimulation.implementationAuthorityGranted, false);
+assert.equal(propagatedSimulation.livePromotionAllowed, false);
 
 const staleCandidate = clone(INVESTMENT_BUSINESS_RULE_PROPAGATION_CHANGE_BLUEPRINT);
 staleCandidate.candidate.commit = 'a'.repeat(40);
@@ -252,15 +259,16 @@ const packageJson = JSON.parse(packageSource);
 assert.match(packageJson.scripts.test, /test-investment-business-rule-propagation-change-plan-invariants\.mjs/);
 assert.match(packageJson.scripts['investment:br:propagation:plan'], /plan-investment-business-rule-propagation\.mjs/);
 assert.match(docsSource, /BLOCKED_AWAITING_CANONICAL_APPROVAL/);
-assert.match(docsSource, /ALREADY_PROPAGATED/);
+assert.match(docsSource, /APPROVALS_RECORDED_REQUIRES_MERGED_MAIN_PROVENANCE/);
+assert.match(docsSource, /PROPAGATION_RECORDED_REQUIRES_MERGED_MAIN_PROVENANCE/);
 assert.match(docsSource, /SIMULATION_\*/);
 assert.match(docsSource, /src\/app\/inversion\/legal\/page\.tsx/);
 assert.match(docsSource, /new immutable migration/i);
 assert.match(docsSource, /does \*\*not\*\* reserve a migration number/i);
 assert.match(plannerCliSource, /buildInvestmentBusinessRulePropagationChangePlan\(\)/);
 assert.match(plannerCliSource, /result\.status === 'INVALID' \? 1 : 0/);
-assert.match(plannerSource, /accepts canonical repository governance only/);
-assert.match(plannerSource, /SIMULATION_APPROVALS_SATISFIED/);
+assert.match(plannerSource, /accepts repository governance only/);
+assert.match(plannerSource, /governanceProvenanceVerified: false/);
 assert.match(plannerSource, /seen = new WeakSet\(\)/);
 
 console.log('Investment business-rule propagation change planner invariants: PASS');
