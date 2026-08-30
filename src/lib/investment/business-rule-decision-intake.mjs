@@ -30,6 +30,14 @@ const ISO_INSTANT_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 const SAFE_REF_RE = /^[A-Za-z0-9][A-Za-z0-9._:/#@-]{2,239}$/;
 const URI_SCHEME_RE = /^[A-Za-z][A-Za-z0-9+.-]*:/;
 const REPOSITORY_PATH_RE = /^[A-Za-z0-9._@+-]+(?:\/[A-Za-z0-9._@+-]+)*$/;
+const DECISION_RECORD_FIELDS = Object.freeze([
+  'status',
+  'reviewedCandidateCommit',
+  'reviewedCandidateBlobSha',
+  'decidedBy',
+  'decidedAt',
+  'evidenceRef',
+]);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -153,6 +161,16 @@ export function summarizeInvestmentBusinessRuleDecisionIntake(intake) {
   });
 }
 
+function canonicalGovernanceMatchesApprovedIntake(canonicalGovernance, proposedGovernanceRecord) {
+  validateInvestmentBusinessRuleGovernance(canonicalGovernance);
+  const canonicalById = new Map(canonicalGovernance.rules.map((rule) => [rule.id, rule]));
+  return proposedGovernanceRecord.rules.every((proposedRule) => {
+    const canonicalRule = canonicalById.get(proposedRule.id);
+    return Boolean(canonicalRule)
+      && DECISION_RECORD_FIELDS.every((field) => canonicalRule[field] === proposedRule[field]);
+  });
+}
+
 function validateArtifactRef(value, path) {
   assert(typeof value === 'string' && value.length >= 3 && value.length <= 240, `${path} must be a repository-relative artifact reference`);
   assert(!URI_SCHEME_RE.test(value), `${path} must not use a URI scheme`);
@@ -220,18 +238,29 @@ export function validateInvestmentBusinessRulePropagationManifest(manifest) {
     const overallEpoch = assertIsoInstant(manifest.overallReview.reviewedAt, 'overallReview.reviewedAt');
     assertEvidenceRef(manifest.overallReview.evidenceRef, 'overallReview.evidenceRef');
     const latestSurfaceEpoch = Math.max(...manifest.surfaces.map((surface) => Date.parse(surface.verifiedAt)));
-    assert(overallEpoch >= latestSurfaceEpoch, 'Overall propagation review cannot predate a required surface verification');
+    assert(overallEpoch > latestSurfaceEpoch, 'Overall propagation review must strictly postdate every required surface verification');
+    const overallReviewer = manifest.overallReview.reviewedBy.trim().toLowerCase();
+    const surfaceReviewers = new Set(manifest.surfaces.map((surface) => surface.verifiedBy.trim().toLowerCase()));
+    assert(!surfaceReviewers.has(overallReviewer), 'Overall propagation reviewer must be independent from every surface verifier');
   }
 
   return manifest;
 }
 
-export function buildInvestmentBusinessRulePropagationReadiness({ intake, manifest }) {
+export function buildInvestmentBusinessRulePropagationReadiness({
+  intake,
+  canonicalGovernance,
+  manifest,
+}) {
   const intakeSummary = summarizeInvestmentBusinessRuleDecisionIntake(intake);
   validateInvestmentBusinessRulePropagationManifest(manifest);
   assert(manifest.candidate.commit === intake.candidate.commit, 'Propagation manifest candidate commit must match decision intake');
   assert(manifest.candidate.blobSha === intake.candidate.blobSha, 'Propagation manifest candidate blob must match decision intake');
 
+  const canonicalGovernanceRecorded = Boolean(
+    intakeSummary.propagationPlanningEligible
+    && canonicalGovernanceMatchesApprovedIntake(canonicalGovernance, intakeSummary.proposedGovernanceRecord),
+  );
   const pendingSurfaces = manifest.surfaces.filter((surface) => surface.status !== 'VERIFIED').map((surface) => surface.id);
   const allSurfacesVerified = pendingSurfaces.length === 0;
   const overallVerified = manifest.overallReview.status === 'VERIFIED';
@@ -248,7 +277,12 @@ export function buildInvestmentBusinessRulePropagationReadiness({ intake, manife
     const overallReviewEpoch = Date.parse(manifest.overallReview.reviewedAt);
     assert(overallReviewEpoch > latestDecisionEpoch, 'Propagation overall review must postdate the latest BR approval decision');
   }
-  const ready = intakeSummary.propagationPlanningEligible && allSurfacesVerified && overallVerified;
+  const ready = Boolean(
+    intakeSummary.propagationPlanningEligible
+    && canonicalGovernanceRecorded
+    && allSurfacesVerified
+    && overallVerified,
+  );
 
   const proposedPropagationRecord = ready
     ? {
@@ -273,6 +307,7 @@ export function buildInvestmentBusinessRulePropagationReadiness({ intake, manife
   return Object.freeze({
     status: ready ? 'ELIGIBLE_FOR_PROPAGATION_GOVERNANCE_PR' : 'BLOCKED',
     decisionBlockers: intakeSummary.decisionBlockers,
+    canonicalGovernanceRecorded,
     pendingSurfaces: Object.freeze(pendingSurfaces),
     overallReviewVerified: overallVerified,
     implementationCommit: manifest.implementationCommit,
