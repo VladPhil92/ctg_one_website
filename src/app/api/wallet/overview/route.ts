@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
+import { buildWalletCopTopUpCapability } from '@/lib/wallet/cop-topup-capability';
 import { readPolygonPortfolio } from '@/lib/wallet/polygon-portfolio';
 import {
   WalletReadModelError,
@@ -127,13 +128,19 @@ export async function GET() {
     const blockchain = await readPolygonPortfolio(primaryVerifiedEvmAccount?.address ?? null);
     const blockchainBalances =
       blockchain.status === 'available' || blockchain.status === 'degraded';
+    const copTopUp = buildWalletCopTopUpCapability(overview.user.kycStatus);
 
     return noStoreJson({
       ...overview,
       blockchain,
+      ...(copTopUp.action ? { copTopUp: copTopUp.action } : {}),
       capabilities: {
         ...overview.capabilities,
         blockchainBalances,
+        // An additive Wallet V2 capability. It is deliberately separate from
+        // moneyMovement: the client may only hand off to CTG One's protected
+        // web flow; it receives no primitive that can credit or move money.
+        copTopUp: copTopUp.enabled,
       },
     });
   } catch (error) {
