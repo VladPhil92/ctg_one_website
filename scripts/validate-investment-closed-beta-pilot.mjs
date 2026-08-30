@@ -1,10 +1,14 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import process from 'node:process';
 import {
   INVESTMENT_BUSINESS_RULE_GOVERNANCE,
   INVESTMENT_BUSINESS_RULE_PROPAGATION,
 } from '../src/data/investment-business-rule-governance.mjs';
-import { INVESTMENT_CLOSED_BETA_PILOT_AUTHORIZATION } from '../src/data/investment-closed-beta-pilot-governance.mjs';
+import {
+  INVESTMENT_CLOSED_BETA_PILOT_AUTHORIZATION,
+  INVESTMENT_CLOSED_BETA_PRODUCTION_FLAG_EVIDENCE,
+} from '../src/data/investment-closed-beta-pilot-governance.mjs';
 import { INVESTMENT_PRODUCTION_READINESS_CANARY } from '../src/data/investment-release-governance.mjs';
 import {
   buildInvestmentClosedBetaPilotPreflight,
@@ -25,18 +29,9 @@ function readExpectedSchema() {
   return { migration, name, count };
 }
 
-function envFlag(name) {
-  return process.env[name] === 'true';
-}
-
-function closedBetaFlags() {
-  return {
-    publicRegistrationEnabled: envFlag('CTG_INVESTMENT_PUBLIC_REGISTRATION_ENABLED'),
-    publicFundingEnabled: envFlag('CTG_INVESTMENT_PUBLIC_FUNDING_ENABLED'),
-    paymentGatewayEnabled: envFlag('CTG_INVESTMENT_PAYMENT_GATEWAY_ENABLED'),
-    automaticSettlementEnabled: envFlag('CTG_INVESTMENT_AUTOMATIC_SETTLEMENT_ENABLED'),
-    automaticWithdrawalsEnabled: envFlag('CTG_INVESTMENT_AUTOMATIC_WITHDRAWALS_ENABLED'),
-  };
+function readOptionalJson(path) {
+  if (!path) return null;
+  return JSON.parse(readFileSync(path, 'utf8'));
 }
 
 function safeBlockedResult(message) {
@@ -51,12 +46,19 @@ function safeBlockedResult(message) {
   };
 }
 
+function writeReport(path, result) {
+  if (!path) return;
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+}
+
 const manifestPath = argumentValue('--manifest');
+const productionFlagEvidencePath = argumentValue('--production-flags-evidence');
 const reportOut = argumentValue('--report-out');
 const productionAuthorization = argumentValue('--authorize-production-preflight');
 
 if (!manifestPath) {
-  console.error('Usage: node scripts/validate-investment-closed-beta-pilot.mjs --manifest <private-manifest.json> [--report-out <safe-report.json>] [--authorize-production-preflight REVIEW_CLOSED_BETA_PILOT_PREFLIGHT]');
+  console.error('Usage: node scripts/validate-investment-closed-beta-pilot.mjs --manifest <private-manifest.json> [--production-flags-evidence <reviewed-production-flags.json>] [--report-out <safe-report.json>] [--authorize-production-preflight REVIEW_CLOSED_BETA_PILOT_PREFLIGHT]');
   process.exit(2);
 }
 
@@ -65,6 +67,7 @@ try {
   manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 } catch {
   const result = safeBlockedResult('Pilot manifest cannot be read as JSON.');
+  writeReport(reportOut, result);
   console.log(JSON.stringify(result, null, 2));
   process.exit(1);
 }
@@ -72,7 +75,17 @@ try {
 if (manifest?.classification === 'production-redacted-preflight'
   && productionAuthorization !== 'REVIEW_CLOSED_BETA_PILOT_PREFLIGHT') {
   const result = safeBlockedResult('Refusing production pilot preflight without explicit REVIEW_CLOSED_BETA_PILOT_PREFLIGHT operator authorization.');
-  if (reportOut) writeFileSync(reportOut, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+  writeReport(reportOut, result);
+  console.log(JSON.stringify(result, null, 2));
+  process.exit(1);
+}
+
+let productionFlagEvidence = INVESTMENT_CLOSED_BETA_PRODUCTION_FLAG_EVIDENCE;
+try {
+  if (productionFlagEvidencePath) productionFlagEvidence = readOptionalJson(productionFlagEvidencePath);
+} catch {
+  const result = safeBlockedResult('Reviewed production feature-flag evidence cannot be read as JSON.');
+  writeReport(reportOut, result);
   console.log(JSON.stringify(result, null, 2));
   process.exit(1);
 }
@@ -94,12 +107,12 @@ try {
     pilotAuthorization: INVESTMENT_CLOSED_BETA_PILOT_AUTHORIZATION,
     productionReadinessCanary: INVESTMENT_PRODUCTION_READINESS_CANARY,
     deployment,
-    flags: closedBetaFlags(),
+    productionFlagEvidence,
   });
 } catch (error) {
   result = safeBlockedResult(error instanceof Error ? error.message : 'Pilot manifest validation failed.');
 }
 
-if (reportOut) writeFileSync(reportOut, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+writeReport(reportOut, result);
 console.log(JSON.stringify(result, null, 2));
 process.exit(result.status === 'READY' ? 0 : 1);
