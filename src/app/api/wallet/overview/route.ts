@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
+import {
+  createAuthenticatedRequestContext,
+  isSupabaseConfigured,
+} from '@/lib/supabase/server';
 import { buildWalletCopTopUpCapability } from '@/lib/wallet/cop-topup-capability';
 import { readPolygonPortfolio } from '@/lib/wallet/polygon-portfolio';
 import {
@@ -24,21 +27,17 @@ function noStoreJson(body: unknown, init: ResponseInit = {}) {
   return NextResponse.json(body, { ...init, headers });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!isSupabaseConfigured) {
     return noStoreJson({ error: 'WALLET_READ_UNAVAILABLE' }, { status: 503 });
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  const auth = await createAuthenticatedRequestContext(request);
+  if (!auth) {
     return noStoreJson({ error: 'UNAUTHENTICATED' }, { status: 401 });
   }
 
+  const { supabase, user } = auth;
   const userId = user.id;
   const [profileResult, balanceResult, identityResult, accountsResult, transactionsResult, intentsResult] =
     await Promise.all([
@@ -113,8 +112,6 @@ export async function GET() {
       intents: (intentsResult.data ?? []) as WalletOverviewIntentRow[],
     });
 
-    // The server chooses the address exclusively from the verified canonical
-    // registry. A browser request cannot substitute an arbitrary EVM address.
     const primaryVerifiedEvmAccount =
       identityResult.data?.status === 'verified'
         ? (accountsResult.data ?? []).find(
@@ -137,9 +134,6 @@ export async function GET() {
       capabilities: {
         ...overview.capabilities,
         blockchainBalances,
-        // An additive Wallet V2 capability. It is deliberately separate from
-        // moneyMovement: the client may only hand off to CTG One's protected
-        // web flow; it receives no primitive that can credit or move money.
         copTopUp: copTopUp.enabled,
       },
     });
