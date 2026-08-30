@@ -84,6 +84,24 @@ assert.equal(idempotentPlan.alreadyPresent.length, 1);
 assert.equal(idempotentPlan.inserts.length, 1);
 assert.equal(idempotentPlan.conflicts.length, 0);
 
+const idempotentLiveConflictPlan = planWalletLegacyEvidenceImport(document, {
+  ...emptyDatabase,
+  evidence: [exactExistingEvidence],
+  externalAccounts: [{
+    id: 'abababab-abab-4bab-8bab-abababababab',
+    user_id: first.canonicalUserId,
+    provider: 'privy',
+    chain_family: 'evm',
+    account_kind: 'embedded',
+    address_normalized: '0x4444444444444444444444444444444444444444',
+    status: 'verified',
+    is_primary: true,
+    legacy_preserved: false,
+  }],
+});
+assert.equal(idempotentLiveConflictPlan.alreadyPresent.length, 0);
+assert.equal(idempotentLiveConflictPlan.conflicts[0].code, 'PRIMARY_EVM_WALLET_CONFLICT');
+
 const rejectedEvidencePlan = planWalletLegacyEvidenceImport(document, {
   ...emptyDatabase,
   evidence: [{ ...exactExistingEvidence, status: 'rejected' }],
