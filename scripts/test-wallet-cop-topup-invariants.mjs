@@ -11,6 +11,9 @@ const files = {
   rateLimit: path.join(root, 'src/lib/security/api-rate-limit.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
   smoke: path.join(root, 'scripts/wallet-cop-topup-smoke.sql'),
+  securityAllowlist: path.join(root, 'scripts/security-definer-authenticated-allowlist.txt'),
+  securityBodies: path.join(root, 'scripts/security-definer-authenticated-body-sha256.txt'),
+  securityGuard: path.join(root, 'scripts/security-definer-authorization-guard-smoke.sql'),
 };
 
 for (const [label, file] of Object.entries(files)) {
@@ -96,6 +99,30 @@ requireFragments(source.rateMigration, 'rate-limit SQL contract', [
   "when 'wallet.topup-proof' then",
   'v_limit := 8',
   'v_window_seconds := 600',
+]);
+
+const privilegedTopupSignatures = [
+  'public.approve_deposit(p_transaction_id uuid, p_admin_notes text)',
+  'public.reconcile_wallet_topup_claim(p_claim_id uuid, p_admin_notes text)',
+  'public.reject_wallet_topup_claim(p_claim_id uuid, p_reason text)',
+  'public.verify_wallet_topup_claim(p_claim_id uuid, p_verification_notes text)',
+];
+for (const signature of privilegedTopupSignatures) {
+  if (!source.securityAllowlist.split(/\r?\n/).includes(signature)) {
+    throw new Error(`reviewed SECURITY DEFINER allowlist missing wallet top-up RPC: ${signature}`);
+  }
+  if (!source.securityBodies.includes(`${signature}\t`)) {
+    throw new Error(`reviewed SECURITY DEFINER body registry missing wallet top-up RPC: ${signature}`);
+  }
+  if (!source.securityGuard.includes(`'${signature}'`)) {
+    throw new Error(`SECURITY DEFINER config guard missing hardened wallet top-up RPC: ${signature}`);
+  }
+}
+requireFragments(source.securityBodies, 'reviewed SECURITY DEFINER body registry', [
+  'public.consume_api_rate_limit(p_scope text)\t',
+]);
+requireFragments(source.securityGuard, 'SECURITY DEFINER config guard', [
+  "ARRAY['search_path=\"\"']::text[]",
 ]);
 
 const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(source.schema);
