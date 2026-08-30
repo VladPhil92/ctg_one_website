@@ -1,3 +1,4 @@
+import { INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE } from '../../data/investment-business-rule-candidate-authority.mjs';
 import {
   INVESTMENT_BUSINESS_RULE_CANDIDATE,
   INVESTMENT_BUSINESS_RULE_GOVERNANCE,
@@ -35,10 +36,19 @@ function deepFreeze(value, seen = new WeakSet()) {
   return value;
 }
 
+function validateGovernanceCandidateAuthority(candidate) {
+  assert(candidate && typeof candidate === 'object', 'Governance candidate is required');
+  assert(candidate.path === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.path, 'Governance candidate path drifted from immutable PR #256 authority');
+  assert(candidate.commit === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.commit, 'Governance candidate commit drifted from immutable PR #256 authority');
+  assert(candidate.blobSha === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.blobSha, 'Governance candidate blob drifted from immutable PR #256 authority');
+  assert(candidate.sourcePr === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.sourcePr, 'Governance candidate PR drifted from immutable PR #256 authority');
+}
+
 function validateMergePullRequest(mergePullRequest, sha) {
   assert(mergePullRequest && typeof mergePullRequest === 'object' && !Array.isArray(mergePullRequest), 'Merged pull-request metadata is required');
   assert(Number.isSafeInteger(mergePullRequest.number) && mergePullRequest.number > 0, 'Merged pull-request number is invalid');
   assert(typeof mergePullRequest.url === 'string' && /^https:\/\/github\.com\/VladPhil92\/ctg_one_website\/pull\/\d+$/.test(mergePullRequest.url), 'Merged pull-request URL is invalid');
+  assert(mergePullRequest.url.endsWith(`/pull/${mergePullRequest.number}`), 'Merged pull-request URL/number mismatch');
   assert(mergePullRequest.baseRef === 'main', 'Merged pull request must target main');
   assert(FULL_SHA_RE.test(mergePullRequest.headSha ?? ''), 'Merged pull-request head SHA is invalid');
   assert(mergePullRequest.mergeCommitSha === sha, 'Merged pull-request merge commit must equal the trusted main SHA');
@@ -68,6 +78,7 @@ export function createInvestmentBusinessRuleMainProvenanceEvidence({
   propagation = INVESTMENT_BUSINESS_RULE_PROPAGATION,
 } = {}) {
   validateInvestmentBusinessRuleGovernance(governance);
+  validateGovernanceCandidateAuthority(governance.candidate);
   validateInvestmentBusinessRulePropagation(governance, propagation);
 
   assert(repository === INVESTMENT_BUSINESS_RULE_MAIN_PROVENANCE_REPOSITORY, 'Provenance repository mismatch');
@@ -77,7 +88,7 @@ export function createInvestmentBusinessRuleMainProvenanceEvidence({
   assert(headSha === sha, 'Checked-out HEAD must equal the trusted main SHA');
   assert(commitVerified === true, 'Trusted main commit must have verified GitHub commit provenance');
   assert(FULL_SHA_RE.test(governanceBlobSha ?? ''), 'Governance blob SHA must be a full Git SHA');
-  assert(candidateBlobSha === INVESTMENT_BUSINESS_RULE_CANDIDATE.blobSha, 'Pinned BR candidate blob does not match repository candidate authority');
+  assert(candidateBlobSha === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.blobSha, 'Pinned BR candidate blob does not match immutable PR #256 authority');
   validateMergePullRequest(mergePullRequest, sha);
   assert(typeof workflowName === 'string' && workflowName === 'Investment BR Merged-Main Provenance', 'Unexpected provenance workflow name');
   assert(typeof workflowRunId === 'string' && /^\d+$/.test(workflowRunId), 'Workflow run id is invalid');
@@ -108,7 +119,7 @@ export function createInvestmentBusinessRuleMainProvenanceEvidence({
       approvalsSatisfied,
       propagationStatus: propagation.status,
     },
-    candidate: { ...INVESTMENT_BUSINESS_RULE_CANDIDATE },
+    candidate: { ...INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE },
     mergePullRequest: { ...mergePullRequest },
     workflow: {
       name: workflowName,
@@ -153,10 +164,10 @@ export function validateInvestmentBusinessRuleMainProvenanceEvidence(evidence) {
     seen.add(rule.id);
     assert(['PENDING', 'APPROVED', 'CHANGES_REQUIRED', 'REJECTED'].includes(rule.status), `${rule.id} has invalid provenance status`);
   }
-  assert(evidence.candidate?.path === INVESTMENT_BUSINESS_RULE_CANDIDATE.path, 'Merged-main provenance candidate path mismatch');
-  assert(evidence.candidate?.commit === INVESTMENT_BUSINESS_RULE_CANDIDATE.commit, 'Merged-main provenance candidate commit mismatch');
-  assert(evidence.candidate?.blobSha === INVESTMENT_BUSINESS_RULE_CANDIDATE.blobSha, 'Merged-main provenance candidate blob mismatch');
-  assert(evidence.candidate?.sourcePr === INVESTMENT_BUSINESS_RULE_CANDIDATE.sourcePr, 'Merged-main provenance candidate PR mismatch');
+  assert(evidence.candidate?.path === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.path, 'Merged-main provenance candidate path mismatch');
+  assert(evidence.candidate?.commit === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.commit, 'Merged-main provenance candidate commit mismatch');
+  assert(evidence.candidate?.blobSha === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.blobSha, 'Merged-main provenance candidate blob mismatch');
+  assert(evidence.candidate?.sourcePr === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.sourcePr, 'Merged-main provenance candidate PR mismatch');
   validateMergePullRequest(evidence.mergePullRequest, evidence.trustedMainSha);
   assert(evidence.workflow?.name === 'Investment BR Merged-Main Provenance', 'Merged-main provenance workflow mismatch');
   assert(typeof evidence.workflow?.runId === 'string' && /^\d+$/.test(evidence.workflow.runId), 'Merged-main provenance run id is invalid');
@@ -190,3 +201,7 @@ export function validateInvestmentBusinessRuleMainProvenanceEvidence(evidence) {
   assert(evidence.requiresHumanReview === true, 'Provenance evidence must require human review');
   return evidence;
 }
+
+// Fail closed at module load if the mutable governance source ever attempts to
+// redefine the immutable PR #256 decision candidate.
+validateGovernanceCandidateAuthority(INVESTMENT_BUSINESS_RULE_CANDIDATE);
