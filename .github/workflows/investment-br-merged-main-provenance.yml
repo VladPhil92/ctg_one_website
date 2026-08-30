@@ -1,0 +1,131 @@
+name: Investment BR Merged-Main Provenance
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: investment-br-main-provenance-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  provenance:
+    name: Verify merged-main BR provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      BR_PROVENANCE_OUTPUT_PATH: provenance-evidence/investment-business-rule-main-provenance.json
+
+    steps:
+      - name: Checkout exact main push
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.0
+
+      - name: Verify trusted push context
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_ACTIONS}" = 'true'
+          test "${GITHUB_EVENT_NAME}" = 'push'
+          test "${GITHUB_REF}" = 'refs/heads/main'
+          head_sha="$(git rev-parse HEAD)"
+          test "${head_sha}" = "${GITHUB_SHA}"
+          echo "BR_PROVENANCE_HEAD_SHA=${head_sha}" >> "${GITHUB_ENV}"
+
+      - name: Verify GitHub commit and exact merged PR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          commit_path="${RUNNER_TEMP}/investment-br-main-commit.json"
+          pulls_path="${RUNNER_TEMP}/investment-br-main-pulls.json"
+          merged_pr_path="${RUNNER_TEMP}/investment-br-main-merged-pr.json"
+
+          curl --fail --silent --show-error \
+            -H 'Accept: application/vnd.github+json' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}" \
+            > "${commit_path}"
+
+          jq -e --arg sha "${GITHUB_SHA}" \
+            '.sha == $sha and .commit.verification.verified == true' \
+            "${commit_path}" >/dev/null
+
+          curl --fail --silent --show-error \
+            -H 'Accept: application/vnd.github+json' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
+            > "${pulls_path}"
+
+          exact_count="$(jq --arg sha "${GITHUB_SHA}" '[.[] | select(.merged_at != null and .base.ref == "main" and .merge_commit_sha == $sha)] | length' "${pulls_path}")"
+          test "${exact_count}" = '1'
+
+          jq --arg sha "${GITHUB_SHA}" \
+            '[.[] | select(.merged_at != null and .base.ref == "main" and .merge_commit_sha == $sha)] | .[0] | {
+              number,
+              url: .html_url,
+              mergedAt: .merged_at,
+              mergeCommitSha: .merge_commit_sha,
+              baseRef: .base.ref,
+              headSha: .head.sha
+            }' \
+            "${pulls_path}" > "${merged_pr_path}"
+
+          echo "BR_PROVENANCE_COMMIT_METADATA_PATH=${commit_path}" >> "${GITHUB_ENV}"
+          echo "BR_PROVENANCE_MERGED_PR_PATH=${merged_pr_path}" >> "${GITHUB_ENV}"
+
+      - name: Verify pinned candidate and governance blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate_json="$(node --input-type=module -e "import { INVESTMENT_BUSINESS_RULE_CANDIDATE as c } from './src/data/investment-business-rule-governance.mjs'; process.stdout.write(JSON.stringify(c));")"
+          candidate_commit="$(printf '%s' "${candidate_json}" | jq -r '.commit')"
+          candidate_path="$(printf '%s' "${candidate_json}" | jq -r '.path')"
+          candidate_expected_blob="$(printf '%s' "${candidate_json}" | jq -r '.blobSha')"
+
+          git cat-file -e "${candidate_commit}^{commit}"
+          candidate_actual_blob="$(git rev-parse "${candidate_commit}:${candidate_path}")"
+          test "${candidate_actual_blob}" = "${candidate_expected_blob}"
+
+          governance_blob="$(git rev-parse "HEAD:src/data/investment-business-rule-governance.mjs")"
+          test -n "${governance_blob}"
+
+          echo "BR_PROVENANCE_CANDIDATE_BLOB_SHA=${candidate_actual_blob}" >> "${GITHUB_ENV}"
+          echo "BR_PROVENANCE_GOVERNANCE_BLOB_SHA=${governance_blob}" >> "${GITHUB_ENV}"
+
+      - name: Create fail-closed provenance evidence
+        run: node scripts/create-investment-business-rule-main-provenance-evidence.mjs
+
+      - name: Validate provenance evidence contract
+        run: node scripts/validate-investment-business-rule-main-provenance-evidence.mjs "${BR_PROVENANCE_OUTPUT_PATH}"
+
+      - name: Summarize provenance state
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo '## Investment BR merged-main provenance'
+            echo
+            jq -r '"- Status: `\(.status)`\n- Trusted main SHA: `\(.trustedMainSha)`\n- Governance blob: `\(.governance.blobSha)`\n- Merge PR: #\(.mergePullRequest.number)\n- Workflow evidence candidate eligible: `\(.workflowEvidenceCandidateEligible)`\n- Standalone authority allowed: `\(.standaloneAuthorityAllowed)`"' "${BR_PROVENANCE_OUTPUT_PATH}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Archive merged-main provenance evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: investment-br-main-provenance-${{ github.sha }}
+          path: provenance-evidence/investment-business-rule-main-provenance.json
+          if-no-files-found: error
+          retention-days: 30
