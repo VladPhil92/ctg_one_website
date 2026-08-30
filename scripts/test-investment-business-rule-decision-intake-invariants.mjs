@@ -93,7 +93,7 @@ function verifiedPropagationManifest() {
   }));
   manifest.overallReview = {
     status: 'VERIFIED',
-    reviewedBy: 'propagation-governance-reviewer',
+    reviewedBy: 'independent-propagation-governance-reviewer',
     reviewedAt: '2026-08-30T06:50:00.000Z',
     evidenceRef: 'propagation-review:fixture',
   };
@@ -114,6 +114,7 @@ assert.deepEqual(pendingSummary.decisionBlockers, INVESTMENT_REQUIRED_BUSINESS_R
 const approved = approvedIntake();
 validateInvestmentBusinessRuleDecisionIntake(approved);
 const approvedSummary = summarizeInvestmentBusinessRuleDecisionIntake(approved);
+const recordedApprovedGovernance = approvedSummary.proposedGovernanceRecord;
 assert.equal(approvedSummary.status, 'ALL_APPROVED');
 assert.equal(approvedSummary.explicitDecisionCount, 5);
 assert.equal(approvedSummary.propagationPlanningEligible, true);
@@ -154,8 +155,13 @@ assert.throws(
 
 const pendingManifest = pendingPropagationManifest();
 validateInvestmentBusinessRulePropagationManifest(pendingManifest);
-const pendingReadiness = buildInvestmentBusinessRulePropagationReadiness({ intake: approved, manifest: pendingManifest });
+const pendingReadiness = buildInvestmentBusinessRulePropagationReadiness({
+  intake: approved,
+  canonicalGovernance: INVESTMENT_BUSINESS_RULE_GOVERNANCE,
+  manifest: pendingManifest,
+});
 assert.equal(pendingReadiness.status, 'BLOCKED');
+assert.equal(pendingReadiness.canonicalGovernanceRecorded, false);
 assert.deepEqual(pendingReadiness.pendingSurfaces, INVESTMENT_BUSINESS_RULE_PROPAGATION_SURFACE_IDS);
 assert.equal(pendingReadiness.canonicalMutationAllowed, false);
 assert.equal(pendingReadiness.runtimeMutationAllowed, false);
@@ -164,6 +170,7 @@ assert.equal(pendingReadiness.proposedPropagationRecord.status, 'PENDING');
 
 const partialDecisionReadiness = buildInvestmentBusinessRulePropagationReadiness({
   intake: changesRequired,
+  canonicalGovernance: INVESTMENT_BUSINESS_RULE_GOVERNANCE,
   manifest: pendingManifest,
 });
 assert.equal(partialDecisionReadiness.status, 'BLOCKED');
@@ -207,7 +214,23 @@ const overallBeforeSurface = verifiedPropagationManifest();
 overallBeforeSurface.overallReview.reviewedAt = '2026-08-30T06:32:00.000Z';
 assert.throws(
   () => validateInvestmentBusinessRulePropagationManifest(overallBeforeSurface),
-  /cannot predate a required surface verification/,
+  /must strictly postdate every required surface verification/,
+);
+
+const overallEqualSurface = verifiedPropagationManifest();
+overallEqualSurface.overallReview.reviewedAt = '2026-08-30T06:36:00.000Z';
+assert.throws(
+  () => validateInvestmentBusinessRulePropagationManifest(overallEqualSurface),
+  /must strictly postdate every required surface verification/,
+  'Equal timestamps do not prove that the overall review happened after surface verification.',
+);
+
+const selfApprovedOverall = verifiedPropagationManifest();
+selfApprovedOverall.overallReview.reviewedBy = 'Propagation-Reviewer';
+assert.throws(
+  () => validateInvestmentBusinessRulePropagationManifest(selfApprovedOverall),
+  /must be independent from every surface verifier/,
+  'The overall reviewer cannot be a surface verifier under alternate casing.',
 );
 
 const surfaceBeforeApproval = verifiedPropagationManifest();
@@ -219,7 +242,11 @@ surfaceBeforeApproval.surfaces = surfaceBeforeApproval.surfaces.map((surface, in
 surfaceBeforeApproval.overallReview.reviewedAt = '2026-08-30T06:50:00.000Z';
 validateInvestmentBusinessRulePropagationManifest(surfaceBeforeApproval);
 assert.throws(
-  () => buildInvestmentBusinessRulePropagationReadiness({ intake: approved, manifest: surfaceBeforeApproval }),
+  () => buildInvestmentBusinessRulePropagationReadiness({
+    intake: approved,
+    canonicalGovernance: recordedApprovedGovernance,
+    manifest: surfaceBeforeApproval,
+  }),
   /verification must postdate the latest BR approval decision/,
   'Surface verification created before the latest approval must not be reusable.',
 );
@@ -227,7 +254,11 @@ assert.throws(
 const manifestBeforeApproval = verifiedPropagationManifest();
 manifestBeforeApproval.preparedAt = '2026-08-30T06:03:00.000Z';
 assert.throws(
-  () => buildInvestmentBusinessRulePropagationReadiness({ intake: approved, manifest: manifestBeforeApproval }),
+  () => buildInvestmentBusinessRulePropagationReadiness({
+    intake: approved,
+    canonicalGovernance: recordedApprovedGovernance,
+    manifest: manifestBeforeApproval,
+  }),
   /manifest must be prepared after the latest BR approval decision/,
 );
 
@@ -240,8 +271,23 @@ assert.throws(
 
 const verifiedManifest = verifiedPropagationManifest();
 validateInvestmentBusinessRulePropagationManifest(verifiedManifest);
-const ready = buildInvestmentBusinessRulePropagationReadiness({ intake: approved, manifest: verifiedManifest });
+
+const unrecordedApproval = buildInvestmentBusinessRulePropagationReadiness({
+  intake: approved,
+  canonicalGovernance: INVESTMENT_BUSINESS_RULE_GOVERNANCE,
+  manifest: verifiedManifest,
+});
+assert.equal(unrecordedApproval.status, 'BLOCKED');
+assert.equal(unrecordedApproval.canonicalGovernanceRecorded, false);
+assert.equal(unrecordedApproval.proposedPropagationRecord.status, 'PENDING');
+
+const ready = buildInvestmentBusinessRulePropagationReadiness({
+  intake: approved,
+  canonicalGovernance: recordedApprovedGovernance,
+  manifest: verifiedManifest,
+});
 assert.equal(ready.status, 'ELIGIBLE_FOR_PROPAGATION_GOVERNANCE_PR');
+assert.equal(ready.canonicalGovernanceRecorded, true);
 assert.deepEqual(ready.pendingSurfaces, []);
 assert.equal(ready.overallReviewVerified, true);
 assert.equal(ready.proposedPropagationRecord.status, 'VERIFIED');
@@ -266,6 +312,7 @@ assert.match(packageJson.scripts['investment:br:propagation:validate'], /validat
 assert.match(docsSource, /does not approve BR-001\.\.BR-005/i);
 assert.match(docsSource, /canonicalMutationAllowed.*false/i);
 assert.match(docsSource, /implementationCommit.*Git `HEAD`/i);
+assert.match(propagationValidatorSource, /INVESTMENT_BUSINESS_RULE_GOVERNANCE/);
 assert.match(propagationValidatorSource, /rev-parse', 'HEAD'/);
 assert.match(propagationValidatorSource, /cat-file', '-t'/);
 assert.match(propagationValidatorSource, /repositoryEvidenceVerified: true/);
