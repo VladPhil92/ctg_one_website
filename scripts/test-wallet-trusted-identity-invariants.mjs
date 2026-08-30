@@ -150,11 +150,10 @@ if (!(authIndex >= 0 && adminIndex > authIndex && rateIndex > adminIndex && evid
   throw new Error('trusted linking must authenticate, rate-limit, load provenance, verify Privy, then mutate');
 }
 
-requireFragments(schema, 'runtime schema contract', [
-  "EXPECTED_DATABASE_MIGRATION = '0077'",
-  "EXPECTED_DATABASE_MIGRATION_NAME = 'trusted_wallet_identity_linking'",
-  'EXPECTED_DATABASE_MIGRATION_COUNT = 77',
-]);
+const currentSchemaMatch = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
+if (!currentSchemaMatch || Number(currentSchemaMatch[1]) < 77) {
+  throw new Error('runtime schema contract must never regress below trusted identity migration 0077');
+}
 
 requireFragments(env, 'environment contract', [
   'NEXT_PUBLIC_PRIVY_APP_ID=',
