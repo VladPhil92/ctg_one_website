@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { CalendarDays, PawPrint, Plus, Weight } from 'lucide-react';
+import { CalendarDays, HeartPulse, PawPrint, Plus, Weight } from 'lucide-react';
 import type { NvetPet, NvetPetSpecies } from '@/lib/nvetcareapp/client-booking';
 import { nvetFetchWithRefresh } from '../nvet-fetch';
 
@@ -129,6 +130,13 @@ export function PetManager({ initialPets }: { initialPets: NvetPet[] }) {
                   <span className="flex items-center gap-2"><Weight className="h-4 w-4" aria-hidden="true" />{pet.weight ? `${pet.weight} kg` : 'Peso no registrado'}</span>
                 </div>
                 {pet.notes && <p className="mt-3 rounded-xl bg-[#F7F8FA] p-3 text-xs leading-5 text-[#5B6670]">{pet.notes}</p>}
+                <Link
+                  href={`/nvetcareapp/dashboard/mascotas/${pet.id}/salud`}
+                  className="mt-4 inline-flex w-full items-center justify-between gap-3 rounded-xl border border-[#34B27A]/20 bg-[#34B27A]/[0.05] px-3.5 py-3 text-xs font-bold text-[#237754] transition hover:border-[#34B27A]/40 hover:bg-[#34B27A]/10"
+                >
+                  <span className="inline-flex items-center gap-2"><HeartPulse className="h-4 w-4" aria-hidden="true" />Salud preventiva</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
               </article>
             ))}
           </div>
@@ -212,7 +220,7 @@ export function PetManager({ initialPets }: { initialPets: NvetPet[] }) {
               maxLength={500}
               rows={3}
               className="mt-1.5 w-full resize-none rounded-xl border border-[#0D1B2A]/15 bg-white px-3 py-2.5 text-sm font-normal outline-none transition focus:border-[#34B27A] focus:ring-2 focus:ring-[#34B27A]/15"
-              placeholder="Alergias, cuidados o información útil."
+              placeholder="Cuidados generales o información útil."
             />
           </label>
 
