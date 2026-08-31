@@ -4,9 +4,11 @@
 
 This runbook controls the first real Polygon crypto-send canary for the canonical CTG One Wallet lifecycle. It does not authorize a public launch.
 
-Canonical lifecycle:
+Reviewed lifecycle:
 
-`created -> authorized -> execution revalidation -> Privy signature/broadcast -> submitted -> pending_external -> confirmed_external -> reconciled`
+`created -> authorized -> durable canary client binding -> execution revalidation -> Privy signature/broadcast -> submitted -> pending_external -> confirmed_external -> reconciled`
+
+The client provenance binding and evidence system are audit controls only. They never sign, broadcast, derive balances or post COP journal entries.
 
 ## Server rollout controls
 
@@ -15,167 +17,188 @@ CTG One uses server-only environment variables:
 ```env
 WALLET_CRYPTO_SEND_EXECUTION_MODE=disabled
 WALLET_CRYPTO_SEND_CANARY_USER_IDS=
-WALLET_CANARY_CLIENT_COMMIT=<reviewed-40-char-ctg-wallet-commit>
+WALLET_CANARY_CLIENT_COMMIT_SHA=<reviewed-40-char-ctg-wallet-commit>
 ```
 
 Allowed execution modes in this phase are intentionally limited to:
 
-- `disabled` — default and kill-switch; new `created -> authorized` transitions and pre-broadcast execution revalidation are rejected.
-- `canary` — new authorization and execution revalidation succeed only for exact canonical Supabase user UUIDs listed in `WALLET_CRYPTO_SEND_CANARY_USER_IDS`.
+- `disabled` — default kill-switch; fresh execution-enabling authorization/revalidation is rejected.
+- `canary` — authorization, provenance binding and execution revalidation succeed only for exact canonical Supabase user UUIDs in `WALLET_CRYPTO_SEND_CANARY_USER_IDS`.
 
-There is deliberately no `public` mode in Canary Readiness.
+There is deliberately no public execution mode in this phase.
 
-`WALLET_CRYPTO_SEND_CANARY_USER_IDS` is a comma-separated list of canonical `auth.users.id` UUIDs. It is server-only configuration and must never be exposed through `NEXT_PUBLIC_*`, `VITE_*`, browser logs, screenshots or client telemetry.
-
-`WALLET_CANARY_CLIENT_COMMIT` is also server-only rollout configuration. It pins the exact reviewed CTG-Wallet Git commit that may produce an accepted canary evidence bundle. It is not a secret, but keeping the expectation server-side prevents a modified browser from choosing which client commit the server will certify.
-
-## Non-bypassable authorization gate
-
-The rollout gate is not optional client metadata. Every first `created -> authorized` transition checks the server execution mode and canonical-user allowlist even when the caller omits the `execution` query parameter. This prevents an older or modified client from creating fresh execution-enabling authorization evidence outside the canary.
-
-Durable `authorized` replays remain available because they create no new authorization evidence. This is necessary for idempotent lost-response recovery. A replay requested specifically as `?execution=canary` checks the current rollout gate again before the reviewed client may continue toward signing.
-
-Intent creation, read-only client preflight and other non-signing validation remain usable while execution mode is disabled, but a new intent cannot cross into `authorized` outside the canary gate.
-
-## Why there is a second gate on execution revalidation
-
-Immediately before the reviewed CTG-Wallet client obtains a signer, it replays the durable authorization against:
-
-`POST /api/wallet/intents/:intentId/authorize?execution=canary`
-
-That request checks the current server kill-switch and canonical user allowlist again. Disabling the rollout therefore blocks the official client at the last server checkpoint before signing even when an authorization had been issued earlier during an active canary window.
-
-Submission and reconciliation are intentionally not rollout-gated. If a transaction was already broadcast before the kill-switch closes, CTG One must still be able to register the exact hash and reconcile it to a terminal state.
+`WALLET_CANARY_CLIENT_COMMIT_SHA` pins the exact reviewed CTG-Wallet commit that is allowed to enter the canary path. It is not a secret, but the reviewed expectation is server-controlled. A client cannot select a different commit and still pass preflight/binding.
 
 ## Preconditions
 
-Before changing execution mode to `canary`, verify all of the following:
+Before changing execution mode to `canary`, verify:
 
-1. Target CTG One deployment includes migration `0089_wallet_canary_evidence_provenance` or a compatible later schema.
-2. `SUPABASE_SERVICE_ROLE_KEY` is available only to the server runtime.
-3. The trusted Polygon RPC is HTTPS, returns chain id `137`, and is healthy.
-4. `WALLET_POLYGON_MIN_CONFIRMATIONS` is explicitly reviewed; the safe default is 12.
-5. The canary CTG user has exactly one verified primary Privy embedded EVM account in the canonical wallet identity tables.
-6. The canary wallet has only the minimal amount of POL/assets needed for the test.
-7. CTG-Wallet canary artifact was built from the reviewed commit with both canary and broadcast build gates enabled and embeds that exact commit as `VITE_CTG_WALLET_BUILD_COMMIT`.
-8. `WALLET_CANARY_CLIENT_COMMIT` on CTG One exactly equals that reviewed client commit.
-9. General staging, production web and signed mobile release workflows remain broadcast-disabled.
+1. CTG One deployment includes migration `0089_wallet_canary_evidence_provenance` or a compatible later schema.
+2. `SUPABASE_SERVICE_ROLE_KEY` is available only to server runtime.
+3. Trusted Polygon RPC is HTTPS, healthy and reports chain id `137`.
+4. `WALLET_POLYGON_MIN_CONFIRMATIONS` is explicitly reviewed; safe default is 12.
+5. Canary CTG user has exactly one verified primary Privy embedded EVM account in canonical identity tables.
+6. Canary wallet has only the minimal POL/assets needed for the test.
+7. Reviewed CTG-Wallet artifact embeds its exact Git commit as `VITE_CTG_WALLET_BUILD_COMMIT`.
+8. `WALLET_CANARY_CLIENT_COMMIT_SHA` exactly equals that reviewed client commit.
+9. General staging, production web and signed mobile builds remain broadcast-disabled.
 
-## Authenticated preflight
+## Authenticated infrastructure/client preflight
 
-Before enabling `canary`, the intended canary user must call:
+Before enabling `canary`, the intended user calls:
 
 `POST /api/wallet/canary/preflight`
 
-with body:
+with:
 
 ```json
-{ "version": "ctg-wallet-canary-preflight-v1" }
+{
+  "version": "ctg-wallet-canary-preflight-v1",
+  "clientCommitSha": "<embedded-ctg-wallet-commit>"
+}
 ```
 
-The endpoint is authenticated and evaluates only the canonical Supabase user represented by the caller's access token. It does not accept another user id, transaction amount, destination, intent id or transaction hash from the browser.
-
-The preflight performs read-only checks for:
+The server first verifies `clientCommitSha` against `WALLET_CANARY_CLIENT_COMMIT_SHA`; a different reviewed-build claim is rejected. The endpoint then evaluates only the authenticated canonical Supabase user and checks:
 
 - runtime schema compatibility;
-- whether the authenticated canonical user is present in the server-only canary allowlist;
-- exactly one verified primary Privy embedded EVM account and verified Privy identity link;
-- trusted Polygon RPC health and chain id `137`;
-- current Polygon block availability and gas-price availability;
-- a non-zero native POL balance for gas;
-- the reviewed minimum-confirmation policy.
+- canary allowlist membership;
+- reviewed client commit;
+- exactly one verified primary Privy embedded EVM account and verified identity link;
+- Polygon RPC health and chain id 137;
+- block/gas availability;
+- non-zero native POL gas balance;
+- reviewed minimum-confirmation policy.
 
-It never creates or authorizes an intent, signs a message/transaction, broadcasts a transaction, registers a hash or mutates COP/crypto balances.
+The preflight is read-only. It cannot create/authorize an intent, bind provenance, sign, broadcast, register a hash or modify financial state.
 
-With `WALLET_CRYPTO_SEND_EXECUTION_MODE=disabled`, a fully prepared user returns `ready_for_activation`. Only then should the operator switch the server mode to `canary` and redeploy. After redeploy, the same authenticated preflight must return `ready_for_canary_execution` before a canary artifact is used.
+With execution mode `disabled`, a prepared user can return `ready_for_activation`. After mode changes to `canary` and CTG One is redeployed, the same call must return `ready_for_canary_execution` before any real-broadcast artifact is used.
 
-## Activation
+## Durable client provenance binding
 
-The safe activation order is:
+Once a specific crypto-send intent is durably `authorized`, but **before any signer/provider access in the broadcast path**, the reviewed client calls:
 
-1. Keep `WALLET_CRYPTO_SEND_EXECUTION_MODE=disabled`.
-2. Configure only the reviewed canonical user UUID in `WALLET_CRYPTO_SEND_CANARY_USER_IDS`.
-3. Configure `WALLET_CANARY_CLIENT_COMMIT` to the exact reviewed CTG-Wallet commit.
-4. Redeploy and require authenticated preflight status `ready_for_activation`.
-5. Set `WALLET_CRYPTO_SEND_EXECUTION_MODE=canary` without changing the allowlist or pinned client commit.
-6. Redeploy and require authenticated preflight status `ready_for_canary_execution`.
-7. Build the reviewed CTG-Wallet canary artifact from the same pinned client commit.
-8. Execute exactly one minimal-value Polygon send and capture the evidence below.
+`POST /api/wallet/intents/<intentId>/canary-client`
 
-Server activation values:
+with:
 
-```env
-WALLET_CRYPTO_SEND_EXECUTION_MODE=canary
-WALLET_CRYPTO_SEND_CANARY_USER_IDS=<canonical-user-uuid>
-WALLET_CANARY_CLIENT_COMMIT=<reviewed-ctg-wallet-commit>
+```json
+{
+  "version": "ctg-wallet-canary-client-v1",
+  "clientCommitSha": "<embedded-ctg-wallet-commit>"
+}
 ```
 
-A non-allowlisted authenticated user must remain unable to create a new authorization or pass execution revalidation, while read/overview, preflight and intent-creation endpoints remain healthy.
+The server:
 
-## Canary evidence
+1. authenticates the canonical owner;
+2. verifies the supplied commit exactly matches `WALLET_CANARY_CLIENT_COMMIT_SHA`;
+3. re-checks the current execution kill-switch and canary-user allowlist;
+4. locks the owned intent;
+5. requires status `authorized`, Polygon chain 137, trusted authorization evidence and **no tx hash/submission/settlement state**;
+6. writes `canary_client_commit_sha` and `canary_client_bound_at` exactly once;
+7. permits idempotent replay only for the same commit;
+8. rejects a different commit with `WALLET_CANARY_CLIENT_COMMIT_CONFLICT`.
 
-Record, without secrets or sensitive KYC data:
+The binding RPC can modify only the provenance metadata for a bindable authorized intent. It cannot sign, broadcast, choose destination/amount, register a transaction hash or settle funds.
 
-- CTG One deployment commit/schema version;
-- exact server-verified CTG-Wallet canary commit;
-- canonical intent id;
-- asset, base-unit amount and destination used for the canary;
-- server authorization timestamp and evidence digest;
-- Polygon transaction hash;
-- submission timestamp;
-- first observed block and full confirmation/observation progression;
-- terminal reconciliation status;
-- any error codes and latency observations.
+After successful binding, the client still performs the existing execution revalidation immediately before the signer boundary. This preserves the last-moment kill-switch.
 
-Never record access tokens, Privy secrets, private keys, seed phrases, service-role keys or full sensitive identity records.
+## Reconciliation observation journal
 
-### Canonical evidence bundle
+Migration 0089 creates `wallet_chain_reconciliation_observations_v1`.
 
-After authorization, and again after submission/finality, the authenticated owner can request:
+Every effective trusted reconciliation update appends a server-derived observation containing:
+
+- intent and owner scope;
+- exact transaction hash;
+- observation status;
+- server evidence digest;
+- whether the chain transaction was observed;
+- block number;
+- confirmations;
+- failure code, when applicable;
+- trusted check timestamp.
+
+The journal is append-only for ordinary application/service roles. Direct update/delete/truncate is revoked. Duplicate `(intent, evidence digest)` observations are ignored idempotently.
+
+This preserves the observation progression instead of losing earlier states when the current `wallet_intents_v2` row advances.
+
+## Canonical evidence bundle
+
+The authenticated owner retrieves:
 
 `GET /api/wallet/intents/<intentId>/evidence`
 
-The reviewed CTG-Wallet client sends its public build provenance in:
+No client-build header is accepted or required by this endpoint. Client provenance is read only from the durable fields already bound to the intent:
 
-`X-CTG-Wallet-Build-Commit: <40-char-git-commit>`
+- `canary_client_commit_sha`
+- `canary_client_bound_at`
 
-CTG One does not trust that assertion by itself. The route requires it to match the server-side `WALLET_CANARY_CLIENT_COMMIT` exactly. Missing server provenance fails with `503`; a missing/invalid client commit fails with `400`; a different valid commit fails with `409`. The server-certified commit, not arbitrary client input, is written into the evidence bundle and bound into its digest.
+If durable provenance is absent, the route fails closed with `WALLET_CANARY_EVIDENCE_CLIENT_PROVENANCE_MISSING`.
 
-The response is `ctg-wallet-canary-evidence-v1`. It is generated entirely from CTG One's durable intent state, the append-only reconciliation observation journal and server-controlled deployment/schema/client-provenance metadata. The route is owner-scoped by the authenticated canonical user and is read-only: it never signs, broadcasts, reconciles, updates an intent or posts a financial journal entry.
+The response version is `ctg-wallet-canary-evidence-v1` and contains only sanitized audit data:
 
-Migration 0089 creates `wallet_chain_reconciliation_observations_v1`. Every effective trusted reconciliation update appends a new observation containing the server-derived status, checked timestamp, block, confirmations, failure code and evidence digest. Ordinary application roles cannot update/delete/truncate the journal. This preserves the observation progression instead of losing earlier confirmation states when `wallet_intents_v2` advances.
+- CTG One deployment/schema metadata;
+- durable CTG-Wallet repository, commit and binding timestamp;
+- intent id/status, asset, base-unit amount and destination;
+- authorization timestamp and server simulation digest;
+- exact submitted transaction hash/timestamp when present;
+- latest trusted reconciliation state;
+- ordered append-only observation progression;
+- terminal state;
+- `bundleDigestSha256`.
 
-The bundle intentionally omits the canonical user id, stored signer address, access token, Privy identity records and all server secrets. It contains the reviewed canary fields required by this runbook: server deployment commit, verified client artifact commit, schema observation, intent id/status, asset, base-unit amount, destination, authorization timestamp/digest, exact submitted transaction hash, ordered reconciliation observations, latest reconciliation state and terminal status.
+It intentionally omits canonical user id, stored authorized signer address, access tokens, Privy identity records, private keys, seed phrases, service-role credentials and KYC data.
 
-Each response also includes `bundleDigestSha256`, calculated over the deterministic canonical evidence payload — including `clientArtifact` and the ordered append-only observation progression — before the non-deterministic `generatedAt` field is added. Capture the terminal bundle and digest with the canary record. Re-requesting the bundle after chain state changes is expected to produce a different digest; re-requesting the same durable state on the same server/client deployment pair should reproduce the same digest.
+`bundleDigestSha256` is calculated over the deterministic canonical payload, including the durable client commit **and `boundAt`**, plus the complete ordered reconciliation observation progression. `generatedAt` is added only after hashing and is not part of the digest.
 
-## Success criteria
+The evidence route is read-only: no `.insert`, `.update`, `.delete`, mutation RPC, reconciliation side effect, signing or broadcast.
 
-A canary is green only when:
+## Activation sequence
 
-1. a non-allowlisted user cannot create fresh authorization evidence or pass execution revalidation;
-2. the allowlisted user can authorize and passes execution revalidation immediately before signing;
-3. exactly one Polygon transaction is broadcast;
-4. the exact returned hash is persisted before server registration;
-5. `/submit` binds that same hash idempotently;
-6. `/reconcile` derives evidence from trusted Polygon RPC without client-supplied chain outcome;
-7. the append-only observation journal preserves the reconciliation/confirmation progression;
-8. the lifecycle reaches `reconciled` or an explainable fail-closed `failed` state;
-9. no second broadcast occurs during registration/reconciliation retries;
-10. canonical history agrees with the final server lifecycle state;
-11. the evidence endpoint rejects a CTG-Wallet build commit that differs from `WALLET_CANARY_CLIENT_COMMIT`;
-12. the terminal authenticated evidence bundle is captured with its `bundleDigestSha256` and contains no secret/KYC material.
+1. Keep `WALLET_CRYPTO_SEND_EXECUTION_MODE=disabled`.
+2. Configure only the reviewed canonical user in `WALLET_CRYPTO_SEND_CANARY_USER_IDS`.
+3. Configure `WALLET_CANARY_CLIENT_COMMIT_SHA` to the exact reviewed CTG-Wallet commit.
+4. Redeploy CTG One.
+5. Require authenticated preflight `ready_for_activation`.
+6. Set execution mode to `canary` without changing allowlist or reviewed commit.
+7. Redeploy CTG One.
+8. Require authenticated preflight `ready_for_canary_execution` from that exact client build.
+9. Build/use only the protected CTG-Wallet canary artifact for the same commit.
+10. Prepare and authorize exactly one minimal-value intent.
+11. Require successful durable `/canary-client` binding before signer access.
+12. Require execution revalidation immediately before signer access.
+13. Execute exactly one approved minimal-value Polygon send.
+14. Register the exact returned hash once/idempotently.
+15. Reconcile until terminal and capture the final evidence bundle/digest.
+
+## Canary success criteria
+
+A canary is green only when all are true:
+
+1. non-allowlisted user cannot create fresh execution authority, bind client provenance or pass execution revalidation;
+2. wrong/unreviewed client commit cannot pass preflight or provenance binding;
+3. reviewed commit is durably bound to the authorized intent before signer access;
+4. exactly one Polygon transaction is broadcast;
+5. exact returned hash is persisted before server registration;
+6. `/submit` binds that same hash idempotently;
+7. `/reconcile` derives truth from trusted Polygon RPC without client-supplied outcome;
+8. append-only journal preserves confirmation/observation progression;
+9. lifecycle reaches `reconciled` or an explainable fail-closed `failed` state;
+10. retries never create a second broadcast;
+11. canonical history agrees with final server state;
+12. final evidence bundle reproduces the durable client provenance and ordered observations and its digest validates.
 
 ## Rollback
 
-At any sign of unexpected behavior, set:
+At any unexpected behavior, restore:
 
 ```env
 WALLET_CRYPTO_SEND_EXECUTION_MODE=disabled
 ```
 
-and redeploy CTG One. Also stop distributing/using the canary client artifact.
+and redeploy CTG One. Stop distribution/use of the canary client artifact.
 
-Do not disable `/submit`, `/reconcile` or the read-only `/evidence` route during rollback. Already-broadcast transactions must remain recoverable and observable.
+Do **not** disable `/submit`, `/reconcile` or read-only `/evidence`: already-broadcast transactions must remain recoverable and observable.
 
-Public production enablement is a later phase and requires a new reviewed rollout mode, explicit operational approval and successful canary evidence.
+Public production enablement is a later reviewed phase and requires successful canary evidence plus explicit operational approval.
