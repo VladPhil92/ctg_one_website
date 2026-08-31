@@ -75,9 +75,17 @@ assert.ok(
   !evidence.includes('authorizedWalletAddress'),
   'Sanitized evidence bundle must not expose the stored authorized wallet field.',
 )
+const selectStart = route.indexOf('const EVIDENCE_SELECT = [')
+const selectEnd = route.indexOf('].join', selectStart)
+assert.ok(selectStart >= 0 && selectEnd > selectStart, 'Evidence SELECT declaration must remain explicit and auditable.')
+const evidenceSelect = route.slice(selectStart, selectEnd)
 assert.ok(
-  !route.includes("'user_id',"),
+  !evidenceSelect.includes("'user_id'"),
   'Evidence SELECT must not fetch canonical user_id into the response payload.',
+)
+assert.ok(
+  route.includes(".eq('user_id', auth.user.id)"),
+  'Evidence lookup must remain scoped to the authenticated canonical owner.',
 )
 assert.ok(
   evidence.indexOf('const canonical = {') < evidence.indexOf("createHash('sha256')")
