@@ -234,6 +234,10 @@ export default async function NvetDashboardPage() {
     );
   }
 
+  if (userResult.user.isSuperadmin) {
+    redirect('/nvetcareapp/dashboard/gobernanza');
+  }
+
   const { role } = userResult.user;
 
   if (role === 'ADMIN') {
@@ -290,9 +294,6 @@ export default async function NvetDashboardPage() {
     );
   }
 
-  // role === 'VET': agenda (read) + one-tap status advance (write, scoped
-  // to the vet's own appointments). Prices and clinical notes are a
-  // separate, not-yet-built slice (ROADMAP.md Phase 4 item 2).
   const result = await fetchNvetAppointments(accessToken);
   if (!result.ok && result.status === 401) {
     redirect('/nvetcareapp/iniciar-sesion');
