@@ -72,7 +72,13 @@ function vetName(vet: NvetVetSearchItem): string {
   return [vet.user.firstName, vet.user.lastName].filter(Boolean).join(' ').trim() || 'Veterinario Nvet Care';
 }
 
-export function ClientBookingFlow({ firstName }: { firstName: string }) {
+export function ClientBookingFlow({
+  firstName,
+  initialVetId,
+}: {
+  firstName: string;
+  initialVetId?: string;
+}) {
   const [pets, setPets] = useState<NvetPet[]>([]);
   const [vets, setVets] = useState<NvetVetSearchItem[]>([]);
   const [prices, setPrices] = useState<NvetVetPrice[]>([]);
@@ -119,21 +125,60 @@ export function ClientBookingFlow({ firstName }: { firstName: string }) {
     async function bootstrap() {
       setLoading(true);
       try {
-        const [petsResponse, vetsResponse] = await Promise.all([
+        const selectedVetRequest = initialVetId
+          ? fetch(`/api/nvetcareapp/client/vets/${encodeURIComponent(initialVetId)}`, { cache: 'no-store' })
+          : Promise.resolve(null);
+        const selectedPricesRequest = initialVetId
+          ? fetch(`/api/nvetcareapp/client/vets/${encodeURIComponent(initialVetId)}/prices`, { cache: 'no-store' })
+          : Promise.resolve(null);
+
+        const [petsResponse, vetsResponse, selectedVetResponse, selectedPricesResponse] = await Promise.all([
           fetch('/api/nvetcareapp/client/pets', { cache: 'no-store' }),
           fetch('/api/nvetcareapp/client/vets?limit=20', { cache: 'no-store' }),
+          selectedVetRequest,
+          selectedPricesRequest,
         ]);
         const petsData = await readJson<unknown>(petsResponse);
         const vetsData = await readJson<unknown>(vetsResponse);
         if (!petsResponse.ok) throw new Error(messageFrom(petsData, 'No se pudieron cargar tus mascotas.'));
         if (!vetsResponse.ok) throw new Error(messageFrom(vetsData, 'No se pudieron cargar los veterinarios.'));
+
+        let selectedVetData: NvetVetSearchItem | null = null;
+        let selectedPrices: NvetVetPrice[] = [];
+        if (selectedVetResponse && selectedPricesResponse) {
+          const providerData = await readJson<unknown>(selectedVetResponse);
+          const providerPricesData = await readJson<unknown>(selectedPricesResponse);
+          if (!selectedVetResponse.ok) {
+            throw new Error(messageFrom(providerData, 'El profesional seleccionado ya no está disponible.'));
+          }
+          if (!selectedPricesResponse.ok) {
+            throw new Error(messageFrom(providerPricesData, 'No se pudieron cargar los servicios del profesional seleccionado.'));
+          }
+          if (!providerData || typeof providerData !== 'object' || !('id' in providerData)) {
+            throw new Error('El profesional seleccionado devolvió una respuesta inválida.');
+          }
+          selectedVetData = providerData as NvetVetSearchItem;
+          selectedPrices = Array.isArray(providerPricesData) ? (providerPricesData as NvetVetPrice[]) : [];
+        }
+
         if (!active) return;
 
         const petList = Array.isArray(petsData) ? (petsData as NvetPet[]) : [];
         const vetSearch = vetsData as NvetVetSearchResponse | null;
+        const baseVets = vetSearch && Array.isArray(vetSearch.results) ? vetSearch.results : [];
+        const vetList =
+          selectedVetData && !baseVets.some((vet) => vet.id === selectedVetData?.id)
+            ? [selectedVetData, ...baseVets]
+            : baseVets;
+
         setPets(petList);
-        setVets(vetSearch && Array.isArray(vetSearch.results) ? vetSearch.results : []);
+        setVets(vetList);
         if (petList.length === 1) setSelectedPetId(petList[0].id);
+        if (selectedVetData) {
+          setSelectedVetId(selectedVetData.id);
+          setPrices(selectedPrices);
+          if (selectedPrices.length === 1) setSelectedPriceId(selectedPrices[0].id);
+        }
       } catch (cause) {
         if (active) setError(cause instanceof Error ? cause.message : 'No se pudo cargar la reserva.');
       } finally {
@@ -145,7 +190,7 @@ export function ClientBookingFlow({ firstName }: { firstName: string }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialVetId]);
 
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -158,7 +203,12 @@ export function ClientBookingFlow({ firstName }: { firstName: string }) {
       const data = await readJson<unknown>(response);
       if (!response.ok) throw new Error(messageFrom(data, 'No se pudieron cargar los veterinarios.'));
       const result = data as NvetVetSearchResponse | null;
-      setVets(result && Array.isArray(result.results) ? result.results : []);
+      const results = result && Array.isArray(result.results) ? result.results : [];
+      setVets((current) => {
+        const selected = current.find((vet) => vet.id === selectedVetId);
+        if (!selected || results.some((vet) => vet.id === selected.id)) return results;
+        return [selected, ...results];
+      });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'No se pudieron cargar los veterinarios.');
     } finally {
