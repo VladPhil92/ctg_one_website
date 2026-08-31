@@ -58,6 +58,7 @@ jobs:
         run: node scripts/verify-wallet-production-origin.mjs
 
       - name: Verify Investment production readiness
+        if: always()
         id: investment-canary
         run: node scripts/verify-investment-production-readiness.mjs
 
