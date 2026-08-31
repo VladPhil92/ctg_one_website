@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CircleDollarSign, Link2, RefreshCw, ShieldCheck, Smartphone, WalletCards } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatCents } from '@/lib/format';
@@ -35,7 +35,7 @@ function shortenAddress(value: string) {
 export function WalletAccountContext() {
   const [state, setState] = useState<LoadState>({ status: 'loading', data: null });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setState({ status: 'loading', data: null });
     try {
       const response = await fetch('/api/wallet/overview', {
@@ -53,11 +53,11 @@ export function WalletAccountContext() {
     } catch {
       setState({ status: 'error', data: null });
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const overview = state.status === 'ready' ? state.data : null;
   const primaryEvm = useMemo(
