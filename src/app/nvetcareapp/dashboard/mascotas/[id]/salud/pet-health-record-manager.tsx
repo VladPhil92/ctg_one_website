@@ -20,7 +20,7 @@ import {
   type NvetPetHealthProfileInput,
   type NvetPreventiveCareStatus,
   type NvetPreventiveCareType,
-} from '@/lib/nvetcareapp/client-booking';
+} from '@/lib/nvetcareapp/pet-health-contract';
 import { nvetFetchWithRefresh } from '../../../nvet-fetch';
 
 const inputClass =
