@@ -7,16 +7,22 @@ on:
       - 'src/lib/wallet/chain-reconciliation-service.ts'
       - 'src/lib/wallet/chain-reconciliation.ts'
       - 'src/lib/wallet/operational-alerts.ts'
+      - 'src/lib/wallet/lifecycle-operations.ts'
       - 'src/app/api/internal/wallet/reconcile-pending/**'
+      - 'src/app/api/internal/wallet/operations-health/**'
       - 'src/app/api/wallet/intents/**/reconcile/**'
       - '.github/workflows/wallet-chain-reconciliation-worker.yml'
+      - '.github/workflows/wallet-lifecycle-operations-worker.yml'
       - '.github/workflows/wallet-chain-operations.yml'
       - 'scripts/test-wallet-chain-operations-invariants.mjs'
       - 'scripts/test-wallet-chain-reconciliation-invariants.mjs'
       - 'scripts/test-wallet-lifecycle-correlation-alerts-invariants.mjs'
+      - 'scripts/test-wallet-lifecycle-operations-invariants.mjs'
       - 'supabase/migrations/**wallet_lifecycle_correlation_alerts_v1.sql'
       - 'src/lib/observability/schema-version.ts'
       - 'docs/wallet/CHAIN_RECONCILIATION_OPERATIONS.md'
+      - 'docs/wallet/LIFECYCLE_CORRELATION_ALERTS.md'
+      - 'docs/wallet/LIFECYCLE_OPERATIONS.md'
       - 'render.yaml'
   push:
     branches: [main]
@@ -24,16 +30,22 @@ on:
       - 'src/lib/wallet/chain-reconciliation-service.ts'
       - 'src/lib/wallet/chain-reconciliation.ts'
       - 'src/lib/wallet/operational-alerts.ts'
+      - 'src/lib/wallet/lifecycle-operations.ts'
       - 'src/app/api/internal/wallet/reconcile-pending/**'
+      - 'src/app/api/internal/wallet/operations-health/**'
       - 'src/app/api/wallet/intents/**/reconcile/**'
       - '.github/workflows/wallet-chain-reconciliation-worker.yml'
+      - '.github/workflows/wallet-lifecycle-operations-worker.yml'
       - '.github/workflows/wallet-chain-operations.yml'
       - 'scripts/test-wallet-chain-operations-invariants.mjs'
       - 'scripts/test-wallet-chain-reconciliation-invariants.mjs'
       - 'scripts/test-wallet-lifecycle-correlation-alerts-invariants.mjs'
+      - 'scripts/test-wallet-lifecycle-operations-invariants.mjs'
       - 'supabase/migrations/**wallet_lifecycle_correlation_alerts_v1.sql'
       - 'src/lib/observability/schema-version.ts'
       - 'docs/wallet/CHAIN_RECONCILIATION_OPERATIONS.md'
+      - 'docs/wallet/LIFECYCLE_CORRELATION_ALERTS.md'
+      - 'docs/wallet/LIFECYCLE_OPERATIONS.md'
       - 'render.yaml'
 
 permissions:
@@ -67,6 +79,7 @@ jobs:
           node scripts/test-wallet-chain-reconciliation-invariants.mjs
           node scripts/test-wallet-chain-operations-invariants.mjs
           node scripts/test-wallet-lifecycle-correlation-alerts-invariants.mjs
+          node scripts/test-wallet-lifecycle-operations-invariants.mjs
 
       - name: Typecheck worker and shared reconciliation boundary
         run: npx tsc --noEmit
