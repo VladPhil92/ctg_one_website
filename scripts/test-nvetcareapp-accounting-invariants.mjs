@@ -80,4 +80,9 @@ assert.match(
 // existing link to the veterinarians tier-management page.
 assert.match(dashboardPage, /\/nvetcareapp\/dashboard\/contabilidad/, 'Admin dashboard must link to the accounting page.');
 
+// The SUPERADMIN governance suite is intentionally chained from this already
+// mandatory accounting invariant so PR #306 can independently evolve the
+// generic admin-role contract without merge conflicts.
+await import('./test-nvetcareapp-superadmin-governance-invariants.mjs');
+
 console.log('Nvet Care accounting invariants: PASS');
