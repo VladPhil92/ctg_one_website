@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0087",
-    "schemaMigrationName": "wallet_canonical_cop_ledger_balance_hardening",
-    "schemaMigrationCount": 87,
+    "schemaMigration": "0088",
+    "schemaMigrationName": "wallet_intent_submission_v1",
+    "schemaMigrationCount": 88,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
