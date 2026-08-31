@@ -44,6 +44,10 @@ Default operational policy:
 
 The authorized threshold and failed lookback are server configuration only and bounded between five minutes and 24 hours.
 
+For `submitted` and `pending_external`, stuck ageing remains anchored to `submitted_at`. For `confirmed_external`, the confirmation window starts at the durable first-confirmation timestamp `chain_confirmed_at`, not at submission time. This prevents a transaction that took a long time to be mined from becoming immediately critical at the moment it first reaches `confirmed_external`.
+
+Durable critical alert kinds (`submission_stuck` and `confirmation_stuck`) and warning alert kinds (`reconciliation_stuck`) are sampled separately. Bounded warning volume therefore cannot crowd a critical alert out of the health sample or downgrade global severity.
+
 ## Broadcast-before-submit boundary
 
 A server-side `authorized` row does not prove that the client never broadcast. There is an unavoidable boundary after the wallet provider returns a transaction hash and before `/submit` successfully registers it with CTG One.
@@ -61,6 +65,7 @@ The operations-health endpoint is scheduler-only and reuses `WALLET_CHAIN_RECONC
 - no browser CORS surface;
 - service-role reads only;
 - bounded samples;
+- critical and warning durable alerts sampled separately;
 - no database writes or RPC mutations;
 - no signer/provider access;
 - no transaction broadcast.
@@ -92,7 +97,8 @@ When an alert appears:
 4. for `authorized`, determine whether the client stopped before broadcast or whether local recovery contains an already-broadcast hash;
 5. if a hash already exists, perform registration-only recovery with the same hash;
 6. for post-submit alerts, let the existing trusted reconciliation worker remain the sole chain-observation authority;
-7. never invent or rewrite a hash, synthesize confirmations, alter balances, or rebroadcast to clear an alert.
+7. for `confirmation_stuck`, measure the finality window from `chain_confirmed_at` and do not infer a problem merely from a long pre-confirmation mining delay;
+8. never invent or rewrite a hash, synthesize confirmations, alter balances, or rebroadcast to clear an alert.
 
 ## Rollback
 
@@ -111,6 +117,8 @@ This tranche is complete when:
 - migration 0090 durable alerts are green in CI;
 - the protected health endpoint remains bounded and read-only;
 - `authorized` pre-submit ageing is visible;
+- `confirmed_external` ageing is anchored to durable `chain_confirmed_at`;
+- bounded sampling cannot hide critical durable alerts behind warning volume;
 - CTG Wallet and CTG One use the same SHA-256 16-character fingerprint for cross-runtime correlation;
 - the reconciliation worker logs both safe correlation forms without raw intent IDs;
 - static invariants, TypeScript and repository CI pass;
