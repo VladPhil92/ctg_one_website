@@ -32,7 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Citas', icon: CalendarDays, href: '/nvetcareapp/dashboard/citas' },
   { label: 'Historial', icon: FileClock, href: '/nvetcareapp/dashboard/historial' },
   { label: 'Pagos / Wallet', icon: WalletCards, href: '/dashboard/wallet' },
-  { label: 'Mensajes', icon: MessageCircle, href: '/nvetcareapp/dashboard/citas', badge: 'En citas' },
+  { label: 'Mensajes', icon: MessageCircle, href: '/nvetcareapp/dashboard/mensajes' },
   { label: 'Notificaciones', icon: Bell, href: '/nvetcareapp/dashboard/notificaciones' },
   { label: 'Perfil', icon: UserRound, href: '/nvetcareapp/dashboard/perfil' },
 ];
@@ -44,6 +44,7 @@ const MOBILE_LABELS = [
   'Prevención',
   'Citas',
   'Historial',
+  'Mensajes',
   'Notificaciones',
   'Pagos / Wallet',
   'Perfil',
