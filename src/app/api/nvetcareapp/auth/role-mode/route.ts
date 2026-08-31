@@ -6,6 +6,8 @@ import {
 } from '@/lib/nvetcareapp/session';
 import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
 
+// Keep the public role-switch surface intentionally binary: root authority or
+// the strictly lower CLIENT operating mode.
 const ALLOWED_MODES = new Set<NvetRootRoleMode>(['SUPERADMIN', 'CLIENT']);
 
 /**
