@@ -1,4 +1,5 @@
 import { getNvetApiUrl } from './session';
+import { getNvetAuthorizationHeaders } from './request';
 
 // Mirrors the shape returned by GET /chat/:appointmentId/messages
 // (chat.service.ts::getMessages()). Text messages only for this slice —
@@ -18,7 +19,7 @@ async function getJson<T>(path: string, accessToken: string): Promise<{ ok: true
   let res: Response;
   try {
     res = await fetch(`${getNvetApiUrl()}${path}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: await getNvetAuthorizationHeaders(accessToken),
       cache: 'no-store',
     });
   } catch {
@@ -41,7 +42,7 @@ async function postJson<T>(
   try {
     res = await fetch(`${getNvetApiUrl()}${path}`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      headers: await getNvetAuthorizationHeaders(accessToken, { 'Content-Type': 'application/json' }),
       body: JSON.stringify(body),
     });
   } catch {
@@ -60,8 +61,9 @@ async function postJson<T>(
 
 /**
  * GET /chat/:appointmentId/messages — the backend's own ChatMembershipGuard
- * (participant-only, ADMIN always allowed) is the authoritative check; this
- * never re-implements it.
+ * is the authoritative check. In root CLIENT mode, the server-to-server role
+ * hint makes the same canonical account subject to normal participant scope
+ * instead of inheriting administrative chat visibility.
  */
 export function fetchNvetChatMessages(accessToken: string, appointmentId: string) {
   return getJson<NvetChatMessage[]>(`/api/chat/${appointmentId}/messages`, accessToken);

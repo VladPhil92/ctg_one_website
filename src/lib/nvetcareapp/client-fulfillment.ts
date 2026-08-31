@@ -1,4 +1,5 @@
 import { getNvetApiUrl } from './session';
+import { getNvetAuthorizationHeaders } from './request';
 
 export type NvetTransactionStatus = 'PENDING' | 'VERIFYING' | 'CONFIRMED' | 'LIQUIDATED' | 'DISPUTED' | 'FAILED';
 
@@ -40,7 +41,7 @@ export async function fetchNvetClientTransactions(
   let response: Response;
   try {
     response = await fetch(`${getNvetApiUrl()}/api/payments/transactions?limit=100&offset=0`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: await getNvetAuthorizationHeaders(accessToken),
       cache: 'no-store',
     });
   } catch {
@@ -69,7 +70,7 @@ export async function fetchNvetClientReviews(
   let response: Response;
   try {
     response = await fetch(`${getNvetApiUrl()}/api/reviews/me?limit=100&offset=0`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: await getNvetAuthorizationHeaders(accessToken),
       cache: 'no-store',
     });
   } catch {
@@ -105,7 +106,7 @@ export async function initiateNvetClientTransfer(
   let appointmentResponse: Response;
   try {
     appointmentResponse = await fetch(`${getNvetApiUrl()}/api/appointments/${input.appointmentId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: await getNvetAuthorizationHeaders(accessToken),
       cache: 'no-store',
     });
   } catch {
@@ -138,11 +139,10 @@ export async function initiateNvetClientTransfer(
   try {
     paymentResponse = await fetch(`${getNvetApiUrl()}/api/payments/process`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+      headers: await getNvetAuthorizationHeaders(accessToken, {
         'Content-Type': 'application/json',
         'Idempotency-Key': input.requestId,
-      },
+      }),
       body: JSON.stringify({
         appointmentId: input.appointmentId,
         paymentMethod: 'TRANSFER',
@@ -177,7 +177,7 @@ export async function createNvetClientReview(
   try {
     response = await fetch(`${getNvetApiUrl()}/api/reviews`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      headers: await getNvetAuthorizationHeaders(accessToken, { 'Content-Type': 'application/json' }),
       body: JSON.stringify(input),
     });
   } catch {
