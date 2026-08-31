@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
 import {
-  fetchNvetVetTransactions,
+  fetchNvetVetTransactionDetail,
   requireNvetVet,
   submitNvetTransferEvidence,
 } from '@/lib/nvetcareapp/vet-operations';
@@ -41,12 +41,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
   }
 
-  const transactions = await fetchNvetVetTransactions(accessToken);
-  if (!transactions.ok) {
-    return NextResponse.json({ message: transactions.message }, { status: transactions.status });
+  // Read the exact transaction from the backend. Its getTransactionById
+  // contract is ownership-aware, so authorization remains correct regardless
+  // of list pagination or how many historical payments the vet has.
+  const transactionResult = await fetchNvetVetTransactionDetail(accessToken, id);
+  if (!transactionResult.ok) {
+    return NextResponse.json({ message: transactionResult.message }, { status: transactionResult.status });
   }
-  const transaction = transactions.data.find((item) => item.id === id);
-  if (!transaction) return NextResponse.json({ message: 'Transacción no encontrada' }, { status: 404 });
+  const transaction = transactionResult.data;
   if (transaction.paymentMethod !== 'TRANSFER') {
     return NextResponse.json({ message: 'Solo las transferencias admiten comprobante' }, { status: 409 });
   }
