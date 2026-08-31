@@ -4,19 +4,25 @@ on:
   pull_request:
     paths:
       - 'src/lib/wallet/canary-evidence.ts'
+      - 'src/lib/wallet/cors.ts'
+      - 'src/lib/observability/schema-version.ts'
       - 'src/app/api/wallet/intents/**/evidence/route.ts'
       - 'scripts/test-wallet-canary-evidence-invariants.mjs'
       - 'docs/WALLET_CANARY_RUNBOOK.md'
       - 'supabase/migrations/20260830235000_0088_wallet_chain_reconciliation_v1.sql'
+      - 'supabase/migrations/20260831021500_0089_wallet_canary_evidence_provenance.sql'
       - '.github/workflows/wallet-canary-evidence.yml'
   push:
     branches: [main]
     paths:
       - 'src/lib/wallet/canary-evidence.ts'
+      - 'src/lib/wallet/cors.ts'
+      - 'src/lib/observability/schema-version.ts'
       - 'src/app/api/wallet/intents/**/evidence/route.ts'
       - 'scripts/test-wallet-canary-evidence-invariants.mjs'
       - 'docs/WALLET_CANARY_RUNBOOK.md'
       - 'supabase/migrations/20260830235000_0088_wallet_chain_reconciliation_v1.sql'
+      - 'supabase/migrations/20260831021500_0089_wallet_canary_evidence_provenance.sql'
       - '.github/workflows/wallet-canary-evidence.yml'
 
 permissions:
