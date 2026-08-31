@@ -28,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Inicio', icon: Home, href: '/nvetcareapp/dashboard' },
   { label: 'Mis mascotas', icon: PawPrint, href: '/nvetcareapp/dashboard/mascotas' },
   { label: 'Prevención', icon: ShieldCheck, href: '/nvetcareapp/dashboard/prevencion' },
-  { label: 'Servicios', icon: Stethoscope, badge: 'Próximamente' },
+  { label: 'Servicios', icon: Stethoscope, href: '/nvetcareapp/dashboard/servicios' },
   { label: 'Citas', icon: CalendarDays, href: '/nvetcareapp/dashboard/citas' },
   { label: 'Historial', icon: FileClock, href: '/nvetcareapp/dashboard/historial' },
   { label: 'Pagos / Wallet', icon: WalletCards, href: '/dashboard/wallet' },
@@ -37,7 +37,16 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Perfil', icon: UserRound, badge: 'Próximamente' },
 ];
 
-const MOBILE_LABELS = ['Inicio', 'Mis mascotas', 'Prevención', 'Citas', 'Historial', 'Notificaciones', 'Pagos / Wallet'];
+const MOBILE_LABELS = [
+  'Inicio',
+  'Mis mascotas',
+  'Servicios',
+  'Prevención',
+  'Citas',
+  'Historial',
+  'Notificaciones',
+  'Pagos / Wallet',
+];
 
 function isActivePath(pathname: string, href: string): boolean {
   if (href === '/nvetcareapp/dashboard') return pathname === href;
@@ -81,11 +90,13 @@ function NavLink({ item, pathname, compact = false }: { item: NavItem; pathname:
       <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
       {item.badge && (
-        <span className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] ${
-          item.label === 'Notificaciones'
-            ? 'bg-[#34B27A] text-white'
-            : 'bg-[#0D1B2A]/5 text-[#5B6670]'
-        }`}>
+        <span
+          className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] ${
+            item.label === 'Notificaciones'
+              ? 'bg-[#34B27A] text-white'
+              : 'bg-[#0D1B2A]/5 text-[#5B6670]'
+          }`}
+        >
           {item.badge}
         </span>
       )}
@@ -105,13 +116,15 @@ export function ClientDashboardShell({
   unreadNotifications?: number;
 }) {
   const pathname = usePathname();
-  const initials = userName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('') || 'U';
-  const notificationBadge = unreadNotifications > 99 ? '99+' : unreadNotifications > 0 ? String(unreadNotifications) : undefined;
+  const initials =
+    userName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'U';
+  const notificationBadge =
+    unreadNotifications > 99 ? '99+' : unreadNotifications > 0 ? String(unreadNotifications) : undefined;
   const navItems = NAV_ITEMS.map((item) =>
     item.label === 'Notificaciones' ? { ...item, badge: notificationBadge } : item,
   );
@@ -141,7 +154,7 @@ export function ClientDashboardShell({
             <div className="rounded-2xl border border-[#34B27A]/20 bg-[#34B27A]/[0.06] p-4">
               <p className="text-xs font-bold text-[#0D1B2A]">Oferta veterinaria en expansión</p>
               <p className="mt-1 text-[11px] leading-5 text-[#5B6670]">
-                Puedes registrar tus mascotas y preparar tu atención mientras incorporamos profesionales verificados.
+                Explora profesionales verificados y sus servicios publicados sin mostrar oferta ficticia cuando todavía no exista disponibilidad real.
               </p>
             </div>
             <div className="rounded-2xl border border-[#0D1B2A]/10 bg-[#F8F9FA] p-3">
