@@ -1,4 +1,5 @@
 import { getNvetApiUrl } from './session';
+import { getNvetAuthorizationHeaders } from './request';
 import {
   isCanonicalNvetSuperadminSession,
   isCanonicalNvetSuperadminSubject,
@@ -13,6 +14,7 @@ export interface NvetCurrentUser {
   firstName: string;
   lastName: string;
   isSuperadmin: boolean;
+  isClientMode: boolean;
 }
 
 export type NvetCurrentUserResult =
@@ -40,10 +42,12 @@ function cleanName(value: unknown): string {
  * prevents a stale/mismatched Nvet cookie from inheriting root UI merely
  * because the browser also holds the canonical CTG One session.
  *
- * The canonical root intentionally reuses the ADMIN read-model in the shared
- * dashboard router while `dashboard/template.tsx` adds SUPERADMIN-only chrome.
- * The backend independently enforces the sole effective SUPERADMIN at its JWT
- * boundary. Any non-canonical upstream SUPERADMIN is projected to ADMIN here.
+ * The canonical root normally reuses the ADMIN read-model. When the root has
+ * explicitly activated Modo usuario, the server-to-server request carries
+ * `X-Nvet-Acting-Role: CLIENT`; the Nvet backend accepts that hint only for
+ * the canonical SUPERADMIN and returns the CLIENT effective role. The root
+ * identity marker remains true so a one-click return to SUPERADMIN is always
+ * available without mutating the database role.
  *
  * CTG-provisioned accounts may legitimately have null profile names; missing
  * names therefore no longer turn a valid authenticated session into a 502.
@@ -52,7 +56,7 @@ export async function fetchNvetCurrentUser(accessToken: string): Promise<NvetCur
   let res: Response;
   try {
     res = await fetch(`${getNvetApiUrl()}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: await getNvetAuthorizationHeaders(accessToken),
       cache: 'no-store',
     });
   } catch {
@@ -79,8 +83,11 @@ export async function fetchNvetCurrentUser(accessToken: string): Promise<NvetCur
     const canonicalSuperadmin = canonicalSession && canonicalNvetLink;
 
     const upstreamRole = raw.role;
+    const rootClientMode = canonicalSuperadmin && upstreamRole === 'CLIENT';
     const effectiveRole: NvetUserRole | undefined = canonicalSuperadmin
-      ? 'ADMIN'
+      ? rootClientMode
+        ? 'CLIENT'
+        : 'ADMIN'
       : upstreamRole === 'SUPERADMIN'
         ? 'ADMIN'
         : upstreamRole === 'ADMIN' || upstreamRole === 'VET' || upstreamRole === 'CLIENT'
@@ -103,6 +110,7 @@ export async function fetchNvetCurrentUser(accessToken: string): Promise<NvetCur
         lastName,
         role: effectiveRole,
         isSuperadmin: canonicalSuperadmin,
+        isClientMode: rootClientMode,
       },
     };
   } catch {
