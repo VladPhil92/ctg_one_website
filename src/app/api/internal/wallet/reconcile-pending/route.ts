@@ -17,6 +17,7 @@ import {
   WALLET_CHAIN_RECONCILABLE_STATUSES,
   WalletChainPersistenceError,
 } from '@/lib/wallet/chain-reconciliation-service';
+import { walletIntentFingerprint } from '@/lib/wallet/lifecycle-operations';
 import {
   alertKindForLifecycleStatus,
   normalizeOperationalCorrelationId,
@@ -95,9 +96,9 @@ function workerSecretState(request: Request): 'unconfigured' | 'authorized' | 'u
 }
 
 function ageSeconds(iso: string, nowMs: number) {
-  const submittedMs = Date.parse(iso);
-  if (!Number.isFinite(submittedMs)) return null;
-  return Math.max(0, Math.floor((nowMs - submittedMs) / 1000));
+  const anchorMs = Date.parse(iso);
+  if (!Number.isFinite(anchorMs)) return null;
+  return Math.max(0, Math.floor((nowMs - anchorMs) / 1000));
 }
 
 function responseWithContext(request: Request, body: unknown, init: ResponseInit = {}) {
@@ -196,7 +197,7 @@ export async function POST(request: Request) {
 
   const { data: candidates, error: candidateError } = await admin
     .from('wallet_intents_v2')
-    .select(`${WALLET_CHAIN_INTENT_SELECT},operational_correlation_id`)
+    .select(`${WALLET_CHAIN_INTENT_SELECT},chain_confirmed_at,operational_correlation_id`)
     .in('status', [...WALLET_CHAIN_RECONCILABLE_STATUSES])
     .not('tx_hash', 'is', null)
     .order('chain_last_checked_at', { ascending: true, nullsFirst: true })
@@ -249,7 +250,11 @@ export async function POST(request: Request) {
       continue;
     }
 
+    const intentFingerprint = walletIntentFingerprint(intent.id);
     const submittedAgeSeconds = ageSeconds(intent.submitted_at, nowMs) ?? 0;
+    const priorConfirmedAgeSeconds = isRecord(rawIntent) && typeof rawIntent.chain_confirmed_at === 'string'
+      ? ageSeconds(rawIntent.chain_confirmed_at, nowMs)
+      : null;
     oldestSubmittedAgeSeconds = Math.max(oldestSubmittedAgeSeconds, submittedAgeSeconds);
     let observedStatus: string | null = null;
 
@@ -267,42 +272,61 @@ export async function POST(request: Request) {
       if (nextStatus === 'reconciled' || nextStatus === 'failed') {
         await resolveWalletOperationalAlertsV1(admin, intent.id, nextStatus);
         counts.alertsResolved += 1;
-      } else if (submittedAgeSeconds >= stuckAfterSeconds) {
-        const alertKind = alertKindForLifecycleStatus(nextStatus);
-        if (alertKind) {
-          await upsertWalletOperationalAlertV1(admin, {
-            intentId: intent.id,
-            correlationId,
-            alertKind,
-            lifecycleStatus: nextStatus,
-            submittedAgeSeconds,
+      } else {
+        const confirmationAgeSeconds = nextStatus === 'confirmed_external'
+          && typeof result.record.chainConfirmedAt === 'string'
+          ? ageSeconds(result.record.chainConfirmedAt, nowMs)
+          : priorConfirmedAgeSeconds;
+        const stuckAgeSeconds = nextStatus === 'confirmed_external'
+          ? (confirmationAgeSeconds ?? 0)
+          : submittedAgeSeconds;
+
+        if (stuckAgeSeconds >= stuckAfterSeconds) {
+          const alertKind = alertKindForLifecycleStatus(nextStatus);
+          if (alertKind) {
+            await upsertWalletOperationalAlertV1(admin, {
+              intentId: intent.id,
+              correlationId,
+              alertKind,
+              lifecycleStatus: nextStatus,
+              submittedAgeSeconds,
+              confirmations: result.observation.confirmations,
+            });
+            counts.alertsOpened += 1;
+          }
+          counts.stuck += 1;
+          logger.warn('wallet.chain.worker.stuck_intent', {
+            ...context,
+            intent_fingerprint: intentFingerprint,
+            wallet_correlation_id: correlationId,
+            prior_status: intent.status,
+            observed_status: nextStatus,
+            submitted_age_seconds: submittedAgeSeconds,
+            stuck_age_seconds: stuckAgeSeconds,
+            stuck_age_anchor: nextStatus === 'confirmed_external' ? 'chain_confirmed_at' : 'submitted_at',
             confirmations: result.observation.confirmations,
           });
-          counts.alertsOpened += 1;
+        } else {
+          logger.info('wallet.chain.worker.intent_observed', {
+            ...context,
+            intent_fingerprint: intentFingerprint,
+            wallet_correlation_id: correlationId,
+            prior_status: intent.status,
+            observed_status: nextStatus,
+            submitted_age_seconds: submittedAgeSeconds,
+            stuck_age_seconds: stuckAgeSeconds,
+            stuck_age_anchor: nextStatus === 'confirmed_external' ? 'chain_confirmed_at' : 'submitted_at',
+            confirmations: result.observation.confirmations,
+          });
         }
-        counts.stuck += 1;
-        logger.warn('wallet.chain.worker.stuck_intent', {
-          ...context,
-          wallet_correlation_id: correlationId,
-          prior_status: intent.status,
-          observed_status: nextStatus,
-          submitted_age_seconds: submittedAgeSeconds,
-          confirmations: result.observation.confirmations,
-        });
-      } else {
-        logger.info('wallet.chain.worker.intent_observed', {
-          ...context,
-          wallet_correlation_id: correlationId,
-          prior_status: intent.status,
-          observed_status: nextStatus,
-          submitted_age_seconds: submittedAgeSeconds,
-          confirmations: result.observation.confirmations,
-        });
       }
     } catch (error) {
       counts.errors += 1;
       const terminalStatusCommitted = terminalLifecycleStatus(observedStatus) !== null;
-      if (!terminalStatusCommitted && submittedAgeSeconds >= stuckAfterSeconds) {
+      const priorStuckAgeSeconds = intent.status === 'confirmed_external'
+        ? (priorConfirmedAgeSeconds ?? 0)
+        : submittedAgeSeconds;
+      if (!terminalStatusCommitted && priorStuckAgeSeconds >= stuckAfterSeconds) {
         counts.stuck += 1;
         const alertKind = alertKindForLifecycleStatus(intent.status);
         if (alertKind) {
@@ -336,10 +360,13 @@ export async function POST(request: Request) {
 
       logger.error('wallet.chain.worker.intent_failed', {
         ...context,
+        intent_fingerprint: intentFingerprint,
         wallet_correlation_id: correlationId,
         prior_status: intent.status,
         observed_status: observedStatus,
         submitted_age_seconds: submittedAgeSeconds,
+        stuck_age_seconds: priorStuckAgeSeconds,
+        stuck_age_anchor: intent.status === 'confirmed_external' ? 'chain_confirmed_at' : 'submitted_at',
         error_code: code,
       });
     }
