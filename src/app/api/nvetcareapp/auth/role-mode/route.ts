@@ -11,10 +11,10 @@ const ALLOWED_MODES = new Set<NvetRootRoleMode>(['SUPERADMIN', 'CLIENT']);
 /**
  * Session-local role switch for the canonical Nvet SUPERADMIN.
  *
- * This endpoint never changes `users.role`. It only stores an httpOnly mode
- * hint after re-validating that the current Nvet + CTG One identity is the
- * canonical root. The Nvet backend independently enforces the same invariant
- * before honoring CLIENT mode on subsequent requests.
+ * This endpoint never rewrites persistent account authority. It only stores
+ * an httpOnly mode hint after re-validating that the current Nvet + CTG One
+ * identity is the canonical root. The Nvet backend independently enforces
+ * the same invariant before honoring CLIENT mode on subsequent requests.
  */
 export async function POST(request: NextRequest) {
   let body: { mode?: NvetRootRoleMode };
