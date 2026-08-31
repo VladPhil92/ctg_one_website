@@ -294,6 +294,7 @@ export default async function NvetDashboardPage() {
     );
   }
 
+  // role === 'VET': the only remaining role after ADMIN, CLIENT and root.
   const result = await fetchNvetAppointments(accessToken);
   if (!result.ok && result.status === 401) {
     redirect('/nvetcareapp/iniciar-sesion');
