@@ -17,6 +17,7 @@ import {
   WALLET_CHAIN_RECONCILABLE_STATUSES,
   WalletChainPersistenceError,
 } from '@/lib/wallet/chain-reconciliation-service';
+import { walletIntentFingerprint } from '@/lib/wallet/lifecycle-operations';
 import {
   alertKindForLifecycleStatus,
   normalizeOperationalCorrelationId,
@@ -188,6 +189,7 @@ export async function POST(request: Request) {
       continue;
     }
 
+    const intentFingerprint = walletIntentFingerprint(intent.id);
     const submittedAgeSeconds = ageSeconds(intent.submitted_at, nowMs) ?? 0;
     oldestSubmittedAgeSeconds = Math.max(oldestSubmittedAgeSeconds, submittedAgeSeconds);
 
@@ -220,6 +222,7 @@ export async function POST(request: Request) {
         counts.stuck += 1;
         logger.warn('wallet.chain.worker.stuck_intent', {
           ...context,
+          intent_fingerprint: intentFingerprint,
           wallet_correlation_id: correlationId,
           prior_status: intent.status,
           observed_status: nextStatus,
@@ -229,6 +232,7 @@ export async function POST(request: Request) {
       } else {
         logger.info('wallet.chain.worker.intent_observed', {
           ...context,
+          intent_fingerprint: intentFingerprint,
           wallet_correlation_id: correlationId,
           prior_status: intent.status,
           observed_status: nextStatus,
@@ -272,6 +276,7 @@ export async function POST(request: Request) {
 
       logger.error('wallet.chain.worker.intent_failed', {
         ...context,
+        intent_fingerprint: intentFingerprint,
         wallet_correlation_id: correlationId,
         prior_status: intent.status,
         submitted_age_seconds: submittedAgeSeconds,
