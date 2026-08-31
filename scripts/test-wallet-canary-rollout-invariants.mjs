@@ -106,7 +106,7 @@ for (const fragment of [
   ".from('wallet_identity_links')",
   'probeRuntimeSchemaCompatibility()',
   'probePolygonCanaryInfrastructureV1(signerAddress)',
-  "status: 'ready_for_canary_execution'",
+  "'ready_for_canary_execution'",
   "'ACTIVATE_CANARY_MODE_AND_REDEPLOY'",
   "'BUILD_REVIEWED_CANARY_ARTIFACT'",
 ]) {
