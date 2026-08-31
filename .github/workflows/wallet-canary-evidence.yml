@@ -1,0 +1,51 @@
+name: Wallet Canary Evidence Contract
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/wallet/canary-evidence.ts'
+      - 'src/app/api/wallet/intents/**/evidence/route.ts'
+      - 'scripts/test-wallet-canary-evidence-invariants.mjs'
+      - 'docs/WALLET_CANARY_RUNBOOK.md'
+      - 'supabase/migrations/20260830235000_0088_wallet_chain_reconciliation_v1.sql'
+      - '.github/workflows/wallet-canary-evidence.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/lib/wallet/canary-evidence.ts'
+      - 'src/app/api/wallet/intents/**/evidence/route.ts'
+      - 'scripts/test-wallet-canary-evidence-invariants.mjs'
+      - 'docs/WALLET_CANARY_RUNBOOK.md'
+      - 'supabase/migrations/20260830235000_0088_wallet_chain_reconciliation_v1.sql'
+      - '.github/workflows/wallet-canary-evidence.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Read-only sanitized evidence contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.20.0'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify migration integrity
+        run: npm run test:migration-integrity
+
+      - name: Verify canary evidence invariants
+        run: node scripts/test-wallet-canary-evidence-invariants.mjs
+
+      - name: Typecheck
+        run: npx tsc --noEmit
