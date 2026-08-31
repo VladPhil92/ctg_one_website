@@ -44,11 +44,11 @@ export default function WalletPage() {
   return (
     <PublicPageShell>
       <Container size="large">
-        <section className="relative overflow-hidden rounded-[34px] border border-[#d6ae56]/25 bg-[linear-gradient(135deg,#0b0b09_0%,#070a0e_58%,#040609_100%)] px-6 py-12 shadow-[0_40px_120px_rgba(0,0,0,.45)] sm:px-10 sm:py-16 md:px-14 md:py-20">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_16%,rgba(214,174,86,.15),transparent_30%),radial-gradient(circle_at_84%_22%,rgba(36,140,255,.11),transparent_28%)]" aria-hidden="true" />
+        <section className="relative overflow-hidden rounded-[34px] border border-[#c9a962]/25 bg-[linear-gradient(135deg,#0b0b09_0%,#070a0e_58%,#040609_100%)] px-6 py-12 shadow-[0_40px_120px_rgba(0,0,0,.45)] sm:px-10 sm:py-16 md:px-14 md:py-20">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_16%,rgba(201,169,98,.15),transparent_30%),radial-gradient(circle_at_84%_22%,rgba(36,140,255,.11),transparent_28%)]" aria-hidden="true" />
           <div className="relative grid gap-12 lg:grid-cols-[1fr_.95fr] lg:items-center">
             <div>
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#d6ae56]/25 bg-[#d6ae56]/[0.055] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#f1c75b]">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#c9a962]/25 bg-[#c9a962]/[0.055] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#d4b676]">
                 <WalletCards size={14} /> CTG One Wallet
               </div>
               <h1 className="max-w-3xl font-outfit text-5xl font-semibold leading-[.94] tracking-[-0.055em] text-white sm:text-6xl md:text-7xl">
@@ -58,28 +58,29 @@ export default function WalletPage() {
                 {es ? 'Accede desde la web o instala la app. Ambas superficies usan la misma cuenta CTG One, la misma relación de identidad y las mismas fuentes financieras canónicas.' : 'Access it on the web or install the app. Both surfaces use the same CTG One account, the same identity relationship and the same canonical financial sources.'}
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <a href="/dashboard/wallet" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#d6ae56] px-6 text-xs font-semibold uppercase tracking-[0.1em] text-black transition-all hover:-translate-y-0.5 hover:bg-[#f1c75b]">
+                <a href="/dashboard/wallet" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#c9a962] px-6 text-xs font-semibold uppercase tracking-[0.1em] text-black transition-all hover:-translate-y-0.5 hover:bg-[#d4b676]">
                   {es ? 'Abrir Wallet Web' : 'Open Web Wallet'} <ArrowUpRight size={14} />
                 </a>
-                <a href="#app" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.025] px-6 text-xs font-semibold uppercase tracking-[0.1em] text-white transition-all hover:-translate-y-0.5 hover:border-[#d6ae56]/35 hover:bg-white/[0.05]">
+                <a href="#app" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.025] px-6 text-xs font-semibold uppercase tracking-[0.1em] text-white transition-all hover:-translate-y-0.5 hover:border-[#c9a962]/35 hover:bg-white/[0.05]">
                   {es ? 'Instalar app' : 'Install app'} <Smartphone size={14} />
                 </a>
               </div>
             </div>
 
             <div className="relative mx-auto w-full max-w-[520px]">
-              <div className="absolute -inset-10 rounded-full bg-[radial-gradient(circle,rgba(214,174,86,.12),transparent_66%)] blur-3xl" aria-hidden="true" />
+              <div className="absolute -inset-10 rounded-full bg-[radial-gradient(circle,rgba(201,169,98,.12),transparent_66%)] blur-3xl" aria-hidden="true" />
               <div className="relative overflow-hidden rounded-[30px] border border-white/[0.10] bg-[#070b10]/95 p-6 shadow-[0_40px_100px_rgba(0,0,0,.55)] backdrop-blur-xl">
                 <div className="flex items-center justify-between border-b border-white/[0.07] pb-5">
                   <div>
-                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#f1c75b]">CTG One / Wallet</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#d4b676]">CTG One / Wallet</p>
                     <p className="mt-2 font-outfit text-2xl font-semibold tracking-[-0.04em] text-white">{es ? 'Identidad financiera unificada' : 'Unified financial identity'}</p>
+                    <p className="mt-2 text-[9px] uppercase tracking-[0.14em] text-text-dim">{es ? 'Vista conceptual de arquitectura' : 'Conceptual architecture view'}</p>
                   </div>
-                  <BadgeCheck size={22} className="text-[#f1c75b]" />
+                  <BadgeCheck size={22} className="text-[#d4b676]" />
                 </div>
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-[#d6ae56]/18 bg-[#d6ae56]/[0.055] p-4">
-                    <CircleDollarSign size={17} className="text-[#f1c75b]" />
+                  <div className="rounded-2xl border border-[#c9a962]/18 bg-[#c9a962]/[0.055] p-4">
+                    <CircleDollarSign size={17} className="text-[#d4b676]" />
                     <p className="mt-6 text-[9px] uppercase tracking-[0.18em] text-white/30">Saldo CTG</p>
                     <p className="mt-2 text-lg font-semibold text-white">COP / CTG Ledger</p>
                   </div>
@@ -95,7 +96,7 @@ export default function WalletPage() {
                       <p className="text-[9px] uppercase tracking-[0.18em] text-white/30">Account model</p>
                       <p className="mt-2 text-sm font-semibold text-white">1 CTG One user → 1 canonical wallet identity</p>
                     </div>
-                    <LockKeyhole size={18} className="shrink-0 text-[#f1c75b]" />
+                    <LockKeyhole size={18} className="shrink-0 text-[#d4b676]" />
                   </div>
                 </div>
               </div>
@@ -105,13 +106,13 @@ export default function WalletPage() {
 
         <section className="py-16 sm:py-20">
           <div className="mb-9 max-w-3xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f1c75b]">{es ? 'Arquitectura de producto' : 'Product architecture'}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#d4b676]">{es ? 'Arquitectura de producto' : 'Product architecture'}</p>
             <h2 className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">{es ? 'Una experiencia; fuentes de verdad separadas.' : 'One experience; separate sources of truth.'}</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {principles.map(({ icon: Icon, title, text }) => (
               <article key={title} className="rounded-[24px] border border-white/[0.08] bg-white/[0.025] p-6">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d6ae56]/20 bg-[#d6ae56]/[0.05] text-[#f1c75b]"><Icon size={18} /></div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#c9a962]/20 bg-[#c9a962]/[0.05] text-[#d4b676]"><Icon size={18} /></div>
                 <h3 className="mt-6 font-outfit text-xl font-semibold tracking-[-0.025em] text-white">{title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-text-muted">{text}</p>
               </article>
@@ -122,11 +123,11 @@ export default function WalletPage() {
         <section id="app" className="scroll-mt-32 pb-20 sm:pb-24">
           <div className="grid gap-5 lg:grid-cols-2">
             <article className="rounded-[28px] border border-white/[0.08] bg-white/[0.025] p-7 sm:p-8">
-              <Globe2 size={22} className="text-[#f1c75b]" />
+              <Globe2 size={22} className="text-[#d4b676]" />
               <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.17em] text-white/35">Web Wallet</p>
               <h2 className="mt-3 font-outfit text-3xl font-semibold tracking-[-0.04em] text-white">{es ? 'Integrada directamente en ctgone.com' : 'Integrated directly into ctgone.com'}</h2>
               <p className="mt-4 text-sm leading-relaxed text-text-muted">{es ? 'Si ya tienes sesión CTG One, entras a la Wallet con esa misma cuenta. Si no la tienes, el login conserva el destino y te devuelve a la Wallet.' : 'If you already have a CTG One session, you enter the Wallet with that same account. Otherwise, login preserves the destination and returns you to the Wallet.'}</p>
-              <a href="/dashboard/wallet" className="mt-7 inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-[#f1c75b] hover:text-white">{es ? 'Abrir Wallet Web' : 'Open Web Wallet'} <ArrowUpRight size={14} /></a>
+              <a href="/dashboard/wallet" className="mt-7 inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-[#d4b676] hover:text-white">{es ? 'Abrir Wallet Web' : 'Open Web Wallet'} <ArrowUpRight size={14} /></a>
             </article>
 
             <article className="rounded-[28px] border border-white/[0.08] bg-white/[0.025] p-7 sm:p-8">
@@ -138,13 +139,13 @@ export default function WalletPage() {
             </article>
           </div>
 
-          <div className="mt-5 rounded-[26px] border border-[#d6ae56]/18 bg-[#d6ae56]/[0.035] p-6 sm:p-7">
+          <div className="mt-5 rounded-[26px] border border-[#c9a962]/18 bg-[#c9a962]/[0.035] p-6 sm:p-7">
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div className="max-w-3xl">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#f1c75b]">{es ? 'Recargar Saldo CTG' : 'Top up CTG Balance'}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#d4b676]">{es ? 'Recargar Saldo CTG' : 'Top up CTG Balance'}</p>
                 <p className="mt-3 text-sm leading-relaxed text-text-muted">{es ? 'Las recargas COP pertenecen a la Wallet. El pago se registra como evidencia y el saldo solo cambia después de la verificación y conciliación correspondiente.' : 'COP top-ups belong to the Wallet. Payment is registered as evidence and the balance changes only after the corresponding verification and reconciliation.'}</p>
               </div>
-              <a href="/dashboard/depositos" className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#d6ae56] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black hover:bg-[#f1c75b]">{es ? 'Recargar' : 'Top up'} <ArrowUpRight size={14} /></a>
+              <a href="/dashboard/depositos" className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#c9a962] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black hover:bg-[#d4b676]">{es ? 'Recargar' : 'Top up'} <ArrowUpRight size={14} /></a>
             </div>
           </div>
         </section>
