@@ -52,7 +52,7 @@ const OBSERVATION_SELECT = [
   'block_number',
   'confirmations',
   'failure_code',
-  'recorded_at',
+  'checked_at',
 ].join(',');
 
 function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
@@ -111,11 +111,11 @@ export async function GET(request: Request) {
   }
 
   const { data: rawObservations, error: observationError } = await admin
-    .from('wallet_chain_observations_v1')
+    .from('wallet_chain_reconciliation_observations_v1')
     .select(OBSERVATION_SELECT)
     .eq('intent_id', intentId)
     .eq('subject_user_id', auth.user.id)
-    .order('recorded_at', { ascending: true })
+    .order('checked_at', { ascending: true })
     .order('id', { ascending: true });
 
   if (observationError) {
@@ -124,10 +124,7 @@ export async function GET(request: Request) {
 
   try {
     const intent = normalizeWalletCanaryEvidenceIntent(rawIntent);
-    const observations = (rawObservations ?? []).map((observation) => normalizeWalletCanaryEvidenceObservation({
-      ...observation,
-      checked_at: observation.recorded_at,
-    }));
+    const observations = (rawObservations ?? []).map((observation) => normalizeWalletCanaryEvidenceObservation(observation));
     const schema = await probeRuntimeSchemaCompatibility();
     const bundle = buildWalletCanaryEvidenceBundleV1({
       intent,
