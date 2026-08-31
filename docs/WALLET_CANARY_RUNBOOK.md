@@ -57,16 +57,54 @@ Before changing execution mode to `canary`, verify all of the following:
 7. CTG-Wallet canary artifact was built from the reviewed commit with both canary and broadcast build gates enabled.
 8. General staging, production web and signed mobile release workflows remain broadcast-disabled.
 
+## Authenticated preflight
+
+Before enabling `canary`, the intended canary user must call:
+
+`POST /api/wallet/canary/preflight`
+
+with body:
+
+```json
+{ "version": "ctg-wallet-canary-preflight-v1" }
+```
+
+The endpoint is authenticated and evaluates only the canonical Supabase user represented by the caller's access token. It does not accept another user id, transaction amount, destination, intent id or transaction hash from the browser.
+
+The preflight performs read-only checks for:
+
+- runtime schema compatibility;
+- whether the authenticated canonical user is present in the server-only canary allowlist;
+- exactly one verified primary Privy embedded EVM account and verified Privy identity link;
+- trusted Polygon RPC health and chain id `137`;
+- current Polygon block availability and gas-price availability;
+- a non-zero native POL balance for gas;
+- the reviewed minimum-confirmation policy.
+
+It never creates or authorizes an intent, signs a message/transaction, broadcasts a transaction, registers a hash or mutates COP/crypto balances.
+
+With `WALLET_CRYPTO_SEND_EXECUTION_MODE=disabled`, a fully prepared user returns `ready_for_activation`. Only then should the operator switch the server mode to `canary` and redeploy. After redeploy, the same authenticated preflight must return `ready_for_canary_execution` before a canary artifact is used.
+
 ## Activation
 
-Set:
+The safe activation order is:
+
+1. Keep `WALLET_CRYPTO_SEND_EXECUTION_MODE=disabled`.
+2. Configure only the reviewed canonical user UUID in `WALLET_CRYPTO_SEND_CANARY_USER_IDS`.
+3. Redeploy and require authenticated preflight status `ready_for_activation`.
+4. Set `WALLET_CRYPTO_SEND_EXECUTION_MODE=canary` without changing the allowlist.
+5. Redeploy and require authenticated preflight status `ready_for_canary_execution`.
+6. Build the reviewed CTG-Wallet canary artifact from the pinned client commit.
+7. Execute exactly one minimal-value Polygon send and capture the evidence below.
+
+Server activation values:
 
 ```env
 WALLET_CRYPTO_SEND_EXECUTION_MODE=canary
 WALLET_CRYPTO_SEND_CANARY_USER_IDS=<canonical-user-uuid>
 ```
 
-Redeploy CTG One and verify a non-allowlisted authenticated user cannot create a new authorization or pass execution revalidation, while read/overview and intent-creation endpoints remain healthy.
+A non-allowlisted authenticated user must remain unable to create a new authorization or pass execution revalidation, while read/overview, preflight and intent-creation endpoints remain healthy.
 
 ## Canary evidence
 
