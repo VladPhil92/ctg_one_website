@@ -22,12 +22,13 @@ export async function requireNvetSuperadmin(): Promise<{
   if (!userResult.ok && userResult.status === 401) {
     redirect('/nvetcareapp/iniciar-sesion');
   }
-  if (
-    !userResult.ok ||
-    !userResult.user.isSuperadmin ||
-    userResult.user.isClientMode
-  ) {
+
+  if (!userResult.ok || !userResult.user.isSuperadmin) {
     redirect('/nvetcareapp/dashboard');
+  }
+
+  if (userResult.user.isClientMode) {
+    redirect('/nvetcareapp/dashboard/citas');
   }
 
   return { accessToken, user: userResult.user };
