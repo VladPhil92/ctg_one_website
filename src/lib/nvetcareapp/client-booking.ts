@@ -1,4 +1,5 @@
 import { getNvetApiUrl } from './session';
+import { getNvetAuthorizationHeaders } from './request';
 import { fetchNvetCurrentUser, type NvetCurrentUser } from './user';
 
 export type NvetPetSpecies = 'DOG' | 'CAT' | 'BIRD' | 'RABBIT' | 'REPTILE' | 'FISH' | 'OTHER';
@@ -125,7 +126,7 @@ export async function requireNvetClient(accessToken: string): Promise<NvetResult
 export async function fetchNvetPets(accessToken: string): Promise<NvetResult<NvetPet[]>> {
   try {
     const response = await fetch(`${getNvetApiUrl()}/api/pets`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: await getNvetAuthorizationHeaders(accessToken),
       cache: 'no-store',
     });
     const data = await parseJsonSafe(response);
@@ -148,10 +149,7 @@ export async function createNvetPet(
   try {
     const response = await fetch(`${getNvetApiUrl()}/api/pets`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
+      headers: await getNvetAuthorizationHeaders(accessToken, { 'Content-Type': 'application/json' }),
       body: JSON.stringify(input),
     });
     const data = await parseJsonSafe(response);
@@ -259,11 +257,10 @@ export async function createNvetClientAppointment(
   try {
     const response = await fetch(`${getNvetApiUrl()}/api/appointments`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+      headers: await getNvetAuthorizationHeaders(accessToken, {
         'Content-Type': 'application/json',
         'Idempotency-Key': input.requestId,
-      },
+      }),
       body: JSON.stringify(payload),
     });
     const data = await parseJsonSafe(response);
