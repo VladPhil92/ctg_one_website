@@ -123,6 +123,18 @@ Record, without secrets or sensitive KYC data:
 
 Never record access tokens, Privy secrets, private keys, seed phrases, service-role keys or full sensitive identity records.
 
+### Canonical evidence bundle
+
+After authorization, and again after submission/finality, the authenticated owner can request:
+
+`GET /api/wallet/intents/<intentId>/evidence`
+
+The response is `ctg-wallet-canary-evidence-v1`. It is generated entirely from CTG One's durable intent state plus deployment/schema metadata. The route is owner-scoped by the authenticated canonical user and is read-only: it never signs, broadcasts, reconciles, updates an intent or posts a financial journal entry.
+
+The bundle intentionally omits the canonical user id, stored signer address, access token, Privy identity records and all server secrets. It contains the reviewed canary fields required by this runbook: deployment commit, schema observation, intent id/status, asset, base-unit amount, destination, authorization timestamp/digest, exact submitted transaction hash, reconciliation timestamps/block/confirmations/digest/failure and terminal state.
+
+Each response also includes `bundleDigestSha256`, calculated over the deterministic canonical evidence payload before the non-deterministic `generatedAt` field is added. Capture the terminal bundle and digest with the canary record. Re-requesting the bundle after chain state changes is expected to produce a different digest; re-requesting the same durable state on the same deployment should reproduce the same digest.
+
 ## Success criteria
 
 A canary is green only when:
@@ -135,7 +147,8 @@ A canary is green only when:
 6. `/reconcile` derives evidence from trusted Polygon RPC without client-supplied chain outcome;
 7. the lifecycle reaches `reconciled` or an explainable fail-closed `failed` state;
 8. no second broadcast occurs during registration/reconciliation retries;
-9. canonical history agrees with the final server lifecycle state.
+9. canonical history agrees with the final server lifecycle state;
+10. the terminal authenticated evidence bundle is captured with its `bundleDigestSha256` and contains no secret/KYC material.
 
 ## Rollback
 
