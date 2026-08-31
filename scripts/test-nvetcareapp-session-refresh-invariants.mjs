@@ -73,4 +73,30 @@ for (const path of writeComponents) {
   );
 }
 
+// Production access must not depend on an out-of-band Render variable that
+// can drift from the repository. Keep the canonical Railway origin both in
+// the server-side resolver and the Render blueprint; an explicit env override
+// still wins for staging or future migrations.
+const sessionSource = await read('src/lib/nvetcareapp/session.ts');
+const renderBlueprint = await read('render.yaml');
+const canonicalBackend = 'https://backend-production-a476.up.railway.app';
+assert.match(
+  sessionSource,
+  /NVET_CANONICAL_PRODUCTION_API_URL/,
+  'Nvet session resolver must carry a canonical production backend fallback.',
+);
+assert.ok(
+  sessionSource.includes(canonicalBackend),
+  'Nvet session resolver must point its production fallback at the canonical Railway backend.',
+);
+assert.match(
+  sessionSource,
+  /process\.env\.CTG_NVETCARE_API_URL/,
+  'Explicit CTG_NVETCARE_API_URL must remain the first-class override.',
+);
+assert.ok(
+  renderBlueprint.includes('key: CTG_NVETCARE_API_URL') && renderBlueprint.includes(canonicalBackend),
+  'Render blueprint must declare the same canonical Nvet backend origin.',
+);
+
 console.log('Nvet Care session-refresh invariants: PASS');
