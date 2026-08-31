@@ -47,12 +47,12 @@ services:
       # the exact same value before the scheduled worker becomes operational.
       - key: WALLET_CHAIN_RECONCILIATION_WORKER_SECRET
         sync: false
-      # CTG One Wallet manual COP top-up rails. The approved static Bre-B QR
-      # and key are immutable public display data versioned in source and need
-      # no Bancolombia API or deployment secret. Keep the real-money rail off
-      # until the rollout gate is explicitly cleared.
+      # Controlled manual COP top-up rail. The static Bre-B payload is approved
+      # public display data. Enabling it exposes payment instructions and claim
+      # intake only; KYC, proof validation, independent verification and a second
+      # reconciliation step remain mandatory before the canonical ledger changes.
       - key: NEXT_PUBLIC_WALLET_STATIC_BRE_B_ENABLED
-        value: "false"
+        value: "true"
       # Optional conventional bank transfer remains fail-closed until its full
       # public account tuple is independently verified and configured.
       - key: NEXT_PUBLIC_WALLET_BANK_NAME

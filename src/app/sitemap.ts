@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.72,
     })),
     { path: '/products', changeFrequency: 'weekly' as const, priority: 0.9 },
+    { path: '/wallet', changeFrequency: 'weekly' as const, priority: 0.95 },
     { path: '/craft-beer', changeFrequency: 'weekly' as const, priority: 0.9 },
     { path: '/nvetcareapp', changeFrequency: 'monthly' as const, priority: 0.9 },
     { path: '/technology/status', changeFrequency: 'weekly' as const, priority: 0.7 },
