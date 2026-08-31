@@ -54,7 +54,6 @@ for (const field of [
   assert.ok(route.includes(`'${field}'`), `Evidence route does not select canonical field: ${field}`)
 }
 
-const combined = `${evidence}\n${route}`
 for (const forbidden of [
   'privateKey',
   'seedPhrase',
@@ -63,12 +62,13 @@ for (const forbidden of [
   'eth_sendTransaction',
   'wallet_journal_entries_v2',
   'wallet_journal_postings_v2',
-  '.insert(',
-  '.update(',
-  '.delete(',
-  '.rpc(',
 ]) {
-  assert.ok(!combined.includes(forbidden), `Canary evidence path crossed read-only boundary: ${forbidden}`)
+  assert.ok(!evidence.includes(forbidden), `Canary evidence builder crossed safety boundary: ${forbidden}`)
+  assert.ok(!route.includes(forbidden), `Canary evidence route crossed safety boundary: ${forbidden}`)
+}
+
+for (const forbidden of ['.insert(', '.update(', '.delete(', '.rpc(']) {
+  assert.ok(!route.includes(forbidden), `Canary evidence route crossed read-only persistence boundary: ${forbidden}`)
 }
 
 assert.ok(
