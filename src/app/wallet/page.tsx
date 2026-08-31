@@ -56,15 +56,15 @@ export default function WalletPage() {
     },
     {
       name: es ? 'Recibir crypto' : 'Receive crypto',
-      state: es ? 'Condicionado' : 'Conditional',
+      state: es ? 'Polygon verificado' : 'Verified Polygon only',
       tone: 'border-[#248cff]/20 bg-[#248cff]/[0.045] text-[#7db8ff]',
-      text: es ? 'Requiere una dirección EVM primaria verificada y vinculada a la identidad CTG One.' : 'Requires a verified primary EVM address linked to CTG One identity.',
+      text: es ? 'Solo publica la dirección Privy EVM primaria verificada por CTG One para Polygon. Bitcoin, Ethereum y BNB permanecen como vistas watch-only.' : 'Only the primary Privy EVM address verified by CTG One for Polygon is published. Bitcoin, Ethereum and BNB remain watch-only views.',
     },
     {
       name: es ? 'Enviar crypto' : 'Send crypto',
-      state: es ? 'Canary controlado' : 'Controlled canary',
+      state: es ? 'No habilitado públicamente' : 'Not publicly enabled',
       tone: 'border-amber-300/20 bg-amber-300/[0.045] text-amber-200',
-      text: es ? 'El envío público sigue cerrado; el canary usa guardrails, simulación y reconciliación server-side.' : 'Public send remains closed; the canary uses server-side guardrails, simulation and reconciliation.',
+      text: es ? 'El contrato público mantiene moneyMovement cerrado. Existe infraestructura de canary, pero solo puede operar si los guardrails server-side se abren de forma explícita y controlada.' : 'The public contract keeps moneyMovement closed. Canary infrastructure exists, but it can operate only when server-side guardrails are explicitly and deliberately opened.',
     },
     {
       name: 'Swap',
