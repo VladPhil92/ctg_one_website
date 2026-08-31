@@ -125,3 +125,28 @@ export async function fetchNvetChatMetadata(
   }
   return { ok: true, data: result.data as NvetChatMetadata };
 }
+
+export async function sendNvetChatMessage(
+  accessToken: string,
+  appointmentId: string,
+  content: string,
+): Promise<NvetResult<NvetChatMessage>> {
+  try {
+    const response = await fetch(`${getNvetApiUrl()}/api/chat/${encodeURIComponent(appointmentId)}/messages`, {
+      method: 'POST',
+      headers: await getNvetAuthorizationHeaders(accessToken, { 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ content }),
+      cache: 'no-store',
+    });
+    const data = await parseJsonSafe(response);
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: backendMessage(data, 'No se pudo enviar el mensaje') };
+    }
+    if (!data || typeof data !== 'object') {
+      return { ok: false, status: 502, message: 'El servicio de chat devolvió un mensaje inválido' };
+    }
+    return { ok: true, data: data as NvetChatMessage };
+  } catch {
+    return { ok: false, status: 502, message: 'No se pudo contactar el servicio de chat' };
+  }
+}
