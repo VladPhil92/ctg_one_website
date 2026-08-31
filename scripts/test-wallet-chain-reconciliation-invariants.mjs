@@ -6,6 +6,7 @@ const files = {
   migration: path.join(root, 'supabase/migrations/20260830235000_0088_wallet_chain_reconciliation_v1.sql'),
   submitRoute: path.join(root, 'src/app/api/wallet/intents/[intentId]/submit/route.ts'),
   reconcileRoute: path.join(root, 'src/app/api/wallet/intents/[intentId]/reconcile/route.ts'),
+  reconcileService: path.join(root, 'src/lib/wallet/chain-reconciliation-service.ts'),
   adapter: path.join(root, 'src/lib/wallet/chain-reconciliation.ts'),
   trustedSimulation: path.join(root, 'src/lib/wallet/trusted-simulation.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
@@ -130,9 +131,10 @@ for (const unsafe of [
   }
 }
 
-requireFragments(source.reconcileRoute, 'Chain reconciliation route', [
-  "const ALLOWED_BODY_KEYS = new Set(['version'])",
-  ".from('wallet_intents_v2')",
+// Reconciliation authority may be reused by the authenticated route and an
+// internal worker, but it must live in exactly one server-only service.
+requireFragments(source.reconcileService, 'Canonical chain reconciliation service', [
+  "import 'server-only'",
   'authorized_wallet_address',
   'inspectPolygonWalletIntentV1({',
   'txHash: intent.tx_hash',
@@ -142,7 +144,45 @@ requireFragments(source.reconcileRoute, 'Chain reconciliation route', [
   'p_chain_observed: observation.chainObserved',
   'p_confirmations: observation.confirmations',
   'p_failure_code: observation.failureCode',
+  "'reconciled'",
+  "'failed'",
 ]);
+
+for (const unsafe of [
+  'eth_sendTransaction',
+  'eth_sendRawTransaction',
+  'sendTransaction(',
+  'signTransaction(',
+  'getSigner(',
+  'privateKey',
+  'wallet_journal_entries_v2',
+  'wallet_journal_postings_v2',
+]) {
+  if (source.reconcileService.includes(unsafe)) {
+    throw new Error(`Canonical reconciliation service must remain observation-only: ${unsafe}`);
+  }
+}
+
+requireFragments(source.reconcileRoute, 'Chain reconciliation route', [
+  "const ALLOWED_BODY_KEYS = new Set(['version'])",
+  ".from('wallet_intents_v2')",
+  'WALLET_CHAIN_INTENT_SELECT',
+  'normalizeWalletChainIntentSnapshot(rawIntent)',
+  'reconcileWalletChainIntentV1(admin, intent)',
+  'createAuthenticatedRequestContext(request)',
+  'persistenceError',
+]);
+
+for (const duplicatedAuthority of [
+  'inspectPolygonWalletIntentV1({',
+  "admin.rpc('record_wallet_chain_reconciliation_v1_server'",
+  'p_evidence_digest_sha256:',
+  'p_confirmations:',
+]) {
+  if (source.reconcileRoute.includes(duplicatedAuthority)) {
+    throw new Error(`Reconciliation route must delegate trusted chain authority to the shared service: ${duplicatedAuthority}`);
+  }
+}
 
 for (const unsafe of [
   "new Set(['version', 'evidenceDigestSha256'])",
