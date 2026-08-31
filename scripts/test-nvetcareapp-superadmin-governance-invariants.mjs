@@ -37,8 +37,8 @@ const [
 
 assert.match(
   dashboardPage,
-  /userResult\.user\.isSuperadmin[\s\S]*redirect\('\/nvetcareapp\/dashboard\/gobernanza'\)/,
-  'Canonical root must land on the governance command center rather than the legacy financial summary.',
+  /userResult\.user\.isSuperadmin\s*&&\s*!userResult\.user\.isClientMode[\s\S]*redirect\('\/nvetcareapp\/dashboard\/gobernanza'\)/,
+  'Canonical root must land on governance only while operating with effective SUPERADMIN authority.',
 );
 
 assert.match(requireRoot, /userResult\.user\.isSuperadmin/, 'Privileged governance pages must share the canonical SUPERADMIN guard.');
