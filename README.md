@@ -6,7 +6,7 @@ CTG One Technology es la capa propietaria de software, datos e infraestructura d
 
 Su diferenciador es la integración vertical: la tecnología se desarrolla dentro del mismo ecosistema donde se utiliza, mide y mejora.
 
-> **Gobernanza:** este README explica el proyecto, pero no es una base de datos de estado runtime. Para saber dónde vive cada fuente autoritativa consulte `docs/architecture/SYSTEM_STATE.md`.
+> **Gobernanza:** este README explica el proyecto, pero no es una base de datos de estado runtime. Para saber dónde vive cada fuente autoritativa consulte `docs/architecture/SYSTEM_STATE.md`. Para contratos y compatibilidad entre CTG One, CTG Wallet y Nvet Care consulte `docs/architecture/ECOSYSTEM_CONTRACT_REGISTRY.md`.
 
 ## Modelo operativo
 
@@ -65,6 +65,8 @@ PostgreSQL · Auth · Storage · RLS
 
 CTG One Technology opera como capa tecnológica común para las unidades del ecosistema definidas de forma canónica en `src/data/content.ts`. Estas unidades constituyen entornos reales de aplicación y validación tecnológica. Su pertenencia al ecosistema no implica el mismo nivel de madurez digital; cada capacidad se clasifica por evidencia.
 
+La armonía tecnológica entre productos se gobierna mediante contratos explícitos de identidad, autoridad, capacidades, compatibilidad y evidencia de despliegue. No se exige que `ctg_one_website`, `CTG-Wallet` y `Nvet-Care-App` usen el mismo framework o las mismas versiones si sus límites de integración permanecen compatibles y fail-closed.
+
 ## Modelo de madurez
 
 La fuente autoritativa de madurez pública es `src/data/technology-proof.ts`. Los estados públicos contemplan:
@@ -91,6 +93,8 @@ Una capacidad no pasa a `LIVE` por existir una descripción, dependencia, pantal
 ### Wallet / Saldo CTG
 
 CTG One es la autoridad de identidad y del saldo COP que consume `CTG-Wallet`. El dominio utiliza cuentas internas y un journal append-only de doble entrada para que cada crédito y débito tenga evidencia transaccional y el navegador nunca pueda editar el saldo directamente.
+
+La UX de Wallet es capability-driven: una pantalla o SDK puede existir sin que la operación esté habilitada. El cliente puede hacer una capacidad más restrictiva, pero nunca ampliar una capability que CTG One mantiene cerrada. Actualmente Swap es quote-only, el retiro bancario y la compra crypto de tercero no son rails canónicos habilitados, y el envío crypto permanece limitado al perímetro canary controlado.
 
 Flujo de recarga operativo:
 
@@ -128,6 +132,10 @@ La plataforma pública se mantiene bajo el release stage definido por `src/data/
 
 Beta controlada de conocimiento institucional con ingestión, chunking, retrieval, control de acceso y provider integration. Debe mantenerse bajo política de evidencia, evaluación y seguridad antes de promoción a `LIVE`.
 
+### Nvet Care federation
+
+`Nvet-Care-App` mantiene su backend y aplicación móvil como bounded context veterinario autónomo. CTG One aporta la cuenta/sesión del ecosistema y la superficie web federada en `/nvetcareapp`; Nvet conserva la autoridad sobre roles efectivos, mascotas, citas, servicios, chat, reviews y reglas de dominio. La federación y compatibilidad cross-repository se documentan en `docs/architecture/ECOSYSTEM_CONTRACT_REGISTRY.md` y en el contrato local de Nvet.
+
 ### Observability
 
 - `/api/health`
@@ -147,6 +155,8 @@ Beta controlada de conocimiento institucional con ingestión, chunking, retrieva
 | `/ecosystem` | Ecosistema empresarial |
 | `/products` | Productos / case studies |
 | `/technology/status` | Registro público de madurez y evidencia |
+| `/wallet` | Presentación pública de Wallet + estado de capacidades |
+| `/nvetcareapp` | Superficie web federada de Nvet Care |
 | `/ai` | Arquitectura y desarrollo de IA |
 | `/knowledge` | CTG Knowledge beta |
 | `/rewards` | CTG Rewards roadmap |
@@ -182,6 +192,8 @@ Las migraciones aplicadas son inmutables. Una corrección de schema se realiza m
 - postings autoritativos server/database-side; nunca mutación financiera desde browser
 - idempotencia obligatoria en recargas y consumos
 - compatibilidad legacy reconciliada contra el ledger canónico
+- capacidades de cliente fail-closed frente al contrato server-side
+- ninguna UI puede fabricar settlement, hash o transacción confirmada como sustituto de evidencia real
 - snapshots económicos históricos por lote
 - participant ledger append-only
 - settlement único y reconciliado por lote
@@ -284,8 +296,9 @@ Los circuitos cuentan con invariantes transaccionales en PostgreSQL y contratos 
 
 ## Documentación autoritativa
 
-- `docs/architecture/SYSTEM_STATE.md` — mapa de fuentes de verdad
+- `docs/architecture/SYSTEM_STATE.md` — mapa de fuentes de verdad internas de CTG One
 - `docs/architecture/CTG_ONE_OS.md` — arquitectura compartida
+- `docs/architecture/ECOSYSTEM_CONTRACT_REGISTRY.md` — contratos y compatibilidad CTG One / Wallet / Nvet
 - `docs/infrastructure/PRODUCTION_READINESS.md` — preparación/deploy
 - `docs/infrastructure/BACKUP_RESTORE.md` — recuperación
 - `docs/infrastructure/OBSERVABILITY.md` — observabilidad
