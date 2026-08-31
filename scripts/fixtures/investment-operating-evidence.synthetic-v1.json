@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0089",
-    "schemaMigrationName": "wallet_canary_evidence_provenance",
-    "schemaMigrationCount": 89,
+    "schemaMigration": "0090",
+    "schemaMigrationName": "wallet_lifecycle_correlation_alerts_v1",
+    "schemaMigrationCount": 90,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
@@ -26,33 +26,11 @@
     {
       "lotDigestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "observedStatus": "SETTLED",
-      "funding": {
-        "allocatedCapitalCents": 230000,
-        "cashReceiptCents": 230000,
-        "approvedReinvestmentDebitCents": 0,
-        "internalCapitalCents": 0,
-        "unbackedExternalCapitalCents": 0,
-        "reconciled": true
-      },
-      "production": {
-        "serializedUnits": 48,
-        "terminalPhysicalUnits": 48,
-        "inventoryReconciled": true
-      },
-      "sales": {
-        "documentedSoldUnits": 48,
-        "returnedUnits": 2,
-        "returnGenealogyMismatches": 0
-      },
-      "settlement": {
-        "finalized": true,
-        "netDistributableProfitCents": 100000,
-        "participantCreditCents": 280000
-      },
-      "liquidity": {
-        "approvedReinvestmentCents": 140000,
-        "confirmedWithdrawalDebitCents": 140000
-      }
+      "funding": {"allocatedCapitalCents":230000,"cashReceiptCents":230000,"approvedReinvestmentDebitCents":0,"internalCapitalCents":0,"unbackedExternalCapitalCents":0,"reconciled":true},
+      "production": {"serializedUnits":48,"terminalPhysicalUnits":48,"inventoryReconciled":true},
+      "sales": {"documentedSoldUnits":48,"returnedUnits":2,"returnGenealogyMismatches":0},
+      "settlement": {"finalized":true,"netDistributableProfitCents":100000,"participantCreditCents":280000},
+      "liquidity": {"approvedReinvestmentCents":140000,"confirmedWithdrawalDebitCents":140000}
     }
   ]
 }
