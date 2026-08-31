@@ -102,6 +102,7 @@ export type WalletCanaryEvidenceObservation = {
 export type WalletCanaryEvidenceClientArtifact = {
   repository: 'VladPhil92/CTG-Wallet';
   commit: string;
+  boundAt: string;
 };
 
 export type WalletCanaryEvidenceSchema = {
@@ -268,10 +269,15 @@ export function normalizeWalletCanaryEvidenceClientArtifact(value: unknown): Wal
     throw new WalletCanaryEvidenceError('WALLET_CANARY_EVIDENCE_CLIENT_PROVENANCE_INVALID');
   }
   const commit = typeof value.commit === 'string' ? value.commit.toLowerCase() : '';
-  if (value.repository !== 'VladPhil92/CTG-Wallet' || !GIT_COMMIT_RE.test(commit)) {
+  const boundAt = typeof value.boundAt === 'string' ? value.boundAt : '';
+  if (
+    value.repository !== 'VladPhil92/CTG-Wallet'
+    || !GIT_COMMIT_RE.test(commit)
+    || !validTimestamp(boundAt)
+  ) {
     throw new WalletCanaryEvidenceError('WALLET_CANARY_EVIDENCE_CLIENT_PROVENANCE_INVALID');
   }
-  return { repository: 'VladPhil92/CTG-Wallet', commit };
+  return { repository: 'VladPhil92/CTG-Wallet', commit, boundAt };
 }
 
 export function buildWalletCanaryEvidenceBundleV1(input: {
