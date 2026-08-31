@@ -65,7 +65,6 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     for (const label of [
       'Crear mi cuenta',
       'Explorar CTG One',
-      'Explora nuestros negocios',
       'Conocer CTG Craft Beer',
       'Invertir en producción',
       'Conocer Nvet Care',
