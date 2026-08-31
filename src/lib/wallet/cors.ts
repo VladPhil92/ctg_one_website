@@ -5,13 +5,20 @@ const NATIVE_WALLET_ORIGINS = new Set([
   'capacitor://localhost',
 ]);
 
+const PRODUCTION_WALLET_ORIGINS = new Set([
+  'https://ctg-one-wallet.vercel.app',
+]);
+
 const DEV_WALLET_ORIGINS = new Set([
   'http://localhost:5173',
   'http://127.0.0.1:5173',
 ]);
 
 function configuredOrigins(): Set<string> {
-  const origins = new Set(NATIVE_WALLET_ORIGINS);
+  const origins = new Set([
+    ...NATIVE_WALLET_ORIGINS,
+    ...PRODUCTION_WALLET_ORIGINS,
+  ]);
   if (process.env.NODE_ENV !== 'production') {
     for (const origin of DEV_WALLET_ORIGINS) origins.add(origin);
   }

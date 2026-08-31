@@ -8,8 +8,9 @@ const migrationPath = path.join(
 );
 const architecturePath = path.join(root, 'docs/CTG_ONE_WALLET_UNIFICATION.md');
 const domainPath = path.join(root, 'src/lib/wallet/domain.ts');
+const corsPath = path.join(root, 'src/lib/wallet/cors.ts');
 
-for (const file of [migrationPath, architecturePath, domainPath]) {
+for (const file of [migrationPath, architecturePath, domainPath, corsPath]) {
   if (!fs.existsSync(file)) {
     throw new Error(`wallet unification invariant file missing: ${path.relative(root, file)}`);
   }
@@ -18,6 +19,7 @@ for (const file of [migrationPath, architecturePath, domainPath]) {
 const migration = fs.readFileSync(migrationPath, 'utf8');
 const architecture = fs.readFileSync(architecturePath, 'utf8');
 const domain = fs.readFileSync(domainPath, 'utf8');
+const cors = fs.readFileSync(corsPath, 'utf8');
 
 const requiredMigrationFragments = [
   'create table public.wallet_identity_links',
@@ -92,6 +94,24 @@ for (const fragment of requiredDomainFragments) {
   if (!domain.includes(fragment)) {
     throw new Error(`wallet domain missing invariant fragment: ${fragment}`);
   }
+}
+
+const requiredCorsFragments = [
+  "const PRODUCTION_WALLET_ORIGINS = new Set([",
+  "'https://ctg-one-wallet.vercel.app'",
+  '...PRODUCTION_WALLET_ORIGINS',
+  'process.env.CTG_WALLET_ALLOWED_ORIGINS',
+  "headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type, Privy-ID-Token')",
+];
+
+for (const fragment of requiredCorsFragments) {
+  if (!cors.includes(fragment)) {
+    throw new Error(`wallet CORS boundary missing canonical production invariant: ${fragment}`);
+  }
+}
+
+if (cors.includes("headers.set('Access-Control-Allow-Origin', '*')")) {
+  throw new Error('wallet CORS boundary must never allow wildcard origins');
 }
 
 console.log('Wallet unification invariants: OK');
