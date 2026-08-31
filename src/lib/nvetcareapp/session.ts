@@ -7,6 +7,9 @@ import type { NextResponse } from 'next/server';
 
 export const NVET_ACCESS_COOKIE = 'nvet_access_token';
 export const NVET_REFRESH_COOKIE = 'nvet_refresh_token';
+export const NVET_ROLE_MODE_COOKIE = 'nvet_role_mode';
+
+export type NvetRootRoleMode = 'SUPERADMIN' | 'CLIENT';
 
 // Public Railway origin of the canonical Nvet Care backend. This is not a
 // credential: it is the server address already used by production. The
@@ -99,9 +102,30 @@ export function setNvetSessionCookies(response: NextResponse, tokens: NvetTokens
   });
 }
 
+/**
+ * Stores only a presentation/authorization mode hint. It is httpOnly so the
+ * browser cannot manufacture privileged UI state from client-side JS. The
+ * Nvet backend still re-validates the canonical SUPERADMIN identity on every
+ * request before honoring CLIENT mode; this cookie can never grant authority.
+ */
+export function setNvetRoleModeCookie(response: NextResponse, mode: NvetRootRoleMode): void {
+  response.cookies.set(NVET_ROLE_MODE_COOKIE, mode, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 8 * 60 * 60,
+  });
+}
+
+export function clearNvetRoleModeCookie(response: NextResponse): void {
+  response.cookies.delete(NVET_ROLE_MODE_COOKIE);
+}
+
 export function clearNvetSessionCookies(response: NextResponse): void {
   response.cookies.delete(NVET_ACCESS_COOKIE);
   response.cookies.delete(NVET_REFRESH_COOKIE);
+  clearNvetRoleModeCookie(response);
 }
 
 /**
