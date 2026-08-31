@@ -29,12 +29,14 @@ function cleanName(value: unknown): string {
  * the backend's own guards on each subsequent data call remain the
  * authoritative authorization check.
  *
- * Root projection is deliberately dual-bound: the Nvet session must be
- * valid AND the current CTG One cookie session must resolve to the single
- * pinned Supabase subject. A stray SUPERADMIN value returned for any other
- * identity is projected down to ADMIN in the web shell. CTG-provisioned
- * accounts may legitimately have null names, so missing profile names no
- * longer turn a valid authenticated session into a synthetic 502.
+ * The canonical root identity intentionally reuses the ADMIN view model in
+ * this shared router while `dashboard/template.tsx` adds the SUPERADMIN-only
+ * control surface. The backend still evaluates that same account as the sole
+ * effective SUPERADMIN. Any stray SUPERADMIN value returned for another
+ * identity is projected down to ADMIN in the web shell.
+ *
+ * CTG-provisioned accounts may legitimately have null profile names; missing
+ * names therefore no longer turn a valid authenticated session into a 502.
  */
 export async function fetchNvetCurrentUser(accessToken: string): Promise<NvetCurrentUserResult> {
   let res: Response;
@@ -60,7 +62,7 @@ export async function fetchNvetCurrentUser(accessToken: string): Promise<NvetCur
     const canonicalSuperadmin = await isCanonicalNvetSuperadminSession();
     const upstreamRole = raw.role;
     const effectiveRole: NvetUserRole | undefined = canonicalSuperadmin
-      ? 'SUPERADMIN'
+      ? 'ADMIN'
       : upstreamRole === 'SUPERADMIN'
         ? 'ADMIN'
         : upstreamRole === 'ADMIN' || upstreamRole === 'VET' || upstreamRole === 'CLIENT'
