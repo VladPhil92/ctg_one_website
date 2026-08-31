@@ -30,6 +30,7 @@ export async function POST(request: Request) {
   }
 
   const body = raw as Record<string, unknown>;
+  const requestId = typeof body.requestId === 'string' ? body.requestId : '';
   const vetId = typeof body.vetId === 'string' ? body.vetId : '';
   const petId = typeof body.petId === 'string' ? body.petId : '';
   const priceId = typeof body.priceId === 'string' ? body.priceId : '';
@@ -38,6 +39,9 @@ export async function POST(request: Request) {
   const address = typeof body.address === 'string' ? body.address.trim() : '';
   const notes = typeof body.notes === 'string' ? body.notes.trim() : '';
 
+  if (!UUID.test(requestId)) {
+    return NextResponse.json({ message: 'Identificador de reserva inválido' }, { status: 400 });
+  }
   if (!UUID.test(vetId) || !UUID.test(petId) || !UUID.test(priceId)) {
     return NextResponse.json({ message: 'Veterinario, mascota o servicio inválido' }, { status: 400 });
   }
@@ -60,6 +64,7 @@ export async function POST(request: Request) {
   // browser. The server resolves the current price catalog and forwards the
   // authenticated client identity exclusively from the httpOnly session JWT.
   const result = await createNvetClientAppointment(accessToken, {
+    requestId,
     vetId,
     petId,
     priceId,
