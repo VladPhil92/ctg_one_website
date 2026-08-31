@@ -3,18 +3,12 @@ import { cookies } from 'next/headers';
 import { ShieldCheck } from 'lucide-react';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
 import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
-import { isCanonicalNvetSuperadminSession } from '@/lib/nvetcareapp/superadmin';
 
 export default async function NvetDashboardTemplate({ children }: { children: React.ReactNode }) {
   const accessToken = (await cookies()).get(NVET_ACCESS_COOKIE)?.value;
-  const [userResult, canonicalSuperadmin] = accessToken
-    ? await Promise.all([
-        fetchNvetCurrentUser(accessToken),
-        isCanonicalNvetSuperadminSession(),
-      ])
-    : [null, false];
+  const userResult = accessToken ? await fetchNvetCurrentUser(accessToken) : null;
+  const isSuperadmin = userResult?.ok === true && userResult.user.isSuperadmin;
 
-  const isSuperadmin = userResult?.ok === true && canonicalSuperadmin;
   if (!isSuperadmin) return children;
 
   return (
