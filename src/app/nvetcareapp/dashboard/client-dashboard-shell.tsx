@@ -34,7 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Pagos / Wallet', icon: WalletCards, href: '/dashboard/wallet' },
   { label: 'Mensajes', icon: MessageCircle, href: '/nvetcareapp/dashboard/citas', badge: 'En citas' },
   { label: 'Notificaciones', icon: Bell, href: '/nvetcareapp/dashboard/notificaciones' },
-  { label: 'Perfil', icon: UserRound, badge: 'Próximamente' },
+  { label: 'Perfil', icon: UserRound, href: '/nvetcareapp/dashboard/perfil' },
 ];
 
 const MOBILE_LABELS = [
@@ -46,6 +46,7 @@ const MOBILE_LABELS = [
   'Historial',
   'Notificaciones',
   'Pagos / Wallet',
+  'Perfil',
 ];
 
 function isActivePath(pathname: string, href: string): boolean {
