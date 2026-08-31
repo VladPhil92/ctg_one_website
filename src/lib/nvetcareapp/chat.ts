@@ -1,78 +1,127 @@
-import { getNvetApiUrl } from './session';
-import { getNvetAuthorizationHeaders } from './request';
+import 'server-only';
 
-// Mirrors the shape returned by GET /chat/:appointmentId/messages
-// (chat.service.ts::getMessages()). Text messages only for this slice —
-// `sharePrice` (type: PRICE, priceData) is a separate, not-yet-built
-// capability (chat.controller.ts::sharePrice, VET-only).
+import { getNvetAuthorizationHeaders } from './request';
+import { getNvetApiUrl } from './session';
+
+export type NvetChatAppointmentStatus = 'CONFIRMED' | 'IN_PROGRESS';
+
+export interface NvetChatParticipant {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  avatar?: string | null;
+  role: 'CLIENT' | 'VET';
+}
+
 export interface NvetChatMessage {
   id: string;
   appointmentId: string;
   senderId: string;
   content: string;
-  type: 'TEXT' | 'PRICE';
+  type: string;
+  priceData?: Record<string, unknown> | null;
+  readAt?: string | null;
   createdAt: string;
-  sender: { id: string; firstName: string; lastName: string; role: string };
+  updatedAt?: string;
+  sender: NvetChatParticipant;
 }
 
-async function getJson<T>(path: string, accessToken: string): Promise<{ ok: true; data: T } | { ok: false; status: number }> {
-  let res: Response;
+export interface NvetChatAppointmentContext {
+  status: NvetChatAppointmentStatus;
+  serviceType: string;
+  date: string;
+  time: string;
+  pet: { id: string; name: string };
+  chatWritable: boolean;
+}
+
+export interface NvetActiveChat {
+  appointmentId: string;
+  appointment: NvetChatAppointmentContext;
+  participants: NvetChatParticipant[];
+  isMonitored: boolean;
+  lastMessage: NvetChatMessage | null;
+  unreadCount: number;
+}
+
+export interface NvetChatMetadata extends NvetActiveChat {}
+
+type NvetResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; status: number; message: string };
+
+function backendMessage(value: unknown, fallback: string): string {
+  if (!value || typeof value !== 'object') return fallback;
+  const message = (value as { message?: unknown }).message;
+  if (typeof message === 'string' && message.trim()) return message;
+  if (Array.isArray(message)) {
+    const joined = message.filter((item): item is string => typeof item === 'string').join('. ');
+    if (joined) return joined;
+  }
+  return fallback;
+}
+
+async function parseJsonSafe(response: Response): Promise<unknown> {
   try {
-    res = await fetch(`${getNvetApiUrl()}${path}`, {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+async function getJson<T>(path: string, accessToken: string, fallback: string): Promise<NvetResult<T>> {
+  try {
+    const response = await fetch(`${getNvetApiUrl()}${path}`, {
       headers: await getNvetAuthorizationHeaders(accessToken),
       cache: 'no-store',
     });
+    const data = await parseJsonSafe(response);
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: backendMessage(data, fallback) };
+    }
+    return { ok: true, data: data as T };
   } catch {
-    return { ok: false, status: 502 };
-  }
-  if (!res.ok) return { ok: false, status: res.status };
-  try {
-    return { ok: true, data: (await res.json()) as T };
-  } catch {
-    return { ok: false, status: 502 };
+    return { ok: false, status: 502, message: 'No se pudo contactar el servicio de chat' };
   }
 }
 
-async function postJson<T>(
-  path: string,
+export async function fetchNvetActiveChats(accessToken: string): Promise<NvetResult<NvetActiveChat[]>> {
+  const result = await getJson<unknown>('/api/chat/active', accessToken, 'No se pudieron obtener tus conversaciones');
+  if (!result.ok) return result;
+  if (!Array.isArray(result.data)) {
+    return { ok: false, status: 502, message: 'El servicio de chat devolvió una respuesta inválida' };
+  }
+  return { ok: true, data: result.data as NvetActiveChat[] };
+}
+
+export async function fetchNvetChatMessages(
   accessToken: string,
-  body: unknown,
-): Promise<{ ok: true; data: T } | { ok: false; status: number; message?: string }> {
-  let res: Response;
-  try {
-    res = await fetch(`${getNvetApiUrl()}${path}`, {
-      method: 'POST',
-      headers: await getNvetAuthorizationHeaders(accessToken, { 'Content-Type': 'application/json' }),
-      body: JSON.stringify(body),
-    });
-  } catch {
-    return { ok: false, status: 502 };
+  appointmentId: string,
+): Promise<NvetResult<NvetChatMessage[]>> {
+  const result = await getJson<unknown>(
+    `/api/chat/${encodeURIComponent(appointmentId)}/messages`,
+    accessToken,
+    'No se pudieron obtener los mensajes',
+  );
+  if (!result.ok) return result;
+  if (!Array.isArray(result.data)) {
+    return { ok: false, status: 502, message: 'El servicio de chat devolvió mensajes inválidos' };
   }
-  if (!res.ok) {
-    const message = await res.json().then((data) => data?.message).catch(() => undefined);
-    return { ok: false, status: res.status, message };
-  }
-  try {
-    return { ok: true, data: (await res.json()) as T };
-  } catch {
-    return { ok: false, status: 502 };
-  }
+  return { ok: true, data: result.data as NvetChatMessage[] };
 }
 
-/**
- * GET /chat/:appointmentId/messages — the backend's own ChatMembershipGuard
- * is the authoritative check. In root CLIENT mode, the server-to-server role
- * hint makes the same canonical account subject to normal participant scope
- * instead of inheriting administrative chat visibility.
- */
-export function fetchNvetChatMessages(accessToken: string, appointmentId: string) {
-  return getJson<NvetChatMessage[]>(`/api/chat/${appointmentId}/messages`, accessToken);
-}
-
-/**
- * POST /chat/:appointmentId/messages — the backend's own EmailVerifiedGuard
- * + ChatMembershipGuard are authoritative; this never re-implements either.
- */
-export function sendNvetChatMessage(accessToken: string, appointmentId: string, content: string) {
-  return postJson<NvetChatMessage>(`/api/chat/${appointmentId}/messages`, accessToken, { content });
+export async function fetchNvetChatMetadata(
+  accessToken: string,
+  appointmentId: string,
+): Promise<NvetResult<NvetChatMetadata>> {
+  const result = await getJson<unknown>(
+    `/api/chat/${encodeURIComponent(appointmentId)}/metadata`,
+    accessToken,
+    'No se pudo obtener la conversación',
+  );
+  if (!result.ok) return result;
+  if (!result.data || typeof result.data !== 'object') {
+    return { ok: false, status: 502, message: 'El servicio de chat devolvió metadata inválida' };
+  }
+  return { ok: true, data: result.data as NvetChatMetadata };
 }
