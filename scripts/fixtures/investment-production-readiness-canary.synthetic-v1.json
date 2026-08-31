@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0087",
-  "expectedMigrationName": "wallet_canonical_cop_ledger_balance_hardening",
-  "expectedMigrationCount": 87,
+  "expectedMigration": "0088",
+  "expectedMigrationName": "wallet_intent_submission_v1",
+  "expectedMigrationCount": 88,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
