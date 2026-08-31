@@ -10,6 +10,7 @@ import {
   Home,
   MessageCircle,
   PawPrint,
+  ShieldCheck,
   Stethoscope,
   UserRound,
   WalletCards,
@@ -26,18 +27,17 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Inicio', icon: Home, href: '/nvetcareapp/dashboard' },
   { label: 'Mis mascotas', icon: PawPrint, href: '/nvetcareapp/dashboard/mascotas' },
-  { label: 'Prevención', icon: Bell, href: '/nvetcareapp/dashboard/prevencion' },
+  { label: 'Prevención', icon: ShieldCheck, href: '/nvetcareapp/dashboard/prevencion' },
   { label: 'Servicios', icon: Stethoscope, badge: 'Próximamente' },
   { label: 'Citas', icon: CalendarDays, href: '/nvetcareapp/dashboard/citas' },
   { label: 'Historial', icon: FileClock, href: '/nvetcareapp/dashboard/historial' },
   { label: 'Pagos / Wallet', icon: WalletCards, href: '/dashboard/wallet' },
   { label: 'Mensajes', icon: MessageCircle, href: '/nvetcareapp/dashboard/citas', badge: 'En citas' },
+  { label: 'Notificaciones', icon: Bell, href: '/nvetcareapp/dashboard/notificaciones' },
   { label: 'Perfil', icon: UserRound, badge: 'Próximamente' },
 ];
 
-const MOBILE_ITEMS = NAV_ITEMS.filter((item) =>
-  ['Inicio', 'Mis mascotas', 'Prevención', 'Citas', 'Historial', 'Pagos / Wallet'].includes(item.label),
-);
+const MOBILE_LABELS = ['Inicio', 'Mis mascotas', 'Prevención', 'Citas', 'Historial', 'Notificaciones', 'Pagos / Wallet'];
 
 function isActivePath(pathname: string, href: string): boolean {
   if (href === '/nvetcareapp/dashboard') return pathname === href;
@@ -80,8 +80,12 @@ function NavLink({ item, pathname, compact = false }: { item: NavItem; pathname:
     >
       <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
-      {!compact && item.badge && (
-        <span className="rounded-full bg-[#0D1B2A]/5 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-[#5B6670]">
+      {item.badge && (
+        <span className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] ${
+          item.label === 'Notificaciones'
+            ? 'bg-[#34B27A] text-white'
+            : 'bg-[#0D1B2A]/5 text-[#5B6670]'
+        }`}>
           {item.badge}
         </span>
       )}
@@ -93,10 +97,12 @@ export function ClientDashboardShell({
   children,
   userName,
   userEmail,
+  unreadNotifications = 0,
 }: {
   children: React.ReactNode;
   userName: string;
   userEmail: string;
+  unreadNotifications?: number;
 }) {
   const pathname = usePathname();
   const initials = userName
@@ -105,6 +111,11 @@ export function ClientDashboardShell({
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join('') || 'U';
+  const notificationBadge = unreadNotifications > 99 ? '99+' : unreadNotifications > 0 ? String(unreadNotifications) : undefined;
+  const navItems = NAV_ITEMS.map((item) =>
+    item.label === 'Notificaciones' ? { ...item, badge: notificationBadge } : item,
+  );
+  const mobileItems = navItems.filter((item) => MOBILE_LABELS.includes(item.label));
 
   return (
     <div className="min-h-screen bg-[#F2F4F7]">
@@ -121,7 +132,7 @@ export function ClientDashboardShell({
           </Link>
 
           <nav className="space-y-1" aria-label="Navegación de usuario Nvet Care">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <NavLink key={`${item.label}-${item.href ?? 'disabled'}`} item={item} pathname={pathname} />
             ))}
           </nav>
@@ -160,7 +171,7 @@ export function ClientDashboardShell({
               </span>
             </div>
             <nav className="flex gap-2 overflow-x-auto pb-1" aria-label="Navegación móvil Nvet Care">
-              {MOBILE_ITEMS.map((item) => (
+              {mobileItems.map((item) => (
                 <NavLink key={`mobile-${item.label}`} item={item} pathname={pathname} compact />
               ))}
             </nav>
