@@ -81,6 +81,16 @@ const nextConfig = {
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
         ],
       },
+      // This read-only identity proof binds the canonical CTG user, Privy
+      // principal and embedded EVM wallet. Keep its referrer surface stricter
+      // than ordinary site navigation. This rule intentionally follows the
+      // catch-all so Next.js applies it as the last matching header value.
+      {
+        source: '/api/wallet/identity/proof',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
     ];
   },
 };
