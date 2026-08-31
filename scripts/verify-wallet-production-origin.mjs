@@ -19,6 +19,17 @@ function requireCondition(condition, message, details = {}) {
   throw error;
 }
 
+function responseCorsSnapshot(response) {
+  return {
+    status: response.status,
+    allowOrigin: response.headers.get('access-control-allow-origin'),
+    allowMethods: response.headers.get('access-control-allow-methods'),
+    allowHeaders: response.headers.get('access-control-allow-headers'),
+    vary: response.headers.get('vary'),
+    cacheControl: response.headers.get('cache-control'),
+  };
+}
+
 async function preflight(origin) {
   const response = await fetch(overviewUrl, {
     method: 'OPTIONS',
@@ -31,14 +42,20 @@ async function preflight(origin) {
     },
   });
 
-  return {
-    status: response.status,
-    allowOrigin: response.headers.get('access-control-allow-origin'),
-    allowMethods: response.headers.get('access-control-allow-methods'),
-    allowHeaders: response.headers.get('access-control-allow-headers'),
-    vary: response.headers.get('vary'),
-    cacheControl: response.headers.get('cache-control'),
-  };
+  return responseCorsSnapshot(response);
+}
+
+async function unauthenticatedGet(origin) {
+  const response = await fetch(overviewUrl, {
+    method: 'GET',
+    redirect: 'manual',
+    signal: AbortSignal.timeout(requestTimeoutMs),
+    headers: {
+      Origin: origin,
+    },
+  });
+
+  return responseCorsSnapshot(response);
 }
 
 async function main() {
@@ -72,6 +89,25 @@ async function main() {
     allowed,
   );
 
+  const actual = await unauthenticatedGet(walletOrigin);
+  const actualVary = splitHeader(actual.vary);
+  requireCondition(
+    actual.status === 401,
+    'Canonical CTG Wallet unauthenticated GET must reach the route and fail closed with 401',
+    actual,
+  );
+  requireCondition(
+    actual.allowOrigin === walletOrigin,
+    'Canonical CTG Wallet GET response is missing the exact Access-Control-Allow-Origin',
+    actual,
+  );
+  requireCondition(actualVary.includes('origin'), 'Wallet GET response must vary by Origin', actual);
+  requireCondition(
+    actual.cacheControl?.toLowerCase().includes('no-store'),
+    'Wallet GET response must remain non-cacheable',
+    actual,
+  );
+
   const denied = await preflight(deniedOrigin);
   requireCondition(denied.status === 403, 'Untrusted wallet origin must be rejected with 403', denied);
   requireCondition(
@@ -87,8 +123,9 @@ async function main() {
         apiOrigin,
         endpoint: overviewUrl,
         canonicalWalletOrigin: walletOrigin,
-        allowedStatus: allowed.status,
-        deniedStatus: denied.status,
+        allowedPreflightStatus: allowed.status,
+        allowedGetStatus: actual.status,
+        deniedPreflightStatus: denied.status,
       },
       null,
       2,
