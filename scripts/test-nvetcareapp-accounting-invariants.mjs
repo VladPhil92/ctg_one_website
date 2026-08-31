@@ -11,6 +11,7 @@ const [
   resolveRoute,
   dashboardPage,
   accountingPage,
+  userModel,
 ] = await Promise.all([
   read('src/app/api/nvetcareapp/admin/transfers/route.ts'),
   read('src/app/api/nvetcareapp/admin/disputes/route.ts'),
@@ -19,6 +20,7 @@ const [
   read('src/app/api/nvetcareapp/admin/transactions/[id]/resolve-dispute/route.ts'),
   read('src/app/nvetcareapp/dashboard/page.tsx'),
   read('src/app/nvetcareapp/dashboard/contabilidad/page.tsx'),
+  read('src/lib/nvetcareapp/user.ts'),
 ]);
 
 // Every BFF route in this surface must reject an unauthenticated request
@@ -57,12 +59,11 @@ for (const [name, source] of [
   );
 }
 
-// The accounting page must gate on the session's own role and handle a
-// 401 from EITHER of its two admin-only fetches (transfers, disputes) by
-// redirecting to sign-in — the same bug class found and fixed on the main
-// dashboard (PR #191): a 401 from a later fetch must not render as if it
-// were just an empty/error state.
-assert.match(accountingPage, /userResult\.user\.role === 'ADMIN'/, 'Accounting page must gate rendering on the session role being ADMIN.');
+// The accounting page must gate on the centralized effective-admin policy.
+// SUPERADMIN inherits ADMIN UI access, but all non-admin roles remain denied.
+// A 401 from EITHER admin-only fetch must still redirect to sign-in.
+assert.match(accountingPage, /isNvetAdminRole\(userResult\.user\.role\)/, 'Accounting page must gate rendering through the centralized admin-role policy.');
+assert.match(userModel, /role === 'ADMIN' \|\| role === 'SUPERADMIN'/, 'Admin-role policy must include ADMIN and SUPERADMIN only.');
 assert.match(accountingPage, /!isAdmin/, 'Accounting page must render a distinct state for a non-admin visitor.');
 assert.match(
   accountingPage,

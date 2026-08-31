@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
-import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
+import { fetchNvetCurrentUser, isNvetAdminRole } from '@/lib/nvetcareapp/user';
 import { fetchNvetPendingTransfers, fetchNvetDisputedTransactions, type NvetTransaction } from '@/lib/nvetcareapp/transactions';
 import { LogoutButton } from '../logout-button';
 import { TransferActions } from './transfer-actions';
@@ -51,7 +51,7 @@ export default async function AccountingPage() {
     redirect('/nvetcareapp/iniciar-sesion');
   }
 
-  const isAdmin = userResult.ok && userResult.user.role === 'ADMIN';
+  const isAdmin = userResult.ok && isNvetAdminRole(userResult.user.role);
 
   const [transfersResult, disputesResult] = isAdmin
     ? await Promise.all([fetchNvetPendingTransfers(accessToken), fetchNvetDisputedTransactions(accessToken)])
