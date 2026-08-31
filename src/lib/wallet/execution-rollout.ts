@@ -11,6 +11,11 @@ export type WalletCryptoSendExecutionDecision = {
   code: 'WALLET_EXECUTION_DISABLED' | 'WALLET_EXECUTION_CANARY_NOT_ALLOWED' | null;
 };
 
+export type WalletCryptoSendExecutionConfiguration = {
+  mode: WalletCryptoSendExecutionMode;
+  canaryUserConfigured: boolean;
+};
+
 export class WalletExecutionRolloutError extends Error {
   constructor(
     public readonly code: 'WALLET_EXECUTION_CONFIG_INVALID' | 'WALLET_EXECUTION_DISABLED' | 'WALLET_EXECUTION_CANARY_NOT_ALLOWED',
@@ -18,6 +23,12 @@ export class WalletExecutionRolloutError extends Error {
     super(code);
     this.name = 'WalletExecutionRolloutError';
   }
+}
+
+function normalizeCanonicalUserId(canonicalUserId: string) {
+  const userId = canonicalUserId.trim().toLowerCase();
+  if (!UUID_RE.test(userId)) throw new WalletExecutionRolloutError('WALLET_EXECUTION_CONFIG_INVALID');
+  return userId;
 }
 
 function readExecutionMode(): WalletCryptoSendExecutionMode {
@@ -44,26 +55,38 @@ function readCanaryUserIds(): Set<string> {
 }
 
 /**
+ * Returns only the execution configuration relevant to the authenticated
+ * canonical user. The full allowlist is never exposed to callers.
+ */
+export function inspectWalletCryptoSendExecutionConfiguration(
+  canonicalUserId: string,
+): WalletCryptoSendExecutionConfiguration {
+  const userId = normalizeCanonicalUserId(canonicalUserId);
+  const mode = readExecutionMode();
+  const canaryUserIds = readCanaryUserIds();
+  return {
+    mode,
+    canaryUserConfigured: canaryUserIds.has(userId),
+  };
+}
+
+/**
  * Canary execution is intentionally not a public production mode. The only
  * executable server mode in this phase is `canary`, and it requires an exact
  * canonical Supabase user UUID allowlist. Missing or malformed configuration
  * fails closed.
  */
 export function getWalletCryptoSendExecutionDecision(canonicalUserId: string): WalletCryptoSendExecutionDecision {
-  const userId = canonicalUserId.trim().toLowerCase();
-  if (!UUID_RE.test(userId)) throw new WalletExecutionRolloutError('WALLET_EXECUTION_CONFIG_INVALID');
-
-  const mode = readExecutionMode();
-  if (mode === 'disabled') {
-    return { mode, allowed: false, code: 'WALLET_EXECUTION_DISABLED' };
+  const configuration = inspectWalletCryptoSendExecutionConfiguration(canonicalUserId);
+  if (configuration.mode === 'disabled') {
+    return { mode: configuration.mode, allowed: false, code: 'WALLET_EXECUTION_DISABLED' };
   }
 
-  const canaryUserIds = readCanaryUserIds();
-  if (!canaryUserIds.has(userId)) {
-    return { mode, allowed: false, code: 'WALLET_EXECUTION_CANARY_NOT_ALLOWED' };
+  if (!configuration.canaryUserConfigured) {
+    return { mode: configuration.mode, allowed: false, code: 'WALLET_EXECUTION_CANARY_NOT_ALLOWED' };
   }
 
-  return { mode, allowed: true, code: null };
+  return { mode: configuration.mode, allowed: true, code: null };
 }
 
 export function assertWalletCryptoSendExecutionAllowed(canonicalUserId: string): WalletCryptoSendExecutionDecision {
