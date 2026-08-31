@@ -104,6 +104,7 @@ async function polygonRpc(method: string, params: unknown[]) {
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
       signal: controller.signal,
       cache: 'no-store',
+      redirect: 'error',
     });
 
     if (!response.ok) {
@@ -111,7 +112,12 @@ async function polygonRpc(method: string, params: unknown[]) {
     }
 
     const payload = await response.json() as JsonRpcEnvelope;
-    if (payload.error || payload.result === undefined) {
+    if (
+      payload.jsonrpc !== '2.0'
+      || payload.id !== 1
+      || payload.error
+      || payload.result === undefined
+    ) {
       throw new WalletCanaryPreflightError('WALLET_CANARY_PREFLIGHT_RPC_RESPONSE_INVALID');
     }
     return payload.result;
