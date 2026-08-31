@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 
 import { formatTraceparent, getRequestObservabilityContext } from '@/lib/observability/request-context';
@@ -17,6 +17,13 @@ import {
   WALLET_CHAIN_RECONCILABLE_STATUSES,
   WalletChainPersistenceError,
 } from '@/lib/wallet/chain-reconciliation-service';
+import {
+  alertKindForLifecycleStatus,
+  normalizeOperationalCorrelationId,
+  resolveWalletOperationalAlertsV1,
+  upsertWalletOperationalAlertV1,
+  WalletOperationalAlertError,
+} from '@/lib/wallet/operational-alerts';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +36,8 @@ const MIN_STUCK_AFTER_SECONDS = 5 * 60;
 const MAX_STUCK_AFTER_SECONDS = 24 * 60 * 60;
 const ALLOWED_BODY_KEYS = new Set(['version']);
 
+type TerminalLifecycleStatus = 'reconciled' | 'failed';
+
 type WorkerCounts = {
   scanned: number;
   pendingExternal: number;
@@ -38,10 +47,16 @@ type WorkerCounts = {
   invalid: number;
   errors: number;
   stuck: number;
+  alertsOpened: number;
+  alertsResolved: number;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function terminalLifecycleStatus(value: unknown): TerminalLifecycleStatus | null {
+  return value === 'reconciled' || value === 'failed' ? value : null;
 }
 
 function validBody(value: unknown) {
@@ -50,24 +65,14 @@ function validBody(value: unknown) {
     && value.version === WORKER_VERSION;
 }
 
-function boundedInteger(
-  raw: string | undefined,
-  fallback: number,
-  min: number,
-  max: number,
-) {
+function boundedInteger(raw: string | undefined, fallback: number, min: number, max: number) {
   if (!raw) return fallback;
   const parsed = Number(raw);
   return Number.isSafeInteger(parsed) && parsed >= min && parsed <= max ? parsed : fallback;
 }
 
 function configuredBatchSize() {
-  return boundedInteger(
-    process.env.WALLET_CHAIN_WORKER_BATCH_SIZE,
-    DEFAULT_BATCH_SIZE,
-    1,
-    MAX_BATCH_SIZE,
-  );
+  return boundedInteger(process.env.WALLET_CHAIN_WORKER_BATCH_SIZE, DEFAULT_BATCH_SIZE, 1, MAX_BATCH_SIZE);
 }
 
 function configuredStuckAfterSeconds() {
@@ -82,17 +87,11 @@ function configuredStuckAfterSeconds() {
 function workerSecretState(request: Request): 'unconfigured' | 'authorized' | 'unauthorized' {
   const expected = process.env.WALLET_CHAIN_RECONCILIATION_WORKER_SECRET?.trim() ?? '';
   if (expected.length < 32) return 'unconfigured';
-
   const supplied = request.headers.get('x-ctg-wallet-worker-secret')?.trim() ?? '';
   const expectedBytes = Buffer.from(expected);
   const suppliedBytes = Buffer.from(supplied);
   if (expectedBytes.length !== suppliedBytes.length) return 'unauthorized';
-
   return timingSafeEqual(expectedBytes, suppliedBytes) ? 'authorized' : 'unauthorized';
-}
-
-function intentFingerprint(intentId: string) {
-  return createHash('sha256').update(intentId).digest('hex').slice(0, 16);
 }
 
 function ageSeconds(iso: string, nowMs: number) {
@@ -101,11 +100,7 @@ function ageSeconds(iso: string, nowMs: number) {
   return Math.max(0, Math.floor((nowMs - submittedMs) / 1000));
 }
 
-function responseWithContext(
-  request: Request,
-  body: unknown,
-  init: ResponseInit = {},
-) {
+function responseWithContext(request: Request, body: unknown, init: ResponseInit = {}) {
   const context = getRequestObservabilityContext(request);
   const headers = new Headers(init.headers);
   headers.set('Cache-Control', 'no-store');
@@ -116,33 +111,63 @@ function responseWithContext(
   return NextResponse.json(body, { ...init, headers });
 }
 
+async function recoverTerminalOperationalAlerts(
+  admin: ReturnType<typeof createAdminClient>,
+  limit: number,
+) {
+  const { data: openAlerts, error: openAlertError } = await admin
+    .from('wallet_chain_operational_alerts_v1')
+    .select('intent_id')
+    .eq('state', 'open')
+    .order('last_detected_at', { ascending: true })
+    .limit(limit);
+
+  if (openAlertError) {
+    throw new WalletOperationalAlertError('WALLET_OPERATIONAL_ALERT_RECOVERY_READ_FAILED');
+  }
+
+  const intentIds = [...new Set(
+    (openAlerts ?? []).flatMap((row) => (
+      isRecord(row) && typeof row.intent_id === 'string' ? [row.intent_id] : []
+    )),
+  )];
+  if (intentIds.length === 0) return 0;
+
+  const { data: intents, error: intentError } = await admin
+    .from('wallet_intents_v2')
+    .select('id,status')
+    .in('id', intentIds);
+
+  if (intentError) {
+    throw new WalletOperationalAlertError('WALLET_OPERATIONAL_ALERT_RECOVERY_INTENT_READ_FAILED');
+  }
+
+  let resolved = 0;
+  for (const row of intents ?? []) {
+    if (!isRecord(row) || typeof row.id !== 'string') continue;
+    const status = terminalLifecycleStatus(row.status);
+    if (!status) continue;
+    await resolveWalletOperationalAlertsV1(admin, row.id, status);
+    resolved += 1;
+  }
+  return resolved;
+}
+
 export async function POST(request: Request) {
   const context = getRequestObservabilityContext(request);
   const startedAt = Date.now();
 
   if (!isSupabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return responseWithContext(
-      request,
-      { error: 'WALLET_CHAIN_WORKER_UNAVAILABLE' },
-      { status: 503 },
-    );
+    return responseWithContext(request, { error: 'WALLET_CHAIN_WORKER_UNAVAILABLE' }, { status: 503 });
   }
 
   const secretState = workerSecretState(request);
   if (secretState === 'unconfigured') {
-    return responseWithContext(
-      request,
-      { error: 'WALLET_CHAIN_WORKER_NOT_CONFIGURED' },
-      { status: 503 },
-    );
+    return responseWithContext(request, { error: 'WALLET_CHAIN_WORKER_NOT_CONFIGURED' }, { status: 503 });
   }
   if (secretState !== 'authorized') {
     logger.warn('wallet.chain.worker.unauthorized', context);
-    return responseWithContext(
-      request,
-      { error: 'UNAUTHORIZED' },
-      { status: 401 },
-    );
+    return responseWithContext(request, { error: 'UNAUTHORIZED' }, { status: 401 });
   }
 
   const contentType = request.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase();
@@ -171,7 +196,7 @@ export async function POST(request: Request) {
 
   const { data: candidates, error: candidateError } = await admin
     .from('wallet_intents_v2')
-    .select(WALLET_CHAIN_INTENT_SELECT)
+    .select(`${WALLET_CHAIN_INTENT_SELECT},operational_correlation_id`)
     .in('status', [...WALLET_CHAIN_RECONCILABLE_STATUSES])
     .not('tx_hash', 'is', null)
     .order('chain_last_checked_at', { ascending: true, nullsFirst: true })
@@ -179,15 +204,8 @@ export async function POST(request: Request) {
     .limit(batchSize);
 
   if (candidateError) {
-    logger.error('wallet.chain.worker.read_failed', {
-      ...context,
-      duration_ms: Date.now() - startedAt,
-    });
-    return responseWithContext(
-      request,
-      { error: 'WALLET_CHAIN_WORKER_READ_FAILED' },
-      { status: 503 },
-    );
+    logger.error('wallet.chain.worker.read_failed', { ...context, duration_ms: Date.now() - startedAt });
+    return responseWithContext(request, { error: 'WALLET_CHAIN_WORKER_READ_FAILED' }, { status: 503 });
   }
 
   const rows = candidates ?? [];
@@ -200,14 +218,32 @@ export async function POST(request: Request) {
     invalid: 0,
     errors: 0,
     stuck: 0,
+    alertsOpened: 0,
+    alertsResolved: 0,
   };
   const errorsByCode = new Map<string, number>();
   let oldestSubmittedAgeSeconds = 0;
   const nowMs = Date.now();
 
+  try {
+    counts.alertsResolved += await recoverTerminalOperationalAlerts(admin, batchSize);
+  } catch (error) {
+    const code = error instanceof WalletOperationalAlertError
+      ? error.code
+      : 'WALLET_OPERATIONAL_ALERT_RECOVERY_UNEXPECTED_FAILURE';
+    errorsByCode.set(code, (errorsByCode.get(code) ?? 0) + 1);
+    logger.error('wallet.chain.worker.alert_recovery_failed', {
+      ...context,
+      error_code: code,
+    });
+  }
+
   for (const rawIntent of rows) {
     const intent = normalizeWalletChainIntentSnapshot(rawIntent);
-    if (!intent) {
+    const correlationId = normalizeOperationalCorrelationId(
+      isRecord(rawIntent) ? rawIntent.operational_correlation_id : null,
+    );
+    if (!intent || !correlationId) {
       counts.invalid += 1;
       logger.error('wallet.chain.worker.invalid_intent_shape', context);
       continue;
@@ -215,11 +251,12 @@ export async function POST(request: Request) {
 
     const submittedAgeSeconds = ageSeconds(intent.submitted_at, nowMs) ?? 0;
     oldestSubmittedAgeSeconds = Math.max(oldestSubmittedAgeSeconds, submittedAgeSeconds);
-    const fingerprint = intentFingerprint(intent.id);
+    let observedStatus: string | null = null;
 
     try {
       const result = await reconcileWalletChainIntentV1(admin, intent);
       const nextStatus = result.record.status;
+      observedStatus = nextStatus;
 
       if (nextStatus === 'pending_external') counts.pendingExternal += 1;
       else if (nextStatus === 'confirmed_external') counts.confirmedExternal += 1;
@@ -227,14 +264,26 @@ export async function POST(request: Request) {
       else if (nextStatus === 'failed') counts.failed += 1;
       else counts.errors += 1;
 
-      if (
-        (nextStatus === 'pending_external' || nextStatus === 'confirmed_external')
-        && submittedAgeSeconds >= stuckAfterSeconds
-      ) {
+      if (nextStatus === 'reconciled' || nextStatus === 'failed') {
+        await resolveWalletOperationalAlertsV1(admin, intent.id, nextStatus);
+        counts.alertsResolved += 1;
+      } else if (submittedAgeSeconds >= stuckAfterSeconds) {
+        const alertKind = alertKindForLifecycleStatus(nextStatus);
+        if (alertKind) {
+          await upsertWalletOperationalAlertV1(admin, {
+            intentId: intent.id,
+            correlationId,
+            alertKind,
+            lifecycleStatus: nextStatus,
+            submittedAgeSeconds,
+            confirmations: result.observation.confirmations,
+          });
+          counts.alertsOpened += 1;
+        }
         counts.stuck += 1;
         logger.warn('wallet.chain.worker.stuck_intent', {
           ...context,
-          intent_fingerprint: fingerprint,
+          wallet_correlation_id: correlationId,
           prior_status: intent.status,
           observed_status: nextStatus,
           submitted_age_seconds: submittedAgeSeconds,
@@ -243,7 +292,7 @@ export async function POST(request: Request) {
       } else {
         logger.info('wallet.chain.worker.intent_observed', {
           ...context,
-          intent_fingerprint: fingerprint,
+          wallet_correlation_id: correlationId,
           prior_status: intent.status,
           observed_status: nextStatus,
           submitted_age_seconds: submittedAgeSeconds,
@@ -252,19 +301,44 @@ export async function POST(request: Request) {
       }
     } catch (error) {
       counts.errors += 1;
-      if (submittedAgeSeconds >= stuckAfterSeconds) counts.stuck += 1;
+      const terminalStatusCommitted = terminalLifecycleStatus(observedStatus) !== null;
+      if (!terminalStatusCommitted && submittedAgeSeconds >= stuckAfterSeconds) {
+        counts.stuck += 1;
+        const alertKind = alertKindForLifecycleStatus(intent.status);
+        if (alertKind) {
+          try {
+            await upsertWalletOperationalAlertV1(admin, {
+              intentId: intent.id,
+              correlationId,
+              alertKind,
+              lifecycleStatus: intent.status,
+              submittedAgeSeconds,
+              confirmations: null,
+            });
+            counts.alertsOpened += 1;
+          } catch (alertError) {
+            const alertCode = alertError instanceof WalletOperationalAlertError
+              ? alertError.code
+              : 'WALLET_OPERATIONAL_ALERT_UNEXPECTED_FAILURE';
+            errorsByCode.set(alertCode, (errorsByCode.get(alertCode) ?? 0) + 1);
+          }
+        }
+      }
 
       const code = error instanceof WalletChainReconciliationError
         ? error.code
         : error instanceof WalletChainPersistenceError
           ? error.code
-          : 'WALLET_CHAIN_WORKER_UNEXPECTED_FAILURE';
+          : error instanceof WalletOperationalAlertError
+            ? error.code
+            : 'WALLET_CHAIN_WORKER_UNEXPECTED_FAILURE';
       errorsByCode.set(code, (errorsByCode.get(code) ?? 0) + 1);
 
       logger.error('wallet.chain.worker.intent_failed', {
         ...context,
-        intent_fingerprint: fingerprint,
+        wallet_correlation_id: correlationId,
         prior_status: intent.status,
+        observed_status: observedStatus,
         submitted_age_seconds: submittedAgeSeconds,
         error_code: code,
       });

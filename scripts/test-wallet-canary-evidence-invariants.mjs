@@ -11,6 +11,7 @@ const [
   preflightRoute,
   migration0088,
   migration0089,
+  migration0090,
   runbook,
   cors,
   schemaVersion,
@@ -22,6 +23,7 @@ const [
   read('src/app/api/wallet/canary/preflight/route.ts'),
   read('supabase/migrations/20260830235000_0088_wallet_chain_reconciliation_v1.sql'),
   read('supabase/migrations/20260831021500_0089_wallet_canary_evidence_provenance.sql'),
+  read('supabase/migrations/20260831041000_0090_wallet_lifecycle_correlation_alerts_v1.sql'),
   read('docs/WALLET_CANARY_RUNBOOK.md'),
   read('src/lib/wallet/cors.ts'),
   read('src/lib/observability/schema-version.ts'),
@@ -110,6 +112,17 @@ for (const fragment of [
 }
 
 for (const fragment of [
+  'add column if not exists operational_correlation_id uuid not null default gen_random_uuid()',
+  'create table if not exists public.wallet_chain_operational_alerts_v1',
+  "alert_kind in ('submission_stuck','reconciliation_stuck','confirmation_stuck')",
+  "state in ('open','resolved')",
+  'enable row level security',
+  'revoke all on table public.wallet_chain_operational_alerts_v1 from public, anon, authenticated',
+]) {
+  assert.ok(migration0090.includes(fragment), `Migration 0090 missing operational observability invariant: ${fragment}`)
+}
+
+for (const fragment of [
   "WALLET_CANARY_CLIENT_VERSION = 'ctg-wallet-canary-client-v1'",
   'process.env.WALLET_CANARY_CLIENT_COMMIT_SHA',
   'assertReviewedWalletCanaryClientCommitSha',
@@ -181,10 +194,10 @@ assert.ok(
   'Durable provenance binding makes a client-supplied evidence header unnecessary.',
 )
 assert.ok(
-  schemaVersion.includes("EXPECTED_DATABASE_MIGRATION = '0089'")
-    && schemaVersion.includes("EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_canary_evidence_provenance'")
-    && schemaVersion.includes('EXPECTED_DATABASE_MIGRATION_COUNT = 89'),
-  'Runtime schema contract must advance atomically to migration 0089.',
+  schemaVersion.includes("EXPECTED_DATABASE_MIGRATION = '0090'")
+    && schemaVersion.includes("EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_lifecycle_correlation_alerts_v1'")
+    && schemaVersion.includes('EXPECTED_DATABASE_MIGRATION_COUNT = 90'),
+  'Runtime schema contract must advance atomically to migration 0090 while preserving canary evidence compatibility.',
 )
 assert.ok(
   evidence.indexOf('const canonical = {') < evidence.indexOf("createHash('sha256')")
