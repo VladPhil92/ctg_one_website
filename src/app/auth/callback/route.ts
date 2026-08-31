@@ -31,7 +31,10 @@ export async function GET(request: NextRequest) {
       ? cookieAnonymousId
       : crypto.randomUUID();
 
-  if (user && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  // Registration confirmation is the only callback that contributes to this
+  // funnel. Password recovery intentionally redirects elsewhere and must not
+  // inflate email verification or first-login activation milestones.
+  if (next === '/dashboard' && user && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     await Promise.all([
       recordFunnelEvent({
         eventName: 'email_verified',
