@@ -1,0 +1,64 @@
+name: Nvet Production Access Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/lib/nvetcareapp/session.ts'
+      - 'src/app/api/nvetcareapp/health/route.ts'
+      - 'render.yaml'
+      - '.github/workflows/nvet-production-access-canary.yml'
+  schedule:
+    - cron: '3,18,33,48 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nvet-production-access-canary
+  cancel-in-progress: true
+
+jobs:
+  canary:
+    name: Verify ctgone.com can reach Nvet backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Wait for production connectivity
+        shell: bash
+        run: |
+          set -uo pipefail
+          url='https://ctgone.com/api/nvetcareapp/health'
+
+          for attempt in $(seq 1 30); do
+            tmp="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 12 \
+              --output "$tmp" --write-out '%{http_code}' "$url" || true)"
+
+            echo "Attempt ${attempt}/30 -> HTTP ${code:-000}"
+            cat "$tmp" || true
+            echo
+
+            if [ "$code" = '200' ] && node - "$tmp" <<'NODE'
+          const fs = require('fs');
+          const path = process.argv[2];
+          try {
+            const body = JSON.parse(fs.readFileSync(path, 'utf8'));
+            if (body?.status !== 'ok' || body?.dependency !== 'nvet-backend') process.exit(1);
+          } catch {
+            process.exit(1);
+          }
+          NODE
+            then
+              echo '✅ ctgone.com can reach the Nvet Care backend.'
+              rm -f "$tmp"
+              exit 0
+            fi
+
+            rm -f "$tmp"
+            sleep 20
+          done
+
+          echo '❌ Nvet Care production connectivity did not become ready within the rollout window.'
+          exit 1
