@@ -63,6 +63,10 @@ function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
   return applyWalletCors(request, NextResponse.json(body, { ...init, headers }), CORS_METHODS);
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function getIntentId(request: Request) {
   const pathname = new URL(request.url).pathname;
   const match = /^\/api\/wallet\/intents\/([^/]+)\/evidence\/?$/.exec(pathname);
@@ -98,6 +102,9 @@ export async function GET(request: Request) {
   }
   if (!rawIntent) {
     return noStoreJson(request, { error: 'WALLET_CANARY_EVIDENCE_INTENT_NOT_FOUND' }, { status: 404 });
+  }
+  if (!isRecord(rawIntent)) {
+    return noStoreJson(request, { error: 'WALLET_CANARY_EVIDENCE_INTENT_SHAPE_INVALID' }, { status: 409 });
   }
 
   const clientCommit = typeof rawIntent.canary_client_commit_sha === 'string'
