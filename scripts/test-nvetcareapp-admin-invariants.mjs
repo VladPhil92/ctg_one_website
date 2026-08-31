@@ -39,6 +39,7 @@ assert.match(
 // CTG One session and must not expose the raw Supabase UUID in source.
 assert.match(superadmin, /supabase\.auth\.getUser\(\)/, 'Superadmin identity must be validated server-side with Supabase auth.getUser().');
 assert.match(superadmin, /createHash\('sha256'\)/, 'Superadmin identity must compare a one-way subject digest.');
+assert.match(superadmin, /isCanonicalNvetSuperadminSubject/, 'The canonical subject verifier must be reusable for the Nvet identity link.');
 assert.doesNotMatch(superadmin, /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i, 'The raw canonical Supabase UUID must not be committed to the web repository.');
 
 // CTG-first provisioning intentionally leaves names nullable. That must not
@@ -47,9 +48,17 @@ assert.match(user, /const firstName = cleanName\(raw\.firstName\)/, 'Current-use
 assert.doesNotMatch(user, /typeof raw\.firstName !== 'string'[\s\S]*status: 502/, 'Nullable Nvet profile names must not reject an otherwise valid user.');
 assert.match(user, /canonicalSuperadmin\s*\?\s*'ADMIN'/, 'Canonical root must route through the existing ADMIN dashboard view model.');
 
+// Root UI requires both ends of the bridge to match the canonical subject:
+// a validated CTG One cookie plus the protected Nvet user's ctgUserId link.
+assert.match(user, /canonicalSession\s*&&\s*canonicalNvetLink/, 'Root projection must dual-bind the CTG One session and the Nvet identity link.');
+assert.match(user, /typeof raw\.ctgUserId === 'string'/, 'Nvet current-user parsing must read the server-returned ctgUserId link.');
+assert.match(user, /isCanonicalNvetSuperadminSubject\(raw\.ctgUserId\)/, 'The Nvet identity link must match the pinned canonical subject.');
+assert.match(user, /isSuperadmin:\s*canonicalSuperadmin/, 'Current-user result must carry the dual-bound root marker.');
+
 // The SUPERADMIN chrome is a separate root-only surface; ordinary ADMIN/VET/
 // CLIENT sessions keep the standard dashboard unchanged.
-assert.match(dashboardTemplate, /isCanonicalNvetSuperadminSession\(\)/, 'Dashboard template must verify the canonical root session.');
+assert.match(dashboardTemplate, /userResult\.user\.isSuperadmin/, 'Dashboard template must render root chrome only from the dual-bound user result.');
+assert.doesNotMatch(dashboardTemplate, /isCanonicalNvetSuperadminSession/, 'Dashboard template must not independently infer root authority from the CTG cookie alone.');
 assert.match(dashboardTemplate, /Superadmin Nvet Care/, 'Canonical root must receive an explicit SUPERADMIN dashboard surface.');
 assert.match(dashboardTemplate, /Identidad raíz única/, 'SUPERADMIN dashboard must communicate singleton root authority.');
 
