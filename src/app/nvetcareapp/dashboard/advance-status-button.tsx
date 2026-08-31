@@ -5,14 +5,12 @@ import { useState } from 'react';
 import type { NvetAppointmentStatus } from '@/lib/nvetcareapp/appointments';
 import { nvetFetchWithRefresh } from './nvet-fetch';
 
-// Mirrors the vet-actionable subset of appointments.service.ts's
-// validateStatusTransition() — the backend is the authoritative check;
-// this only decides which single next action to offer, matching each
-// current status's one valid vet-triggered advance.
+// Payment confirmation is intentionally not a VET action in the web shell.
+// PENDING stays locked until the payment/admin flow confirms the appointment.
+// Completion is performed in /dashboard/servicios after clinical notes are
+// persisted. The agenda keeps only the paid CONFIRMED -> IN_PROGRESS shortcut.
 const NEXT_ACTION: Partial<Record<NvetAppointmentStatus, { next: NvetAppointmentStatus; label: string }>> = {
-  PENDING: { next: 'CONFIRMED', label: 'Confirmar' },
   CONFIRMED: { next: 'IN_PROGRESS', label: 'Iniciar' },
-  IN_PROGRESS: { next: 'COMPLETED', label: 'Completar' },
 };
 
 export function AdvanceStatusButton({ appointmentId, status }: { appointmentId: string; status: NvetAppointmentStatus }) {
@@ -33,7 +31,8 @@ export function AdvanceStatusButton({ appointmentId, status }: { appointmentId: 
         body: JSON.stringify({ status: action!.next }),
       });
       if (!res.ok) {
-        setError('No se pudo actualizar la cita.');
+        const message = await res.json().then((data) => data?.message).catch(() => undefined);
+        setError(message || 'No se pudo actualizar la cita.');
         return;
       }
       router.refresh();
