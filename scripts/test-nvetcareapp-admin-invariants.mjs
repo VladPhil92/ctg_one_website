@@ -2,11 +2,22 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [admin, user, superadmin, dashboardTemplate] = await Promise.all([
+const [
+  admin,
+  user,
+  superadmin,
+  dashboardTemplate,
+  dashboardPage,
+  dashboardLayout,
+  continueWithCtg,
+] = await Promise.all([
   read('src/lib/nvetcareapp/admin.ts'),
   read('src/lib/nvetcareapp/user.ts'),
   read('src/lib/nvetcareapp/superadmin.ts'),
   read('src/app/nvetcareapp/dashboard/template.tsx'),
+  read('src/app/nvetcareapp/dashboard/page.tsx'),
+  read('src/app/nvetcareapp/dashboard/layout.tsx'),
+  read('src/app/nvetcareapp/iniciar-sesion/continue-with-ctg-button.tsx'),
 ]);
 
 // A P2 review finding on PR #189: fetch() rejects on network failure
@@ -62,4 +73,30 @@ assert.doesNotMatch(dashboardTemplate, /isCanonicalNvetSuperadminSession/, 'Dash
 assert.match(dashboardTemplate, /Superadmin Nvet Care/, 'Canonical root must receive an explicit SUPERADMIN dashboard surface.');
 assert.match(dashboardTemplate, /Identidad raíz única/, 'SUPERADMIN dashboard must communicate singleton root authority.');
 
-console.log('Nvet Care admin-metrics + superadmin invariants: PASS');
+// Unified dashboard access contract. All personas enter the same dashboard;
+// the server-resolved Nvet role selects the surface after authentication.
+assert.match(
+  dashboardPage,
+  /redirect\('\/nvetcareapp\/iniciar-sesion'\)/,
+  'Unauthenticated dashboard access must return to the one public Nvet login.',
+);
+assert.match(dashboardPage, /if \(role === 'ADMIN'\)/, 'ADMIN/SUPERADMIN projection must render the administrative dashboard read-model.');
+assert.match(dashboardPage, /if \(role === 'CLIENT'\)/, 'CLIENT must render the user appointment dashboard.');
+assert.match(dashboardPage, /\/\/ role === 'VET'/, 'The remaining allowed VET role must enter the veterinarian dashboard branch.');
+assert.match(dashboardPage, /VetAgendaPanel/, 'VET must receive the veterinarian agenda surface.');
+
+// Persona-specific affordances must remain scoped to the effective role and
+// must not leak admin controls into the public login or ordinary dashboards.
+assert.match(dashboardLayout, /role === 'CLIENT'/, 'CLIENT must receive client-only dashboard actions.');
+assert.match(dashboardLayout, /Agendar cita/, 'CLIENT dashboard must expose appointment booking.');
+assert.match(dashboardLayout, /role === 'VET'/, 'VET must receive veterinarian-only dashboard actions.');
+assert.match(dashboardLayout, /Operar servicios/, 'VET dashboard must expose service operations.');
+assert.doesNotMatch(dashboardPage, /\/admin\/login/, 'The shared Nvet dashboard must not expose a separate admin login route.');
+
+// CTG One SSO is additive to the same public login and lands on the requested
+// dashboard path only after a successful server-side identity exchange.
+assert.match(continueWithCtg, /\/api\/nvetcareapp\/auth\/ctg-identity-exchange/, 'CTG One continuation must use the server-side Nvet identity-exchange BFF.');
+assert.match(continueWithCtg, /router\.push\(next\)/, 'Successful CTG One exchange must continue to the requested dashboard route.');
+assert.doesNotMatch(continueWithCtg, /\/admin\/login/, 'CTG One continuation must not reveal a separate privileged login path.');
+
+console.log('Nvet Care admin-metrics + unified dashboard role invariants: PASS');
