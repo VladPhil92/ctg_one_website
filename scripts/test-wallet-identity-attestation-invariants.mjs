@@ -4,6 +4,7 @@ import path from 'node:path';
 const root = process.cwd();
 const files = {
   route: path.join(root, 'src/app/api/wallet/identity/proof/route.ts'),
+  nextConfig: path.join(root, 'next.config.js'),
   identityMigration: path.join(root, 'supabase/migrations/20260829231000_0076_wallet_identity_bridge.sql'),
   trustedLinkMigration: path.join(root, 'supabase/migrations/20260829234000_0077_trusted_wallet_identity_linking.sql'),
 };
@@ -15,6 +16,7 @@ for (const [label, file] of Object.entries(files)) {
 }
 
 const route = fs.readFileSync(files.route, 'utf8');
+const nextConfig = fs.readFileSync(files.nextConfig, 'utf8');
 const identityMigration = fs.readFileSync(files.identityMigration, 'utf8');
 const trustedLinkMigration = fs.readFileSync(files.trustedLinkMigration, 'utf8');
 
@@ -59,6 +61,23 @@ requireFragments(route, 'identity proof route', [
   "headers.set('Referrer-Policy', 'no-referrer')",
   'return walletCorsPreflight(request, CORS_METHODS)',
 ]);
+
+// The Route Handler sets no-referrer itself, but Next.js project headers are
+// applied at the platform layer. The sensitive route override must therefore
+// remain after the catch-all rule so the last matching Referrer-Policy wins.
+requireFragments(nextConfig, 'Next.js identity proof header override', [
+  "source: '/:path*'",
+  "{ key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }",
+  "source: '/api/wallet/identity/proof'",
+  "{ key: 'Referrer-Policy', value: 'no-referrer' }",
+]);
+const catchAllHeadersIndex = nextConfig.indexOf("source: '/:path*'");
+const globalReferrerIndex = nextConfig.indexOf("{ key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }", catchAllHeadersIndex);
+const identityProofHeadersIndex = nextConfig.indexOf("source: '/api/wallet/identity/proof'");
+const identityNoReferrerIndex = nextConfig.indexOf("{ key: 'Referrer-Policy', value: 'no-referrer' }", identityProofHeadersIndex);
+if (!(catchAllHeadersIndex >= 0 && globalReferrerIndex > catchAllHeadersIndex && identityProofHeadersIndex > globalReferrerIndex && identityNoReferrerIndex > identityProofHeadersIndex)) {
+  throw new Error('identity proof no-referrer override must remain after the global referrer policy so Next.js applies the sensitive-route value last');
+}
 
 const authIndex = route.indexOf('createAuthenticatedRequestContext(request)');
 const adminIndex = route.indexOf('const serviceRole = createAdminClient()');
