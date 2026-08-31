@@ -120,9 +120,11 @@ assert.ok((layout.match(/preload:\s*true/g) ?? []).length >= 2, 'Both primary fo
 assert.match(layout, /style=\{\{ backgroundColor: '#050505'/, 'Root document must paint the dark canvas before hydration.');
 assert.doesNotMatch(layout, /fonts\.googleapis\.com|fonts\.gstatic\.com/, 'Root layout must not add a second external font delivery path.');
 
-// UX-04 — mobile hero is content-first; the interactive ecosystem architecture is the primary visual.
-assert.match(hero, /href="\/products"/, 'Hero must lead consumers to public products.');
-assert.match(hero, /href="\/ecosystem"/, 'Hero must retain a direct path to real businesses.');
+// UX-04 — mobile hero is content-first; account acquisition and the interactive ecosystem architecture are the primary paths.
+assert.match(hero, /href="\/registro"/, 'Hero must lead new users to CTG One account registration.');
+assert.match(hero, /Portal multiservicios · Una sola cuenta/, 'Hero must identify CTG One as a multi-service portal with one account.');
+assert.match(hero, /Productos, servicios, pagos y beneficios conectados para ti\./, 'Hero must state the consumer-facing multi-service value proposition.');
+assert.match(hero, /href="\/ecosystem"/, 'Hero must retain a direct path to the CTG One ecosystem.');
 assert.match(hero, /<BlockchainNetwork size="lg" interactive\s*\/>/, 'Hero must expose the interactive CTG ecosystem network as its primary visual.');
 assert.match(hero, /Arquitectura del ecosistema/, 'Hero must explain the ecosystem architecture in Spanish.');
 assert.doesNotMatch(hero, /href="\/craft-beer"/, 'Hero must not duplicate the Craft Beer product card already present in the product showcase.');

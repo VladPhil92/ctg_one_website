@@ -240,6 +240,10 @@ assert.equal(
   'Operating-business counts must remain aligned across public registries.',
 );
 assert.match(translations, /en: 'Operating Businesses', es: 'Negocios operativos'/, 'Operating-business metric must have explicit bilingual terminology.');
-assert.match(hero, /'Empresa tecnológica · Cartagena'[\s\S]*?'Technology company · Cartagena'/, 'Hero identity eyebrow must have explicit bilingual terminology.');
+assert.match(
+  hero,
+  /'Portal multiservicios · Una sola cuenta'[\s\S]*?'Multi-service portal · One account'/,
+  'Hero multi-service identity eyebrow must have explicit bilingual terminology.',
+);
 
 console.log('Capability truth invariants: PASS');

@@ -75,8 +75,10 @@ for (const capability of ['identity-auth', 'data-security', 'ai-layer']) {
 }
 assert.match(hero, /getPublicProofStatus/, 'Hero must derive maturity values from the canonical proof registry.');
 assert.match(hero, /Container size="large"/, 'Homepage hero must use the wide command-center container.');
-assert.match(hero, /Tecnología creada para/, 'Hero must state the consumer-facing technology proposition in Spanish.');
-assert.match(hero, /negocios reales\./, 'Hero must connect technology to real businesses.');
+assert.match(hero, /Portal multiservicios · Una sola cuenta/, 'Hero must identify CTG One as a multi-service portal with one account.');
+assert.match(hero, /Todo CTG One,/, 'Hero must lead with the unified CTG One consumer proposition.');
+assert.match(hero, /Productos, servicios, pagos y beneficios conectados para ti\./, 'Hero must state the consumer value categories explicitly.');
+assert.match(hero, /href="\/registro"/, 'Hero primary action must route new users to account registration.');
 assert.match(hero, /<BlockchainNetwork size="lg" interactive\s*\/>/, 'Hero must render the interactive ecosystem network in its primary visual column.');
 assert.match(hero, /CTG ONE CORE/, 'Hero network must identify the central CTG One core.');
 assert.doesNotMatch(hero, /href="\/craft-beer"/, 'Craft Beer product media belongs to the dedicated product showcase, not the ecosystem hero visual.');
