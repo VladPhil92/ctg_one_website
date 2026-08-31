@@ -26,7 +26,7 @@ export default async function NvetServicesPage() {
     return (
       <ClientServicesMarketplace
         initialVets={marketplaceResult.ok ? marketplaceResult.data.results : []}
-        totalVerifiedProviders={marketplaceResult.ok ? marketplaceResult.data.total : 0}
+        totalVerifiedProviders={marketplaceResult.ok ? marketplaceResult.data.results.length : 0}
         marketplaceAvailable={marketplaceResult.ok}
       />
     );
