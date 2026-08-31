@@ -15,6 +15,9 @@ export interface NvetAppointment {
   status: NvetAppointmentStatus;
   paymentMethod: 'CTG' | 'PSE' | 'TRANSFER';
   amount: number;
+  diagnosis?: string | null;
+  treatment?: string | null;
+  notes?: string | null;
   vet: { user: { firstName: string; lastName: string } };
   client: { firstName: string; lastName: string };
   pet: { name: string; species: string };
@@ -52,11 +55,9 @@ export type NvetUpdateStatusResult =
   | { ok: false; status: number };
 
 /**
- * PATCH /appointments/:id/status — the backend's own guard restricts this
- * to the appointment's own vet (RolesGuard(VET) + an ownership check in the
- * controller) and enforces the valid state-machine transitions itself
- * (appointments.service.ts::validateStatusTransition); this never
- * re-implements either check.
+ * PATCH /appointments/:id/status — backend ownership remains authoritative.
+ * The CTG One BFF additionally narrows the public web flow to paid
+ * CONFIRMED → IN_PROGRESS → COMPLETED service operations.
  */
 export async function updateNvetAppointmentStatus(
   accessToken: string,
