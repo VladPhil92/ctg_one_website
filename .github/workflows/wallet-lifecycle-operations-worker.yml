@@ -1,0 +1,80 @@
+name: Wallet Lifecycle Operations Worker
+
+on:
+  schedule:
+    - cron: '5-55/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wallet-lifecycle-operations-production-worker
+  cancel-in-progress: false
+
+jobs:
+  inspect-production-lifecycle:
+    name: Detect canonical wallet lifecycle alerts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      OPERATIONS_URL: https://ctgone.com/api/internal/wallet/operations-health
+      WORKER_SECRET: ${{ secrets.WALLET_CHAIN_RECONCILIATION_WORKER_SECRET }}
+
+    steps:
+      - name: Fail closed when worker credential is not provisioned
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${WORKER_SECRET}" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Wallet lifecycle operations worker is not provisioned; scheduled inspection remains disabled."
+            exit 0
+          fi
+          if [ "${#WORKER_SECRET}" -lt 32 ]; then
+            echo "::error::WALLET_CHAIN_RECONCILIATION_WORKER_SECRET must contain at least 32 characters."
+            exit 1
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - name: Inspect bounded production lifecycle health
+        if: steps.gate.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          body_file="$(mktemp)"
+          request_id="github-wallet-ops-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          status="$(curl \
+            --silent \
+            --show-error \
+            --output "$body_file" \
+            --write-out '%{http_code}' \
+            --request GET \
+            --connect-timeout 10 \
+            --max-time 120 \
+            --header 'Accept: application/json' \
+            --header "X-Request-ID: ${request_id}" \
+            --header "X-CTG-Wallet-Worker-Secret: ${WORKER_SECRET}" \
+            "$OPERATIONS_URL")"
+
+          test "$status" = '200'
+          jq -e '
+            .version == "ctg-wallet-lifecycle-operations-v1" and
+            (.severity == "healthy" or .severity == "warning" or .severity == "critical") and
+            (.alerts.total | type == "number") and
+            (.alerts.critical | type == "number") and
+            (.alerts.warning | type == "number") and
+            (.sample.bounded == true) and
+            (.durationMs | type == "number")
+          ' "$body_file" >/dev/null
+
+          jq '{version,severity,alerts,alertsByCode,oldestAgeSeconds,sample,durationMs}' "$body_file"
+
+          severity="$(jq -r '.severity' "$body_file")"
+          if [ "$severity" = 'warning' ]; then
+            echo "::warning::CTG Wallet lifecycle inspection found operational warnings."
+          elif [ "$severity" = 'critical' ]; then
+            echo "::error::CTG Wallet lifecycle inspection found critical stuck states. Review protected logs by correlation fingerprint; never rebroadcast to compensate for telemetry or registration uncertainty."
+            exit 2
+          fi
