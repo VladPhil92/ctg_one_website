@@ -3,7 +3,13 @@ import 'server-only';
 import { getNvetAuthorizationHeaders } from './request';
 import { getNvetApiUrl } from './session';
 
-export type NvetChatAppointmentStatus = 'CONFIRMED' | 'IN_PROGRESS';
+export type NvetChatAppointmentStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'DISPUTED';
 
 export interface NvetChatParticipant {
   id: string;
