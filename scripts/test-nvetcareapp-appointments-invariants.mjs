@@ -3,11 +3,34 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [statusRoute, appointmentsRoute, advanceButton, dashboardPage] = await Promise.all([
+const [
+  statusRoute,
+  appointmentsRoute,
+  advanceButton,
+  dashboardPage,
+  clientAppointmentsRoute,
+  clientPetsRoute,
+  clientVetsRoute,
+  clientPricesRoute,
+  clientScheduleRoute,
+  bookingLibrary,
+  bookingPage,
+  bookingFlow,
+  dashboardLayout,
+] = await Promise.all([
   read('src/app/api/nvetcareapp/appointments/[id]/status/route.ts'),
   read('src/app/api/nvetcareapp/appointments/route.ts'),
   read('src/app/nvetcareapp/dashboard/advance-status-button.tsx'),
   read('src/app/nvetcareapp/dashboard/page.tsx'),
+  read('src/app/api/nvetcareapp/client/appointments/route.ts'),
+  read('src/app/api/nvetcareapp/client/pets/route.ts'),
+  read('src/app/api/nvetcareapp/client/vets/route.ts'),
+  read('src/app/api/nvetcareapp/client/vets/[id]/prices/route.ts'),
+  read('src/app/api/nvetcareapp/client/vets/[id]/schedule/route.ts'),
+  read('src/lib/nvetcareapp/client-booking.ts'),
+  read('src/app/nvetcareapp/dashboard/reservar/page.tsx'),
+  read('src/app/nvetcareapp/dashboard/reservar/client-booking-flow.tsx'),
+  read('src/app/nvetcareapp/dashboard/layout.tsx'),
 ]);
 
 // The status-update BFF route must require a session cookie before doing
@@ -82,5 +105,69 @@ assert.equal(
   'Every sign-in redirect except the no-cookie guard must be paired with its own 401 check — one for the initial user lookup, and one for each role-specific fetch (ADMIN metrics, CLIENT/VET appointments).',
 );
 assert.ok(status401CheckCount >= 4, 'Dashboard must redirect on 401 after the user lookup and after each of the three role-specific fetches.');
+
+// Phase: CLIENT transactional booking v1. Every private BFF surface must
+// reject a missing httpOnly Nvet session and explicitly re-check CLIENT role.
+for (const [name, source] of [
+  ['client appointments route', clientAppointmentsRoute],
+  ['client pets route', clientPetsRoute],
+  ['client vets route', clientVetsRoute],
+  ['client prices route', clientPricesRoute],
+  ['client schedule route', clientScheduleRoute],
+]) {
+  assert.match(source, /if \(!accessToken\)/, `${name} must reject requests with no session cookie.`);
+  assert.match(source, /status: 401/, `${name} must return 401 when unauthenticated.`);
+  assert.match(source, /requireNvetClient\(/, `${name} must verify CLIENT role server-side.`);
+}
+
+// Identity and price authority are server-side. Booking may accept resource
+// IDs/date/address from the client, but never an amount, role or identity
+// override. serviceType and amount are resolved from the current public vet
+// price catalog immediately before POST /appointments.
+assert.doesNotMatch(
+  clientAppointmentsRoute,
+  /body\.(amount|amountCop|serviceType|paymentMethod|role|userId|clientId|ownerId)/,
+  'Client booking route must not trust browser-supplied financial, role or identity claims.',
+);
+assert.match(
+  bookingLibrary,
+  /fetchNvetVetPrices\(input\.vetId\)/,
+  'Booking server contract must re-read the selected vet price catalog before booking.',
+);
+assert.match(
+  bookingLibrary,
+  /amount:\s*officialPrice\.priceCop/,
+  'Booking server contract must derive COP amount from the server-read official price.',
+);
+assert.match(
+  bookingLibrary,
+  /serviceType:\s*officialPrice\.serviceName/,
+  'Booking server contract must derive serviceType from the server-read official price.',
+);
+assert.match(
+  bookingLibrary,
+  /paymentMethod:\s*'TRANSFER'/,
+  'Booking v1 must stay on the currently supported non-automatic transfer path; unfinished CTG/PSE rails must not be exposed.',
+);
+assert.doesNotMatch(
+  clientPetsRoute,
+  /body\.(role|userId|ownerId)/,
+  'Pet creation must never accept owner identity or role from the browser.',
+);
+
+// Booking dates are bounded, and the UI must use backend-provided available
+// slots rather than allowing a free-form time that bypasses schedule UX.
+assert.match(clientScheduleRoute, /next 90 days|próximos 90 días/, 'Schedule BFF must bound booking horizon to 90 days.');
+assert.match(clientAppointmentsRoute, /next 90 days|próximos 90 días/, 'Appointment BFF must bound booking horizon to 90 days.');
+assert.match(bookingFlow, /slots\.filter\(\(slot\) => slot\.available\)/, 'Booking UI must render only available backend schedule slots.');
+assert.match(bookingFlow, /priceId:\s*selectedPriceId/, 'Booking UI must identify the selected catalog price by ID.');
+assert.doesNotMatch(bookingFlow, /amount:\s*selectedPrice|amountCop:/, 'Booking UI must never submit a charge amount.');
+
+// The booking page and its discoverability affordance are both role-aware:
+// non-client roles return to the normal role router, and only CLIENT users get
+// the floating "Agendar cita" action in the shared dashboard layout.
+assert.match(bookingPage, /userResult\.user\.role !== 'CLIENT'/, 'Booking page must reject non-client roles.');
+assert.match(dashboardLayout, /userResult\.user\.role === 'CLIENT'/, 'Dashboard booking action must only render for CLIENT users.');
+assert.match(dashboardLayout, /\/nvetcareapp\/dashboard\/reservar/, 'CLIENT dashboard must expose the booking journey.');
 
 console.log('Nvet Care appointments invariants: PASS');
