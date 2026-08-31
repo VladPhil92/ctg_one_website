@@ -19,20 +19,28 @@ WALLET_CRYPTO_SEND_CANARY_USER_IDS=
 
 Allowed execution modes in this phase are intentionally limited to:
 
-- `disabled` — default and kill-switch; pre-broadcast execution revalidation is rejected.
-- `canary` — execution revalidation succeeds only for exact canonical Supabase user UUIDs listed in `WALLET_CRYPTO_SEND_CANARY_USER_IDS`.
+- `disabled` — default and kill-switch; new `created -> authorized` transitions and pre-broadcast execution revalidation are rejected.
+- `canary` — new authorization and execution revalidation succeed only for exact canonical Supabase user UUIDs listed in `WALLET_CRYPTO_SEND_CANARY_USER_IDS`.
 
 There is deliberately no `public` mode in Canary Readiness.
 
 `WALLET_CRYPTO_SEND_CANARY_USER_IDS` is a comma-separated list of canonical `auth.users.id` UUIDs. It is server-only configuration and must never be exposed through `NEXT_PUBLIC_*`, `VITE_*`, browser logs, screenshots or client telemetry.
 
-## Why the gate is on execution revalidation
+## Non-bypassable authorization gate
 
-Normal intent creation and trusted authorization remain available for non-money validation. Immediately before the reviewed CTG-Wallet client obtains a signer, it replays the durable authorization against:
+The rollout gate is not optional client metadata. Every first `created -> authorized` transition checks the server execution mode and canonical-user allowlist even when the caller omits the `execution` query parameter. This prevents an older or modified client from creating fresh execution-enabling authorization evidence outside the canary.
+
+Durable `authorized` replays remain available because they create no new authorization evidence. This is necessary for idempotent lost-response recovery. A replay requested specifically as `?execution=canary` checks the current rollout gate again before the reviewed client may continue toward signing.
+
+Intent creation, read-only client preflight and other non-signing validation remain usable while execution mode is disabled, but a new intent cannot cross into `authorized` outside the canary gate.
+
+## Why there is a second gate on execution revalidation
+
+Immediately before the reviewed CTG-Wallet client obtains a signer, it replays the durable authorization against:
 
 `POST /api/wallet/intents/:intentId/authorize?execution=canary`
 
-That request checks the current server kill-switch and canonical user allowlist. Disabling the rollout therefore blocks new official-client broadcasts at the last server checkpoint before signing.
+That request checks the current server kill-switch and canonical user allowlist again. Disabling the rollout therefore blocks the official client at the last server checkpoint before signing even when an authorization had been issued earlier during an active canary window.
 
 Submission and reconciliation are intentionally not rollout-gated. If a transaction was already broadcast before the kill-switch closes, CTG One must still be able to register the exact hash and reconcile it to a terminal state.
 
@@ -58,7 +66,7 @@ WALLET_CRYPTO_SEND_EXECUTION_MODE=canary
 WALLET_CRYPTO_SEND_CANARY_USER_IDS=<canonical-user-uuid>
 ```
 
-Redeploy CTG One and verify a non-allowlisted authenticated user receives a fail-closed execution revalidation response while normal read/overview endpoints remain healthy.
+Redeploy CTG One and verify a non-allowlisted authenticated user cannot create a new authorization or pass execution revalidation, while read/overview and intent-creation endpoints remain healthy.
 
 ## Canary evidence
 
@@ -81,8 +89,8 @@ Never record access tokens, Privy secrets, private keys, seed phrases, service-r
 
 A canary is green only when:
 
-1. a non-allowlisted user cannot pass execution revalidation;
-2. the allowlisted user passes execution revalidation immediately before signing;
+1. a non-allowlisted user cannot create fresh authorization evidence or pass execution revalidation;
+2. the allowlisted user can authorize and passes execution revalidation immediately before signing;
 3. exactly one Polygon transaction is broadcast;
 4. the exact returned hash is persisted before server registration;
 5. `/submit` binds that same hash idempotently;
