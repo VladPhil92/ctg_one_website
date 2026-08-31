@@ -1,7 +1,26 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { join, relative } from 'node:path';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+
+async function walkFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const absolutePath = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await walkFiles(absolutePath)));
+    } else if (entry.isFile()) {
+      files.push(absolutePath);
+    }
+  }
+
+  return files;
+}
+
 const [
   admin,
   user,
@@ -19,6 +38,12 @@ const [
   read('src/app/nvetcareapp/dashboard/layout.tsx'),
   read('src/app/nvetcareapp/iniciar-sesion/continue-with-ctg-button.tsx'),
 ]);
+
+const nvetAppRoot = fileURLToPath(new URL('../src/app/nvetcareapp/', import.meta.url));
+const nvetAppFiles = await walkFiles(nvetAppRoot);
+const nvetSourceFiles = nvetAppFiles.filter((path) => /\.(?:ts|tsx|js|jsx)$/i.test(path));
+const nvetRoutePaths = nvetSourceFiles.map((path) => relative(nvetAppRoot, path).replaceAll('\\', '/'));
+const nvetSourceCorpus = (await Promise.all(nvetSourceFiles.map((path) => readFile(path, 'utf8')))).join('\n');
 
 // A P2 review finding on PR #189: fetch() rejects on network failure
 // (unreachable backend, DNS, timeout, connection reset) rather than
@@ -82,8 +107,16 @@ assert.match(
 );
 assert.match(dashboardPage, /if \(role === 'ADMIN'\)/, 'ADMIN/SUPERADMIN projection must render the administrative dashboard read-model.');
 assert.match(dashboardPage, /if \(role === 'CLIENT'\)/, 'CLIENT must render the user appointment dashboard.');
-assert.match(dashboardPage, /\/\/ role === 'VET'/, 'The remaining allowed VET role must enter the veterinarian dashboard branch.');
-assert.match(dashboardPage, /VetAgendaPanel/, 'VET must receive the veterinarian agenda surface.');
+assert.match(
+  user,
+  /upstreamRole === 'ADMIN' \|\| upstreamRole === 'VET' \|\| upstreamRole === 'CLIENT'/,
+  'Only the known ADMIN, VET and CLIENT roles may reach the shared dashboard router after root projection.',
+);
+assert.match(
+  dashboardPage,
+  /\/\/ role === 'VET'[\s\S]*?const result = await fetchNvetAppointments\(accessToken\);[\s\S]*?return\s*\([\s\S]*?<DashboardShell title="Mi agenda"[\s\S]*?<VetAgendaPanel\b/,
+  'After ADMIN and CLIENT are handled, the executable VET fallback must fetch appointments and return the veterinarian agenda panel.',
+);
 
 // Persona-specific affordances must remain scoped to the effective role and
 // must not leak admin controls into the public login or ordinary dashboards.
@@ -91,12 +124,36 @@ assert.match(dashboardLayout, /role === 'CLIENT'/, 'CLIENT must receive client-o
 assert.match(dashboardLayout, /Agendar cita/, 'CLIENT dashboard must expose appointment booking.');
 assert.match(dashboardLayout, /role === 'VET'/, 'VET must receive veterinarian-only dashboard actions.');
 assert.match(dashboardLayout, /Operar servicios/, 'VET dashboard must expose service operations.');
-assert.doesNotMatch(dashboardPage, /\/admin\/login/, 'The shared Nvet dashboard must not expose a separate admin login route.');
+
+// Route-tree invariant: there must be no separate public privileged login
+// anywhere under the Nvet App Router tree, and no Nvet route source may link
+// users to one. Superadmin must enter through the same public login as every
+// other persona and be recognized only after authentication.
+const privilegedLoginRoute = nvetRoutePaths.find((path) => {
+  const segments = path.toLowerCase().split('/');
+  const hasAdminSegment = segments.includes('admin') || segments.includes('administrador');
+  const hasLoginSegment = segments.includes('login') || segments.includes('iniciar-sesion');
+  return hasAdminSegment && hasLoginSegment && /^page\.(?:ts|tsx|js|jsx)$/i.test(segments.at(-1) ?? '');
+});
+assert.equal(
+  privilegedLoginRoute,
+  undefined,
+  `Nvet must not expose a separate public admin login route; found ${privilegedLoginRoute ?? 'none'}.`,
+);
+assert.doesNotMatch(
+  nvetSourceCorpus,
+  /\/nvetcareapp\/(?:admin|administrador)\/(?:login|iniciar-sesion)|\/nvetcareapp\/(?:login|iniciar-sesion)\/(?:admin|administrador)/i,
+  'No Nvet route or navigation source may point to a separate privileged login path.',
+);
 
 // CTG One SSO is additive to the same public login and lands on the requested
 // dashboard path only after a successful server-side identity exchange.
 assert.match(continueWithCtg, /\/api\/nvetcareapp\/auth\/ctg-identity-exchange/, 'CTG One continuation must use the server-side Nvet identity-exchange BFF.');
-assert.match(continueWithCtg, /router\.push\(next\)/, 'Successful CTG One exchange must continue to the requested dashboard route.');
+assert.match(
+  continueWithCtg,
+  /if\s*\(!res\.ok\)\s*\{[\s\S]*?setError\(data\?\.message \|\| 'No se pudo continuar con tu cuenta CTG One\.'\);[\s\S]*?return;\s*\}\s*router\.push\(next\);/,
+  'A non-OK identity exchange must return before router.push(next); only a successful exchange may enter the dashboard.',
+);
 assert.doesNotMatch(continueWithCtg, /\/admin\/login/, 'CTG One continuation must not reveal a separate privileged login path.');
 
 console.log('Nvet Care admin-metrics + unified dashboard role invariants: PASS');
