@@ -18,6 +18,17 @@ Changes entering `main` while this provenance workflow is enabled must use **Cre
 
 A squash merge has only the previous `main` commit as its parent and therefore cannot satisfy the second-parent binding to the reviewed pull-request head. Re-running the workflow cannot repair that historical fact.
 
+## Pre-merge operator checkpoint
+
+Before merging any pull request into `main`:
+
+1. Confirm the selected GitHub merge method is **Create a merge commit**.
+2. Confirm the pull request head SHA is still the reviewed and CI-tested SHA.
+3. Do not use squash/rebase merely because the pull request is small, documentation-only, wallet-only, or unrelated to Investment.
+4. After merge, require `Investment BR Merged-Main Provenance` to be green on the resulting `main` SHA before treating `checksPass` deployment automation as trustworthy.
+
+This checkpoint is repository-wide. PR #315 demonstrated that a valid application change can still produce an invalid governance transition when merged as a one-parent commit; the application fix remains intact, but the historical transition cannot be retroactively made provenance-eligible.
+
 ## Recovery after an invalid main transition
 
 If a squash/rebase transition reaches `main` and the provenance workflow fails:
