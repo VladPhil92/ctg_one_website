@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { NvetAppointment } from '@/lib/nvetcareapp/appointments';
 import type { NvetClientReview, NvetClientTransaction } from '@/lib/nvetcareapp/client-fulfillment';
+import { nvetFetchWithRefresh } from '../nvet-fetch';
 
 type PaymentAttempt = { fingerprint: string; requestId: string } | null;
 type ReviewDraft = { rating: number; comment: string };
@@ -86,7 +87,7 @@ export function ClientFulfillmentFlow({
     setPaymentErrors((current) => ({ ...current, [appointmentId]: '' }));
 
     try {
-      const response = await fetch('/api/nvetcareapp/client/payments', {
+      const response = await nvetFetchWithRefresh('/api/nvetcareapp/client/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ appointmentId, requestId }),
@@ -117,7 +118,7 @@ export function ClientFulfillmentFlow({
     setReviewErrors((current) => ({ ...current, [appointmentId]: '' }));
 
     try {
-      const response = await fetch('/api/nvetcareapp/client/reviews', {
+      const response = await nvetFetchWithRefresh('/api/nvetcareapp/client/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ appointmentId, rating: draft.rating, comment: draft.comment }),
