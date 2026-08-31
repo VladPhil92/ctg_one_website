@@ -207,7 +207,7 @@ export async function requireNvetClient(accessToken: string): Promise<NvetResult
 
 export async function fetchNvetPets(accessToken: string): Promise<NvetResult<NvetPet[]>> {
   try {
-    const response = await fetch(`${getNvetApiUrl()}/api/pets`, {
+    const response = await fetch(`${getNvetApiUrl()}/api/pets/me`, {
       headers: await getNvetAuthorizationHeaders(accessToken),
       cache: 'no-store',
     });
