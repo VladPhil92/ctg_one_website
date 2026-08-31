@@ -80,8 +80,8 @@ export const Navbar: React.FC = () => {
     };
   }, [isOpen]);
 
-  const desktopItemsBeforePlatforms = PRIMARY_NAV_ITEMS.slice(0, 4);
-  const contactItem = PRIMARY_NAV_ITEMS[4];
+  const desktopItemsBeforePlatforms = PRIMARY_NAV_ITEMS.filter((item) => item.href !== '/contact');
+  const contactItem = PRIMARY_NAV_ITEMS.find((item) => item.href === '/contact') ?? PRIMARY_NAV_ITEMS[PRIMARY_NAV_ITEMS.length - 1];
   const navLinkClass = (active: boolean) => `relative inline-flex min-h-11 items-center text-sm uppercase tracking-[0.105em] font-semibold transition-colors duration-200 ${active ? 'text-[#f1c75b]' : 'text-text-dim hover:text-white'}`;
 
   return (
@@ -89,10 +89,10 @@ export const Navbar: React.FC = () => {
       <SkipLink />
       <nav aria-label={primaryLabel} className="fixed left-0 right-0 top-0 z-50 px-2.5 pt-2.5 sm:px-4 sm:pt-4 lg:px-6">
         <div className={`${styles.theme} ${styles.navFrame} ${isScrolled ? styles.navFrameScrolled : ''} mx-auto max-w-[1500px] px-4 sm:px-5 lg:px-7`}>
-          <div className="relative z-10 flex min-h-[72px] items-center justify-between gap-5 lg:min-h-[78px]">
+          <div className="relative z-10 flex min-h-[72px] items-center justify-between gap-4 lg:min-h-[78px]">
             <a href="/" className="z-10 flex min-h-12 shrink-0 items-center" aria-label={logoLabel}><BrandLogo priority className="transition-transform duration-300 hover:-translate-y-px" /></a>
 
-            <div className="hidden min-w-0 flex-1 items-center justify-center gap-4 xl:flex 2xl:gap-7">
+            <div className="hidden min-w-0 flex-1 items-center justify-center gap-3 xl:flex 2xl:gap-5">
               {desktopItemsBeforePlatforms.map((item) => {
                 const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(`${item.href}/`));
                 return (
