@@ -34,7 +34,7 @@ requireFragments(source.migration, 'Wallet chain migration', [
   'create unique index if not exists wallet_intents_v2_chain_tx_hash_unique',
   'create or replace function public.register_wallet_chain_submission_v1_server(',
   "'wallet.intent-submit'",
-  "v_rate_row.request_count >= 20",
+  'v_rate_row.request_count >= 20',
   "set status = 'submitted'",
   "'blockchain'",
   "'tx_hash'",
@@ -98,7 +98,6 @@ for (const unsafe of [
   }
 }
 
-// Reconciliation and pre-authorization simulation must agree on token contracts.
 for (const address of [
   '0xe4200d6bed0db8e720cbb840c572182676515132',
   '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
@@ -124,7 +123,7 @@ for (const unsafe of [
   'chainConfirmations',
   'eth_getTransactionReceipt',
   'eth_sendTransaction',
-  'status: \'reconciled\'',
+  "status: 'reconciled'",
 ]) {
   if (source.submitRoute.includes(unsafe)) {
     throw new Error(`Submission route must only register an unconfirmed tx hash: ${unsafe}`);
@@ -167,7 +166,7 @@ requireFragments(source.smoke, 'Chain PostgreSQL smoke', [
   "'reconciled'",
   "'failed'",
   'WALLET_CHAIN_RECONCILED_TERMINAL',
-  'authorization mutated',
+  'chain submission/reconciliation mutated the COP journal',
 ]);
 
 const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(source.schema)?.[1];
