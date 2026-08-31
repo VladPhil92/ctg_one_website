@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0089",
-    "schemaMigrationName": "wallet_canary_evidence_provenance",
-    "schemaMigrationCount": 89,
+    "schemaMigration": "0090",
+    "schemaMigrationName": "wallet_lifecycle_correlation_alerts_v1",
+    "schemaMigrationCount": 90,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
