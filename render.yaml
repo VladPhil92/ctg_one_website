@@ -29,6 +29,14 @@ services:
         sync: false
       - key: CTG_TOKEN_POLYGON_ADDRESS
         sync: false
+      # Crypto-send execution is server-authoritative and remains disabled in
+      # production until an explicitly reviewed canary window is opened.
+      - key: WALLET_CRYPTO_SEND_EXECUTION_MODE
+        value: "disabled"
+      # Canonical Supabase UUID allowlist for the controlled canary. The value
+      # is provisioned only in Render and is never committed or browser-public.
+      - key: WALLET_CRYPTO_SEND_CANARY_USER_IDS
+        sync: false
       # Shared secret for the bounded server-side Polygon reconciliation worker.
       # The matching GitHub Actions repository secret must be provisioned with
       # the exact same value before the scheduled worker becomes operational.
