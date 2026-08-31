@@ -70,10 +70,13 @@ if (!(authIndex >= 0 && adminIndex > authIndex && identityReadIndex > adminIndex
   throw new Error('identity attestation must authenticate, read trusted identity/account state, derive the digest, then respond');
 }
 
-for (const mutation of ['.insert(', '.update(', '.delete(', '.upsert(', '.rpc(']) {
+for (const mutation of ['.insert(', '.delete(', '.upsert(', '.rpc(']) {
   if (route.includes(mutation)) {
     throw new Error(`identity proof route must remain read-only; found ${mutation}`);
   }
+}
+if (/\.from\([^)]*\)\s*\.update\(/s.test(route)) {
+  throw new Error('identity proof route must remain read-only; found database .update(');
 }
 
 if (/export\s+async\s+function\s+POST/.test(route) || /request\.json\(|request\.text\(/.test(route)) {
