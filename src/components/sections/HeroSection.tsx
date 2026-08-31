@@ -22,7 +22,7 @@ export const HeroSection: React.FC = () => {
   const { locale, t } = useLanguage();
   const es = locale === 'es';
 
-  // Acquisition-first contract: the first viewport identifies CTG One as a
+  // Public acquisition contract: the first viewport identifies CTG One as a
   // multi-service portal and routes new users toward one shared account.
 
   // Canonical maturity remains attached to the Hero contract without forcing
