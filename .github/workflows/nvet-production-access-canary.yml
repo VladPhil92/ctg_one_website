@@ -1,13 +1,6 @@
 name: Nvet Production Access Canary
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/lib/nvetcareapp/session.ts'
-      - 'src/app/api/nvetcareapp/health/route.ts'
-      - 'render.yaml'
-      - '.github/workflows/nvet-production-access-canary.yml'
   schedule:
     - cron: '3,18,33,48 * * * *'
   workflow_dispatch:
@@ -22,6 +15,12 @@ concurrency:
 jobs:
   canary:
     name: Verify ctgone.com can reach Nvet backend
+    # Production canaries must never participate in the main push check graph:
+    # Render deploys main only after checks pass, so a pre-deploy canary would
+    # deadlock the release that introduces or repairs the production endpoint.
+    # Scheduled runs always use the default branch; manual runs are allowed only
+    # from main so feature branches cannot be mistaken for production evidence.
+    if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
