@@ -73,4 +73,46 @@ for (const path of writeComponents) {
   );
 }
 
+// Production access must not depend on an out-of-band Render variable that
+// can drift from the repository. Keep the canonical Railway origin both in
+// the server-side resolver and the Render blueprint; an explicit env override
+// still wins for staging or future migrations. Critically, the fallback must
+// only activate on the canonical non-preview Render service, never just because
+// NODE_ENV happens to be "production" in a preview, fork, staging service or
+// local `next start`.
+const sessionSource = await read('src/lib/nvetcareapp/session.ts');
+const renderBlueprint = await read('render.yaml');
+const canonicalBackend = 'https://backend-production-a476.up.railway.app';
+assert.match(
+  sessionSource,
+  /NVET_CANONICAL_PRODUCTION_API_URL/,
+  'Nvet session resolver must carry a canonical production backend fallback.',
+);
+assert.ok(
+  sessionSource.includes(canonicalBackend),
+  'Nvet session resolver must point its production fallback at the canonical Railway backend.',
+);
+assert.match(
+  sessionSource,
+  /process\.env\.CTG_NVETCARE_API_URL/,
+  'Explicit CTG_NVETCARE_API_URL must remain the first-class override.',
+);
+for (const guard of [
+  "process.env.RENDER === 'true'",
+  "process.env.RENDER_SERVICE_NAME === 'ctg-one-website'",
+  "process.env.RENDER_GIT_BRANCH === 'main'",
+  "process.env.IS_PULL_REQUEST !== 'true'",
+]) {
+  assert.ok(sessionSource.includes(guard), `Canonical backend fallback must be gated by: ${guard}`);
+}
+assert.doesNotMatch(
+  sessionSource,
+  /process\.env\.NODE_ENV === 'production' \? NVET_CANONICAL_PRODUCTION_API_URL/,
+  'NODE_ENV alone must never route a non-canonical environment into the production Nvet backend.',
+);
+assert.ok(
+  renderBlueprint.includes('key: CTG_NVETCARE_API_URL') && renderBlueprint.includes(canonicalBackend),
+  'Render blueprint must declare the same canonical Nvet backend origin.',
+);
+
 console.log('Nvet Care session-refresh invariants: PASS');

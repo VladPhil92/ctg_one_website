@@ -8,18 +8,41 @@ import type { NextResponse } from 'next/server';
 export const NVET_ACCESS_COOKIE = 'nvet_access_token';
 export const NVET_REFRESH_COOKIE = 'nvet_refresh_token';
 
+// Public Railway origin of the canonical Nvet Care backend. This is not a
+// credential: it is the server address already used by production. The
+// fallback below is intentionally restricted to the canonical ctgone.com
+// Render service so previews, staging, forks and local `next start` remain
+// fail-closed if they omit CTG_NVETCARE_API_URL.
+export const NVET_CANONICAL_PRODUCTION_API_URL = 'https://backend-production-a476.up.railway.app';
+
 export interface NvetTokens {
   accessToken: string;
   refreshToken: string;
 }
 
+function isCanonicalCtgOneRenderService(): boolean {
+  return (
+    process.env.RENDER === 'true' &&
+    process.env.RENDER_SERVICE_NAME === 'ctg-one-website' &&
+    process.env.RENDER_GIT_BRANCH === 'main' &&
+    process.env.IS_PULL_REQUEST !== 'true'
+  );
+}
+
 export function getNvetApiUrl(): string {
-  const url = process.env.CTG_NVETCARE_API_URL;
+  const configuredUrl = process.env.CTG_NVETCARE_API_URL?.trim();
+  const url = configuredUrl || (isCanonicalCtgOneRenderService() ? NVET_CANONICAL_PRODUCTION_API_URL : '');
+
   if (!url) {
     throw new Error(
-      'CTG_NVETCARE_API_URL is not set — the Nvet Care backend base URL is required for /nvetcareapp auth to work.'
+      'CTG_NVETCARE_API_URL is not set — the Nvet Care backend base URL is required outside the canonical production service.'
     );
   }
+
+  if (process.env.NODE_ENV === 'production' && !url.startsWith('https://')) {
+    throw new Error('CTG_NVETCARE_API_URL must use HTTPS in production.');
+  }
+
   return url.replace(/\/+$/, '');
 }
 
