@@ -7,6 +7,7 @@ export const WALLET_CANARY_DEFAULT_MIN_CONFIRMATIONS = 12 as const;
 const EVM_ADDRESS_RE = /^0x[0-9a-f]{40}$/i;
 const HEX_RE = /^0x[0-9a-f]+$/i;
 const RPC_TIMEOUT_MS = 8_000;
+const BIGINT_ZERO = BigInt(0);
 
 type JsonRpcEnvelope = {
   jsonrpc?: unknown;
@@ -87,7 +88,7 @@ function parseHexBigInt(value: unknown) {
 
 function parseSafeHexNumber(value: unknown) {
   const parsed = parseHexBigInt(value);
-  if (parsed < 0n || parsed > BigInt(Number.MAX_SAFE_INTEGER)) {
+  if (parsed < BIGINT_ZERO || parsed > BigInt(Number.MAX_SAFE_INTEGER)) {
     throw new WalletCanaryPreflightError('WALLET_CANARY_PREFLIGHT_RPC_RESPONSE_INVALID');
   }
   return Number(parsed);
@@ -149,7 +150,7 @@ export async function probePolygonCanaryInfrastructureV1(
   const gasPrice = parseHexBigInt(gasPriceRaw);
   const nativeBalance = parseHexBigInt(balanceRaw);
 
-  if (observedBlockNumber < 1 || gasPrice <= 0n) {
+  if (observedBlockNumber < 1 || gasPrice <= BIGINT_ZERO) {
     throw new WalletCanaryPreflightError('WALLET_CANARY_PREFLIGHT_RPC_RESPONSE_INVALID');
   }
 
@@ -157,7 +158,7 @@ export async function probePolygonCanaryInfrastructureV1(
     chainId: WALLET_CANARY_POLYGON_CHAIN_ID,
     observedBlockNumber,
     gasPriceAvailable: true,
-    hasNativeGasBalance: nativeBalance > 0n,
+    hasNativeGasBalance: nativeBalance > BIGINT_ZERO,
     minConfirmations: readMinConfirmations(),
   };
 }
