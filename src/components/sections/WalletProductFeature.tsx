@@ -14,11 +14,11 @@ export const WalletProductFeature: React.FC = () => {
     <section className="relative overflow-hidden bg-[#030507] py-10 sm:py-14 md:py-16">
       <Container size="large">
         <FadeInSection>
-          <article className="relative overflow-hidden rounded-[32px] border border-[#d6ae56]/25 bg-[linear-gradient(135deg,#0b0b09_0%,#06090d_56%,#05070a_100%)] shadow-[0_34px_110px_rgba(0,0,0,.42)]">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(214,174,86,.13),transparent_32%),radial-gradient(circle_at_83%_28%,rgba(36,140,255,.10),transparent_30%)]" aria-hidden="true" />
+          <article className="relative overflow-hidden rounded-[32px] border border-[#c9a962]/25 bg-[linear-gradient(135deg,#0b0b09_0%,#06090d_56%,#05070a_100%)] shadow-[0_34px_110px_rgba(0,0,0,.42)]">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(201,169,98,.13),transparent_32%),radial-gradient(circle_at_83%_28%,rgba(36,140,255,.10),transparent_30%)]" aria-hidden="true" />
             <div className="relative grid min-h-[620px] lg:grid-cols-[0.92fr_1.08fr]">
               <div className="flex flex-col justify-center p-7 sm:p-10 md:p-12 lg:p-14">
-                <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#d6ae56]/25 bg-[#d6ae56]/[0.055] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#f1c75b]">
+                <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#c9a962]/25 bg-[#c9a962]/[0.055] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#d4b676]">
                   <WalletCards size={14} /> CTG One Wallet
                 </div>
                 <h2 className="max-w-2xl font-outfit text-4xl font-semibold leading-[.98] tracking-[-0.05em] text-white sm:text-5xl md:text-6xl">
@@ -31,10 +31,10 @@ export const WalletProductFeature: React.FC = () => {
                 </p>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <a href="/dashboard/wallet" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#d6ae56] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black transition-all hover:-translate-y-0.5 hover:bg-[#f1c75b]">
+                  <a href="/dashboard/wallet" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#c9a962] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black transition-all hover:-translate-y-0.5 hover:bg-[#d4b676]">
                     {es ? 'Abrir Wallet Web' : 'Open Web Wallet'} <ArrowUpRight size={14} />
                   </a>
-                  <a href="/wallet#app" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.025] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-white transition-all hover:-translate-y-0.5 hover:border-[#d6ae56]/35 hover:bg-white/[0.05]">
+                  <a href="/wallet#app" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.025] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-white transition-all hover:-translate-y-0.5 hover:border-[#c9a962]/35 hover:bg-white/[0.05]">
                     {es ? 'Instalar app' : 'Install app'} <Smartphone size={14} />
                   </a>
                 </div>
@@ -57,24 +57,24 @@ export const WalletProductFeature: React.FC = () => {
 
               <div className="relative flex items-center justify-center p-7 sm:p-10 lg:p-12">
                 <div className="relative w-full max-w-[560px]">
-                  <div className="absolute -inset-8 rounded-[44px] bg-[radial-gradient(circle,rgba(214,174,86,.10),transparent_64%)] blur-2xl" aria-hidden="true" />
+                  <div className="absolute -inset-8 rounded-[44px] bg-[radial-gradient(circle,rgba(201,169,98,.10),transparent_64%)] blur-2xl" aria-hidden="true" />
                   <div className="relative overflow-hidden rounded-[30px] border border-white/[0.10] bg-[#070b10]/95 p-5 shadow-[0_35px_90px_rgba(0,0,0,.55)] backdrop-blur-xl sm:p-6">
                     <div className="flex items-center justify-between border-b border-white/[0.07] pb-5">
                       <div>
-                        <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#f1c75b]">CTG One / Wallet</p>
+                        <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#d4b676]">CTG One / Wallet</p>
                         <p className="mt-2 font-outfit text-2xl font-semibold tracking-[-0.04em] text-white">{es ? 'Centro financiero personal' : 'Personal finance center'}</p>
                       </div>
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d6ae56]/25 bg-[#d6ae56]/[0.07] text-[#f1c75b]"><WalletCards size={19} /></div>
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#c9a962]/25 bg-[#c9a962]/[0.07] text-[#d4b676]"><WalletCards size={19} /></div>
                     </div>
 
-                    <div className="mt-5 rounded-2xl border border-[#d6ae56]/20 bg-[linear-gradient(135deg,rgba(214,174,86,.10),rgba(255,255,255,.02))] p-5">
+                    <div className="mt-5 rounded-2xl border border-[#c9a962]/20 bg-[linear-gradient(135deg,rgba(201,169,98,.10),rgba(255,255,255,.02))] p-5">
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <p className="text-[9px] uppercase tracking-[0.18em] text-white/35">Saldo CTG</p>
                           <p className="mt-3 font-outfit text-3xl font-semibold tracking-[-0.04em] text-white">{es ? 'Sincronizado' : 'Synchronized'}</p>
                           <p className="mt-2 text-xs text-white/40">COP · CTG One ledger</p>
                         </div>
-                        <Landmark size={19} className="text-[#f1c75b]" />
+                        <Landmark size={19} className="text-[#d4b676]" />
                       </div>
                     </div>
 
