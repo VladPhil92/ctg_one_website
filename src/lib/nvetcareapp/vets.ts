@@ -19,10 +19,13 @@ export interface NvetVet {
   id: string;
   tier: NvetVetTier;
   isVerified: boolean;
+  isActive: boolean;
+  isAvailableNow: boolean;
   verificationStatus: NvetVerificationStatus;
+  verifiedAt?: string | null;
   rating: number | null;
   reviewCount: number;
-  user: { id: string; email: string; firstName: string; lastName: string };
+  user: { id: string; email: string; firstName: string | null; lastName: string | null };
   _count: { appointments: number; reviews: number };
 }
 
