@@ -12,6 +12,7 @@ const [
   migration0088,
   migration0089,
   migration0090,
+  migration0091,
   runbook,
   cors,
   schemaVersion,
@@ -24,6 +25,7 @@ const [
   read('supabase/migrations/20260830235000_0088_wallet_chain_reconciliation_v1.sql'),
   read('supabase/migrations/20260831021500_0089_wallet_canary_evidence_provenance.sql'),
   read('supabase/migrations/20260831041000_0090_wallet_lifecycle_correlation_alerts_v1.sql'),
+  read('supabase/migrations/20260831050000_0091_wallet_canary_execution_guardrails_v1.sql'),
   read('docs/WALLET_CANARY_RUNBOOK.md'),
   read('src/lib/wallet/cors.ts'),
   read('src/lib/observability/schema-version.ts'),
@@ -123,6 +125,17 @@ for (const fragment of [
 }
 
 for (const fragment of [
+  'create or replace function public.authorize_wallet_intent_v2_server',
+  'pg_advisory_xact_lock(',
+  "raise exception 'WALLET_AUTH_CANARY_SINGLE_FLIGHT_CONFLICT'",
+  'return public.authorize_wallet_intent_v1_server(',
+  'grant execute on function public.authorize_wallet_intent_v2_server',
+  'revoke execute on function public.authorize_wallet_intent_v1_server',
+]) {
+  assert.ok(migration0091.includes(fragment), `Migration 0091 missing canary execution guardrail invariant: ${fragment}`)
+}
+
+for (const fragment of [
   "WALLET_CANARY_CLIENT_VERSION = 'ctg-wallet-canary-client-v1'",
   'process.env.WALLET_CANARY_CLIENT_COMMIT_SHA',
   'assertReviewedWalletCanaryClientCommitSha',
@@ -151,8 +164,11 @@ for (const fragment of [
   'reviewedClientCommit: true',
   'const reviewedClientCommit = Boolean(clientCommitSha)',
   '&& reviewedClientCommit',
+  'canaryGuardrailsConfigured: rollout.canaryGuardrailsConfigured',
+  '&& rollout.canaryGuardrailsConfigured',
+  "blockers.push('WALLET_CANARY_GUARDRAILS_NOT_CONFIGURED')",
 ]) {
-  assert.ok(preflightRoute.includes(fragment), `Canary preflight missing reviewed client invariant: ${fragment}`)
+  assert.ok(preflightRoute.includes(fragment), `Canary preflight missing reviewed client/guardrail invariant: ${fragment}`)
 }
 
 for (const forbidden of [
@@ -194,10 +210,10 @@ assert.ok(
   'Durable provenance binding makes a client-supplied evidence header unnecessary.',
 )
 assert.ok(
-  schemaVersion.includes("EXPECTED_DATABASE_MIGRATION = '0090'")
-    && schemaVersion.includes("EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_lifecycle_correlation_alerts_v1'")
-    && schemaVersion.includes('EXPECTED_DATABASE_MIGRATION_COUNT = 90'),
-  'Runtime schema contract must advance atomically to migration 0090 while preserving canary evidence compatibility.',
+  schemaVersion.includes("EXPECTED_DATABASE_MIGRATION = '0091'")
+    && schemaVersion.includes("EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_canary_execution_guardrails_v1'")
+    && schemaVersion.includes('EXPECTED_DATABASE_MIGRATION_COUNT = 91'),
+  'Runtime schema contract must advance atomically to migration 0091 while preserving canary evidence compatibility.',
 )
 assert.ok(
   evidence.indexOf('const canonical = {') < evidence.indexOf("createHash('sha256')")
@@ -222,4 +238,4 @@ assert.ok(
   'Canary runbook must document evidence retrieval and durable reconciliation progression.',
 )
 
-console.log('CTG One Wallet durable canary client provenance and evidence progression invariants: PASS')
+console.log('CTG One Wallet durable canary provenance, guarded execution and evidence progression invariants: PASS')
