@@ -2,11 +2,11 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { CalendarPlus, ReceiptText, Stethoscope } from 'lucide-react';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
-import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
+import { fetchNvetCurrentUser, type NvetUserRole } from '@/lib/nvetcareapp/user';
 
 export default async function NvetDashboardLayout({ children }: { children: React.ReactNode }) {
   const accessToken = (await cookies()).get(NVET_ACCESS_COOKIE)?.value;
-  let role: 'CLIENT' | 'VET' | 'ADMIN' | null = null;
+  let role: NvetUserRole | null = null;
 
   if (accessToken) {
     const userResult = await fetchNvetCurrentUser(accessToken);
