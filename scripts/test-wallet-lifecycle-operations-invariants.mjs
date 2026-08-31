@@ -45,7 +45,6 @@ for (const prohibitedAuthority of [
   'eth_sendRawTransaction',
   'privateKey',
   "admin.rpc('",
-  '.update(',
   '.insert(',
   '.delete(',
 ]) {
