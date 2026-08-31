@@ -3,6 +3,7 @@ import 'server-only';
 import type { createAdminClient } from '@/lib/supabase/server';
 
 const CORRELATION_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const ALERTABLE_STATUSES = new Set(['submitted', 'pending_external', 'confirmed_external']);
 
 export type WalletOperationalAlertKind =
   | 'submission_stuck'
@@ -35,11 +36,15 @@ export async function upsertWalletOperationalAlertV1(
     intentId: string;
     correlationId: string;
     alertKind: WalletOperationalAlertKind;
-    lifecycleStatus: 'submitted' | 'pending_external' | 'confirmed_external';
+    lifecycleStatus: string;
     submittedAgeSeconds: number;
     confirmations: number | null;
   },
 ) {
+  if (!ALERTABLE_STATUSES.has(input.lifecycleStatus)) {
+    throw new WalletOperationalAlertError('WALLET_OPERATIONAL_ALERT_STATUS_INVALID');
+  }
+
   const { error } = await admin
     .from('wallet_chain_operational_alerts_v1')
     .upsert({
