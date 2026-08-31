@@ -19,7 +19,8 @@ import {
 export const dynamic = 'force-dynamic';
 
 const MAX_AUTHORIZED_SAMPLE = 50;
-const MAX_DURABLE_ALERT_SAMPLE = 100;
+const MAX_CRITICAL_DURABLE_ALERT_SAMPLE = 100;
+const MAX_WARNING_DURABLE_ALERT_SAMPLE = 100;
 const MAX_FAILED_SAMPLE = 25;
 const DEFAULT_AUTHORIZED_STUCK_AFTER_SECONDS = 10 * 60;
 const DEFAULT_FAILED_LOOKBACK_SECONDS = 24 * 60 * 60;
@@ -86,7 +87,7 @@ export async function GET(request: Request) {
   const failedSince = new Date(Date.now() - failedLookbackSeconds * 1000).toISOString();
   const admin = createAdminClient();
 
-  const [authorizedResult, durableAlertsResult, failedResult] = await Promise.all([
+  const [authorizedResult, criticalAlertsResult, warningAlertsResult, failedResult] = await Promise.all([
     admin
       .from('wallet_intents_v2')
       .select(WALLET_AUTHORIZED_OPERATIONS_SELECT)
@@ -100,8 +101,16 @@ export async function GET(request: Request) {
       .from('wallet_chain_operational_alerts_v1')
       .select(WALLET_DURABLE_ALERT_SELECT)
       .eq('state', 'open')
+      .in('alert_kind', ['submission_stuck', 'confirmation_stuck'])
       .order('last_detected_at', { ascending: false })
-      .limit(MAX_DURABLE_ALERT_SAMPLE),
+      .limit(MAX_CRITICAL_DURABLE_ALERT_SAMPLE),
+    admin
+      .from('wallet_chain_operational_alerts_v1')
+      .select(WALLET_DURABLE_ALERT_SELECT)
+      .eq('state', 'open')
+      .eq('alert_kind', 'reconciliation_stuck')
+      .order('last_detected_at', { ascending: false })
+      .limit(MAX_WARNING_DURABLE_ALERT_SAMPLE),
     admin
       .from('wallet_intents_v2')
       .select(WALLET_FAILED_OPERATIONS_SELECT)
@@ -114,7 +123,12 @@ export async function GET(request: Request) {
       .limit(MAX_FAILED_SAMPLE),
   ]);
 
-  if (authorizedResult.error || durableAlertsResult.error || failedResult.error) {
+  if (
+    authorizedResult.error
+    || criticalAlertsResult.error
+    || warningAlertsResult.error
+    || failedResult.error
+  ) {
     logger.error('wallet.operations.read_failed', {
       ...context,
       duration_ms: Date.now() - startedAt,
@@ -130,7 +144,7 @@ export async function GET(request: Request) {
     if (item) items.push(item);
   }
 
-  for (const raw of durableAlertsResult.data ?? []) {
+  for (const raw of [...(criticalAlertsResult.data ?? []), ...(warningAlertsResult.data ?? [])]) {
     const item = normalizeDurableWalletAlert(raw);
     if (item) items.push(item);
     else invalid += 1;
@@ -167,10 +181,12 @@ export async function GET(request: Request) {
     },
     sample: {
       authorizedLimit: MAX_AUTHORIZED_SAMPLE,
-      durableAlertLimit: MAX_DURABLE_ALERT_SAMPLE,
+      criticalDurableAlertLimit: MAX_CRITICAL_DURABLE_ALERT_SAMPLE,
+      warningDurableAlertLimit: MAX_WARNING_DURABLE_ALERT_SAMPLE,
       failedLimit: MAX_FAILED_SAMPLE,
       authorizedScanned: authorizedResult.data?.length ?? 0,
-      durableAlertsScanned: durableAlertsResult.data?.length ?? 0,
+      criticalDurableAlertsScanned: criticalAlertsResult.data?.length ?? 0,
+      warningDurableAlertsScanned: warningAlertsResult.data?.length ?? 0,
       failedScanned: failedResult.data?.length ?? 0,
       invalid,
       bounded: true,
