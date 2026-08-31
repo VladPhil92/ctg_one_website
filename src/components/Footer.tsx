@@ -10,6 +10,7 @@ import { ArrowUpRight, CircuitBoard, MapPin } from 'lucide-react';
 import styles from '@/styles/CommandCenter.module.css';
 
 const productLinks = [
+  { label: 'CTG One Wallet', href: '/wallet' },
   { label: 'CTG Craft Beer', href: '/craft-beer' },
   { label: 'CTG Craft Beer Investment', href: '/inversion' },
   { label: 'Nvet Care', href: '/nvetcareapp' },

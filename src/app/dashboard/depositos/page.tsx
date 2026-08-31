@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { AccountSurface } from '@/components/dashboard/AccountSurface';
+import { WalletAccountContext } from '@/components/dashboard/WalletAccountContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import {
@@ -116,24 +117,28 @@ export default function DepositosPage() {
 
   if (!WALLET_MANUAL_COP_TOPUP_CONFIGURED) {
     return (
-      <AccountSurface code="FIN-02" eyebrow="Saldo CTG" title="Recargar Saldo CTG" description="Registra un ingreso COP desde una superficie protegida del Personal OS." icon={<WalletCards size={20} />}>
+      <AccountSurface code="FIN-02" eyebrow="CTG One Wallet" title="Recargar Saldo CTG" description="Tu recarga pertenece a la misma Wallet asociada a tu cuenta CTG One. El canal COP se mantiene cerrado hasta completar el gate operativo de producción." icon={<WalletCards size={20} />}>
+        <WalletAccountContext />
         <section className="accountPanel">
           <div className="accountPanelHeader">
             <div>
-              <p className="accountMicro">COP payment rails</p>
-              <h2>Bancolombia/Bre-B en configuración</h2>
-              <p>No publicaremos instrucciones de pago hasta que al menos un canal COP haya sido verificado para producción.</p>
+              <p className="accountMicro">COP funding rail</p>
+              <h2>Canal de recarga protegido</h2>
+              <p>La Wallet está integrada aunque el rail de ingreso COP permanezca temporalmente cerrado. No necesitamos crear otra wallet ni otro saldo para habilitar la recarga.</p>
             </div>
             <div className="accountNode"><Landmark size={17} /></div>
           </div>
           <div className="accountNotice warning">
             <ShieldCheck size={17} />
             <div>
-              <strong>Recargas temporalmente deshabilitadas</strong>
-              <p>Los datos bancarios permanecen ocultos mientras termina la configuración operativa. El ledger de Saldo CTG permanece protegido y no acredita comprobantes sin conciliación.</p>
+              <strong>Recargas COP aún no habilitadas en producción</strong>
+              <p>El canal Bre-B/transferencia permanece fail-closed hasta que su configuración de despliegue sea aprobada. Tu ledger, identidad y Wallet Web siguen siendo los mismos y no se acreditará ningún comprobante sin verificación y conciliación.</p>
             </div>
           </div>
-          <Button href="/dashboard" variant="secondary" size="sm">Volver al panel</Button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button href="/dashboard/wallet" variant="primary" size="sm">Abrir Wallet Web</Button>
+            <Button href="/dashboard" variant="secondary" size="sm">Volver al panel</Button>
+          </div>
         </section>
       </AccountSurface>
     );
@@ -142,11 +147,13 @@ export default function DepositosPage() {
   return (
     <AccountSurface
       code="FIN-02"
-      eyebrow="Saldo CTG"
+      eyebrow="CTG One Wallet"
       title="Recargar Saldo CTG"
-      description="Paga por Bre-B o transferencia y adjunta el comprobante. El saldo solo cambia cuando la operación bancaria es verificada y conciliada."
+      description="Recarga la misma Wallet asociada a tu cuenta CTG One. El saldo solo cambia cuando el ingreso bancario es verificado y conciliado."
       icon={<WalletCards size={20} />}
     >
+      <WalletAccountContext />
+
       <div className="accountNotice">
         <ShieldCheck size={17} />
         <div>
@@ -179,7 +186,7 @@ export default function DepositosPage() {
           <CheckCircle2 size={17} />
           <div>
             <strong>Solicitud de recarga recibida</strong>
-            <p>El comprobante quedó asociado a tu usuario. Aún no es saldo disponible: cuando Finanzas verifique el pago y un segundo control lo concilie, CTG One publicará el crédito en el ledger y Wallet V2 mostrará el nuevo Saldo CTG.</p>
+            <p>El comprobante quedó asociado a tu usuario. Aún no es saldo disponible: cuando Finanzas verifique el pago y un segundo control lo concilie, CTG One publicará el crédito en el ledger y Wallet V2 mostrará el nuevo Saldo CTG tanto en web como en la app.</p>
           </div>
         </div>
       )}

@@ -11,6 +11,7 @@ export const WEBSITE = config.contact.website;
 
 export const NAV_ITEMS = [
   { label: 'Home', href: '/' },
+  { label: 'Wallet', href: '/wallet' },
   { label: 'Products', href: '/products' },
   { label: 'Nvet Care', href: '/nvetcareapp' },
   { label: 'About', href: '/about' },
@@ -25,9 +26,11 @@ export const NAV_ITEMS = [
 ] as const;
 
 // Keep the first level consumer-oriented. Technical and roadmap surfaces live
-// one level deeper under the Explore menu.
+// one level deeper under the Explore menu. Wallet remains first-level because
+// it is the canonical financial surface for an authenticated CTG One account.
 export const PRIMARY_NAV_ITEMS = [
   { label: 'Home', href: '/' },
+  { label: 'Wallet', href: '/wallet' },
   { label: 'Products', href: '/products' },
   { label: 'Nvet Care', href: '/nvetcareapp' },
   { label: 'About', href: '/about' },
