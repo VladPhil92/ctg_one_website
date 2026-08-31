@@ -3,6 +3,85 @@ import { getNvetAuthorizationHeaders } from './request';
 import { fetchNvetCurrentUser, type NvetCurrentUser } from './user';
 
 export type NvetPetSpecies = 'DOG' | 'CAT' | 'BIRD' | 'RABBIT' | 'REPTILE' | 'FISH' | 'OTHER';
+export type NvetAllergySeverity = 'MILD' | 'MODERATE' | 'SEVERE';
+export type NvetConditionStatus = 'ACTIVE' | 'RESOLVED' | 'UNKNOWN';
+export type NvetPreventiveCareType = 'CHECKUP' | 'VACCINATION' | 'DEWORMING' | 'DENTAL' | 'LAB' | 'OTHER';
+export type NvetPreventiveCareStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
+
+export interface NvetPetAllergy {
+  id: string;
+  substance: string;
+  reaction?: string;
+  severity: NvetAllergySeverity;
+  notedAt?: string;
+}
+
+export interface NvetPetMedication {
+  id: string;
+  name: string;
+  dosage?: string;
+  frequency?: string;
+  startedAt?: string;
+  endedAt?: string;
+  active: boolean;
+  notes?: string;
+}
+
+export interface NvetPetCondition {
+  id: string;
+  name: string;
+  diagnosedAt?: string;
+  status: NvetConditionStatus;
+  notes?: string;
+}
+
+export interface NvetPetVaccination {
+  id: string;
+  vaccine: string;
+  administeredAt: string;
+  nextDueAt?: string;
+  batch?: string;
+  provider?: string;
+}
+
+export interface NvetPetDeworming {
+  id: string;
+  product: string;
+  administeredAt: string;
+  nextDueAt?: string;
+  notes?: string;
+}
+
+export interface NvetPetPreventiveCare {
+  id: string;
+  type: NvetPreventiveCareType;
+  title: string;
+  dueAt: string;
+  status: NvetPreventiveCareStatus;
+  notes?: string;
+}
+
+export interface NvetPetHealthProfile {
+  schemaVersion: 1;
+  source: 'OWNER_REPORTED';
+  allergies: NvetPetAllergy[];
+  medications: NvetPetMedication[];
+  conditions: NvetPetCondition[];
+  vaccinations: NvetPetVaccination[];
+  deworming: NvetPetDeworming[];
+  preventiveCare: NvetPetPreventiveCare[];
+}
+
+export type NvetPetHealthProfileInput = Omit<NvetPetHealthProfile, 'schemaVersion' | 'source'>;
+
+export const EMPTY_NVET_PET_HEALTH_PROFILE: NvetPetHealthProfileInput = {
+  allergies: [],
+  medications: [],
+  conditions: [],
+  vaccinations: [],
+  deworming: [],
+  preventiveCare: [],
+};
 
 export interface NvetPet {
   id: string;
@@ -12,6 +91,9 @@ export interface NvetPet {
   weight?: number | null;
   birthDate?: string | null;
   notes?: string | null;
+  healthProfile?: NvetPetHealthProfile | null;
+  healthProfileVersion?: number | null;
+  healthProfileUpdatedAt?: string | null;
 }
 
 export interface CreateNvetPetInput {
@@ -155,6 +237,31 @@ export async function createNvetPet(
     const data = await parseJsonSafe(response);
     if (!response.ok) {
       return { ok: false, status: response.status, message: backendMessage(data, 'No se pudo crear la mascota') };
+    }
+    return { ok: true, data: data as NvetPet };
+  } catch {
+    return { ok: false, status: 502, message: 'No se pudo contactar el servicio de mascotas' };
+  }
+}
+
+export async function updateNvetPetHealthProfile(
+  accessToken: string,
+  petId: string,
+  input: NvetPetHealthProfileInput,
+): Promise<NvetResult<NvetPet>> {
+  try {
+    const response = await fetch(`${getNvetApiUrl()}/api/pets/${encodeURIComponent(petId)}/health-profile`, {
+      method: 'PATCH',
+      headers: await getNvetAuthorizationHeaders(accessToken, { 'Content-Type': 'application/json' }),
+      body: JSON.stringify(input),
+      cache: 'no-store',
+    });
+    const data = await parseJsonSafe(response);
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: backendMessage(data, 'No se pudo actualizar el expediente preventivo') };
+    }
+    if (!data || typeof data !== 'object') {
+      return { ok: false, status: 502, message: 'El servicio de mascotas devolvió una respuesta inválida' };
     }
     return { ok: true, data: data as NvetPet };
   } catch {
