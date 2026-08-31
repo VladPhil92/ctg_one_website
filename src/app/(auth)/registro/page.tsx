@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { getAnalyticsAnonymousId, trackFunnelEvent } from '@/lib/analytics/client';
 import { Button } from '@/components/ui/Button';
 import { AuthInput } from '@/components/auth/AuthInput';
 import { PasswordRequirements } from '@/components/auth/PasswordRequirements';
@@ -102,11 +103,17 @@ export default function RegistroPage() {
     try {
       const supabase = createClient();
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+      const analyticsAnonymousId = getAnalyticsAnonymousId();
+      void trackFunnelEvent('signup_started', { sourcePath: '/registro' });
       const { error: signUpError } = await supabase.auth.signUp({
         email: parsed.data.email,
         password,
         options: {
-          data: { full_name: parsed.data.fullName, phone: parsed.data.phone },
+          data: {
+            full_name: parsed.data.fullName,
+            phone: parsed.data.phone,
+            analytics_anonymous_id: analyticsAnonymousId,
+          },
           emailRedirectTo: `${siteUrl}/auth/callback?next=/dashboard`,
         },
       });
