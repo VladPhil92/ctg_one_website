@@ -13,6 +13,12 @@ export const WALLET_CHAIN_RECONCILABLE_STATUSES = [
   'confirmed_external',
 ] as const;
 
+const WALLET_CHAIN_SERVICE_STATUSES = [
+  ...WALLET_CHAIN_RECONCILABLE_STATUSES,
+  'reconciled',
+  'failed',
+] as const;
+
 export const WALLET_CHAIN_INTENT_SELECT = [
   'id',
   'user_id',
@@ -33,7 +39,7 @@ const TX_HASH_RE = /^0x[0-9a-f]{64}$/;
 const EVM_ADDRESS_RE = /^0x[0-9a-f]{40}$/;
 const BASE_UNITS_RE = /^[1-9][0-9]*$/;
 const SUPPORTED_ASSETS = new Set(['POL', 'CTG', 'USDC', 'USDT']);
-const RECONCILABLE_STATUSES = new Set<string>(WALLET_CHAIN_RECONCILABLE_STATUSES);
+const SERVICE_STATUSES = new Set<string>(WALLET_CHAIN_SERVICE_STATUSES);
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -44,7 +50,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export type WalletChainIntentSnapshot = {
   id: string;
   user_id: string;
-  status: (typeof WALLET_CHAIN_RECONCILABLE_STATUSES)[number];
+  status: (typeof WALLET_CHAIN_SERVICE_STATUSES)[number];
   intent_type: 'crypto_send';
   rail: 'polygon';
   chain_id: 137;
@@ -78,7 +84,7 @@ export function normalizeWalletChainIntentSnapshot(value: unknown): WalletChainI
     typeof value.id !== 'string'
     || typeof value.user_id !== 'string'
     || typeof value.status !== 'string'
-    || !RECONCILABLE_STATUSES.has(value.status)
+    || !SERVICE_STATUSES.has(value.status)
     || value.intent_type !== 'crypto_send'
     || value.rail !== 'polygon'
     || value.chain_id !== 137
