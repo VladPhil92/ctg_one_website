@@ -33,7 +33,25 @@ for (const fragment of [
   'wallet_correlation_id: correlationId',
   'alertsOpened',
   'alertsResolved',
+  'recoverTerminalOperationalAlerts(',
+  ".from('wallet_chain_operational_alerts_v1')",
+  ".select('intent_id')",
+  ".eq('state', 'open')",
+  ".select('id,status')",
+  'terminalLifecycleStatus(row.status)',
+  'wallet.chain.worker.alert_recovery_failed',
+  'const terminalStatusCommitted = terminalLifecycleStatus(observedStatus) !== null',
+  'if (!terminalStatusCommitted && submittedAgeSeconds >= stuckAfterSeconds)',
 ]) assert.ok(worker.includes(fragment), `Worker missing correlation/alert invariant: ${fragment}`);
+
+assert.ok(
+  worker.indexOf('recoverTerminalOperationalAlerts(admin, batchSize)') < worker.indexOf('for (const rawIntent of rows)'),
+  'Terminal open-alert recovery must run before the normal reconcilable-intent sweep.',
+);
+assert.ok(
+  worker.includes(".in('status', [...WALLET_CHAIN_RECONCILABLE_STATUSES])"),
+  'Normal reconciliation candidates must remain restricted to reconcilable lifecycle states.',
+);
 
 for (const fragment of [
   "'submission_stuck'",

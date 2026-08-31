@@ -36,6 +36,8 @@ const MIN_STUCK_AFTER_SECONDS = 5 * 60;
 const MAX_STUCK_AFTER_SECONDS = 24 * 60 * 60;
 const ALLOWED_BODY_KEYS = new Set(['version']);
 
+type TerminalLifecycleStatus = 'reconciled' | 'failed';
+
 type WorkerCounts = {
   scanned: number;
   pendingExternal: number;
@@ -51,6 +53,10 @@ type WorkerCounts = {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function terminalLifecycleStatus(value: unknown): TerminalLifecycleStatus | null {
+  return value === 'reconciled' || value === 'failed' ? value : null;
 }
 
 function validBody(value: unknown) {
@@ -103,6 +109,48 @@ function responseWithContext(request: Request, body: unknown, init: ResponseInit
   headers.set('X-Request-ID', context.request_id);
   headers.set('traceparent', formatTraceparent(context));
   return NextResponse.json(body, { ...init, headers });
+}
+
+async function recoverTerminalOperationalAlerts(
+  admin: ReturnType<typeof createAdminClient>,
+  limit: number,
+) {
+  const { data: openAlerts, error: openAlertError } = await admin
+    .from('wallet_chain_operational_alerts_v1')
+    .select('intent_id')
+    .eq('state', 'open')
+    .order('last_detected_at', { ascending: true })
+    .limit(limit);
+
+  if (openAlertError) {
+    throw new WalletOperationalAlertError('WALLET_OPERATIONAL_ALERT_RECOVERY_READ_FAILED');
+  }
+
+  const intentIds = [...new Set(
+    (openAlerts ?? []).flatMap((row) => (
+      isRecord(row) && typeof row.intent_id === 'string' ? [row.intent_id] : []
+    )),
+  )];
+  if (intentIds.length === 0) return 0;
+
+  const { data: intents, error: intentError } = await admin
+    .from('wallet_intents_v2')
+    .select('id,status')
+    .in('id', intentIds);
+
+  if (intentError) {
+    throw new WalletOperationalAlertError('WALLET_OPERATIONAL_ALERT_RECOVERY_INTENT_READ_FAILED');
+  }
+
+  let resolved = 0;
+  for (const row of intents ?? []) {
+    if (!isRecord(row) || typeof row.id !== 'string') continue;
+    const status = terminalLifecycleStatus(row.status);
+    if (!status) continue;
+    await resolveWalletOperationalAlertsV1(admin, row.id, status);
+    resolved += 1;
+  }
+  return resolved;
 }
 
 export async function POST(request: Request) {
@@ -177,6 +225,19 @@ export async function POST(request: Request) {
   let oldestSubmittedAgeSeconds = 0;
   const nowMs = Date.now();
 
+  try {
+    counts.alertsResolved += await recoverTerminalOperationalAlerts(admin, batchSize);
+  } catch (error) {
+    const code = error instanceof WalletOperationalAlertError
+      ? error.code
+      : 'WALLET_OPERATIONAL_ALERT_RECOVERY_UNEXPECTED_FAILURE';
+    errorsByCode.set(code, (errorsByCode.get(code) ?? 0) + 1);
+    logger.error('wallet.chain.worker.alert_recovery_failed', {
+      ...context,
+      error_code: code,
+    });
+  }
+
   for (const rawIntent of rows) {
     const intent = normalizeWalletChainIntentSnapshot(rawIntent);
     const correlationId = normalizeOperationalCorrelationId(
@@ -190,10 +251,12 @@ export async function POST(request: Request) {
 
     const submittedAgeSeconds = ageSeconds(intent.submitted_at, nowMs) ?? 0;
     oldestSubmittedAgeSeconds = Math.max(oldestSubmittedAgeSeconds, submittedAgeSeconds);
+    let observedStatus: string | null = null;
 
     try {
       const result = await reconcileWalletChainIntentV1(admin, intent);
       const nextStatus = result.record.status;
+      observedStatus = nextStatus;
 
       if (nextStatus === 'pending_external') counts.pendingExternal += 1;
       else if (nextStatus === 'confirmed_external') counts.confirmedExternal += 1;
@@ -238,7 +301,8 @@ export async function POST(request: Request) {
       }
     } catch (error) {
       counts.errors += 1;
-      if (submittedAgeSeconds >= stuckAfterSeconds) {
+      const terminalStatusCommitted = terminalLifecycleStatus(observedStatus) !== null;
+      if (!terminalStatusCommitted && submittedAgeSeconds >= stuckAfterSeconds) {
         counts.stuck += 1;
         const alertKind = alertKindForLifecycleStatus(intent.status);
         if (alertKind) {
@@ -274,6 +338,7 @@ export async function POST(request: Request) {
         ...context,
         wallet_correlation_id: correlationId,
         prior_status: intent.status,
+        observed_status: observedStatus,
         submitted_age_seconds: submittedAgeSeconds,
         error_code: code,
       });
