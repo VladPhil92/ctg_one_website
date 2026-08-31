@@ -18,7 +18,6 @@ import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
 const CORS_METHODS = ['GET', 'OPTIONS'] as const;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const GIT_COMMIT_RE = /^[0-9a-f]{40}$/;
-const CLIENT_COMMIT_HEADER = 'x-ctg-wallet-build-commit';
 const EVIDENCE_SELECT = [
   'id',
   'status',
@@ -31,6 +30,8 @@ const EVIDENCE_SELECT = [
   'created_at',
   'authorized_at',
   'simulation_digest_sha256',
+  'canary_client_commit_sha',
+  'canary_client_bound_at',
   'tx_hash',
   'submitted_at',
   'chain_last_checked_at',
@@ -51,7 +52,7 @@ const OBSERVATION_SELECT = [
   'block_number',
   'confirmations',
   'failure_code',
-  'checked_at',
+  'recorded_at',
 ].join(',');
 
 function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
@@ -69,22 +70,6 @@ function getIntentId(request: Request) {
   return UUID_RE.test(intentId) ? intentId : null;
 }
 
-function getVerifiedClientArtifact(request: Request) {
-  const expected = process.env.WALLET_CANARY_CLIENT_COMMIT?.trim().toLowerCase() ?? '';
-  if (!GIT_COMMIT_RE.test(expected)) return { error: 'WALLET_CANARY_EVIDENCE_CLIENT_PROVENANCE_UNAVAILABLE' as const };
-
-  const asserted = request.headers.get(CLIENT_COMMIT_HEADER)?.trim().toLowerCase() ?? '';
-  if (!GIT_COMMIT_RE.test(asserted)) return { error: 'WALLET_CANARY_EVIDENCE_CLIENT_COMMIT_REQUIRED' as const };
-  if (asserted !== expected) return { error: 'WALLET_CANARY_EVIDENCE_CLIENT_COMMIT_MISMATCH' as const };
-
-  return {
-    clientArtifact: {
-      repository: 'VladPhil92/CTG-Wallet' as const,
-      commit: expected,
-    },
-  };
-}
-
 export function OPTIONS(request: Request) {
   return walletCorsPreflight(request, CORS_METHODS);
 }
@@ -99,16 +84,6 @@ export async function GET(request: Request) {
 
   const intentId = getIntentId(request);
   if (!intentId) return noStoreJson(request, { error: 'WALLET_CANARY_EVIDENCE_INTENT_ID_INVALID' }, { status: 400 });
-
-  const provenance = getVerifiedClientArtifact(request);
-  if ('error' in provenance) {
-    const status = provenance.error === 'WALLET_CANARY_EVIDENCE_CLIENT_PROVENANCE_UNAVAILABLE'
-      ? 503
-      : provenance.error === 'WALLET_CANARY_EVIDENCE_CLIENT_COMMIT_MISMATCH'
-        ? 409
-        : 400;
-    return noStoreJson(request, { error: provenance.error }, { status });
-  }
 
   const admin = createAdminClient();
   const { data: rawIntent, error: intentError } = await admin
@@ -125,10 +100,22 @@ export async function GET(request: Request) {
     return noStoreJson(request, { error: 'WALLET_CANARY_EVIDENCE_INTENT_NOT_FOUND' }, { status: 404 });
   }
 
+  const clientCommit = typeof rawIntent.canary_client_commit_sha === 'string'
+    ? rawIntent.canary_client_commit_sha.toLowerCase()
+    : '';
+  const clientBoundAt = typeof rawIntent.canary_client_bound_at === 'string'
+    ? rawIntent.canary_client_bound_at
+    : '';
+  if (!GIT_COMMIT_RE.test(clientCommit) || Number.isNaN(Date.parse(clientBoundAt))) {
+    return noStoreJson(request, { error: 'WALLET_CANARY_EVIDENCE_CLIENT_PROVENANCE_MISSING' }, { status: 409 });
+  }
+
   const { data: rawObservations, error: observationError } = await admin
-    .from('wallet_chain_reconciliation_observations_v1')
+    .from('wallet_chain_observations_v1')
     .select(OBSERVATION_SELECT)
     .eq('intent_id', intentId)
+    .eq('subject_user_id', auth.user.id)
+    .order('recorded_at', { ascending: true })
     .order('id', { ascending: true });
 
   if (observationError) {
@@ -137,12 +124,18 @@ export async function GET(request: Request) {
 
   try {
     const intent = normalizeWalletCanaryEvidenceIntent(rawIntent);
-    const observations = (rawObservations ?? []).map(normalizeWalletCanaryEvidenceObservation);
+    const observations = (rawObservations ?? []).map((observation) => normalizeWalletCanaryEvidenceObservation({
+      ...observation,
+      checked_at: observation.recorded_at,
+    }));
     const schema = await probeRuntimeSchemaCompatibility();
     const bundle = buildWalletCanaryEvidenceBundleV1({
       intent,
       deployment: getDeploymentMetadata(),
-      clientArtifact: provenance.clientArtifact,
+      clientArtifact: {
+        repository: 'VladPhil92/CTG-Wallet',
+        commit: clientCommit,
+      },
       observations,
       schema: {
         compatible: schema.compatible,
@@ -151,7 +144,13 @@ export async function GET(request: Request) {
       },
     });
 
-    return noStoreJson(request, bundle);
+    return noStoreJson(request, {
+      ...bundle,
+      clientArtifact: {
+        ...bundle.clientArtifact,
+        boundAt: clientBoundAt,
+      },
+    });
   } catch (error) {
     if (error instanceof WalletCanaryEvidenceError) {
       return noStoreJson(request, { error: error.code }, { status: 409 });
