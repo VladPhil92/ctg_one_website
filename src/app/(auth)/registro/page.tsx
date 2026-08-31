@@ -35,7 +35,7 @@ export default function RegistroPage() {
   const copy = es
     ? {
         title: 'Crear cuenta',
-        subtitle: 'Crea una identidad para acceder al ecosistema CTG One.',
+        subtitle: 'Crea una sola cuenta para acceder a tus servicios, beneficios y operaciones dentro de CTG One.',
         fullName: 'Nombre completo',
         phone: 'Teléfono',
         email: 'Correo electrónico',
@@ -49,11 +49,11 @@ export default function RegistroPage() {
         signIn: 'Inicia sesión',
         checkTitle: 'Revisa tu correo',
         checkPrefix: 'Enviamos un enlace de confirmación a',
-        checkSuffix: 'Confírmalo para activar tu cuenta y continuar.',
+        checkSuffix: 'Confírmalo para activar tu cuenta y entrar a tu centro de control CTG One.',
       }
     : {
         title: 'Create account',
-        subtitle: 'Create one identity to access the CTG One ecosystem.',
+        subtitle: 'Create one account to access your services, benefits, and activity across CTG One.',
         fullName: 'Full name',
         phone: 'Phone',
         email: 'Email',
@@ -67,7 +67,7 @@ export default function RegistroPage() {
         signIn: 'Sign in',
         checkTitle: 'Check your email',
         checkPrefix: 'We sent a confirmation link to',
-        checkSuffix: 'Confirm it to activate your account and continue.',
+        checkSuffix: 'Confirm it to activate your account and enter your CTG One control center.',
       };
 
   const handleSubmit = async () => {
