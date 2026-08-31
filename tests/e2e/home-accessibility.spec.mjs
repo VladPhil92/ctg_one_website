@@ -32,21 +32,25 @@ async function expectImmutableBrandName(page) {
 }
 
 test.describe('CTG One home UI/UX accessibility contract', () => {
-  test('Spanish home renders explicit product-first localized copy without English fallback', async ({ page }) => {
+  test('Spanish home renders explicit multi-service localized copy without English fallback', async ({ page }) => {
     await preferSpanish(page);
     await page.goto('/');
 
     await expectImmutableBrandName(page);
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Tecnología creada para');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('negocios reales.');
-    await expect(page.getByText('Una empresa tecnológica construida alrededor de operaciones reales.', { exact: true })).toBeVisible();
-    await expect(page.getByText('CTG One desarrolla tecnología propia y la aplica en empresas de diferentes sectores.', { exact: false })).toBeVisible();
+    await expect(page.getByText('Portal multiservicios · Una sola cuenta', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Todo CTG One,');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('en un solo lugar.');
+    await expect(page.getByText('Productos, servicios, pagos y beneficios conectados para ti.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Crea tu cuenta CTG One y accede con una sola identidad a nuestro portal multiservicios.', { exact: false })).toBeVisible();
     await expect(page.getByText('Tecnología que puedes ver en acción.', { exact: true })).toBeVisible();
     await expect(page.getByText('Cerveza artesanal. Producción real.', { exact: true })).toBeVisible();
     await expect(page.getByText('Nvet Care · En desarrollo', { exact: true })).toBeVisible();
     await expect(page.getByText('Tu veterinario de confianza, a un toque de distancia.', { exact: true })).toBeVisible();
 
     for (const englishFallback of [
+      'Multi-service portal · One account',
+      'Products, services, payments and benefits connected for you.',
+      'Create your CTG One account and access our multi-service portal with a single identity.',
       'A technology company built around real operations.',
       'Technology you can see in action.',
       'Craft beer. Real production.',
@@ -59,7 +63,8 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     await expect(page.getByText('Ver más', { exact: true })).toHaveCount(0);
 
     for (const label of [
-      'Conoce nuestros productos',
+      'Crear mi cuenta',
+      'Explorar CTG One',
       'Explora nuestros negocios',
       'Conocer CTG Craft Beer',
       'Invertir en producción',
