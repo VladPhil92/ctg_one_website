@@ -83,6 +83,31 @@ export async function fetchNvetVetTransactions(
   }
 }
 
+export async function fetchNvetVetTransactionDetail(
+  accessToken: string,
+  transactionId: string,
+): Promise<NvetResult<NvetVetTransaction>> {
+  try {
+    const response = await fetch(
+      `${getNvetApiUrl()}/api/payments/transactions/${encodeURIComponent(transactionId)}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: 'no-store',
+      },
+    );
+    const data = await parseJsonSafe(response);
+    if (!response.ok) {
+      return { ok: false, status: response.status, message: backendMessage(data, 'No se pudo consultar la transacción') };
+    }
+    if (!data || typeof data !== 'object') {
+      return { ok: false, status: 502, message: 'El servicio de pagos devolvió una respuesta inválida' };
+    }
+    return { ok: true, data: data as NvetVetTransaction };
+  } catch {
+    return { ok: false, status: 502, message: 'No se pudo contactar el servicio de pagos' };
+  }
+}
+
 export async function fetchNvetVetAppointmentDetail(
   accessToken: string,
   appointmentId: string,
