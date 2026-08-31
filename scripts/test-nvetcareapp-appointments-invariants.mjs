@@ -17,6 +17,11 @@ const [
   bookingPage,
   bookingFlow,
   dashboardLayout,
+  clientPaymentsRoute,
+  clientReviewsRoute,
+  fulfillmentLibrary,
+  fulfillmentPage,
+  fulfillmentFlow,
 ] = await Promise.all([
   read('src/app/api/nvetcareapp/appointments/[id]/status/route.ts'),
   read('src/app/api/nvetcareapp/appointments/route.ts'),
@@ -31,6 +36,11 @@ const [
   read('src/app/nvetcareapp/dashboard/reservar/page.tsx'),
   read('src/app/nvetcareapp/dashboard/reservar/client-booking-flow.tsx'),
   read('src/app/nvetcareapp/dashboard/layout.tsx'),
+  read('src/app/api/nvetcareapp/client/payments/route.ts'),
+  read('src/app/api/nvetcareapp/client/reviews/route.ts'),
+  read('src/lib/nvetcareapp/client-fulfillment.ts'),
+  read('src/app/nvetcareapp/dashboard/citas/page.tsx'),
+  read('src/app/nvetcareapp/dashboard/citas/client-fulfillment-flow.tsx'),
 ]);
 
 assert.match(statusRoute, /if \(!accessToken\)/, 'Status-update route must reject requests with no session cookie.');
@@ -79,6 +89,8 @@ for (const [name, source] of [
   ['client vets route', clientVetsRoute],
   ['client prices route', clientPricesRoute],
   ['client schedule route', clientScheduleRoute],
+  ['client payments route', clientPaymentsRoute],
+  ['client reviews route', clientReviewsRoute],
 ]) {
   assert.match(source, /if \(!accessToken\)/, `${name} must reject requests with no session cookie.`);
   assert.match(source, /status: 401/, `${name} must return 401 when unauthenticated.`);
@@ -147,7 +159,34 @@ assert.match(bookingFlow, /priceId:\s*selectedPriceId/, 'Booking UI must identif
 assert.doesNotMatch(bookingFlow, /amount:\s*selectedPrice|amountCop:/, 'Booking UI must never submit a charge amount.');
 
 assert.match(bookingPage, /userResult\.user\.role !== 'CLIENT'/, 'Booking page must reject non-client roles.');
-assert.match(dashboardLayout, /userResult\.user\.role === 'CLIENT'/, 'Dashboard booking action must only render for CLIENT users.');
+assert.match(dashboardLayout, /userResult\.user\.role === 'CLIENT'/, 'Dashboard client actions must only render for CLIENT users.');
 assert.match(dashboardLayout, /\/nvetcareapp\/dashboard\/reservar/, 'CLIENT dashboard must expose the booking journey.');
+
+// Payment & Service Fulfillment v1: the browser submits only an appointment
+// ID plus replay key. The BFF/server contract re-fetches the protected
+// appointment and derives amount + payment rail from authoritative data.
+assert.doesNotMatch(
+  clientPaymentsRoute,
+  /body\.(amount|amountCop|amountCtg|paymentMethod|role|userId|clientId|ownerId)/,
+  'Client payment BFF must never trust browser financial, role or identity claims.',
+);
+assert.match(clientPaymentsRoute, /UUID\.test\(requestId\)/, 'Client payment BFF must require a UUID replay key.');
+assert.match(fulfillmentLibrary, /\/api\/appointments\/\$\{input\.appointmentId\}/, 'Payment server contract must re-read the protected appointment before creating a transaction.');
+assert.match(fulfillmentLibrary, /paymentMethod:\s*'TRANSFER'/, 'Production fulfillment v1 must keep the payment rail restricted to TRANSFER.');
+assert.match(fulfillmentLibrary, /amountCop:\s*appointment\.amount/, 'Payment amount must be derived from the server-read appointment.');
+assert.match(fulfillmentLibrary, /'Idempotency-Key':\s*input\.requestId/, 'Payment replay key must be forwarded as Idempotency-Key.');
+assert.match(fulfillmentFlow, /crypto\.randomUUID\(\)/, 'Payment UI must generate a UUID for a new logical payment attempt.');
+assert.match(fulfillmentFlow, /paymentAttempt\?\.fingerprint === fingerprint \? paymentAttempt\.requestId : crypto\.randomUUID\(\)/, 'Exact payment retries must reuse the same requestId.');
+assert.match(fulfillmentFlow, /JSON\.stringify\(\{ appointmentId, requestId \}\)/, 'Payment UI must submit only appointmentId and requestId.');
+assert.doesNotMatch(fulfillmentFlow, /amountCop\s*:/, 'Payment UI must never submit an amount.');
+assert.match(fulfillmentFlow, /no debita dinero/i, 'Transfer UI must clearly state that registration does not debit money.');
+
+// Reviews remain backend-authoritative: the BFF accepts review content only;
+// ownership and COMPLETED status are enforced with the authenticated identity.
+assert.doesNotMatch(clientReviewsRoute, /body\.(role|userId|clientId|ownerId|vetId)/, 'Review BFF must not accept identity or role claims.');
+assert.match(clientReviewsRoute, /rating < 1 \|\| rating > 5/, 'Review BFF must validate rating range.');
+assert.match(fulfillmentPage, /userResult\.user\.role !== 'CLIENT'/, 'Fulfillment page must reject non-client roles.');
+assert.match(fulfillmentFlow, /appointment\.status === 'COMPLETED'/, 'Review UI must only expose review creation after completed service.');
+assert.match(dashboardLayout, /\/nvetcareapp\/dashboard\/citas/, 'CLIENT dashboard must expose payment and fulfillment journey.');
 
 console.log('Nvet Care appointments invariants: PASS');
