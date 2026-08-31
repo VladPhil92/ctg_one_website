@@ -4,8 +4,11 @@ on:
   pull_request:
     paths:
       - 'src/lib/wallet/canary-evidence.ts'
+      - 'src/lib/wallet/canary-client-provenance.ts'
       - 'src/lib/wallet/cors.ts'
       - 'src/lib/observability/schema-version.ts'
+      - 'src/app/api/wallet/canary/preflight/route.ts'
+      - 'src/app/api/wallet/intents/**/canary-client/route.ts'
       - 'src/app/api/wallet/intents/**/evidence/route.ts'
       - 'scripts/test-wallet-canary-evidence-invariants.mjs'
       - 'docs/WALLET_CANARY_RUNBOOK.md'
@@ -16,8 +19,11 @@ on:
     branches: [main]
     paths:
       - 'src/lib/wallet/canary-evidence.ts'
+      - 'src/lib/wallet/canary-client-provenance.ts'
       - 'src/lib/wallet/cors.ts'
       - 'src/lib/observability/schema-version.ts'
+      - 'src/app/api/wallet/canary/preflight/route.ts'
+      - 'src/app/api/wallet/intents/**/canary-client/route.ts'
       - 'src/app/api/wallet/intents/**/evidence/route.ts'
       - 'scripts/test-wallet-canary-evidence-invariants.mjs'
       - 'docs/WALLET_CANARY_RUNBOOK.md'
@@ -30,7 +36,7 @@ permissions:
 
 jobs:
   contract:
-    name: Read-only sanitized evidence contract
+    name: Durable canary provenance and evidence contract
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 
