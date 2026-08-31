@@ -7,6 +7,10 @@ import {
 } from '@/lib/supabase/server';
 import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
 import {
+  assertWalletCryptoSendExecutionAllowed,
+  WalletExecutionRolloutError,
+} from '@/lib/wallet/execution-rollout';
+import {
   simulateTrustedWalletIntentV1,
   WalletTrustedSimulationError,
 } from '@/lib/wallet/trusted-simulation';
@@ -40,6 +44,12 @@ function getIntentId(request: Request) {
   return UUID_RE.test(intentId) ? intentId : null;
 }
 
+function executionRevalidationRequested(request: Request): boolean | null {
+  const execution = new URL(request.url).searchParams.get('execution');
+  if (execution === null) return false;
+  return execution === 'canary' ? true : null;
+}
+
 function parseAuthorizationBody(value: unknown) {
   if (!isRecord(value)) return false;
   if (Object.keys(value).some((key) => !ALLOWED_BODY_KEYS.has(key))) return false;
@@ -59,6 +69,10 @@ function rpcStatus(message: string) {
   if (message.includes('WALLET_AUTH_EXTERNAL_STATE_PRESENT')) return 409;
   if (message.includes('WALLET_AUTH_')) return 400;
   return 503;
+}
+
+function rolloutStatus(code: string) {
+  return code === 'WALLET_EXECUTION_CONFIG_INVALID' ? 503 : 403;
 }
 
 function simulationStatus(code: string) {
@@ -164,6 +178,21 @@ export async function POST(request: Request) {
   const auth = await createAuthenticatedRequestContext(request);
   if (!auth) {
     return noStoreJson(request, { error: 'UNAUTHENTICATED' }, { status: 401 });
+  }
+
+  const executionRevalidation = executionRevalidationRequested(request);
+  if (executionRevalidation === null) {
+    return noStoreJson(request, { error: 'WALLET_EXECUTION_QUERY_INVALID' }, { status: 400 });
+  }
+  if (executionRevalidation) {
+    try {
+      assertWalletCryptoSendExecutionAllowed(auth.user.id);
+    } catch (error) {
+      if (error instanceof WalletExecutionRolloutError) {
+        return noStoreJson(request, { error: error.code }, { status: rolloutStatus(error.code) });
+      }
+      return noStoreJson(request, { error: 'WALLET_EXECUTION_GATE_FAILED' }, { status: 503 });
+    }
   }
 
   const intentId = getIntentId(request);
