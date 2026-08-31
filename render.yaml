@@ -18,6 +18,11 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      # Canonical server-to-server origin for Nvet Care. This URL is public
+      # infrastructure metadata, not a secret. The BFF also carries the same
+      # production fallback so a Render environment drift cannot break login.
+      - key: CTG_NVETCARE_API_URL
+        value: https://backend-production-a476.up.railway.app
       # CTG One Wallet identity + read-only Polygon runtime. Values stay in
       # Render configuration; no provider key, RPC URL or token address is
       # committed to source. Wallet features fail closed while unset.
