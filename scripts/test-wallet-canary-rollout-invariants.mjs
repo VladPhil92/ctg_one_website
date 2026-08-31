@@ -76,6 +76,9 @@ for (const fragment of [
   "polygonRpc('eth_getBalance', [normalizedAddress, 'latest'])",
   'const BIGINT_ZERO = BigInt(0)',
   'hasNativeGasBalance: nativeBalance > BIGINT_ZERO',
+  "redirect: 'error'",
+  "payload.jsonrpc !== '2.0'",
+  'payload.id !== 1',
   'WALLET_CANARY_DEFAULT_MIN_CONFIRMATIONS = 12',
 ]) {
   assert.ok(preflightProbe.includes(fragment), `Canary infrastructure probe missing invariant: ${fragment}`);
