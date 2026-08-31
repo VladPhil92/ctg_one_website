@@ -5,6 +5,17 @@ import { fetchNvetVetSchedule, requireNvetClient } from '@/lib/nvetcareapp/clien
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+function currentColombiaDate(): Date {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return new Date(`${value.year}-${value.month}-${value.day}T00:00:00.000Z`);
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const accessToken = (await cookies()).get(NVET_ACCESS_COOKIE)?.value;
   if (!accessToken) return NextResponse.json({ message: 'No autenticado' }, { status: 401 });
@@ -20,8 +31,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ message: 'Fecha inválida' }, { status: 400 });
   }
 
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  const today = currentColombiaDate();
   const requested = new Date(`${date}T00:00:00.000Z`);
   const horizon = new Date(today);
   horizon.setUTCDate(horizon.getUTCDate() + 90);
