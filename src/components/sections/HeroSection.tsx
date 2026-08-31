@@ -22,16 +22,19 @@ export const HeroSection: React.FC = () => {
   const { locale, t } = useLanguage();
   const es = locale === 'es';
 
+  // Acquisition-first contract: the first viewport identifies CTG One as a
+  // multi-service portal and routes new users toward one shared account.
+
   // Canonical maturity remains attached to the Hero contract without forcing
   // technical status language into the first consumer-facing message.
   const identityStatus = getPublicProofStatus(getCapabilityProof('identity-auth'));
   const dataStatus = getPublicProofStatus(getCapabilityProof('data-security'));
   const aiStatus = getPublicProofStatus(getCapabilityProof('ai-layer'));
 
-  const eyebrow = es ? 'Empresa tecnológica · Cartagena' : 'Technology company · Cartagena';
+  const eyebrow = es ? 'Portal multiservicios · Una sola cuenta' : 'Multi-service portal · One account';
   const description = es
-    ? 'Creamos software y soluciones digitales para nuestros propios negocios, productos y plataformas. Desde cerveza artesanal hasta salud, educación y servicios, usamos tecnología para conectar operaciones y construir mejores experiencias.'
-    : 'We build software and digital products for our own businesses, products and platforms. From craft beer to health, education and services, we use technology to connect operations and create better experiences.';
+    ? 'Crea tu cuenta CTG One y accede con una sola identidad a nuestro portal multiservicios. Usa tu Wallet, conecta con Nvet Care y descubre productos, servicios y nuevas experiencias desde un mismo lugar.'
+    : 'Create your CTG One account and access our multi-service portal with a single identity. Use your Wallet, connect with Nvet Care, and discover products, services and new experiences from one place.';
 
   return (
     <section
@@ -62,10 +65,10 @@ export const HeroSection: React.FC = () => {
 
             <FadeInSection delay={0.08}>
               <h1 className="mb-7 max-w-[780px] font-outfit text-[clamp(3rem,5.4vw,5.7rem)] font-semibold leading-[.96] tracking-[-0.05em]">
-                <span className="text-white">{es ? 'Tecnología creada para' : t(HERO.title)}</span>
+                <span className="text-white">{es ? 'Todo CTG One,' : 'All of CTG One,'}</span>
                 <br />
                 <span className="bg-gradient-to-r from-[#f1c75b] via-[#d6ae56] to-[#b88932] bg-clip-text text-transparent">
-                  {es ? 'negocios reales.' : t(HERO.titleHighlight)}
+                  {es ? 'en un solo lugar.' : 'in one place.'}
                 </span>
               </h1>
             </FadeInSection>
@@ -73,7 +76,7 @@ export const HeroSection: React.FC = () => {
             <FadeInSection delay={0.12}>
               <div className="mb-5 border-l border-[#d6ae56]/65 pl-4 sm:pl-5">
                 <p className="max-w-xl text-base font-medium leading-relaxed text-text-secondary sm:text-lg">
-                  {es ? 'Construida y probada dentro de nuestras propias empresas.' : t(HERO.subtitle)}
+                  {es ? 'Productos, servicios, pagos y beneficios conectados para ti.' : 'Products, services, payments and benefits connected for you.'}
                 </p>
               </div>
             </FadeInSection>
@@ -84,11 +87,11 @@ export const HeroSection: React.FC = () => {
 
             <FadeInSection delay={0.2}>
               <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-                <Button href="/products" variant="primary" size="md" arrow className="rounded-xl border border-[#ffd56a]/30 bg-[#d6ae56] px-6 shadow-[0_0_28px_rgba(214,174,86,.1)] hover:-translate-y-px hover:bg-[#f1c75b]">
-                  {es ? 'Conoce nuestros productos' : 'Explore our products'}
+                <Button href="/registro" variant="primary" size="md" arrow className="rounded-xl border border-[#ffd56a]/30 bg-[#d6ae56] px-6 shadow-[0_0_28px_rgba(214,174,86,.1)] hover:-translate-y-px hover:bg-[#f1c75b]">
+                  {es ? 'Crear mi cuenta' : 'Create my account'}
                 </Button>
                 <Button href="/ecosystem" variant="secondary" size="md" arrow className="rounded-xl border-[#248cff]/35 bg-[#07111d]/45 px-6 hover:-translate-y-px hover:border-[#248cff]/55 hover:bg-[#071a32]/45">
-                  {es ? 'Explora nuestros negocios' : 'Explore our businesses'}
+                  {es ? 'Explorar CTG One' : 'Explore CTG One'}
                 </Button>
               </div>
             </FadeInSection>
