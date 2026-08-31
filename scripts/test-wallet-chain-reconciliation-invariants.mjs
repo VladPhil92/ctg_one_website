@@ -170,7 +170,7 @@ requireFragments(source.reconcileRoute, 'Chain reconciliation route', [
   'normalizeWalletChainIntentSnapshot(rawIntent)',
   'reconcileWalletChainIntentV1(admin, intent)',
   'createAuthenticatedRequestContext(request)',
-  'persistenceError',
+  'WalletChainPersistenceError',
 ]);
 
 for (const duplicatedAuthority of [
