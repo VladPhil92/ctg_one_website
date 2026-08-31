@@ -7,6 +7,7 @@ import {
 } from '@/lib/supabase/server';
 import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
 import {
+  assertWalletCryptoSendCanaryIntentAllowed,
   assertWalletCryptoSendExecutionAllowed,
   WalletExecutionRolloutError,
 } from '@/lib/wallet/execution-rollout';
@@ -59,6 +60,7 @@ function parseAuthorizationBody(value: unknown) {
 function rpcStatus(message: string) {
   if (message.includes('WALLET_AUTH_RATE_LIMITED')) return 429;
   if (message.includes('WALLET_AUTH_INTENT_NOT_FOUND')) return 404;
+  if (message.includes('WALLET_AUTH_CANARY_SINGLE_FLIGHT_CONFLICT')) return 409;
   if (message.includes('WALLET_AUTH_REPLAY_CONFLICT')) return 409;
   if (message.includes('WALLET_AUTH_SIMULATION_BINDING_CONFLICT')) return 409;
   if (message.includes('WALLET_AUTH_SIGNER_BINDING_CONFLICT')) return 409;
@@ -72,7 +74,10 @@ function rpcStatus(message: string) {
 }
 
 function rolloutStatus(code: string) {
-  return code === 'WALLET_EXECUTION_CONFIG_INVALID' ? 503 : 403;
+  return code === 'WALLET_EXECUTION_CONFIG_INVALID'
+    || code === 'WALLET_EXECUTION_CANARY_GUARDRAILS_NOT_CONFIGURED'
+    ? 503
+    : 403;
 }
 
 function simulationStatus(code: string) {
@@ -237,11 +242,17 @@ export async function POST(request: Request) {
   // A first created -> authorized transition is execution-enabling evidence and
   // therefore can never be created outside the current server-side canary gate.
   // Durable authorized replays remain available without creating new evidence;
-  // when the caller explicitly requests pre-broadcast revalidation, the same
-  // gate is checked again so the kill-switch is effective immediately.
+  // when the caller explicitly requests pre-broadcast revalidation, both the
+  // kill-switch and the exact asset/amount/destination exposure guard are
+  // checked again immediately before the signer boundary.
   if (intent.status === 'created' || executionRevalidation) {
     try {
       assertWalletCryptoSendExecutionAllowed(auth.user.id);
+      assertWalletCryptoSendCanaryIntentAllowed({
+        assetSymbol: intent.asset_symbol,
+        amountBaseUnits: intent.amount_base_units,
+        destinationAddress: intent.destination_address,
+      });
     } catch (error) {
       if (error instanceof WalletExecutionRolloutError) {
         return noStoreJson(request, { error: error.code }, { status: rolloutStatus(error.code) });
@@ -336,7 +347,7 @@ export async function POST(request: Request) {
     return noStoreJson(request, { error: 'WALLET_AUTH_STATUS_INVALID' }, { status: 409 });
   }
 
-  const { data, error } = await admin.rpc('authorize_wallet_intent_v1_server', {
+  const { data, error } = await admin.rpc('authorize_wallet_intent_v2_server', {
     p_user_id: auth.user.id,
     p_intent_id: intent.id,
     p_simulation_digest_sha256: simulationDigestSha256,

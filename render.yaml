@@ -42,6 +42,15 @@ services:
       # is provisioned only in Render and is never committed or browser-public.
       - key: WALLET_CRYPTO_SEND_CANARY_USER_IDS
         sync: false
+      # Real-money canary exposure is also fail-closed until all three exact
+      # server-only guardrails are provisioned: one asset, one maximum amount
+      # in that asset's base units, and one approved destination address.
+      - key: WALLET_CRYPTO_SEND_CANARY_ASSET_SYMBOL
+        sync: false
+      - key: WALLET_CRYPTO_SEND_CANARY_MAX_AMOUNT_BASE_UNITS
+        sync: false
+      - key: WALLET_CRYPTO_SEND_CANARY_DESTINATION_ADDRESS
+        sync: false
       # Shared secret for the bounded server-side Polygon reconciliation worker.
       # The matching GitHub Actions repository secret must be provisioned with
       # the exact same value before the scheduled worker becomes operational.

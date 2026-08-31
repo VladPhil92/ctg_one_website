@@ -1,6 +1,6 @@
 \set ON_ERROR_STOP on
 
--- CTG One Wallet — Wallet Intent Authorization V1 PostgreSQL contract.
+-- CTG One Wallet — Wallet Intent Authorization V2 PostgreSQL contract.
 -- Runs only against an ephemeral CI database and rolls back all fixtures.
 
 begin;
@@ -22,7 +22,7 @@ insert into auth.users (
   '21000000-0000-0000-0000-000000000001',
   'authenticated',
   'authenticated',
-  'wallet-auth-v1@example.invalid',
+  'wallet-auth-v2@example.invalid',
   '',
   now(),
   '{}'::jsonb,
@@ -41,6 +41,7 @@ declare
   v_authorization jsonb;
   v_replay jsonb;
   v_intent_id uuid;
+  v_single_flight_id uuid;
   v_expired_id uuid;
   v_digest text := repeat('a', 64);
   v_other_digest text := repeat('b', 64);
@@ -60,7 +61,7 @@ begin
   ) values (
     v_user,
     'privy',
-    'did:privy:wallet-auth-v1-user',
+    'did:privy:wallet-auth-v2-user',
     'verified',
     'new',
     now(),
@@ -97,7 +98,7 @@ begin
 
   v_creation := public.create_wallet_intent_v1_server(
     v_user,
-    'wallet-auth-v1-idempotency-0001',
+    'wallet-auth-v2-idempotency-0001',
     137,
     'USDC',
     '1000000',
@@ -110,7 +111,7 @@ begin
     raise exception 'intent creation did not remain created before authorization';
   end if;
 
-  v_authorization := public.authorize_wallet_intent_v1_server(
+  v_authorization := public.authorize_wallet_intent_v2_server(
     v_user,
     v_intent_id,
     v_digest,
@@ -122,7 +123,7 @@ begin
   );
 
   if v_authorization ->> 'version' <> 'ctg-wallet-authorization-v1' then
-    raise exception 'authorization version contract regressed';
+    raise exception 'authorization response version contract regressed';
   end if;
   if (v_authorization ->> 'replayed')::boolean is not false then
     raise exception 'first authorization unexpectedly reported a replay';
@@ -146,8 +147,8 @@ begin
     raise exception 'authorization must not settle an intent';
   end if;
 
-  -- Identical replay is idempotent before expiration.
-  v_replay := public.authorize_wallet_intent_v1_server(
+  -- Identical replay is idempotent and self-excluded from single-flight.
+  v_replay := public.authorize_wallet_intent_v2_server(
     v_user,
     v_intent_id,
     v_digest,
@@ -169,7 +170,7 @@ begin
   set expires_at = now() - interval '1 minute'
   where id = v_intent_id;
 
-  v_replay := public.authorize_wallet_intent_v1_server(
+  v_replay := public.authorize_wallet_intent_v2_server(
     v_user,
     v_intent_id,
     v_digest,
@@ -185,7 +186,7 @@ begin
   end if;
 
   begin
-    perform public.authorize_wallet_intent_v1_server(
+    perform public.authorize_wallet_intent_v2_server(
       v_user,
       v_intent_id,
       v_other_digest,
@@ -206,7 +207,7 @@ begin
   end;
 
   begin
-    perform public.authorize_wallet_intent_v1_server(
+    perform public.authorize_wallet_intent_v2_server(
       v_user,
       v_intent_id,
       v_digest,
@@ -226,13 +227,52 @@ begin
     end if;
   end;
 
+  -- The same user cannot advance a second active Polygon crypto_send while the
+  -- first authorization remains non-terminal.
   v_creation := public.create_wallet_intent_v1_server(
     v_user,
-    'wallet-auth-v1-idempotency-0002',
+    'wallet-auth-v2-single-flight-0002',
+    137,
+    'USDC',
+    '500000',
+    '0x3333333333333333333333333333333333333333'
+  );
+  v_single_flight_id := (v_creation -> 'intent' ->> 'id')::uuid;
+
+  begin
+    perform public.authorize_wallet_intent_v2_server(
+      v_user,
+      v_single_flight_id,
+      v_digest,
+      v_wallet,
+      137,
+      'USDC',
+      '500000',
+      '0x3333333333333333333333333333333333333333'
+    );
+    raise exception 'TEST_EXPECTED_CANARY_SINGLE_FLIGHT_CONFLICT';
+  exception when others then
+    if sqlerrm = 'TEST_EXPECTED_CANARY_SINGLE_FLIGHT_CONFLICT' then
+      raise;
+    end if;
+    if position('WALLET_AUTH_CANARY_SINGLE_FLIGHT_CONFLICT' in sqlerrm) = 0 then
+      raise exception 'unexpected single-flight error: %', sqlerrm;
+    end if;
+  end;
+
+  -- Close the synthetic first intent only to isolate the pre-existing expiry
+  -- behavior in this smoke transaction. Authorization evidence must remain.
+  update public.wallet_intents_v2
+  set status = 'cancelled', updated_at = now()
+  where id = v_intent_id;
+
+  v_creation := public.create_wallet_intent_v1_server(
+    v_user,
+    'wallet-auth-v2-expired-0003',
     137,
     'POL',
     '1000000000000000',
-    '0x3333333333333333333333333333333333333333'
+    '0x4444444444444444444444444444444444444444'
   );
   v_expired_id := (v_creation -> 'intent' ->> 'id')::uuid;
 
@@ -241,7 +281,7 @@ begin
   where id = v_expired_id;
 
   begin
-    perform public.authorize_wallet_intent_v1_server(
+    perform public.authorize_wallet_intent_v2_server(
       v_user,
       v_expired_id,
       v_digest,
@@ -249,7 +289,7 @@ begin
       137,
       'POL',
       '1000000000000000',
-      '0x3333333333333333333333333333333333333333'
+      '0x4444444444444444444444444444444444444444'
     );
     raise exception 'TEST_EXPECTED_EXPIRED_AUTHORIZATION_FAILURE';
   exception when others then
@@ -278,7 +318,7 @@ begin
     from public.wallet_intents_v2
     where id = v_intent_id
       and (
-        status <> 'authorized'
+        status <> 'cancelled'
         or authorized_at is null
         or authorized_wallet_address <> v_wallet
         or simulation_digest_sha256 <> v_digest
@@ -297,16 +337,28 @@ begin
     'authenticated',
     'public.authorize_wallet_intent_v1_server(uuid,uuid,text,text,bigint,text,text,text)',
     'EXECUTE'
+  ) or has_function_privilege(
+    'authenticated',
+    'public.authorize_wallet_intent_v2_server(uuid,uuid,text,text,bigint,text,text,text)',
+    'EXECUTE'
   ) then
-    raise exception 'authenticated must not execute the authorization RPC directly';
+    raise exception 'authenticated must not execute either authorization RPC directly';
   end if;
 
-  if not has_function_privilege(
+  if has_function_privilege(
     'service_role',
     'public.authorize_wallet_intent_v1_server(uuid,uuid,text,text,bigint,text,text,text)',
     'EXECUTE'
   ) then
-    raise exception 'service_role authorization RPC privilege missing';
+    raise exception 'service_role must not bypass canary single-flight through authorization V1';
+  end if;
+
+  if not has_function_privilege(
+    'service_role',
+    'public.authorize_wallet_intent_v2_server(uuid,uuid,text,text,bigint,text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'service_role guarded authorization V2 privilege missing';
   end if;
 
   if has_table_privilege('authenticated', 'public.wallet_intents_v2', 'UPDATE')
@@ -317,4 +369,4 @@ end $$;
 
 rollback;
 
-select 'Wallet Intent Authorization V1 PostgreSQL contract: PASS' as result;
+select 'Wallet Intent Authorization V2 + Canary Single-Flight PostgreSQL contract: PASS' as result;

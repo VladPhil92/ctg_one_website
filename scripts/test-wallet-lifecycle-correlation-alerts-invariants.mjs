@@ -69,8 +69,8 @@ for (const forbidden of ['wallets', 'wallet_journal', 'balance', 'tx_hash', 'des
   assert.ok(!alerts.includes(forbidden), `Alert service crossed financial/privacy boundary: ${forbidden}`);
 }
 
-assert.ok(schema.includes("EXPECTED_DATABASE_MIGRATION = '0090'"));
-assert.ok(schema.includes("EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_lifecycle_correlation_alerts_v1'"));
-assert.ok(schema.includes('EXPECTED_DATABASE_MIGRATION_COUNT = 90'));
+assert.ok(schema.includes("EXPECTED_DATABASE_MIGRATION = '0091'"));
+assert.ok(schema.includes("EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_canary_execution_guardrails_v1'"));
+assert.ok(schema.includes('EXPECTED_DATABASE_MIGRATION_COUNT = 91'));
 
 console.log('Wallet lifecycle correlation + durable stuck-state alert invariants: PASS');

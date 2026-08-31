@@ -7,6 +7,7 @@ on:
       - 'supabase/migrations/**wallet_domain_v2**'
       - 'supabase/migrations/**wallet_intent_creation**'
       - 'supabase/migrations/**wallet_intent_authorization**'
+      - 'supabase/migrations/**wallet_canary_execution_guardrails**'
       - 'src/app/api/wallet/intents/**'
       - 'src/lib/wallet/domain.ts'
       - 'src/lib/observability/schema-version.ts'
@@ -23,6 +24,7 @@ on:
       - 'supabase/migrations/**wallet_domain_v2**'
       - 'supabase/migrations/**wallet_intent_creation**'
       - 'supabase/migrations/**wallet_intent_authorization**'
+      - 'supabase/migrations/**wallet_canary_execution_guardrails**'
       - 'src/app/api/wallet/intents/**'
       - 'src/lib/wallet/domain.ts'
       - 'src/lib/observability/schema-version.ts'
@@ -97,7 +99,7 @@ jobs:
             -v ON_ERROR_STOP=1 \
             -f scripts/wallet-domain-v2-schema-smoke.sql
 
-      - name: Wallet Intent Authorization V1 PostgreSQL contract
+      - name: Wallet Intent Authorization V2 + Canary Single-Flight PostgreSQL contract
         run: |
           psql "postgresql://postgres:postgres@127.0.0.1:55434/postgres" \
             -v ON_ERROR_STOP=1 \

@@ -240,14 +240,14 @@ for (const unsafe of [
   }
 }
 
-requireFragments(intentAuthorizationRoute, 'Wallet Intent V1 authorization route', [
+requireFragments(intentAuthorizationRoute, 'Wallet Intent guarded authorization route', [
   "const AUTHORIZATION_VERSION = 'ctg-wallet-authorization-v1' as const",
   "const ALLOWED_BODY_KEYS = new Set(['version'])",
   "simulateTrustedWalletIntentV1({",
   "intent.status === 'authorized'",
   "intent.status === 'created'",
   'simulationDigestSha256 = trustedSimulation.simulationDigestSha256',
-  "admin.rpc('authorize_wallet_intent_v1_server'",
+  "admin.rpc('authorize_wallet_intent_v2_server'",
   'p_user_id: auth.user.id',
   'p_intent_id: intent.id',
   'p_simulation_digest_sha256: simulationDigestSha256',
@@ -292,4 +292,4 @@ if (
   throw new Error('runtime schema contract must include canonical COP ledger hardening migration 0087');
 }
 
-console.log('Wallet Domain V2 + trusted Intent Creation/Authorization V1 invariants: PASS');
+console.log('Wallet Domain V2 + trusted Intent Creation/guarded Authorization invariants: PASS');

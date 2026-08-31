@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0090",
-    "schemaMigrationName": "wallet_lifecycle_correlation_alerts_v1",
-    "schemaMigrationCount": 90,
+    "schemaMigration": "0091",
+    "schemaMigrationName": "wallet_canary_execution_guardrails_v1",
+    "schemaMigrationCount": 91,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
