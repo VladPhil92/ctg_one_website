@@ -63,6 +63,7 @@ export interface NvetAvailabilitySlot {
 }
 
 export interface CreateNvetAppointmentInput {
+  requestId: string;
   vetId: string;
   petId: string;
   priceId: string;
@@ -261,6 +262,7 @@ export async function createNvetClientAppointment(
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
+        'Idempotency-Key': input.requestId,
       },
       body: JSON.stringify(payload),
     });
