@@ -3,10 +3,11 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [tierRoute, listRoute, page] = await Promise.all([
+const [tierRoute, listRoute, page, userModel] = await Promise.all([
   read('src/app/api/nvetcareapp/admin/veterinarians/[id]/tier/route.ts'),
   read('src/app/api/nvetcareapp/admin/veterinarians/route.ts'),
   read('src/app/nvetcareapp/dashboard/veterinarios/page.tsx'),
+  read('src/lib/nvetcareapp/user.ts'),
 ]);
 
 // The tier-update BFF route must require a session cookie and validate the
@@ -27,10 +28,11 @@ for (const [name, source] of [['tier-update route', tierRoute], ['veterinarians 
   );
 }
 
-// The admin veterinarians page must gate on the session's own role rather
-// than assuming every visitor is an admin — a non-admin must see a
-// graceful message, not a crash or someone else's data.
-assert.match(page, /userResult\.user\.role === 'ADMIN'/, 'Veterinarians page must gate rendering on the session role being ADMIN.');
+// The admin veterinarians page must gate on the session's own effective
+// admin role rather than assuming every visitor is privileged. SUPERADMIN
+// is allowed to inherit the ADMIN UI, while non-admin roles remain denied.
+assert.match(page, /isNvetAdminRole\(userResult\.user\.role\)/, 'Veterinarians page must gate rendering through the centralized admin-role policy.');
+assert.match(userModel, /role === 'ADMIN' \|\| role === 'SUPERADMIN'/, 'Admin-role policy must include ADMIN and SUPERADMIN only.');
 assert.match(page, /!isAdmin/, 'Veterinarians page must render a distinct state for a non-admin visitor.');
 
 // The backend paginates GET /admin/veterinarians (limit/offset, hasMore) —
