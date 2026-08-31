@@ -162,7 +162,7 @@ assert.match(
   'Unauthenticated dashboard access must return to the one public Nvet login.',
 );
 assert.match(dashboardPage, /if \(role === 'ADMIN'\)/, 'ADMIN/SUPERADMIN projection must render the administrative dashboard read-model.');
-assert.match(dashboardPage, /if \(role === 'CLIENT'\)/, 'CLIENT must render the user appointment dashboard.');
+assert.match(dashboardPage, /if \(role === 'CLIENT'\)/, 'CLIENT must render the user care dashboard.');
 assert.match(
   user,
   /upstreamRole === 'ADMIN' \|\| upstreamRole === 'VET' \|\| upstreamRole === 'CLIENT'/,
@@ -177,7 +177,7 @@ assert.match(
 // Persona-specific affordances must remain scoped to the effective role and
 // must not leak admin controls into the public login or ordinary dashboards.
 assert.match(dashboardLayout, /role === 'CLIENT'/, 'CLIENT must receive client-only dashboard actions.');
-assert.match(dashboardLayout, /Agendar cita/, 'CLIENT dashboard must expose appointment booking.');
+assert.match(dashboardLayout, /Solicitar atención/, 'CLIENT dashboard must expose the provider-aware attention-request entry point.');
 assert.match(dashboardLayout, /role === 'VET'/, 'VET must receive veterinarian-only dashboard actions.');
 assert.match(dashboardLayout, /Operar servicios/, 'VET dashboard must expose service operations.');
 

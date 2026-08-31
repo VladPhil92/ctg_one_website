@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { ShieldCheck, UserRound } from 'lucide-react';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
 import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
+import { ClientDashboardShell } from './client-dashboard-shell';
 import { SuperadminRoleSwitch } from './superadmin-role-switch';
 
 const ROOT_NAV = [
@@ -18,9 +19,21 @@ const ROOT_NAV = [
 export default async function NvetDashboardTemplate({ children }: { children: React.ReactNode }) {
   const accessToken = (await cookies()).get(NVET_ACCESS_COOKIE)?.value;
   const userResult = accessToken ? await fetchNvetCurrentUser(accessToken) : null;
-  const isSuperadmin = userResult?.ok === true && userResult.user.isSuperadmin;
 
-  if (!isSuperadmin || !userResult?.ok) return children;
+  if (!userResult?.ok) return children;
+
+  const isSuperadmin = userResult.user.isSuperadmin;
+  const isClientView = userResult.user.role === 'CLIENT';
+  const userName = `${userResult.user.firstName} ${userResult.user.lastName}`.trim();
+  const content = isClientView ? (
+    <ClientDashboardShell userName={userName} userEmail={userResult.user.email}>
+      {children}
+    </ClientDashboardShell>
+  ) : (
+    children
+  );
+
+  if (!isSuperadmin) return content;
 
   const isClientMode = userResult.user.isClientMode;
 
@@ -61,7 +74,7 @@ export default async function NvetDashboardTemplate({ children }: { children: Re
           )}
         </div>
       </section>
-      {children}
+      {content}
     </>
   );
 }
