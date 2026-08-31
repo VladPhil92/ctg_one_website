@@ -120,7 +120,7 @@ requireFragments(source.scheduler, 'Lifecycle operations scheduler', [
   'X-CTG-Wallet-Worker-Secret: ${WORKER_SECRET}',
   '.version == "ctg-wallet-lifecycle-operations-v1"',
   '.sample.bounded == true',
-  "severity == 'critical'",
+  "[ \"$severity\" = 'critical' ]",
   'exit 2',
   'never rebroadcast',
 ]);
