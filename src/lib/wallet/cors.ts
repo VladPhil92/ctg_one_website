@@ -49,7 +49,7 @@ export function applyWalletCors(
   if (origin && isAllowedWalletOrigin(origin)) {
     headers.set('Access-Control-Allow-Origin', origin);
     headers.set('Access-Control-Allow-Methods', allowedMethods.join(', '));
-    headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type, Privy-ID-Token, X-CTG-Wallet-Build-Commit');
+    headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type, Privy-ID-Token');
     headers.set('Access-Control-Max-Age', '600');
   }
 
