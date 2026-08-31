@@ -98,8 +98,9 @@ for (const forbidden of [
 
 for (const fragment of [
   'createAuthenticatedRequestContext(request)',
-  "const ALLOWED_BODY_KEYS = new Set(['version'])",
-  'value.version === WALLET_CANARY_PREFLIGHT_VERSION',
+  "const ALLOWED_BODY_KEYS = new Set(['version', 'clientCommitSha'])",
+  'if (value.version !== WALLET_CANARY_PREFLIGHT_VERSION) return null',
+  'assertReviewedWalletCanaryClientCommitSha(value.clientCommitSha)',
   'inspectWalletCryptoSendExecutionConfiguration(auth.user.id)',
   ".from('wallet_external_accounts')",
   ".eq('user_id', auth.user.id)",
@@ -110,6 +111,7 @@ for (const fragment of [
   ".from('wallet_identity_links')",
   'probeRuntimeSchemaCompatibility()',
   'probePolygonCanaryInfrastructureV1(signerAddress)',
+  'reviewedClientCommit',
   "'ready_for_canary_execution'",
   "'ACTIVATE_CANARY_MODE_AND_REDEPLOY'",
   "'BUILD_REVIEWED_CANARY_ARTIFACT'",
@@ -142,4 +144,4 @@ for (const fragment of [
   assert.ok(workflow.includes(fragment), `Canary invariant test is not wired into the wallet CI contract: ${fragment}`);
 }
 
-console.log('CTG One Wallet canary authorization, preflight and recovery invariants: PASS');
+console.log('CTG One Wallet canary authorization, reviewed-client preflight and recovery invariants: PASS');

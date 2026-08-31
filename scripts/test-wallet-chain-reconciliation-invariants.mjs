@@ -209,11 +209,13 @@ requireFragments(source.smoke, 'Chain PostgreSQL smoke', [
   'chain submission/reconciliation mutated the COP journal',
 ]);
 
-const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(source.schema)?.[1];
-const schemaName = /EXPECTED_DATABASE_MIGRATION_NAME\s*=\s*['"]([^'"]+)['"]/.exec(source.schema)?.[1];
+// 0088 defines the immutable Chain Reconciliation V1 contract. Runtime schema
+// metadata may legitimately advance through additive, separately reviewed
+// migrations (for example 0089 canary evidence) without invalidating 0088.
+const schemaMigration = Number(/EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(source.schema)?.[1]);
 const schemaCount = Number(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(source.schema)?.[1]);
-if (schemaMigration !== '0088' || schemaName !== 'wallet_chain_reconciliation_v1' || schemaCount !== 88) {
-  throw new Error('Runtime schema metadata must be pinned exactly to Wallet Chain Reconciliation V1 migration 0088.');
+if (!Number.isInteger(schemaMigration) || schemaMigration < 88 || !Number.isInteger(schemaCount) || schemaCount < 88) {
+  throw new Error('Runtime schema metadata must include Wallet Chain Reconciliation V1 migration 0088 or a compatible additive successor.');
 }
 
 console.log('Wallet Chain Submission/Reconciliation V1 invariants: PASS');

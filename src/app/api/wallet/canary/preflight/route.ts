@@ -1,26 +1,30 @@
 import { NextResponse } from 'next/server';
 
+import { probeRuntimeSchemaCompatibility } from '@/lib/observability/runtime-schema';
 import {
   createAdminClient,
   createAuthenticatedRequestContext,
   isSupabaseConfigured,
 } from '@/lib/supabase/server';
-import { probeRuntimeSchemaCompatibility } from '@/lib/observability/runtime-schema';
-import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
+import {
+  assertReviewedWalletCanaryClientCommitSha,
+  WalletCanaryClientProvenanceError,
+} from '@/lib/wallet/canary-client-provenance';
 import {
   WALLET_CANARY_PREFLIGHT_VERSION,
   probePolygonCanaryInfrastructureV1,
   WalletCanaryPreflightError,
 } from '@/lib/wallet/canary-preflight';
+import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
 import {
   inspectWalletCryptoSendExecutionConfiguration,
   WalletExecutionRolloutError,
 } from '@/lib/wallet/execution-rollout';
 
 const CORS_METHODS = ['POST', 'OPTIONS'] as const;
-const MAX_BODY_BYTES = 256;
+const MAX_BODY_BYTES = 384;
 const EVM_ADDRESS_RE = /^0x[0-9a-f]{40}$/;
-const ALLOWED_BODY_KEYS = new Set(['version']);
+const ALLOWED_BODY_KEYS = new Set(['version', 'clientCommitSha']);
 
 function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
@@ -35,9 +39,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function parseBody(value: unknown) {
-  if (!isRecord(value)) return false;
-  if (Object.keys(value).some((key) => !ALLOWED_BODY_KEYS.has(key))) return false;
-  return value.version === WALLET_CANARY_PREFLIGHT_VERSION;
+  if (!isRecord(value)) return null;
+  if (Object.keys(value).some((key) => !ALLOWED_BODY_KEYS.has(key))) return null;
+  if (value.version !== WALLET_CANARY_PREFLIGHT_VERSION) return null;
+  return assertReviewedWalletCanaryClientCommitSha(value.clientCommitSha);
+}
+
+function clientProvenanceStatus(code: string) {
+  if (code === 'WALLET_CANARY_CLIENT_COMMIT_INVALID') return 400;
+  if (code === 'WALLET_CANARY_CLIENT_COMMIT_NOT_REVIEWED') return 403;
+  return 503;
 }
 
 export function OPTIONS(request: Request) {
@@ -50,9 +61,7 @@ export async function POST(request: Request) {
   }
 
   const auth = await createAuthenticatedRequestContext(request);
-  if (!auth) {
-    return noStoreJson(request, { error: 'UNAUTHENTICATED' }, { status: 401 });
-  }
+  if (!auth) return noStoreJson(request, { error: 'UNAUTHENTICATED' }, { status: 401 });
 
   const contentType = request.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase();
   if (contentType !== 'application/json') {
@@ -71,7 +80,15 @@ export async function POST(request: Request) {
     return noStoreJson(request, { error: 'WALLET_CANARY_PREFLIGHT_BODY_INVALID' }, { status: 400 });
   }
 
-  if (!parseBody(body)) {
+  let clientCommitSha: string;
+  try {
+    const parsed = parseBody(body);
+    if (!parsed) return noStoreJson(request, { error: 'WALLET_CANARY_PREFLIGHT_REQUEST_INVALID' }, { status: 400 });
+    clientCommitSha = parsed;
+  } catch (error) {
+    if (error instanceof WalletCanaryClientProvenanceError) {
+      return noStoreJson(request, { error: error.code }, { status: clientProvenanceStatus(error.code) });
+    }
     return noStoreJson(request, { error: 'WALLET_CANARY_PREFLIGHT_REQUEST_INVALID' }, { status: 400 });
   }
 
@@ -140,38 +157,37 @@ export async function POST(request: Request) {
       infrastructure = await probePolygonCanaryInfrastructureV1(signerAddress);
     } catch (error) {
       if (error instanceof WalletCanaryPreflightError) {
-        return noStoreJson(
-          request,
-          {
-            version: WALLET_CANARY_PREFLIGHT_VERSION,
-            status: 'blocked',
-            readyForActivation: false,
-            readyForCanaryExecution: false,
-            executionMode: rollout.mode,
-            checks: {
-              schemaCompatible: schema.compatible,
-              canaryUserConfigured: rollout.canaryUserConfigured,
-              verifiedPrimaryPrivyWallet: identityVerified,
-              polygonRpcHealthy: false,
-              polygonChainId: null,
-              nativeGasBalanceAvailable: false,
-            },
-            blocker: error.code,
-            nextAction: 'RESOLVE_PREFLIGHT_BLOCKERS',
+        return noStoreJson(request, {
+          version: WALLET_CANARY_PREFLIGHT_VERSION,
+          status: 'blocked',
+          readyForActivation: false,
+          readyForCanaryExecution: false,
+          executionMode: rollout.mode,
+          checks: {
+            schemaCompatible: schema.compatible,
+            canaryUserConfigured: rollout.canaryUserConfigured,
+            reviewedClientCommit: true,
+            verifiedPrimaryPrivyWallet: identityVerified,
+            polygonRpcHealthy: false,
+            polygonChainId: null,
+            nativeGasBalanceAvailable: false,
           },
-          { status: 503 },
-        );
+          blocker: error.code,
+          nextAction: 'RESOLVE_PREFLIGHT_BLOCKERS',
+        }, { status: 503 });
       }
       return noStoreJson(request, { error: 'WALLET_CANARY_PREFLIGHT_RPC_PROBE_FAILED' }, { status: 503 });
     }
   }
 
   const schemaCompatible = schema.compatible;
+  const reviewedClientCommit = Boolean(clientCommitSha);
   const verifiedPrimaryPrivyWallet = Boolean(signerAddress && identityVerified);
   const polygonRpcHealthy = Boolean(infrastructure);
   const nativeGasBalanceAvailable = infrastructure?.hasNativeGasBalance ?? false;
   const prerequisitesReady = schemaCompatible
     && rollout.canaryUserConfigured
+    && reviewedClientCommit
     && verifiedPrimaryPrivyWallet
     && polygonRpcHealthy
     && nativeGasBalanceAvailable;
@@ -187,6 +203,7 @@ export async function POST(request: Request) {
   const blockers: string[] = [];
   if (!schemaCompatible) blockers.push('WALLET_CANARY_SCHEMA_INCOMPATIBLE');
   if (!rollout.canaryUserConfigured) blockers.push('WALLET_CANARY_USER_NOT_CONFIGURED');
+  if (!reviewedClientCommit) blockers.push('WALLET_CANARY_CLIENT_COMMIT_NOT_REVIEWED');
   if (!verifiedPrimaryPrivyWallet) blockers.push('WALLET_CANARY_PRIVY_WALLET_UNAVAILABLE');
   if (verifiedPrimaryPrivyWallet && !polygonRpcHealthy) blockers.push('WALLET_CANARY_POLYGON_RPC_UNAVAILABLE');
   if (polygonRpcHealthy && !nativeGasBalanceAvailable) blockers.push('WALLET_CANARY_NATIVE_GAS_BALANCE_EMPTY');
@@ -206,6 +223,7 @@ export async function POST(request: Request) {
     checks: {
       schemaCompatible,
       canaryUserConfigured: rollout.canaryUserConfigured,
+      reviewedClientCommit,
       verifiedPrimaryPrivyWallet,
       polygonRpcHealthy,
       polygonChainId: infrastructure?.chainId ?? null,
