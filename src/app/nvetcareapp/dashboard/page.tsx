@@ -234,7 +234,7 @@ export default async function NvetDashboardPage() {
     );
   }
 
-  if (userResult.user.isSuperadmin) {
+  if (userResult.user.isSuperadmin && !userResult.user.isClientMode) {
     redirect('/nvetcareapp/dashboard/gobernanza');
   }
 
