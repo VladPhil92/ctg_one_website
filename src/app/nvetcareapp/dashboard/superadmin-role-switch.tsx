@@ -28,7 +28,11 @@ export function SuperadminRoleSwitch({ currentMode }: { currentMode: NvetRootRol
         return;
       }
 
-      router.push('/nvetcareapp/dashboard');
+      const landingPath =
+        targetMode === 'CLIENT'
+          ? '/nvetcareapp/dashboard/citas'
+          : '/nvetcareapp/dashboard/gobernanza';
+      router.replace(landingPath);
       router.refresh();
     } catch {
       setError('No se pudo contactar el servicio de acceso.');
