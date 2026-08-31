@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getNvetApiUrl, setNvetSessionCookies } from '@/lib/nvetcareapp/session';
+import {
+  clearNvetRoleModeCookie,
+  getNvetApiUrl,
+  setNvetSessionCookies,
+} from '@/lib/nvetcareapp/session';
 
 // "Continuar con mi cuenta CTG One" (Fase 4, docs/identity/ADR-001 en este
 // repo). Server-to-server only, exactly like THREAT_MODEL.md § New trust
@@ -43,8 +47,6 @@ export async function POST(request: NextRequest) {
   }
 
   if (upstream.status === 404) {
-    // El backend todavía tiene NVET_CTG_IDENTITY_EXCHANGE_ENABLED apagado
-    // (ver ADR-001 § Rollout) -- no es un error de la sesión del usuario.
     return NextResponse.json(
       { message: 'Este método de acceso todavía no está disponible.' },
       { status: 404 }
@@ -64,5 +66,6 @@ export async function POST(request: NextRequest) {
     requiresEmailVerification: data.requiresEmailVerification,
   });
   setNvetSessionCookies(response, { accessToken: data.accessToken, refreshToken: data.refreshToken });
+  clearNvetRoleModeCookie(response);
   return response;
 }

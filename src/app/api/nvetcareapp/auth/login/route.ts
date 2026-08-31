@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getNvetApiUrl, setNvetSessionCookies } from '@/lib/nvetcareapp/session';
+import {
+  clearNvetRoleModeCookie,
+  getNvetApiUrl,
+  setNvetSessionCookies,
+} from '@/lib/nvetcareapp/session';
 
 // Proxies to NestJS POST /auth/login server-side and turns the returned
 // access/refresh tokens into httpOnly cookies — the browser never holds
@@ -38,5 +42,6 @@ export async function POST(request: NextRequest) {
     requiresEmailVerification: data.requiresEmailVerification,
   });
   setNvetSessionCookies(response, { accessToken: data.accessToken, refreshToken: data.refreshToken });
+  clearNvetRoleModeCookie(response);
   return response;
 }
