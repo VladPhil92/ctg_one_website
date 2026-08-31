@@ -52,15 +52,19 @@ export async function POST(request: NextRequest) {
   }
 
   const metadataAnonymousId = user?.user_metadata?.analytics_anonymous_id;
-  const cookieAnonymousId = request.cookies.get(ANALYTICS_COOKIE_NAME)?.value;
   const bodyAnonymousId = body.anonymousId;
+  const cookieAnonymousId = request.cookies.get(ANALYTICS_COOKIE_NAME)?.value;
 
+  // Once a user exists, signup metadata is the cross-device cohort authority.
+  // Before authentication, the browser-local UUID is authoritative and the
+  // httpOnly cookie follows it, so clearing local storage cannot silently split
+  // signup metadata from the event that immediately preceded registration.
   const anonymousId = isAnalyticsAnonymousId(metadataAnonymousId)
     ? metadataAnonymousId
-    : isAnalyticsAnonymousId(cookieAnonymousId)
-      ? cookieAnonymousId
-      : isAnalyticsAnonymousId(bodyAnonymousId)
-        ? bodyAnonymousId
+    : isAnalyticsAnonymousId(bodyAnonymousId)
+      ? bodyAnonymousId
+      : isAnalyticsAnonymousId(cookieAnonymousId)
+        ? cookieAnonymousId
         : null;
 
   if (!anonymousId) {
