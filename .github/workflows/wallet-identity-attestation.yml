@@ -1,0 +1,36 @@
+name: Wallet Identity Attestation
+
+on:
+  push:
+    paths:
+      - 'src/app/api/wallet/identity/proof/**'
+      - 'scripts/test-wallet-identity-attestation-invariants.mjs'
+      - 'supabase/migrations/20260829231000_0076_wallet_identity_bridge.sql'
+      - 'supabase/migrations/20260829234000_0077_trusted_wallet_identity_linking.sql'
+      - '.github/workflows/wallet-identity-attestation.yml'
+  pull_request:
+    paths:
+      - 'src/app/api/wallet/identity/proof/**'
+      - 'scripts/test-wallet-identity-attestation-invariants.mjs'
+      - 'supabase/migrations/20260829231000_0076_wallet_identity_bridge.sql'
+      - 'supabase/migrations/20260829234000_0077_trusted_wallet_identity_linking.sql'
+      - '.github/workflows/wallet-identity-attestation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  identity-attestation-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22.22.0'
+
+      - name: Verify canonical identity attestation invariants
+        run: node scripts/test-wallet-identity-attestation-invariants.mjs
