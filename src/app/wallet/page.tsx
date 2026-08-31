@@ -74,7 +74,7 @@ export default function WalletPage() {
                   <div>
                     <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#d4b676]">CTG One / Wallet</p>
                     <p className="mt-2 font-outfit text-2xl font-semibold tracking-[-0.04em] text-white">{es ? 'Identidad financiera unificada' : 'Unified financial identity'}</p>
-                    <p className="mt-2 text-[9px] uppercase tracking-[0.14em] text-white/30">{es ? 'Vista conceptual de arquitectura' : 'Conceptual architecture view'}</p>
+                    <p className="mt-2 text-[9px] uppercase tracking-[0.14em] text-text-dim">{es ? 'Vista conceptual de arquitectura' : 'Conceptual architecture view'}</p>
                   </div>
                   <BadgeCheck size={22} className="text-[#d4b676]" />
                 </div>
