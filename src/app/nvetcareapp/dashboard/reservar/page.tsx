@@ -4,7 +4,13 @@ import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
 import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
 import { ClientBookingFlow } from './client-booking-flow';
 
-export default async function NvetClientBookingPage() {
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export default async function NvetClientBookingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ vetId?: string }>;
+}) {
   const accessToken = (await cookies()).get(NVET_ACCESS_COOKIE)?.value;
   if (!accessToken) redirect('/nvetcareapp/iniciar-sesion?next=/nvetcareapp/dashboard/reservar');
 
@@ -16,5 +22,8 @@ export default async function NvetClientBookingPage() {
     redirect('/nvetcareapp/dashboard');
   }
 
-  return <ClientBookingFlow firstName={userResult.user.firstName} />;
+  const { vetId } = await searchParams;
+  const initialVetId = vetId && UUID.test(vetId) ? vetId : undefined;
+
+  return <ClientBookingFlow firstName={userResult.user.firstName} initialVetId={initialVetId} />;
 }
