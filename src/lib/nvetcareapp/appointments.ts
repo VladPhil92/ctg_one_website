@@ -1,4 +1,5 @@
 import { getNvetApiUrl } from './session';
+import { getNvetAuthorizationHeaders } from './request';
 
 export type NvetAppointmentStatus = 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED';
 
@@ -31,7 +32,7 @@ export async function fetchNvetAppointments(accessToken: string): Promise<NvetAp
   let res: Response;
   try {
     res = await fetch(`${getNvetApiUrl()}/api/appointments`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: await getNvetAuthorizationHeaders(accessToken),
       cache: 'no-store',
     });
   } catch {
@@ -68,7 +69,7 @@ export async function updateNvetAppointmentStatus(
   try {
     res = await fetch(`${getNvetApiUrl()}/api/appointments/${appointmentId}/status`, {
       method: 'PATCH',
-      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      headers: await getNvetAuthorizationHeaders(accessToken, { 'Content-Type': 'application/json' }),
       body: JSON.stringify({ status }),
     });
   } catch {
