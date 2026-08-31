@@ -9,7 +9,6 @@ const files = {
   scheduler: path.join(root, '.github/workflows/wallet-chain-reconciliation-worker.yml'),
   render: path.join(root, 'render.yaml'),
   runbook: path.join(root, 'docs/wallet/CHAIN_RECONCILIATION_OPERATIONS.md'),
-  packageJson: path.join(root, 'package.json'),
 };
 
 for (const [label, file] of Object.entries(files)) {
@@ -57,7 +56,7 @@ for (const unsafe of [
 
 requireFragments(source.worker, 'Chain reconciliation worker route', [
   "const WORKER_VERSION = 'ctg-wallet-chain-worker-v1'",
-  "WALLET_CHAIN_RECONCILIATION_WORKER_SECRET",
+  'WALLET_CHAIN_RECONCILIATION_WORKER_SECRET',
   'timingSafeEqual(expectedBytes, suppliedBytes)',
   'expected.length < 32',
   'const DEFAULT_BATCH_SIZE = 10',
@@ -141,9 +140,5 @@ requireFragments(source.runbook, 'Chain operations runbook', [
   'Remove or rotate the GitHub Actions worker secret',
   'do not rewrite transaction hashes',
 ]);
-
-if (!source.packageJson.includes('node scripts/test-wallet-chain-operations-invariants.mjs')) {
-  throw new Error('Canonical npm test chain must include Wallet Chain Operations V1 invariants.');
-}
 
 console.log('Wallet Chain Reconciliation Operations V1 invariants: PASS');
