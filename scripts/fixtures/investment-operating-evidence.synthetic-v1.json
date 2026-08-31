@@ -11,6 +11,7 @@
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
     "schemaMigration": "0088",
     "schemaMigrationName": "wallet_intent_submission_v1",
+    "schemaMigrationName": "wallet_chain_reconciliation_v1",
     "schemaMigrationCount": 88,
     "schemaCompatible": true,
     "productionReadinessVerified": false

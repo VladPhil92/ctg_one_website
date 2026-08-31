@@ -8,6 +8,7 @@
   "expectedBranch": "main",
   "expectedMigration": "0088",
   "expectedMigrationName": "wallet_intent_submission_v1",
+  "expectedMigrationName": "wallet_chain_reconciliation_v1",
   "expectedMigrationCount": 88,
   "observed": {
     "readinessHttp": 200,
