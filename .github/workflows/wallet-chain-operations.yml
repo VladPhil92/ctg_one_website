@@ -6,12 +6,16 @@ on:
     paths:
       - 'src/lib/wallet/chain-reconciliation-service.ts'
       - 'src/lib/wallet/chain-reconciliation.ts'
+      - 'src/lib/wallet/operational-alerts.ts'
       - 'src/app/api/internal/wallet/reconcile-pending/**'
       - 'src/app/api/wallet/intents/**/reconcile/**'
       - '.github/workflows/wallet-chain-reconciliation-worker.yml'
       - '.github/workflows/wallet-chain-operations.yml'
       - 'scripts/test-wallet-chain-operations-invariants.mjs'
       - 'scripts/test-wallet-chain-reconciliation-invariants.mjs'
+      - 'scripts/test-wallet-lifecycle-correlation-alerts-invariants.mjs'
+      - 'supabase/migrations/**wallet_lifecycle_correlation_alerts_v1.sql'
+      - 'src/lib/observability/schema-version.ts'
       - 'docs/wallet/CHAIN_RECONCILIATION_OPERATIONS.md'
       - 'render.yaml'
   push:
@@ -19,12 +23,16 @@ on:
     paths:
       - 'src/lib/wallet/chain-reconciliation-service.ts'
       - 'src/lib/wallet/chain-reconciliation.ts'
+      - 'src/lib/wallet/operational-alerts.ts'
       - 'src/app/api/internal/wallet/reconcile-pending/**'
       - 'src/app/api/wallet/intents/**/reconcile/**'
       - '.github/workflows/wallet-chain-reconciliation-worker.yml'
       - '.github/workflows/wallet-chain-operations.yml'
       - 'scripts/test-wallet-chain-operations-invariants.mjs'
       - 'scripts/test-wallet-chain-reconciliation-invariants.mjs'
+      - 'scripts/test-wallet-lifecycle-correlation-alerts-invariants.mjs'
+      - 'supabase/migrations/**wallet_lifecycle_correlation_alerts_v1.sql'
+      - 'src/lib/observability/schema-version.ts'
       - 'docs/wallet/CHAIN_RECONCILIATION_OPERATIONS.md'
       - 'render.yaml'
 
@@ -58,6 +66,7 @@ jobs:
         run: |
           node scripts/test-wallet-chain-reconciliation-invariants.mjs
           node scripts/test-wallet-chain-operations-invariants.mjs
+          node scripts/test-wallet-lifecycle-correlation-alerts-invariants.mjs
 
       - name: Typecheck worker and shared reconciliation boundary
         run: npx tsc --noEmit
