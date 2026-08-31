@@ -41,7 +41,9 @@ for (const fragment of [
   'terminalLifecycleStatus(row.status)',
   'wallet.chain.worker.alert_recovery_failed',
   'const terminalStatusCommitted = terminalLifecycleStatus(observedStatus) !== null',
-  'if (!terminalStatusCommitted && submittedAgeSeconds >= stuckAfterSeconds)',
+  "const priorStuckAgeSeconds = intent.status === 'confirmed_external'",
+  'if (!terminalStatusCommitted && priorStuckAgeSeconds >= stuckAfterSeconds)',
+  "stuck_age_anchor: intent.status === 'confirmed_external' ? 'chain_confirmed_at' : 'submitted_at'",
 ]) assert.ok(worker.includes(fragment), `Worker missing correlation/alert invariant: ${fragment}`);
 
 assert.ok(
