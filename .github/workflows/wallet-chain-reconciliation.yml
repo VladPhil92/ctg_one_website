@@ -5,12 +5,15 @@ on:
     branches: [main]
     paths:
       - 'supabase/migrations/**wallet_chain_reconciliation**'
+      - 'src/app/api/wallet/intents/**/authorize/**'
       - 'src/app/api/wallet/intents/**/submit/**'
       - 'src/app/api/wallet/intents/**/reconcile/**'
       - 'src/lib/wallet/chain-reconciliation.ts'
+      - 'src/lib/wallet/execution-rollout.ts'
       - 'src/lib/wallet/trusted-simulation.ts'
       - 'src/lib/observability/schema-version.ts'
       - 'scripts/test-wallet-chain-reconciliation-invariants.mjs'
+      - 'scripts/test-wallet-canary-rollout-invariants.mjs'
       - 'scripts/wallet-chain-reconciliation-schema-smoke.sql'
       - 'scripts/fixtures/investment-operating-evidence.synthetic-v1.json'
       - 'scripts/fixtures/investment-production-readiness-canary.synthetic-v1.json'
@@ -20,12 +23,15 @@ on:
     branches: [main]
     paths:
       - 'supabase/migrations/**wallet_chain_reconciliation**'
+      - 'src/app/api/wallet/intents/**/authorize/**'
       - 'src/app/api/wallet/intents/**/submit/**'
       - 'src/app/api/wallet/intents/**/reconcile/**'
       - 'src/lib/wallet/chain-reconciliation.ts'
+      - 'src/lib/wallet/execution-rollout.ts'
       - 'src/lib/wallet/trusted-simulation.ts'
       - 'src/lib/observability/schema-version.ts'
       - 'scripts/test-wallet-chain-reconciliation-invariants.mjs'
+      - 'scripts/test-wallet-canary-rollout-invariants.mjs'
       - 'scripts/wallet-chain-reconciliation-schema-smoke.sql'
       - '.github/workflows/wallet-chain-reconciliation.yml'
 
@@ -59,6 +65,7 @@ jobs:
         run: |
           node scripts/test-migration-integrity.mjs
           node scripts/test-wallet-chain-reconciliation-invariants.mjs
+          node scripts/test-wallet-canary-rollout-invariants.mjs
 
       - name: Typecheck chain lifecycle
         run: npx tsc --noEmit
