@@ -1,5 +1,8 @@
 import { getNvetApiUrl } from './session';
-import { isCanonicalNvetSuperadminSession } from './superadmin';
+import {
+  isCanonicalNvetSuperadminSession,
+  isCanonicalNvetSuperadminSubject,
+} from './superadmin';
 
 export type NvetUserRole = 'SUPERADMIN' | 'ADMIN' | 'VET' | 'CLIENT';
 
@@ -9,6 +12,7 @@ export interface NvetCurrentUser {
   role: NvetUserRole;
   firstName: string;
   lastName: string;
+  isSuperadmin: boolean;
 }
 
 export type NvetCurrentUserResult =
@@ -29,11 +33,17 @@ function cleanName(value: unknown): string {
  * the backend's own guards on each subsequent data call remain the
  * authoritative authorization check.
  *
- * The canonical root identity intentionally reuses the ADMIN view model in
- * this shared router while `dashboard/template.tsx` adds the SUPERADMIN-only
- * control surface. The backend still evaluates that same account as the sole
- * effective SUPERADMIN. Any stray SUPERADMIN value returned for another
- * identity is projected down to ADMIN in the web shell.
+ * The root projection is dual-bound to both sides of the identity bridge:
+ * (1) the current CTG One cookie session must validate as the canonical
+ * Supabase subject and (2) the authenticated Nvet user returned by /auth/me
+ * must be linked to that same canonical subject through `ctgUserId`. This
+ * prevents a stale/mismatched Nvet cookie from inheriting root UI merely
+ * because the browser also holds the canonical CTG One session.
+ *
+ * The canonical root intentionally reuses the ADMIN read-model in the shared
+ * dashboard router while `dashboard/template.tsx` adds SUPERADMIN-only chrome.
+ * The backend independently enforces the sole effective SUPERADMIN at its JWT
+ * boundary. Any non-canonical upstream SUPERADMIN is projected to ADMIN here.
  *
  * CTG-provisioned accounts may legitimately have null profile names; missing
  * names therefore no longer turn a valid authenticated session into a 502.
@@ -54,12 +64,20 @@ export async function fetchNvetCurrentUser(accessToken: string): Promise<NvetCur
   }
 
   try {
-    const raw = (await res.json()) as Partial<NvetCurrentUser> & { role?: unknown };
+    const raw = (await res.json()) as Partial<NvetCurrentUser> & {
+      role?: unknown;
+      ctgUserId?: unknown;
+    };
     if (typeof raw.id !== 'string' || typeof raw.email !== 'string') {
       return { ok: false, status: 502 };
     }
 
-    const canonicalSuperadmin = await isCanonicalNvetSuperadminSession();
+    const canonicalSession = await isCanonicalNvetSuperadminSession();
+    const canonicalNvetLink =
+      typeof raw.ctgUserId === 'string' &&
+      isCanonicalNvetSuperadminSubject(raw.ctgUserId);
+    const canonicalSuperadmin = canonicalSession && canonicalNvetLink;
+
     const upstreamRole = raw.role;
     const effectiveRole: NvetUserRole | undefined = canonicalSuperadmin
       ? 'ADMIN'
@@ -84,6 +102,7 @@ export async function fetchNvetCurrentUser(accessToken: string): Promise<NvetCur
         firstName,
         lastName,
         role: effectiveRole,
+        isSuperadmin: canonicalSuperadmin,
       },
     };
   } catch {
