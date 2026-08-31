@@ -6,7 +6,6 @@ import type { NvetAppointment } from '@/lib/nvetcareapp/appointments';
 import type { NvetClientReview, NvetClientTransaction } from '@/lib/nvetcareapp/client-fulfillment';
 
 type PaymentAttempt = { fingerprint: string; requestId: string } | null;
-
 type ReviewDraft = { rating: number; comment: string };
 
 const STATUS_LABELS: Record<NvetAppointment['status'], string> = {
@@ -94,10 +93,8 @@ export function ClientFulfillmentFlow({
       });
 
       if (!response.ok) {
-        setPaymentErrors((current) => ({
-          ...current,
-          [appointmentId]: await readMessage(response, 'No se pudo iniciar la verificación del pago.'),
-        }));
+        const message = await readMessage(response, 'No se pudo iniciar la verificación del pago.');
+        setPaymentErrors((current) => ({ ...current, [appointmentId]: message }));
         return;
       }
 
@@ -127,10 +124,8 @@ export function ClientFulfillmentFlow({
       });
 
       if (!response.ok) {
-        setReviewErrors((current) => ({
-          ...current,
-          [appointmentId]: await readMessage(response, 'No se pudo enviar tu calificación.'),
-        }));
+        const message = await readMessage(response, 'No se pudo enviar tu calificación.');
+        setReviewErrors((current) => ({ ...current, [appointmentId]: message }));
         return;
       }
 
