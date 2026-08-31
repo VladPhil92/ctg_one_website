@@ -41,6 +41,45 @@ export default function WalletPage() {
     },
   ];
 
+  const capabilities = [
+    {
+      name: es ? 'Saldo CTG y actividad' : 'CTG Balance and activity',
+      state: es ? 'Canónico' : 'Canonical',
+      tone: 'border-emerald-400/20 bg-emerald-400/[0.05] text-emerald-300',
+      text: es ? 'Lectura autenticada desde el modelo financiero de CTG One.' : 'Authenticated read model served by CTG One financial authority.',
+    },
+    {
+      name: es ? 'Recargar Saldo CTG' : 'Top up CTG Balance',
+      state: es ? 'Según capability' : 'Capability-driven',
+      tone: 'border-[#c9a962]/25 bg-[#c9a962]/[0.055] text-[#d4b676]',
+      text: es ? 'Se habilita solo con KYC y una acción de recarga publicada por CTG One.' : 'Enabled only with KYC and a top-up action published by CTG One.',
+    },
+    {
+      name: es ? 'Recibir crypto' : 'Receive crypto',
+      state: es ? 'Condicionado' : 'Conditional',
+      tone: 'border-[#248cff]/20 bg-[#248cff]/[0.045] text-[#7db8ff]',
+      text: es ? 'Requiere una dirección EVM primaria verificada y vinculada a la identidad CTG One.' : 'Requires a verified primary EVM address linked to CTG One identity.',
+    },
+    {
+      name: es ? 'Enviar crypto' : 'Send crypto',
+      state: es ? 'Canary controlado' : 'Controlled canary',
+      tone: 'border-amber-300/20 bg-amber-300/[0.045] text-amber-200',
+      text: es ? 'El envío público sigue cerrado; el canary usa guardrails, simulación y reconciliación server-side.' : 'Public send remains closed; the canary uses server-side guardrails, simulation and reconciliation.',
+    },
+    {
+      name: 'Swap',
+      state: es ? 'Solo cotización' : 'Quote only',
+      tone: 'border-white/[0.10] bg-white/[0.025] text-white/60',
+      text: es ? 'La pantalla puede estimar una ruta, pero no ejecuta ni modifica balances.' : 'The surface may estimate a route but does not execute or mutate balances.',
+    },
+    {
+      name: es ? 'Retiro a banco / compra crypto' : 'Bank withdrawal / crypto purchase',
+      state: es ? 'No habilitado' : 'Unavailable',
+      tone: 'border-rose-300/15 bg-rose-300/[0.035] text-rose-200/80',
+      text: es ? 'No se presentan como operaciones productivas hasta existir contratos canónicos de ejecución y conciliación.' : 'Not presented as production operations until canonical execution and reconciliation contracts exist.',
+    },
+  ];
+
   return (
     <PublicPageShell>
       <Container size="large">
@@ -120,6 +159,23 @@ export default function WalletPage() {
           </div>
         </section>
 
+        <section className="pb-16 sm:pb-20">
+          <div className="mb-8 max-w-3xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#d4b676]">{es ? 'Estado de capacidades' : 'Capability status'}</p>
+            <h2 className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">{es ? 'La interfaz solo habilita lo que el backend puede certificar.' : 'The interface only enables what the backend can certify.'}</h2>
+            <p className="mt-4 text-sm leading-relaxed text-text-muted">{es ? 'Las funciones financieras pueden estar habilitadas, controladas, ser solo informativas o permanecer cerradas. Una pantalla o un SDK no convierten una función en productiva.' : 'Financial functions may be enabled, controlled, informational only, or closed. A screen or SDK does not make a capability production-ready.'}</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {capabilities.map((capability) => (
+              <article key={capability.name} className="rounded-[22px] border border-white/[0.08] bg-white/[0.02] p-5">
+                <span className={`inline-flex rounded-full border px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] ${capability.tone}`}>{capability.state}</span>
+                <h3 className="mt-4 font-outfit text-lg font-semibold text-white">{capability.name}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-text-muted">{capability.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section id="app" className="scroll-mt-32 pb-20 sm:pb-24">
           <div className="grid gap-5 lg:grid-cols-2">
             <article className="rounded-[28px] border border-white/[0.08] bg-white/[0.025] p-7 sm:p-8">
@@ -134,7 +190,7 @@ export default function WalletPage() {
               <Smartphone size={22} className="text-[#7db8ff]" />
               <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.17em] text-white/35">App / PWA</p>
               <h2 className="mt-3 font-outfit text-3xl font-semibold tracking-[-0.04em] text-white">{es ? 'La misma wallet en tu dispositivo' : 'The same wallet on your device'}</h2>
-              <p className="mt-4 text-sm leading-relaxed text-text-muted">{es ? 'La app es un cliente de la misma identidad CTG One y no debe crear un segundo ledger ni sustituir una wallet legacy ya verificada.' : 'The app is a client of the same CTG One identity and must not create a second ledger or replace an already verified legacy wallet.'}</p>
+              <p className="mt-4 text-sm leading-relaxed text-text-muted">{es ? 'La app es un cliente de la misma identidad CTG One y no debe crear un segundo ledger ni sustituir una wallet legacy ya verificada. Las capacidades operativas siguen las mismas reglas fail-closed del backend.' : 'The app is a client of the same CTG One identity and must not create a second ledger or replace an already verified legacy wallet. Operational capabilities follow the same fail-closed backend rules.'}</p>
               <a href={PWA_URL} target="_blank" rel="noreferrer" className="mt-7 inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-[#7db8ff] hover:text-white">{es ? 'Abrir PWA' : 'Open PWA'} <ArrowUpRight size={14} /></a>
             </article>
           </div>
