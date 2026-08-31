@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0089",
-  "expectedMigrationName": "wallet_canary_evidence_provenance",
-  "expectedMigrationCount": 89,
+  "expectedMigration": "0090",
+  "expectedMigrationName": "wallet_lifecycle_correlation_alerts_v1",
+  "expectedMigrationCount": 90,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
