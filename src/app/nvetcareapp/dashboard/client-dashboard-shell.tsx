@@ -26,17 +26,17 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Inicio', icon: Home, href: '/nvetcareapp/dashboard' },
   { label: 'Mis mascotas', icon: PawPrint, href: '/nvetcareapp/dashboard/mascotas' },
+  { label: 'Prevención', icon: Bell, href: '/nvetcareapp/dashboard/prevencion' },
   { label: 'Servicios', icon: Stethoscope, badge: 'Próximamente' },
   { label: 'Citas', icon: CalendarDays, href: '/nvetcareapp/dashboard/citas' },
   { label: 'Historial', icon: FileClock, href: '/nvetcareapp/dashboard/historial' },
   { label: 'Pagos / Wallet', icon: WalletCards, href: '/dashboard/wallet' },
   { label: 'Mensajes', icon: MessageCircle, href: '/nvetcareapp/dashboard/citas', badge: 'En citas' },
-  { label: 'Notificaciones', icon: Bell, badge: 'Próximamente' },
   { label: 'Perfil', icon: UserRound, badge: 'Próximamente' },
 ];
 
 const MOBILE_ITEMS = NAV_ITEMS.filter((item) =>
-  ['Inicio', 'Mis mascotas', 'Citas', 'Historial', 'Pagos / Wallet'].includes(item.label),
+  ['Inicio', 'Mis mascotas', 'Prevención', 'Citas', 'Historial', 'Pagos / Wallet'].includes(item.label),
 );
 
 function isActivePath(pathname: string, href: string): boolean {
