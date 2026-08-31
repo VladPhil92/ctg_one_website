@@ -1,0 +1,83 @@
+name: Wallet Intent Submission V1
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**wallet_intent_submission**'
+      - 'src/app/api/wallet/intents/**/submit/**'
+      - 'src/lib/wallet/trusted-submission.ts'
+      - 'src/lib/observability/schema-version.ts'
+      - 'scripts/test-wallet-intent-submission-invariants.mjs'
+      - 'scripts/wallet-intent-submission-schema-smoke.sql'
+      - 'scripts/fixtures/**synthetic-v1.json'
+      - '.github/workflows/wallet-intent-submission.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**wallet_intent_submission**'
+      - 'src/app/api/wallet/intents/**/submit/**'
+      - 'src/lib/wallet/trusted-submission.ts'
+      - 'src/lib/observability/schema-version.ts'
+      - 'scripts/test-wallet-intent-submission-invariants.mjs'
+      - 'scripts/wallet-intent-submission-schema-smoke.sql'
+      - 'scripts/fixtures/**synthetic-v1.json'
+      - '.github/workflows/wallet-intent-submission.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wallet-intent-submission-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Trusted Polygon submission contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify source invariants
+        run: |
+          node scripts/test-migration-integrity.mjs
+          node scripts/test-wallet-intent-submission-invariants.mjs
+          npx tsc --noEmit
+
+      - name: Set up pinned Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.111.0
+
+      - name: Configure isolated database port
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('supabase/config.toml')
+          source = path.read_text()
+          marker = '[db]\n# Port to use for the local database URL.\nport = 54322'
+          replacement = '[db]\n# Port to use for the local database URL.\nport = 55439'
+          if marker not in source:
+              raise SystemExit('Expected Supabase database port stanza was not found')
+          path.write_text(source.replace(marker, replacement, 1))
+          PY
+
+      - name: Start isolated Supabase database
+        run: supabase db start
+
+      - name: Submission PostgreSQL golden path
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:55439/postgres" \
+            -X -v ON_ERROR_STOP=1 \
+            -f scripts/wallet-intent-submission-schema-smoke.sql
