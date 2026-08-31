@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0088",
-    "schemaMigrationName": "wallet_chain_reconciliation_v1",
-    "schemaMigrationCount": 88,
+    "schemaMigration": "0089",
+    "schemaMigrationName": "wallet_canary_evidence_provenance",
+    "schemaMigrationCount": 89,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
