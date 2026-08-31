@@ -20,13 +20,12 @@ export default async function NvetServicesPage() {
 
   if (userResult.user.role === 'CLIENT') {
     const marketplaceResult = await searchNvetVets(
-      new URLSearchParams({ limit: '100', sortBy: 'rating' }),
+      new URLSearchParams({ limit: '20', offset: '0', sortBy: 'rating' }),
     );
 
     return (
       <ClientServicesMarketplace
         initialVets={marketplaceResult.ok ? marketplaceResult.data.results : []}
-        totalVerifiedProviders={marketplaceResult.ok ? marketplaceResult.data.results.length : 0}
         marketplaceAvailable={marketplaceResult.ok}
       />
     );
