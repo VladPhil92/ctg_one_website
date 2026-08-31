@@ -7,6 +7,7 @@ const [
   dashboardPage,
   template,
   requireRoot,
+  roleSwitch,
   governanceModel,
   governancePage,
   usersPage,
@@ -21,6 +22,7 @@ const [
   read('src/app/nvetcareapp/dashboard/page.tsx'),
   read('src/app/nvetcareapp/dashboard/template.tsx'),
   read('src/lib/nvetcareapp/require-superadmin.ts'),
+  read('src/app/nvetcareapp/dashboard/superadmin-role-switch.tsx'),
   read('src/lib/nvetcareapp/governance.ts'),
   read('src/app/nvetcareapp/dashboard/gobernanza/page.tsx'),
   read('src/app/nvetcareapp/dashboard/usuarios/page.tsx'),
@@ -41,6 +43,14 @@ assert.match(
 
 assert.match(requireRoot, /userResult\.user\.isSuperadmin/, 'Privileged governance pages must share the canonical SUPERADMIN guard.');
 assert.match(requireRoot, /redirect\('\/nvetcareapp\/dashboard'\)/, 'Non-root authenticated users must fail closed back to their ordinary dashboard.');
+assert.match(
+  requireRoot,
+  /userResult\.user\.isClientMode[\s\S]*redirect\('\/nvetcareapp\/dashboard\/citas'\)/,
+  'Canonical root acting as CLIENT must leave privileged governance pages through a CLIENT-safe landing route instead of looping through /dashboard.',
+);
+assert.match(roleSwitch, /targetMode === 'CLIENT'[\s\S]*\/nvetcareapp\/dashboard\/citas/, 'Switching into CLIENT mode must land on the client appointment surface.');
+assert.match(roleSwitch, /\/nvetcareapp\/dashboard\/gobernanza/, 'Switching back to SUPERADMIN must land on governance.');
+assert.match(roleSwitch, /router\.replace\(landingPath\)/, 'Role transitions must replace stale privileged history rather than pushing a loop-prone entry.');
 
 for (const [href, label] of [
   ['/nvetcareapp/dashboard/gobernanza', 'governance hub'],
