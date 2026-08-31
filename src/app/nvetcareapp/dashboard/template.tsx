@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { ShieldCheck, UserRound } from 'lucide-react';
+import { fetchNvetUnreadNotificationCount } from '@/lib/nvetcareapp/notifications';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
 import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
 import { ClientDashboardShell } from './client-dashboard-shell';
@@ -25,8 +26,16 @@ export default async function NvetDashboardTemplate({ children }: { children: Re
   const isSuperadmin = userResult.user.isSuperadmin;
   const isClientView = userResult.user.role === 'CLIENT';
   const userName = `${userResult.user.firstName} ${userResult.user.lastName}`.trim();
+  const unreadResult = isClientView && accessToken
+    ? await fetchNvetUnreadNotificationCount(accessToken)
+    : null;
+  const unreadNotifications = unreadResult?.ok ? unreadResult.data.unread : 0;
   const content = isClientView ? (
-    <ClientDashboardShell userName={userName} userEmail={userResult.user.email}>
+    <ClientDashboardShell
+      userName={userName}
+      userEmail={userResult.user.email}
+      unreadNotifications={unreadNotifications}
+    >
       {children}
     </ClientDashboardShell>
   ) : (
