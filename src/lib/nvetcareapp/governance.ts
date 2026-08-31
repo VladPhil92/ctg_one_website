@@ -123,6 +123,35 @@ async function fetchGovernance<T>(accessToken: string, path: string): Promise<Nv
   }
 }
 
+async function mutateGovernance<T>(
+  accessToken: string,
+  path: string,
+  body: Record<string, unknown>,
+): Promise<NvetGovernanceResult<T>> {
+  let response: Response;
+  try {
+    response = await fetch(`${getNvetApiUrl()}${path}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+    });
+  } catch {
+    return { ok: false, status: 502 };
+  }
+
+  if (!response.ok) return { ok: false, status: response.status };
+
+  try {
+    return { ok: true, data: (await response.json()) as T };
+  } catch {
+    return { ok: false, status: 502 };
+  }
+}
+
 export function fetchNvetGovernanceOverview(accessToken: string) {
   return fetchGovernance<NvetGovernanceOverview>(accessToken, '/api/admin/governance/overview');
 }
@@ -167,5 +196,44 @@ export function fetchNvetPaymentStats(accessToken: string) {
   return fetchGovernance<Record<string, { total: number; amount: number; byStatus: Record<string, number> }>>(
     accessToken,
     '/api/admin/payment-stats',
+  );
+}
+
+export function updateNvetGovernanceUserStatus(
+  accessToken: string,
+  userId: string,
+  isActive: boolean,
+  reason: string,
+) {
+  return mutateGovernance<Pick<NvetGovernanceUser, 'id' | 'email' | 'role' | 'isActive' | 'deactivatedAt'>>(
+    accessToken,
+    `/api/admin/governance/users/${userId}/status`,
+    { isActive, reason },
+  );
+}
+
+export function reviewNvetGovernanceVet(
+  accessToken: string,
+  vetId: string,
+  decision: 'APPROVE' | 'REJECT' | 'IN_REVIEW',
+  reason: string,
+) {
+  return mutateGovernance<Record<string, unknown>>(
+    accessToken,
+    `/api/admin/governance/veterinarians/${vetId}/verification`,
+    { decision, reason },
+  );
+}
+
+export function updateNvetGovernanceVetStatus(
+  accessToken: string,
+  vetId: string,
+  isActive: boolean,
+  reason: string,
+) {
+  return mutateGovernance<Record<string, unknown>>(
+    accessToken,
+    `/api/admin/governance/veterinarians/${vetId}/status`,
+    { isActive, reason },
   );
 }
