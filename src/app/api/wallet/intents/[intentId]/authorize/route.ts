@@ -184,16 +184,6 @@ export async function POST(request: Request) {
   if (executionRevalidation === null) {
     return noStoreJson(request, { error: 'WALLET_EXECUTION_QUERY_INVALID' }, { status: 400 });
   }
-  if (executionRevalidation) {
-    try {
-      assertWalletCryptoSendExecutionAllowed(auth.user.id);
-    } catch (error) {
-      if (error instanceof WalletExecutionRolloutError) {
-        return noStoreJson(request, { error: error.code }, { status: rolloutStatus(error.code) });
-      }
-      return noStoreJson(request, { error: 'WALLET_EXECUTION_GATE_FAILED' }, { status: 503 });
-    }
-  }
 
   const intentId = getIntentId(request);
   if (!intentId) {
@@ -242,6 +232,22 @@ export async function POST(request: Request) {
   }
   if (intent.tx_hash || intent.external_reference || intent.settled_at) {
     return noStoreJson(request, { error: 'WALLET_AUTH_EXTERNAL_STATE_PRESENT' }, { status: 409 });
+  }
+
+  // A first created -> authorized transition is execution-enabling evidence and
+  // therefore can never be created outside the current server-side canary gate.
+  // Durable authorized replays remain available without creating new evidence;
+  // when the caller explicitly requests pre-broadcast revalidation, the same
+  // gate is checked again so the kill-switch is effective immediately.
+  if (intent.status === 'created' || executionRevalidation) {
+    try {
+      assertWalletCryptoSendExecutionAllowed(auth.user.id);
+    } catch (error) {
+      if (error instanceof WalletExecutionRolloutError) {
+        return noStoreJson(request, { error: error.code }, { status: rolloutStatus(error.code) });
+      }
+      return noStoreJson(request, { error: 'WALLET_EXECUTION_GATE_FAILED' }, { status: 503 });
+    }
   }
 
   let simulationDigestSha256: string;
