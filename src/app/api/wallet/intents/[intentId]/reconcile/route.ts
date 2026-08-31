@@ -7,18 +7,19 @@ import {
 } from '@/lib/supabase/server';
 import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
 import {
-  inspectPolygonWalletIntentV1,
   WALLET_CHAIN_RECONCILIATION_VERSION,
   WalletChainReconciliationError,
 } from '@/lib/wallet/chain-reconciliation';
+import {
+  normalizeWalletChainIntentSnapshot,
+  reconcileWalletChainIntentV1,
+  WALLET_CHAIN_INTENT_SELECT,
+  WalletChainPersistenceError,
+} from '@/lib/wallet/chain-reconciliation-service';
 
 const CORS_METHODS = ['POST', 'OPTIONS'] as const;
 const MAX_BODY_BYTES = 256;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const TX_HASH_RE = /^0x[0-9a-f]{64}$/;
-const EVM_ADDRESS_RE = /^0x[0-9a-f]{40}$/;
-const BASE_UNITS_RE = /^[1-9][0-9]*$/;
-const SUPPORTED_ASSETS = new Set(['POL', 'CTG', 'USDC', 'USDT']);
 const ALLOWED_BODY_KEYS = new Set(['version']);
 
 function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
@@ -44,66 +45,6 @@ function validBody(value: unknown) {
   return isRecord(value)
     && !Object.keys(value).some((key) => !ALLOWED_BODY_KEYS.has(key))
     && value.version === WALLET_CHAIN_RECONCILIATION_VERSION;
-}
-
-type IntentSnapshot = {
-  id: string;
-  user_id: string;
-  status: string;
-  intent_type: string;
-  rail: string;
-  chain_id: number;
-  asset_symbol: string;
-  amount_base_units: string;
-  destination_address: string;
-  tx_hash: string;
-  submitted_at: string;
-  authorized_wallet_address: string;
-};
-
-function normalizeIntent(value: unknown): IntentSnapshot | null {
-  if (!isRecord(value)) return null;
-  if (
-    typeof value.id !== 'string'
-    || typeof value.user_id !== 'string'
-    || typeof value.status !== 'string'
-    || value.intent_type !== 'crypto_send'
-    || value.rail !== 'polygon'
-    || value.chain_id !== 137
-    || typeof value.asset_symbol !== 'string'
-    || !SUPPORTED_ASSETS.has(value.asset_symbol)
-    || typeof value.amount_base_units !== 'string'
-    || !BASE_UNITS_RE.test(value.amount_base_units)
-    || value.amount_base_units.length > 78
-    || typeof value.destination_address !== 'string'
-    || typeof value.tx_hash !== 'string'
-    || typeof value.submitted_at !== 'string'
-    || typeof value.authorized_wallet_address !== 'string'
-  ) return null;
-
-  const destinationAddress = value.destination_address.toLowerCase();
-  const txHash = value.tx_hash.toLowerCase();
-  const authorizedWalletAddress = value.authorized_wallet_address.toLowerCase();
-  if (
-    !EVM_ADDRESS_RE.test(destinationAddress)
-    || !TX_HASH_RE.test(txHash)
-    || !EVM_ADDRESS_RE.test(authorizedWalletAddress)
-  ) return null;
-
-  return {
-    id: value.id,
-    user_id: value.user_id,
-    status: value.status,
-    intent_type: 'crypto_send',
-    rail: 'polygon',
-    chain_id: 137,
-    asset_symbol: value.asset_symbol,
-    amount_base_units: value.amount_base_units,
-    destination_address: destinationAddress,
-    tx_hash: txHash,
-    submitted_at: value.submitted_at,
-    authorized_wallet_address: authorizedWalletAddress,
-  };
 }
 
 function rpcStatus(message: string) {
@@ -182,7 +123,7 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const { data: rawIntent, error: intentError } = await admin
     .from('wallet_intents_v2')
-    .select('id,user_id,status,intent_type,rail,chain_id,asset_symbol,amount_base_units,destination_address,tx_hash,submitted_at,authorized_wallet_address')
+    .select(WALLET_CHAIN_INTENT_SELECT)
     .eq('id', intentId)
     .eq('user_id', auth.user.id)
     .maybeSingle();
@@ -192,69 +133,30 @@ export async function POST(request: Request) {
   }
   if (!rawIntent) return noStoreJson(request, { error: 'WALLET_CHAIN_INTENT_NOT_FOUND' }, { status: 404 });
 
-  const intent = normalizeIntent(rawIntent);
+  const intent = normalizeWalletChainIntentSnapshot(rawIntent);
   if (!intent || intent.user_id !== auth.user.id) {
     return noStoreJson(request, { error: 'WALLET_CHAIN_INTENT_SHAPE_INVALID' }, { status: 409 });
   }
 
-  let observation;
   try {
-    observation = await inspectPolygonWalletIntentV1({
-      intentId: intent.id,
-      canonicalUserId: intent.user_id,
-      txHash: intent.tx_hash,
-      chainId: intent.chain_id,
-      assetSymbol: intent.asset_symbol,
-      amountBaseUnits: intent.amount_base_units,
-      destinationAddress: intent.destination_address,
-      authorizedWalletAddress: intent.authorized_wallet_address,
+    const result = await reconcileWalletChainIntentV1(admin, intent);
+    return noStoreJson(request, {
+      ...result.record,
+      observation: {
+        status: result.observation.status,
+        blockNumber: result.observation.blockNumber,
+        confirmations: result.observation.confirmations,
+        failureCode: result.observation.failureCode,
+        evidenceDigestSha256: result.observation.evidenceDigestSha256,
+      },
     });
   } catch (error) {
     if (error instanceof WalletChainReconciliationError) {
       return noStoreJson(request, { error: error.code }, { status: adapterStatus(error.code) });
     }
+    if (error instanceof WalletChainPersistenceError) {
+      return noStoreJson(request, { error: error.code }, { status: rpcStatus(error.code) });
+    }
     return noStoreJson(request, { error: 'WALLET_CHAIN_RECONCILIATION_ADAPTER_FAILED' }, { status: 503 });
   }
-
-  const { data, error } = await admin.rpc('record_wallet_chain_reconciliation_v1_server', {
-    p_user_id: auth.user.id,
-    p_intent_id: intent.id,
-    p_tx_hash: intent.tx_hash,
-    p_observation_status: observation.status,
-    p_evidence_digest_sha256: observation.evidenceDigestSha256,
-    p_chain_observed: observation.chainObserved,
-    p_block_number: observation.blockNumber,
-    p_confirmations: observation.confirmations,
-    p_failure_code: observation.failureCode,
-  });
-
-  if (error) {
-    return noStoreJson(
-      request,
-      { error: error.message.includes('WALLET_CHAIN_') ? error.message : 'WALLET_CHAIN_RECONCILIATION_FAILED' },
-      { status: rpcStatus(error.message) },
-    );
-  }
-
-  if (
-    !isRecord(data)
-    || data.version !== WALLET_CHAIN_RECONCILIATION_VERSION
-    || data.intentId !== intent.id
-    || data.txHash !== intent.tx_hash
-    || typeof data.status !== 'string'
-    || typeof data.replayed !== 'boolean'
-  ) {
-    return noStoreJson(request, { error: 'WALLET_CHAIN_RECONCILIATION_RESPONSE_INVALID' }, { status: 503 });
-  }
-
-  return noStoreJson(request, {
-    ...data,
-    observation: {
-      status: observation.status,
-      blockNumber: observation.blockNumber,
-      confirmations: observation.confirmations,
-      failureCode: observation.failureCode,
-      evidenceDigestSha256: observation.evidenceDigestSha256,
-    },
-  });
 }

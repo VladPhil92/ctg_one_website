@@ -1,0 +1,63 @@
+name: Wallet Chain Operations Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/wallet/chain-reconciliation-service.ts'
+      - 'src/lib/wallet/chain-reconciliation.ts'
+      - 'src/app/api/internal/wallet/reconcile-pending/**'
+      - 'src/app/api/wallet/intents/**/reconcile/**'
+      - '.github/workflows/wallet-chain-reconciliation-worker.yml'
+      - '.github/workflows/wallet-chain-operations.yml'
+      - 'scripts/test-wallet-chain-operations-invariants.mjs'
+      - 'scripts/test-wallet-chain-reconciliation-invariants.mjs'
+      - 'docs/wallet/CHAIN_RECONCILIATION_OPERATIONS.md'
+      - 'render.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/lib/wallet/chain-reconciliation-service.ts'
+      - 'src/lib/wallet/chain-reconciliation.ts'
+      - 'src/app/api/internal/wallet/reconcile-pending/**'
+      - 'src/app/api/wallet/intents/**/reconcile/**'
+      - '.github/workflows/wallet-chain-reconciliation-worker.yml'
+      - '.github/workflows/wallet-chain-operations.yml'
+      - 'scripts/test-wallet-chain-operations-invariants.mjs'
+      - 'scripts/test-wallet-chain-reconciliation-invariants.mjs'
+      - 'docs/wallet/CHAIN_RECONCILIATION_OPERATIONS.md'
+      - 'render.yaml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wallet-chain-operations-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  wallet-chain-operations:
+    name: Offline reconciliation and observability boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify chain reconciliation and operations invariants
+        run: |
+          node scripts/test-wallet-chain-reconciliation-invariants.mjs
+          node scripts/test-wallet-chain-operations-invariants.mjs
+
+      - name: Typecheck worker and shared reconciliation boundary
+        run: npx tsc --noEmit
