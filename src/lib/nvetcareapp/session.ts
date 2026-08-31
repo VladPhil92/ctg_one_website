@@ -8,18 +8,34 @@ import type { NextResponse } from 'next/server';
 export const NVET_ACCESS_COOKIE = 'nvet_access_token';
 export const NVET_REFRESH_COOKIE = 'nvet_refresh_token';
 
+// Public Railway origin of the canonical Nvet Care backend. This is not a
+// credential: it is the server address already used by production. Keeping a
+// production fallback here prevents a missing Render environment declaration
+// from turning every Nvet auth request into a 502. An explicit env value still
+// wins, so staging/alternate backends remain configurable.
+export const NVET_CANONICAL_PRODUCTION_API_URL = 'https://backend-production-a476.up.railway.app';
+
 export interface NvetTokens {
   accessToken: string;
   refreshToken: string;
 }
 
 export function getNvetApiUrl(): string {
-  const url = process.env.CTG_NVETCARE_API_URL;
+  const configuredUrl = process.env.CTG_NVETCARE_API_URL?.trim();
+  const url =
+    configuredUrl ||
+    (process.env.NODE_ENV === 'production' ? NVET_CANONICAL_PRODUCTION_API_URL : '');
+
   if (!url) {
     throw new Error(
-      'CTG_NVETCARE_API_URL is not set — the Nvet Care backend base URL is required for /nvetcareapp auth to work.'
+      'CTG_NVETCARE_API_URL is not set — the Nvet Care backend base URL is required outside production.'
     );
   }
+
+  if (process.env.NODE_ENV === 'production' && !url.startsWith('https://')) {
+    throw new Error('CTG_NVETCARE_API_URL must use HTTPS in production.');
+  }
+
   return url.replace(/\/+$/, '');
 }
 
