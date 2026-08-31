@@ -22,6 +22,11 @@ const [
   fulfillmentLibrary,
   fulfillmentPage,
   fulfillmentFlow,
+  vetClinicalRoute,
+  vetTransferRoute,
+  vetOperationsLibrary,
+  vetOperationsPage,
+  vetOperationsFlow,
 ] = await Promise.all([
   read('src/app/api/nvetcareapp/appointments/[id]/status/route.ts'),
   read('src/app/api/nvetcareapp/appointments/route.ts'),
@@ -41,15 +46,24 @@ const [
   read('src/lib/nvetcareapp/client-fulfillment.ts'),
   read('src/app/nvetcareapp/dashboard/citas/page.tsx'),
   read('src/app/nvetcareapp/dashboard/citas/client-fulfillment-flow.tsx'),
+  read('src/app/api/nvetcareapp/vet/appointments/[id]/clinical-notes/route.ts'),
+  read('src/app/api/nvetcareapp/vet/transactions/[id]/verify-transfer/route.ts'),
+  read('src/lib/nvetcareapp/vet-operations.ts'),
+  read('src/app/nvetcareapp/dashboard/servicios/page.tsx'),
+  read('src/app/nvetcareapp/dashboard/servicios/vet-service-operations.tsx'),
 ]);
 
 assert.match(statusRoute, /if \(!accessToken\)/, 'Status-update route must reject requests with no session cookie.');
 assert.match(statusRoute, /status: 401/, 'Status-update route must respond 401 when unauthenticated.');
-assert.match(statusRoute, /VALID_STATUSES\.includes/, 'Status-update route must validate requested status before forwarding.');
+assert.match(statusRoute, /SERVICE_STATUSES\.includes/, 'Status-update route must allow-list service-operation states.');
+assert.match(statusRoute, /requireNvetVet\(/, 'Status-update route must re-check VET role server-side.');
+assert.match(statusRoute, /fetchNvetVetAppointmentDetail\(/, 'Status-update route must re-read the protected appointment before transition.');
+assert.match(statusRoute, /isPaymentReadyForService\(detail\.data\.transaction\?\.status\)/, 'Starting care must depend on server-read payment status.');
+assert.match(statusRoute, /detail\.data\.diagnosis/, 'Completing care must depend on a persisted diagnosis.');
 assert.doesNotMatch(
   statusRoute,
-  /body\.(vetId|role|userId|ownerId)/,
-  'Status-update route must never read identity/ownership claims from the request body.',
+  /body\.(vetId|role|userId|ownerId|paymentStatus|transactionStatus|diagnosis)/,
+  'Status-update route must never trust identity, payment or clinical authority claims from the request body.',
 );
 assert.doesNotMatch(
   appointmentsRoute,
@@ -57,18 +71,14 @@ assert.doesNotMatch(
   'Appointments list route must not forward client-supplied query filters that can widen backend role scoping.',
 );
 
-const expectedTransitions = [
-  ["PENDING: { next: 'CONFIRMED'", 'PENDING → CONFIRMED'],
-  ["CONFIRMED: { next: 'IN_PROGRESS'", 'CONFIRMED → IN_PROGRESS'],
-  ["IN_PROGRESS: { next: 'COMPLETED'", 'IN_PROGRESS → COMPLETED'],
-];
-for (const [needle, label] of expectedTransitions) {
-  assert.ok(advanceButton.includes(needle), `Advance-status button must offer ${label}.`);
-}
-for (const terminal of ['COMPLETED', 'CANCELLED', 'DISPUTED']) {
+assert.ok(
+  advanceButton.includes("CONFIRMED: { next: 'IN_PROGRESS'"),
+  'Agenda shortcut must offer CONFIRMED → IN_PROGRESS.',
+);
+for (const blocked of ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'DISPUTED']) {
   assert.ok(
-    !new RegExp(`${terminal}: \\{ next:`).test(advanceButton),
-    `Advance-status button must not offer any transition out of ${terminal}.`,
+    !new RegExp(`${blocked}: \\{ next:`).test(advanceButton),
+    `Agenda shortcut must not advance ${blocked}; payment confirmation/completion belong to their controlled flows.`,
   );
 }
 
@@ -159,7 +169,7 @@ assert.match(bookingFlow, /priceId:\s*selectedPriceId/, 'Booking UI must identif
 assert.doesNotMatch(bookingFlow, /amount:\s*selectedPrice|amountCop:/, 'Booking UI must never submit a charge amount.');
 
 assert.match(bookingPage, /userResult\.user\.role !== 'CLIENT'/, 'Booking page must reject non-client roles.');
-assert.match(dashboardLayout, /userResult\.user\.role === 'CLIENT'/, 'Dashboard client actions must only render for CLIENT users.');
+assert.match(dashboardLayout, /role === 'CLIENT'/, 'Dashboard client actions must only render for CLIENT users.');
 assert.match(dashboardLayout, /\/nvetcareapp\/dashboard\/reservar/, 'CLIENT dashboard must expose the booking journey.');
 
 // Payment & Service Fulfillment v1: the browser submits only an appointment
@@ -188,5 +198,34 @@ assert.match(clientReviewsRoute, /rating < 1 \|\| rating > 5/, 'Review BFF must 
 assert.match(fulfillmentPage, /userResult\.user\.role !== 'CLIENT'/, 'Fulfillment page must reject non-client roles.');
 assert.match(fulfillmentFlow, /appointment\.status === 'COMPLETED'/, 'Review UI must only expose review creation after completed service.');
 assert.match(dashboardLayout, /\/nvetcareapp\/dashboard\/citas/, 'CLIENT dashboard must expose payment and fulfillment journey.');
+
+// VET Service Operations v1. VET identity is server-derived, financial status
+// is read from the backend, transfer evidence moves only to VERIFYING/admin
+// review, and clinical completion requires persisted diagnosis.
+for (const [name, source] of [
+  ['vet clinical route', vetClinicalRoute],
+  ['vet transfer route', vetTransferRoute],
+]) {
+  assert.match(source, /if \(!accessToken\)/, `${name} must reject missing Nvet session.`);
+  assert.match(source, /requireNvetVet\(/, `${name} must verify VET role server-side.`);
+  assert.doesNotMatch(source, /body\.(role|userId|vetId|ownerId|clientId)/, `${name} must not accept identity claims from the browser.`);
+}
+assert.match(vetClinicalRoute, /appointment\.data\.status !== 'IN_PROGRESS'/, 'Clinical notes must be constrained to an in-progress service.');
+assert.match(vetClinicalRoute, /diagnosis\.length < 3/, 'Clinical BFF must require a non-trivial diagnosis.');
+assert.match(vetTransferRoute, /transaction\.status !== 'PENDING'/, 'Transfer evidence must only be submitted once from PENDING.');
+assert.match(vetTransferRoute, /MAX_FILE_BYTES = 5 \* 1024 \* 1024/, 'Transfer evidence must have a bounded upload size.');
+assert.match(vetTransferRoute, /ALLOWED_TYPES/, 'Transfer evidence must be restricted to approved media types.');
+assert.match(vetOperationsLibrary, /\/api\/payments\/transactions\?limit=100&offset=0/, 'VET payment list must use backend role scoping.');
+assert.match(vetOperationsLibrary, /\/verify-transfer/, 'VET server contract must use the backend transfer-verification endpoint.');
+assert.match(vetOperationsLibrary, /\/clinical-notes/, 'VET server contract must use the backend clinical-notes endpoint.');
+assert.match(vetOperationsPage, /userResult\.user\.role !== 'VET'/, 'VET operations page must reject non-vet roles.');
+assert.match(vetOperationsFlow, /nvetFetchWithRefresh\(/, 'VET writes must refresh expired Nvet sessions before retrying.');
+assert.match(vetOperationsFlow, /Enviar a revisión administrativa/, 'Transfer evidence UX must describe admin review, not payment confirmation.');
+assert.match(vetOperationsFlow, /no confirma ni liquida fondos/i, 'Transfer evidence UX must not imply funds were confirmed or liquidated.');
+assert.match(vetOperationsFlow, /disabled=\{!clinicalSaved/, 'Completion action must stay disabled until clinical diagnosis has been persisted.');
+assert.match(vetOperationsFlow, /transaction\?\.status === 'LIQUIDATED'/, 'Completed service UX must distinguish actual liquidation from confirmed hold.');
+assert.doesNotMatch(vetOperationsFlow, /confirm-transfer|reject-transfer|liquidate/, 'VET UI must never expose admin payment confirmation, rejection or liquidation actions.');
+assert.match(dashboardLayout, /role === 'VET'/, 'Dashboard must expose VET actions only to VET users.');
+assert.match(dashboardLayout, /\/nvetcareapp\/dashboard\/servicios/, 'VET dashboard must expose the service-operations journey.');
 
 console.log('Nvet Care appointments invariants: PASS');
