@@ -166,6 +166,7 @@ export async function POST(request: Request) {
           checks: {
             schemaCompatible: schema.compatible,
             canaryUserConfigured: rollout.canaryUserConfigured,
+            canaryGuardrailsConfigured: rollout.canaryGuardrailsConfigured,
             reviewedClientCommit: true,
             verifiedPrimaryPrivyWallet: identityVerified,
             polygonRpcHealthy: false,
@@ -187,6 +188,7 @@ export async function POST(request: Request) {
   const nativeGasBalanceAvailable = infrastructure?.hasNativeGasBalance ?? false;
   const prerequisitesReady = schemaCompatible
     && rollout.canaryUserConfigured
+    && rollout.canaryGuardrailsConfigured
     && reviewedClientCommit
     && verifiedPrimaryPrivyWallet
     && polygonRpcHealthy
@@ -203,6 +205,7 @@ export async function POST(request: Request) {
   const blockers: string[] = [];
   if (!schemaCompatible) blockers.push('WALLET_CANARY_SCHEMA_INCOMPATIBLE');
   if (!rollout.canaryUserConfigured) blockers.push('WALLET_CANARY_USER_NOT_CONFIGURED');
+  if (!rollout.canaryGuardrailsConfigured) blockers.push('WALLET_CANARY_GUARDRAILS_NOT_CONFIGURED');
   if (!reviewedClientCommit) blockers.push('WALLET_CANARY_CLIENT_COMMIT_NOT_REVIEWED');
   if (!verifiedPrimaryPrivyWallet) blockers.push('WALLET_CANARY_PRIVY_WALLET_UNAVAILABLE');
   if (verifiedPrimaryPrivyWallet && !polygonRpcHealthy) blockers.push('WALLET_CANARY_POLYGON_RPC_UNAVAILABLE');
@@ -223,6 +226,7 @@ export async function POST(request: Request) {
     checks: {
       schemaCompatible,
       canaryUserConfigured: rollout.canaryUserConfigured,
+      canaryGuardrailsConfigured: rollout.canaryGuardrailsConfigured,
       reviewedClientCommit,
       verifiedPrimaryPrivyWallet,
       polygonRpcHealthy,
