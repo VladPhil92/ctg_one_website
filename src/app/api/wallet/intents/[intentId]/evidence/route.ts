@@ -132,6 +132,7 @@ export async function GET(request: Request) {
       clientArtifact: {
         repository: 'VladPhil92/CTG-Wallet',
         commit: clientCommit,
+        boundAt: clientBoundAt,
       },
       observations,
       schema: {
@@ -141,13 +142,7 @@ export async function GET(request: Request) {
       },
     });
 
-    return noStoreJson(request, {
-      ...bundle,
-      clientArtifact: {
-        ...bundle.clientArtifact,
-        boundAt: clientBoundAt,
-      },
-    });
+    return noStoreJson(request, bundle);
   } catch (error) {
     if (error instanceof WalletCanaryEvidenceError) {
       return noStoreJson(request, { error: error.code }, { status: 409 });
