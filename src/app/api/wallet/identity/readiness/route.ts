@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { createPublicKey } from 'node:crypto';
+import { createPublicKey, type KeyObject } from 'node:crypto';
 import type { JsonWebKey as NodeJsonWebKey } from 'node:crypto';
 import { NextResponse } from 'next/server';
 
@@ -41,6 +41,12 @@ function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
   );
 }
 
+function isEcP256Key(key: KeyObject): boolean {
+  if (key.asymmetricKeyType !== 'ec') return false;
+  const curve = key.asymmetricKeyDetails?.namedCurve;
+  return curve === 'prime256v1' || curve === 'P-256';
+}
+
 function inspectPrivyVerifier(): ReadinessCheck {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID?.trim();
   const rawKey = process.env.PRIVY_JWT_VERIFICATION_KEY?.trim();
@@ -49,17 +55,51 @@ function inspectPrivyVerifier(): ReadinessCheck {
   if (!rawKey) return { ready: false, code: 'PRIVY_VERIFICATION_KEY_MISSING' };
 
   try {
+    let key: KeyObject;
     if (rawKey.startsWith('{')) {
       const jwk = JSON.parse(rawKey) as NodeJsonWebKey;
-      createPublicKey({ key: jwk, format: 'jwk' });
+      if (jwk.kty !== 'EC' || jwk.crv !== 'P-256') {
+        return { ready: false, code: 'PRIVY_VERIFICATION_KEY_INCOMPATIBLE' };
+      }
+      key = createPublicKey({ key: jwk, format: 'jwk' });
     } else {
-      createPublicKey(rawKey.replace(/\\n/g, '\n'));
+      key = createPublicKey(rawKey.replace(/\\n/g, '\n'));
+    }
+
+    if (!isEcP256Key(key)) {
+      return { ready: false, code: 'PRIVY_VERIFICATION_KEY_INCOMPATIBLE' };
     }
   } catch {
     return { ready: false, code: 'PRIVY_VERIFICATION_KEY_INVALID' };
   }
 
   return { ready: true, code: 'PRIVY_IDENTITY_VERIFIER_READY' };
+}
+
+function inspectSupabaseJwk(rawKey: unknown): string | null {
+  if (!rawKey || typeof rawKey !== 'object' || Array.isArray(rawKey)) return null;
+  const jwk = rawKey as NodeJsonWebKey & { alg?: unknown };
+  if (typeof jwk.alg !== 'string' || !SUPPORTED_SUPABASE_ALGS.has(jwk.alg)) return null;
+
+  try {
+    if (jwk.alg === 'ES256') {
+      if (jwk.kty !== 'EC' || jwk.crv !== 'P-256') return null;
+      const key = createPublicKey({ key: jwk, format: 'jwk' });
+      return isEcP256Key(key) ? 'ES256' : null;
+    }
+
+    if (jwk.alg === 'RS256') {
+      if (jwk.kty !== 'RSA') return null;
+      const key = createPublicKey({ key: jwk, format: 'jwk' });
+      return key.asymmetricKeyType === 'rsa' || key.asymmetricKeyType === 'rsa-pss'
+        ? 'RS256'
+        : null;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }
 
 async function inspectSupabaseJwtDiscovery(): Promise<SupabaseJwtCheck> {
@@ -102,12 +142,8 @@ async function inspectSupabaseJwtDiscovery(): Promise<SupabaseJwtCheck> {
 
   const algorithms = [...new Set(
     keys
-      .map((key) => {
-        if (!key || typeof key !== 'object' || Array.isArray(key)) return null;
-        const alg = (key as { alg?: unknown }).alg;
-        return typeof alg === 'string' ? alg : null;
-      })
-      .filter((alg): alg is string => !!alg && SUPPORTED_SUPABASE_ALGS.has(alg)),
+      .map(inspectSupabaseJwk)
+      .filter((alg): alg is string => alg !== null),
   )].sort();
 
   if (algorithms.length === 0) {
@@ -122,13 +158,13 @@ async function inspectIdentityStorage(userId: string): Promise<IdentityStorageCh
   const [linkResult, accountResult, evidenceResult] = await Promise.all([
     serviceRole
       .from('wallet_identity_links')
-      .select('status,link_mode')
+      .select('id,status,link_mode')
       .eq('user_id', userId)
       .eq('provider', 'privy')
       .limit(2),
     serviceRole
       .from('wallet_external_accounts')
-      .select('status,is_primary,chain_family,provider,legacy_preserved')
+      .select('identity_link_id,status,is_primary,chain_family,provider,account_kind,legacy_preserved')
       .eq('user_id', userId)
       .eq('provider', 'privy')
       .eq('chain_family', 'evm')
@@ -164,8 +200,16 @@ async function inspectIdentityStorage(userId: string): Promise<IdentityStorageCh
   }
 
   if (link && account) {
-    if (link.status !== 'verified' || account.status !== 'verified') {
-      return { ready: false, code: 'IDENTITY_STORAGE_PARTIAL', state: 'conflict' };
+    const legacyPreservedExpected = link.link_mode === 'legacy_preserve';
+    const relationshipConsistent =
+      link.status === 'verified' &&
+      account.status === 'verified' &&
+      account.account_kind === 'embedded' &&
+      account.identity_link_id === link.id &&
+      account.legacy_preserved === legacyPreservedExpected;
+
+    if (!relationshipConsistent) {
+      return { ready: false, code: 'IDENTITY_STORAGE_INCONSISTENT', state: 'conflict' };
     }
     return { ready: true, code: 'IDENTITY_STORAGE_LINKED', state: 'linked' };
   }
