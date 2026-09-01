@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0092",
-    "schemaMigrationName": "acquisition_activation_funnel_telemetry",
-    "schemaMigrationCount": 92,
+    "schemaMigration": "0093",
+    "schemaMigrationName": "atomic_legacy_wallet_identity_bootstrap",
+    "schemaMigrationCount": 93,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
