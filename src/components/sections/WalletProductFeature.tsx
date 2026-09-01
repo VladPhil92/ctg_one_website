@@ -5,6 +5,7 @@ import { ArrowUpRight, Globe2, Landmark, ShieldCheck, Smartphone, WalletCards } 
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CTG_WALLET_URL } from '@/lib/constants';
 
 export const WalletProductFeature: React.FC = () => {
   const { locale } = useLanguage();
@@ -31,8 +32,8 @@ export const WalletProductFeature: React.FC = () => {
                 </p>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <a href="/dashboard/wallet" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#c9a962] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black transition-all hover:-translate-y-0.5 hover:bg-[#d4b676]">
-                    {es ? 'Abrir Wallet Web' : 'Open Web Wallet'} <ArrowUpRight size={14} />
+                  <a href={CTG_WALLET_URL} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#c9a962] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black transition-all hover:-translate-y-0.5 hover:bg-[#d4b676]">
+                    {es ? 'Abrir CTG Wallet' : 'Open CTG Wallet'} <ArrowUpRight size={14} />
                   </a>
                   <a href="/wallet#app" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.025] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-white transition-all hover:-translate-y-0.5 hover:border-[#c9a962]/35 hover:bg-white/[0.05]">
                     {es ? 'Instalar app' : 'Install app'} <Smartphone size={14} />
