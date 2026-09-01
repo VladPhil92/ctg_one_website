@@ -7,6 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     { path: '/', changeFrequency: 'weekly' as const, priority: 1 },
     { path: '/about', changeFrequency: 'monthly' as const, priority: 0.9 },
+    { path: '/jpvalderrama', changeFrequency: 'monthly' as const, priority: 0.9 },
     { path: '/services', changeFrequency: 'monthly' as const, priority: 0.8 },
     { path: '/ecosystem', changeFrequency: 'monthly' as const, priority: 0.9 },
     ...ECOSYSTEM_PROCESSES.map(({ slug }) => ({
