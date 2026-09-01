@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description:
     'Perfil académico y plataforma educativa de Juan Pablo Valderrama Pino: filósofo, educador, escritor, empresario, fundador de CTG One y desarrollador. Valderrama Talks, Ideas, Books y Projects.',
   alternates: {
-    canonical: '/jpvalderrama',
+    canonical: 'https://ctgone.com/jpvalderrama',
   },
   openGraph: {
     title: 'JP Valderrama | CTG One',
