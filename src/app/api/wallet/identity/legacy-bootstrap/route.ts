@@ -26,15 +26,6 @@ type RateLimitRow = {
   retry_after_seconds: number;
 };
 
-type LegacyEvidenceRow = {
-  id: string;
-  user_id: string;
-  provider_user_id: string;
-  expected_address_normalized: string;
-  source_digest_sha256: string;
-  status: 'pending' | 'consumed' | 'rejected';
-};
-
 function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
   headers.set('Cache-Control', 'no-store');
@@ -74,21 +65,6 @@ function buildLegacyEvidenceDigest(params: {
   return createHash('sha256').update(payload, 'utf8').digest('hex');
 }
 
-async function readLegacyEvidence(
-  serviceRole: ReturnType<typeof createAdminClient>,
-  userId: string,
-): Promise<LegacyEvidenceRow | null> {
-  const { data, error } = await serviceRole
-    .from('wallet_legacy_migration_evidence')
-    .select('id,user_id,provider_user_id,expected_address_normalized,source_digest_sha256,status')
-    .eq('user_id', userId)
-    .eq('provider', 'privy')
-    .maybeSingle();
-
-  if (error) throw new Error('LEGACY_MIGRATION_EVIDENCE_UNAVAILABLE');
-  return data as LegacyEvidenceRow | null;
-}
-
 export function OPTIONS(request: Request) {
   return walletCorsPreflight(request, CORS_METHODS);
 }
@@ -97,10 +73,9 @@ export function OPTIONS(request: Request) {
  * One-time legacy claim boundary.
  *
  * The browser submits no wallet address, Privy principal or provenance data.
- * Both identities are proven by signed bearer material: the canonical CTG One
- * access token and the Privy identity token. The server derives the historical
- * embedded wallet from the verified Privy token, records deterministic evidence,
- * then delegates the actual link to the existing transactional RPC.
+ * Both identities are proven by signed bearer material. After cryptographic
+ * verification, a service-role-only RPC creates/reuses legacy evidence and
+ * links the identity in one PostgreSQL transaction.
  */
 export async function POST(request: Request) {
   if (!isSupabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -117,17 +92,15 @@ export async function POST(request: Request) {
     return noStoreJson(request, { error: 'UNAUTHENTICATED' }, { status: 401 });
   }
 
-  let body: z.infer<typeof requestSchema>;
   try {
     const rawBody = await request.text();
     if (Buffer.byteLength(rawBody, 'utf8') > MAX_REQUEST_BYTES) {
       return noStoreJson(request, { error: 'REQUEST_TOO_LARGE' }, { status: 413 });
     }
-    body = requestSchema.parse(rawBody ? JSON.parse(rawBody) : {});
+    requestSchema.parse(rawBody ? JSON.parse(rawBody) : {});
   } catch {
     return noStoreJson(request, { error: 'INVALID_REQUEST' }, { status: 400 });
   }
-  void body;
 
   const identityToken = request.headers.get('privy-id-token')?.trim();
   if (!identityToken) {
@@ -180,74 +153,13 @@ export async function POST(request: Request) {
     embeddedEvmAddress: address,
   });
 
-  let existing: LegacyEvidenceRow | null;
-  try {
-    existing = await readLegacyEvidence(serviceRole, user.id);
-  } catch {
-    return noStoreJson(
-      request,
-      { error: 'LEGACY_MIGRATION_EVIDENCE_UNAVAILABLE' },
-      { status: 503 },
-    );
-  }
-
-  if (existing) {
-    if (existing.status === 'rejected') {
-      return noStoreJson(request, { error: 'LEGACY_MIGRATION_REJECTED' }, { status: 409 });
-    }
-    if (
-      existing.provider_user_id !== verifiedIdentity.privyUserId ||
-      existing.expected_address_normalized !== address ||
-      existing.source_digest_sha256 !== sourceDigestSha256
-    ) {
-      return noStoreJson(request, { error: 'LEGACY_MIGRATION_EVIDENCE_CONFLICT' }, { status: 409 });
-    }
-  } else {
-    const now = new Date().toISOString();
-    const { error: insertError } = await serviceRole
-      .from('wallet_legacy_migration_evidence')
-      .insert({
-        user_id: user.id,
-        provider: 'privy',
-        provider_user_id: verifiedIdentity.privyUserId,
-        chain_family: 'evm',
-        expected_address: address,
-        source_digest_sha256: sourceDigestSha256,
-        evidence_captured_at: now,
-        status: 'pending',
-      });
-
-    if (insertError) {
-      // A concurrent identical request may win one of the uniqueness constraints.
-      // Re-read and accept only an exact server-derived match; all other races fail closed.
-      try {
-        existing = await readLegacyEvidence(serviceRole, user.id);
-      } catch {
-        return noStoreJson(
-          request,
-          { error: 'LEGACY_MIGRATION_EVIDENCE_UNAVAILABLE' },
-          { status: 503 },
-        );
-      }
-      if (
-        !existing ||
-        existing.status === 'rejected' ||
-        existing.provider_user_id !== verifiedIdentity.privyUserId ||
-        existing.expected_address_normalized !== address ||
-        existing.source_digest_sha256 !== sourceDigestSha256
-      ) {
-        return noStoreJson(request, { error: 'LEGACY_MIGRATION_EVIDENCE_CONFLICT' }, { status: 409 });
-      }
-    }
-  }
-
   const { data: linkData, error: linkError } = await serviceRole.rpc(
-    'link_verified_wallet_identity',
+    'bootstrap_verified_legacy_wallet_identity',
     {
       p_user_id: user.id,
       p_provider_user_id: verifiedIdentity.privyUserId,
       p_evm_address: address,
-      p_link_mode: 'legacy_preserve',
+      p_source_digest_sha256: sourceDigestSha256,
     },
   );
 
@@ -256,7 +168,6 @@ export async function POST(request: Request) {
     if (
       message.includes('LEGACY_WALLET_MISMATCH') ||
       message.includes('LEGACY_PROVIDER_IDENTITY_MISMATCH') ||
-      message.includes('LEGACY_MIGRATION_EVIDENCE_REQUIRED') ||
       message.includes('already linked') ||
       message.includes('already has a different active primary') ||
       message.includes('conflicts with verified Privy identity') ||
