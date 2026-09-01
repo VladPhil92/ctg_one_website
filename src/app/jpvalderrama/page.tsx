@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import {
   ArrowRight,
   BookOpen,
@@ -8,96 +9,89 @@ import {
   Lightbulb,
   Mic2,
   PenLine,
-  Quote,
-  Sparkles,
 } from 'lucide-react';
-import { PublicPageShell } from '@/components/PublicPageShell';
-import { Container } from '@/components/ui';
+
+const WINE = '#6f0d12';
 
 const brands = [
   {
     id: 'talks',
     name: 'Valderrama Talks',
-    eyebrow: 'VOZ · FORMACIÓN · CONVERSACIÓN',
+    label: 'CONFERENCIAS · CLASES · CONVERSACIONES',
+    image: '/jpvalderrama/talks.webp',
     description:
       'Conferencias, clases, talleres y conversaciones para convertir ideas complejas en experiencias de aprendizaje claras, rigurosas y útiles.',
-    focus: ['Filosofía y humanidades', 'Educación y pensamiento crítico', 'Liderazgo, cambio y tecnología'],
+    cta: 'Ver conferencias',
+    href: '#conferencia',
     icon: Mic2,
   },
   {
     id: 'ideas',
     name: 'Valderrama Ideas',
-    eyebrow: 'ENSAYO · ANÁLISIS · PENSAMIENTO',
+    label: 'ENSAYO · ANÁLISIS · PENSAMIENTO',
+    image: '/jpvalderrama/ideas.webp',
     description:
-      'Laboratorio editorial para ensayos, columnas, análisis y marcos conceptuales sobre sociedad, educación, tecnología, empresa y cultura.',
-    focus: ['Ensayos y artículos', 'Análisis de coyuntura', 'Marcos conceptuales y pensamiento aplicado'],
+      'Ensayos, columnas y marcos conceptuales sobre filosofía, educación, sociedad, tecnología, empresa y cultura.',
+    cta: 'Explorar ideas',
+    href: '#contacto',
     icon: Lightbulb,
   },
   {
     id: 'books',
     name: 'Valderrama Books',
-    eyebrow: 'LIBROS · INVESTIGACIÓN · PUBLICACIÓN',
+    label: 'LIBROS · INVESTIGACIÓN · PUBLICACIÓN',
+    image: '/jpvalderrama/books.webp',
     description:
-      'Espacio para libros, manuscritos, investigación de largo aliento y proyectos editoriales que conectan filosofía, experiencia y transformación social.',
-    focus: ['Obra filosófica y ensayística', 'Proyectos editoriales', 'Investigación y publicaciones'],
+      'Libros, manuscritos, investigación de largo aliento y proyectos editoriales para pensar, aprender y profundizar.',
+    cta: 'Explorar libros',
+    href: '#contacto',
     icon: BookOpen,
   },
   {
     id: 'projects',
     name: 'Valderrama Projects',
-    eyebrow: 'INVESTIGACIÓN · DISEÑO · CONSTRUCCIÓN',
+    label: 'INVESTIGACIÓN · DISEÑO · CONSTRUCCIÓN',
+    image: '/jpvalderrama/projects.webp',
     description:
-      'Proyectos interdisciplinarios donde educación, investigación, tecnología y emprendimiento pasan de la formulación conceptual a prototipos y productos reales.',
-    focus: ['Investigación aplicada', 'EdTech y productos digitales', 'Diseño y desarrollo de proyectos'],
+      'Proyectos interdisciplinarios donde educación, investigación, tecnología y emprendimiento pasan de la idea a productos y acciones reales.',
+    cta: 'Conocer proyectos',
+    href: '#contacto',
     icon: Boxes,
   },
 ] as const;
 
 const education = [
   {
-    degree: 'Filosofía',
+    degree: 'Filósofo',
     institution: 'Universidad de Cartagena',
-    detail: 'Formación de pregrado orientada a investigación, lectura crítica, argumentación y escritura filosófica.',
+    icon: Building2,
   },
   {
-    degree: 'Maestría en Filosofía',
+    degree: 'Magíster en Filosofía',
     institution: 'Universidad del Norte',
-    detail: 'Profundización académica en investigación filosófica, problemas contemporáneos y producción de conocimiento.',
+    icon: GraduationCap,
   },
   {
     degree: 'Leading Change',
     institution: 'Harvard Business School Online',
-    detail: 'Formación ejecutiva enfocada en liderazgo, transformación organizacional y gestión del cambio.',
+    icon: Building2,
   },
   {
-    degree: 'Formación docente internacional',
-    institution: 'TESOL / TEFL · Google for Education',
-    detail: 'Certificaciones y herramientas aplicadas a enseñanza, aprendizaje digital y diseño de experiencias educativas.',
+    degree: 'TESOL / TEFL',
+    institution: 'Google for Education · formación docente internacional',
+    icon: GraduationCap,
   },
 ] as const;
 
-const capabilities = [
-  {
-    icon: GraduationCap,
-    title: 'Educación',
-    text: 'Diseño de clases, tutorías, talleres, programas formativos y experiencias de aprendizaje centradas en comprensión, pensamiento crítico y aplicación.',
-  },
-  {
-    icon: PenLine,
-    title: 'Escritura',
-    text: 'Investigación, ensayo, producción editorial y comunicación de ideas complejas mediante estructuras claras y argumentación rigurosa.',
-  },
-  {
-    icon: Code2,
-    title: 'Tecnología',
-    text: 'Construcción y dirección de productos digitales, integración de inteligencia artificial y desarrollo de herramientas para educación y empresa.',
-  },
-  {
-    icon: Building2,
-    title: 'Emprendimiento',
-    text: 'Creación y gestión de proyectos que conectan conocimiento, estrategia, tecnología, servicios y modelos de negocio dentro del ecosistema CTG One.',
-  },
+const pillars = [
+  { label: 'Filosofía', icon: Building2 },
+  { label: 'Educación', icon: GraduationCap },
+  { label: 'Escritura', icon: PenLine },
+  { label: 'Tecnología', icon: Code2 },
+  { label: 'Investigación', icon: Lightbulb },
 ] as const;
+
+const serif = 'font-serif';
 
 export default function JPValderramaPage() {
   const personSchema = {
@@ -124,213 +118,250 @@ export default function JPValderramaPage() {
   };
 
   return (
-    <PublicPageShell contentClassName="overflow-hidden">
+    <main className="min-h-screen bg-[#f7f0e7] text-[#19130f] selection:bg-[#6f0d12] selection:text-[#fffaf2]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
       />
 
-      <section className="relative pb-20 sm:pb-24 lg:pb-28">
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[760px] opacity-70"
-          aria-hidden="true"
-          style={{
-            background:
-              'radial-gradient(circle at 78% 18%, rgba(36,140,255,.12), transparent 31%), radial-gradient(circle at 20% 22%, rgba(214,174,86,.13), transparent 36%)',
-          }}
-        />
-        <Container size="large">
-          <div className="grid items-center gap-12 lg:grid-cols-[1.12fr_.88fr] lg:gap-16">
-            <div className="max-w-4xl">
-              <div className="mb-7 flex flex-wrap items-center gap-3">
-                <span className="inline-flex min-h-8 items-center rounded-full border border-[#d6ae56]/25 bg-[#d6ae56]/[.07] px-3.5 font-mono text-[9px] font-semibold uppercase tracking-[.19em] text-[#f1c75b]">
-                  CTG ONE · EDUCATION & IDEAS
-                </span>
-                <span className="inline-flex min-h-8 items-center gap-2 rounded-full border border-white/[.08] bg-white/[.025] px-3.5 font-mono text-[9px] uppercase tracking-[.16em] text-text-dim">
-                  <Sparkles className="h-3.5 w-3.5 text-[#d6ae56]" aria-hidden="true" />
-                  Knowledge into action
-                </span>
+      <a
+        href="#contenido"
+        className="sr-only z-[100] rounded bg-[#6f0d12] px-4 py-3 text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Saltar al contenido
+      </a>
+
+      <header className="sticky top-0 z-50 border-b border-[#6f0d12]/10 bg-[#f7f0e7]/95 backdrop-blur-xl">
+        <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
+          <a href="/" className="flex items-center gap-3" aria-label="Volver a CTG One">
+            <span className="flex h-8 w-8 items-center justify-center border border-[#6f0d12]/35 text-xs font-semibold text-[#6f0d12]">
+              CTG
+            </span>
+            <span className={`${serif} text-lg tracking-[.22em] text-[#17110e]`}>CTG ONE</span>
+          </a>
+
+          <nav className="hidden items-center gap-7 text-[10px] font-semibold uppercase tracking-[.16em] text-[#665950] lg:flex" aria-label="Navegación JP Valderrama">
+            <a href="#perfil" className="transition-colors hover:text-[#6f0d12]">Perfil</a>
+            <a href="#formacion" className="transition-colors hover:text-[#6f0d12]">Formación</a>
+            <a href="#marcas" className="transition-colors hover:text-[#6f0d12]">Marcas</a>
+            <a href="#conferencia" className="transition-colors hover:text-[#6f0d12]">Conferencia</a>
+            <a href="/contact" className="transition-colors hover:text-[#6f0d12]">Contacto</a>
+          </nav>
+
+          <a href="#contenido" className="border-b border-[#6f0d12] pb-1 text-[10px] font-bold uppercase tracking-[.18em] text-[#6f0d12]">
+            JP Valderrama
+          </a>
+        </div>
+      </header>
+
+      <div id="contenido">
+        <section className="relative overflow-hidden border-b border-[#6f0d12]/10">
+          <div className="pointer-events-none absolute -right-32 top-16 h-[440px] w-[440px] rounded-full border border-[#6f0d12]/10" aria-hidden="true" />
+          <div className="pointer-events-none absolute -right-8 top-48 h-px w-72 bg-[#6f0d12]/15" aria-hidden="true" />
+
+          <div className="mx-auto grid max-w-[1440px] gap-12 px-5 pb-20 pt-14 sm:px-8 sm:pb-24 lg:grid-cols-[1.03fr_.97fr] lg:items-center lg:px-12 lg:pb-28 lg:pt-20">
+            <div className="max-w-3xl">
+              <p className="mb-6 text-[10px] font-semibold uppercase tracking-[.25em] text-[#6f0d12]">
+                CTG One · Educación · Ideas · Proyectos
+              </p>
+
+              <Image
+                src="/jpvalderrama/brand.webp"
+                alt="Juan Pablo Valderrama — filósofo, escritor y conferencista"
+                width={720}
+                height={360}
+                priority
+                className="mb-8 h-auto w-full max-w-[660px] mix-blend-multiply"
+                sizes="(max-width: 1024px) 90vw, 630px"
+              />
+
+              <p className="mb-5 text-[10px] font-semibold uppercase leading-6 tracking-[.16em] text-[#75675d] sm:text-[11px]">
+                Filósofo · Educador · Escritor · Empresario · Fundador de CTG One · Desarrollador
+              </p>
+
+              <h1 className={`${serif} text-5xl leading-[.98] tracking-[-.04em] text-[#15100d] sm:text-6xl lg:text-[4.9rem]`}>
+                Filosofía, educación, escritura y <span className="text-[#6f0d12]">proyectos.</span>
+              </h1>
+
+              <div className="mt-6 flex items-center gap-3" aria-hidden="true">
+                <span className="h-px w-24 bg-[#6f0d12]" />
+                <span className="h-2 w-2 rounded-full bg-[#6f0d12]" />
+                <span className="h-px w-16 bg-[#6f0d12]/35" />
               </div>
 
-              <p className="mb-4 text-sm font-semibold uppercase tracking-[.18em] text-text-muted sm:text-base">
-                Juan Pablo Valderrama Pino
-              </p>
-              <h1 className="max-w-5xl font-outfit text-5xl font-semibold tracking-[-.055em] text-white sm:text-6xl lg:text-7xl xl:text-[5.4rem] xl:leading-[.95]">
-                Pensar. Enseñar. Escribir. <span className="text-[#e6bd61]">Construir.</span>
-              </h1>
-              <p className="mt-7 max-w-3xl text-base leading-8 text-text-muted sm:text-lg">
-                Filósofo, educador, escritor, empresario, fundador de CTG One y desarrollador. Una plataforma personal para convertir conocimiento, investigación e ideas en experiencias educativas, publicaciones y proyectos reales.
+              <p className={`${serif} mt-7 max-w-2xl text-lg leading-8 text-[#534941] sm:text-xl`}>
+                Ideas que piensan. Educación que transforma. Escritura que permanece. Proyectos que construyen futuro.
               </p>
 
               <div className="mt-9 flex flex-wrap gap-3">
-                <a
-                  href="#marcas"
-                  className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-[#e7bd5d]/25 bg-[#d6ae56] px-5 text-sm font-semibold text-[#071018] transition-transform hover:-translate-y-px"
-                >
-                  Explorar la plataforma <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                <a href="#marcas" className="inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2] transition-transform hover:-translate-y-0.5">
+                  Explorar <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </a>
-                <a
-                  href="/contact"
-                  className="inline-flex min-h-12 items-center rounded-xl border border-white/[.11] bg-white/[.035] px-5 text-sm font-semibold text-white transition-colors hover:bg-white/[.07]"
-                >
-                  Consultar servicios educativos
+                <a href="/contact" className="inline-flex min-h-12 items-center gap-2 rounded-sm border border-[#6f0d12]/45 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12] transition-colors hover:bg-[#6f0d12]/5">
+                  Contacto <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </a>
               </div>
             </div>
 
             <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
-              <div className="absolute -inset-8 -z-10 rounded-full bg-[#d6ae56]/[.055] blur-3xl" aria-hidden="true" />
-              <div className="relative overflow-hidden rounded-[2rem] border border-[#d6ae56]/20 bg-[#050a10]/80 p-7 shadow-[0_32px_100px_rgba(0,0,0,.35)] backdrop-blur-xl sm:p-9">
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#d6ae56]/[.065] via-transparent to-[#248cff]/[.045]" aria-hidden="true" />
-                <div className="relative">
-                  <div className="mb-8 flex items-center justify-between gap-4">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#d6ae56]/25 bg-[#d6ae56]/[.08] font-outfit text-2xl font-semibold tracking-[-.04em] text-[#f1c75b]">
-                      JPV
-                    </div>
-                    <span className="font-mono text-[9px] uppercase tracking-[.2em] text-text-dim">PROFILE · 001</span>
-                  </div>
-                  <blockquote className="border-l border-[#d6ae56]/35 pl-5">
-                    <Quote className="mb-3 h-5 w-5 text-[#d6ae56]" aria-hidden="true" />
-                    <p className="font-outfit text-2xl font-medium leading-snug tracking-[-.025em] text-white sm:text-3xl">
-                      El conocimiento adquiere valor cuando transforma la manera en que comprendemos y construimos el mundo.
-                    </p>
-                  </blockquote>
-                  <div className="mt-8 grid grid-cols-2 gap-3 text-sm">
-                    {['Filosofía', 'Educación', 'Escritura', 'Tecnología'].map((item) => (
-                      <div key={item} className="rounded-xl border border-white/[.07] bg-black/20 px-4 py-3 text-text-muted">
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="relative border border-[#6f0d12]/15 bg-[#fbf7f1] p-5 shadow-[0_24px_80px_rgba(72,35,24,.08)] sm:p-8">
+                <div className="absolute -left-3 -top-3 h-6 w-6 border-l border-t border-[#6f0d12]/50" aria-hidden="true" />
+                <div className="absolute -bottom-3 -right-3 h-6 w-6 border-b border-r border-[#6f0d12]/50" aria-hidden="true" />
+                <Image
+                  src="/jpvalderrama/conference.webp"
+                  alt="Conferencia Filosofía o Dinero — El arte de comer papel"
+                  width={520}
+                  height={520}
+                  className="mx-auto h-auto w-full max-w-[510px]"
+                  sizes="(max-width: 1024px) 82vw, 520px"
+                />
               </div>
             </div>
           </div>
-        </Container>
-      </section>
+        </section>
 
-      <section className="border-y border-white/[.06] bg-white/[.012] py-20 sm:py-24">
-        <Container size="large">
-          <div className="grid gap-12 lg:grid-cols-[.78fr_1.22fr] lg:gap-20">
-            <div>
-              <p className="mb-4 font-mono text-[9px] font-semibold uppercase tracking-[.2em] text-[#f1c75b]">PERFIL</p>
-              <h2 className="font-outfit text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-                Humanidades, educación y tecnología en una misma práctica.
-              </h2>
-              <p className="mt-5 text-sm leading-7 text-text-muted sm:text-base">
-                JP Valderrama integra formación filosófica, experiencia docente, escritura, liderazgo de proyectos y desarrollo tecnológico. La propuesta educativa no separa teoría y práctica: parte de preguntas rigurosas y termina en aprendizaje, comunicación, producto o acción.
-              </p>
+        <section id="marcas" className="scroll-mt-24 py-20 sm:py-24 lg:py-28">
+          <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+            <div className="mb-12 flex items-center gap-5">
+              <span className="h-px flex-1 bg-[#6f0d12]/15" />
+              <h2 className="text-center text-[11px] font-semibold uppercase tracking-[.28em] text-[#4c4038]">Mi universo de contenidos</h2>
+              <span className="h-px flex-1 bg-[#6f0d12]/15" />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {capabilities.map(({ icon: Icon, title, text }) => (
-                <article key={title} className="rounded-2xl border border-white/[.07] bg-[#050a10]/65 p-6">
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-[#d6ae56]/20 bg-[#d6ae56]/[.065] text-[#f1c75b]">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="font-outfit text-xl font-semibold text-white">{title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-text-muted">{text}</p>
+
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              {brands.map((brand) => (
+                <article key={brand.id} id={brand.id} className="group flex h-full flex-col border border-[#6f0d12]/15 bg-[#fbf7f1] p-5 transition-transform duration-300 hover:-translate-y-1 sm:p-6">
+                  <Image
+                    src={brand.image}
+                    alt={`Logo ${brand.name}`}
+                    width={420}
+                    height={420}
+                    className="mx-auto aspect-square w-full max-w-[260px] rounded-full object-cover mix-blend-multiply"
+                    sizes="(max-width: 640px) 70vw, (max-width: 1280px) 38vw, 260px"
+                  />
+                  <p className="mt-6 text-center text-[9px] font-semibold uppercase leading-5 tracking-[.18em] text-[#6f0d12]">{brand.label}</p>
+                  <h3 className={`${serif} mt-3 text-center text-2xl tracking-[.05em] text-[#17110e]`}>{brand.name}</h3>
+                  <p className={`${serif} mt-4 flex-1 text-center text-[15px] leading-7 text-[#665950]`}>{brand.description}</p>
+                  <a href={brand.href} className="mt-6 inline-flex min-h-10 items-center justify-center gap-2 border-t border-[#6f0d12]/12 pt-5 text-[10px] font-bold uppercase tracking-[.15em] text-[#6f0d12]">
+                    {brand.cta} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </a>
                 </article>
               ))}
             </div>
           </div>
-        </Container>
-      </section>
+        </section>
 
-      <section className="py-20 sm:py-24 lg:py-28">
-        <Container size="large">
-          <div className="mb-12 max-w-3xl">
-            <p className="mb-4 font-mono text-[9px] font-semibold uppercase tracking-[.2em] text-[#f1c75b]">FORMACIÓN ACADÉMICA</p>
-            <h2 className="font-outfit text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-              Base académica para una práctica interdisciplinaria.
-            </h2>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-2">
-            {education.map((item, index) => (
-              <article key={`${item.degree}-${item.institution}`} className="group rounded-2xl border border-white/[.07] bg-[#050a10]/55 p-6 sm:p-7">
-                <div className="flex gap-5">
-                  <span className="mt-1 font-mono text-[10px] tracking-[.16em] text-[#d6ae56]">0{index + 1}</span>
-                  <div>
-                    <h3 className="font-outfit text-xl font-semibold text-white sm:text-2xl">{item.degree}</h3>
-                    <p className="mt-1 text-sm font-semibold text-[#e6bd61]">{item.institution}</p>
-                    <p className="mt-4 text-sm leading-6 text-text-muted">{item.detail}</p>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <section id="marcas" className="border-y border-white/[.06] bg-[#03070b]/60 py-20 sm:py-24 lg:py-28 scroll-mt-28">
-        <Container size="large">
-          <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div className="max-w-3xl">
-              <p className="mb-4 font-mono text-[9px] font-semibold uppercase tracking-[.2em] text-[#f1c75b]">JP VALDERRAMA · PLATFORM</p>
-              <h2 className="font-outfit text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl md:text-5xl">
-                Cuatro marcas. Un mismo sistema de conocimiento.
+        <section id="perfil" className="scroll-mt-24 border-y border-[#6f0d12]/10 bg-[#fbf7f1] py-20 sm:py-24">
+          <div className="mx-auto grid max-w-[1440px] gap-12 px-5 sm:px-8 lg:grid-cols-[.95fr_1.15fr_.7fr] lg:gap-10 lg:px-12">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#6f0d12]">Perfil</p>
+              <h2 className={`${serif} mt-4 text-3xl leading-tight tracking-[.04em] text-[#17110e] sm:text-4xl`}>
+                Sobre Juan Pablo Valderrama Pino
               </h2>
+              <div className="mt-5 h-px w-16 bg-[#6f0d12]" />
+              <p className={`${serif} mt-6 text-[16px] leading-8 text-[#564a42]`}>
+                Filósofo, educador, escritor y empresario. Fundador de CTG One y desarrollador de proyectos interdisciplinarios en educación, tecnología y cultura.
+              </p>
+              <p className={`${serif} mt-4 text-[16px] leading-8 text-[#564a42]`}>
+                Su trabajo integra reflexión filosófica, práctica educativa, escritura, pensamiento empresarial e innovación para convertir preguntas rigurosas en aprendizaje, comunicación, producto y acción.
+              </p>
             </div>
-            <p className="max-w-md text-sm leading-6 text-text-muted">
-              Cada submarca ocupa una función específica: hablar, pensar, publicar y construir. Juntas forman la vertical educativa y editorial de CTG One.
-            </p>
-          </div>
 
-          <div className="grid gap-5 lg:grid-cols-2">
-            {brands.map(({ icon: Icon, ...brand }, index) => (
-              <article
-                id={brand.id}
-                key={brand.id}
-                className="group relative scroll-mt-28 overflow-hidden rounded-[1.75rem] border border-white/[.075] bg-[#050a10]/75 p-7 sm:p-8"
-              >
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#d6ae56]/[.045] via-transparent to-[#248cff]/[.025] opacity-0 transition-opacity duration-300 group-hover:opacity-100" aria-hidden="true" />
-                <div className="relative">
-                  <div className="mb-8 flex items-start justify-between gap-5">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#d6ae56]/20 bg-[#d6ae56]/[.065] text-[#f1c75b]">
+            <div id="formacion" className="scroll-mt-24 border-y border-[#6f0d12]/12 py-8 lg:border-x lg:border-y-0 lg:px-8 lg:py-0">
+              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#6f0d12]">Formación y credenciales</p>
+              <div className="mt-5 divide-y divide-[#6f0d12]/10">
+                {education.map(({ degree, institution, icon: Icon }) => (
+                  <div key={`${degree}-${institution}`} className="flex gap-4 py-5 first:pt-0">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#6f0d12] text-[#fffaf2]">
                       <Icon className="h-5 w-5" aria-hidden="true" />
                     </div>
-                    <span className="font-mono text-[9px] tracking-[.18em] text-text-dim">0{index + 1}</span>
+                    <div>
+                      <h3 className={`${serif} text-lg text-[#1c1511]`}>{degree}</h3>
+                      <p className="mt-1 text-sm leading-6 text-[#74655b]">{institution}</p>
+                    </div>
                   </div>
-                  <p className="text-[9px] font-semibold uppercase tracking-[.18em] text-[#d6ae56]">{brand.eyebrow}</p>
-                  <h3 className="mt-3 font-outfit text-3xl font-semibold tracking-[-.035em] text-white">{brand.name}</h3>
-                  <p className="mt-4 max-w-2xl text-sm leading-7 text-text-muted">{brand.description}</p>
-                  <div className="mt-7 flex flex-wrap gap-2">
-                    {brand.focus.map((item) => (
-                      <span key={item} className="rounded-full border border-white/[.08] bg-white/[.025] px-3 py-1.5 text-xs text-text-muted">
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <section className="py-20 sm:py-24 lg:py-28">
-        <Container size="large">
-          <div className="relative overflow-hidden rounded-[2rem] border border-[#d6ae56]/20 bg-[#050a10]/80 px-7 py-10 sm:px-10 sm:py-12 lg:px-14">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#d6ae56]/[.075] via-transparent to-[#248cff]/[.045]" aria-hidden="true" />
-            <div className="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
-              <div className="max-w-3xl">
-                <p className="mb-4 font-mono text-[9px] font-semibold uppercase tracking-[.2em] text-[#f1c75b]">SERVICIOS EDUCATIVOS</p>
-                <h2 className="font-outfit text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
-                  Aprender, pensar y construir con propósito.
-                </h2>
-                <p className="mt-5 text-sm leading-7 text-text-muted sm:text-base">
-                  La plataforma está preparada para ofrecer clases y tutorías, conferencias, talleres, acompañamiento académico, investigación, escritura, diseño de proyectos educativos y desarrollo de iniciativas interdisciplinarias para personas e instituciones.
-                </p>
+                ))}
               </div>
-              <a
-                href="/contact"
-                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#e7bd5d]/25 bg-[#d6ae56] px-5 text-sm font-semibold text-[#071018] transition-transform hover:-translate-y-px"
-              >
-                Contactar <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </a>
+            </div>
+
+            <aside className="border border-[#6f0d12]/15 bg-[#f7f0e7] p-6">
+              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#6f0d12]">Áreas de práctica</p>
+              <div className="mt-5 divide-y divide-[#6f0d12]/10">
+                {pillars.map(({ label, icon: Icon }) => (
+                  <div key={label} className="flex items-center gap-4 py-4 first:pt-0">
+                    <Icon className="h-5 w-5 text-[#6f0d12]" aria-hidden="true" />
+                    <span className={`${serif} text-lg text-[#2b211b]`}>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="conferencia" className="scroll-mt-24 py-20 sm:py-24 lg:py-28">
+          <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+            <div className="grid overflow-hidden border border-[#6f0d12]/16 bg-[#fbf7f1] lg:grid-cols-[1.15fr_.85fr]">
+              <div className="p-7 sm:p-10 lg:p-14">
+                <p className="text-[10px] font-bold uppercase tracking-[.23em] text-[#6f0d12]">Conferencia destacada · Valderrama Talks</p>
+                <h2 className={`${serif} mt-4 text-4xl leading-none tracking-[-.02em] text-[#17110e] sm:text-5xl lg:text-6xl`}>
+                  ¿Filosofía o <span className="text-[#6f0d12]">Dinero?</span>
+                </h2>
+                <p className={`${serif} mt-3 text-2xl italic text-[#4e4038]`}>El arte de comer papel</p>
+                <div className="mt-7 h-px w-32 bg-[#6f0d12]" />
+
+                <dl className="mt-8 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+                  <div><dt className="text-[9px] font-bold uppercase tracking-[.18em] text-[#8a776a]">Fecha</dt><dd className={`${serif} mt-1 text-lg`}>17 de septiembre</dd></div>
+                  <div><dt className="text-[9px] font-bold uppercase tracking-[.18em] text-[#8a776a]">Hora</dt><dd className={`${serif} mt-1 text-lg`}>7:00 p. m.</dd></div>
+                  <div><dt className="text-[9px] font-bold uppercase tracking-[.18em] text-[#8a776a]">Duración</dt><dd className={`${serif} mt-1 text-lg`}>45 minutos</dd></div>
+                  <div><dt className="text-[9px] font-bold uppercase tracking-[.18em] text-[#8a776a]">Modalidad</dt><dd className={`${serif} mt-1 text-lg`}>Google Meet</dd></div>
+                  <div><dt className="text-[9px] font-bold uppercase tracking-[.18em] text-[#8a776a]">Ticket</dt><dd className={`${serif} mt-1 text-lg text-[#6f0d12]`}>$10.000</dd></div>
+                  <div><dt className="text-[9px] font-bold uppercase tracking-[.18em] text-[#8a776a]">Inscripciones</dt><dd className={`${serif} mt-1 text-lg`}>3186428218</dd></div>
+                </dl>
+
+                <a href="/contact" className="mt-9 inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.14em] text-[#fffaf2]">
+                  Solicitar información <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </a>
+              </div>
+
+              <div className="relative flex items-center justify-center border-t border-[#6f0d12]/12 bg-[#f4eadf] p-7 lg:border-l lg:border-t-0 lg:p-10">
+                <Image
+                  src="/jpvalderrama/conference.webp"
+                  alt="Pieza visual de la conferencia ¿Filosofía o Dinero?"
+                  width={520}
+                  height={520}
+                  className="h-auto w-full max-w-[500px] shadow-[0_18px_55px_rgba(75,32,22,.12)]"
+                  sizes="(max-width: 1024px) 85vw, 500px"
+                />
+              </div>
             </div>
           </div>
-        </Container>
-      </section>
-    </PublicPageShell>
+        </section>
+
+        <section id="contacto" className="scroll-mt-24 px-5 pb-10 sm:px-8 lg:px-12">
+          <div className="mx-auto max-w-[1440px] bg-[#650b10] px-7 py-10 text-[#fff7ed] sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:px-14">
+            <div className="max-w-3xl">
+              <p className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#e9c9bf]">Educación · contenido · proyectos</p>
+              <h2 className={`${serif} mt-3 text-3xl leading-tight sm:text-4xl`}>
+                ¿Colaboramos en educación, contenido o proyectos con impacto?
+              </h2>
+              <p className={`${serif} mt-3 text-lg text-[#eadbd2]`}>Escríbeme y conversemos sobre nuevas ideas.</p>
+            </div>
+            <div className="mt-7 flex shrink-0 flex-col items-start gap-3 lg:mt-0 lg:items-end">
+              <a href="/contact" className="inline-flex min-h-12 items-center gap-2 bg-[#fff7ed] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#650b10]">
+                Escribir mensaje <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <p className="text-sm text-[#eadbd2]">ctgone.com/jpvalderrama · 3186428218</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer className="border-t border-[#6f0d12]/10 bg-[#f7f0e7]">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-3 px-5 py-7 text-[9px] font-semibold uppercase tracking-[.2em] text-[#74655b] sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12">
+          <p>CTG One · Educación · Tecnología · Desarrollo humano</p>
+          <p style={{ color: WINE }}>ctgone.com/jpvalderrama</p>
+        </div>
+      </footer>
+    </main>
   );
 }
