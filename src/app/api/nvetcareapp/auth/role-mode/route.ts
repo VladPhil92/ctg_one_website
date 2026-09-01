@@ -6,9 +6,11 @@ import {
 } from '@/lib/nvetcareapp/session';
 import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
 
-// Root session modes. CLIENT is a deliberately narrowed backend role;
-// VET_TESTER is UI-only and never grants VET authority to the access token.
-const ALLOWED_MODES = new Set<NvetRootRoleMode>(['SUPERADMIN', 'CLIENT', 'VET_TESTER']);
+// Effective backend modes remain deliberately restricted to SUPERADMIN/CLIENT.
+// VET_TESTER is handled separately as a root-only presentation sandbox and is
+// never forwarded to NestJS as an authority claim.
+const ALLOWED_MODES = new Set<NvetRootRoleMode>(['SUPERADMIN', 'CLIENT']);
+const VET_TESTER_MODE: NvetRootRoleMode = 'VET_TESTER';
 
 /**
  * Session-local role/presentation switch for the canonical Nvet SUPERADMIN.
@@ -26,7 +28,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Cuerpo de solicitud inválido' }, { status: 400 });
   }
 
-  if (!body.mode || !ALLOWED_MODES.has(body.mode)) {
+  const isTesterMode = body.mode === VET_TESTER_MODE;
+  if (!body.mode || (!ALLOWED_MODES.has(body.mode) && !isTesterMode)) {
     return NextResponse.json({ message: 'Modo de rol inválido' }, { status: 400 });
   }
 
