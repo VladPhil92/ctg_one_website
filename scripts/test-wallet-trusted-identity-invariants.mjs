@@ -4,6 +4,7 @@ import path from 'node:path';
 const root = process.cwd();
 const files = {
   migration: path.join(root, 'supabase/migrations/20260829234000_0077_trusted_wallet_identity_linking.sql'),
+  atomicBootstrapMigration: path.join(root, 'supabase/migrations/20260901022000_0093_atomic_legacy_wallet_identity_bootstrap.sql'),
   verifier: path.join(root, 'src/lib/wallet/privy-identity-token.ts'),
   route: path.join(root, 'src/app/api/wallet/identity/link/route.ts'),
   legacyBootstrap: path.join(root, 'src/app/api/wallet/identity/legacy-bootstrap/route.ts'),
@@ -20,6 +21,7 @@ for (const [label, file] of Object.entries(files)) {
 }
 
 const migration = fs.readFileSync(files.migration, 'utf8');
+const atomicBootstrapMigration = fs.readFileSync(files.atomicBootstrapMigration, 'utf8');
 const verifier = fs.readFileSync(files.verifier, 'utf8');
 const route = fs.readFileSync(files.route, 'utf8');
 const legacyBootstrap = fs.readFileSync(files.legacyBootstrap, 'utf8');
@@ -96,6 +98,45 @@ for (const fragment of forbiddenMigration) {
   if (migration.includes(fragment)) {
     throw new Error(`trusted identity migration weakens the server-only boundary: ${fragment}`);
   }
+}
+
+requireFragments(atomicBootstrapMigration, 'atomic legacy bootstrap migration', [
+  'create or replace function public.bootstrap_verified_legacy_wallet_identity(',
+  'p_user_id uuid,',
+  'p_provider_user_id text,',
+  'p_evm_address text,',
+  'p_source_digest_sha256 text',
+  'security definer',
+  'set search_path = public',
+  "pg_advisory_xact_lock(\n    hashtextextended('wallet-link:user:'",
+  "pg_advisory_xact_lock(\n    hashtextextended('wallet-link:provider:privy:'",
+  "pg_advisory_xact_lock(\n    hashtextextended('wallet-link:evm:'",
+  'from public.wallet_legacy_migration_evidence',
+  'for update;',
+  'if v_evidence.id is null then',
+  'insert into public.wallet_legacy_migration_evidence(',
+  'source_digest_sha256,',
+  "'pending'",
+  "raise exception 'LEGACY_PROVIDER_IDENTITY_MISMATCH'",
+  "raise exception 'LEGACY_WALLET_MISMATCH'",
+  'return public.link_verified_wallet_identity(',
+  "'legacy_preserve'",
+  'revoke all on function public.bootstrap_verified_legacy_wallet_identity(uuid,text,text,text)',
+  'from public, anon, authenticated;',
+  'grant execute on function public.bootstrap_verified_legacy_wallet_identity(uuid,text,text,text)',
+  'to service_role;',
+]);
+
+if (atomicBootstrapMigration.includes('v_evidence.source_digest_sha256 <> v_source_digest')) {
+  throw new Error('atomic bootstrap must reuse matching imported evidence even when its source-document digest differs');
+}
+if (atomicBootstrapMigration.includes('to authenticated;')) {
+  throw new Error('atomic bootstrap RPC must remain service-role-only');
+}
+const atomicEvidenceIndex = atomicBootstrapMigration.indexOf('insert into public.wallet_legacy_migration_evidence(');
+const atomicLinkIndex = atomicBootstrapMigration.indexOf('return public.link_verified_wallet_identity(');
+if (!(atomicEvidenceIndex >= 0 && atomicLinkIndex > atomicEvidenceIndex)) {
+  throw new Error('atomic bootstrap must create/reuse provenance before linking within one PostgreSQL function');
 }
 
 requireFragments(verifier, 'Privy identity-token verifier', [
@@ -190,13 +231,10 @@ requireFragments(legacyBootstrap, 'legacy identity bootstrap route', [
   'verifyPrivyIdentityToken({',
   'canonicalCtgUserId: user.id',
   "createHash('sha256')",
-  ".from('wallet_legacy_migration_evidence')",
-  "provider_user_id: verifiedIdentity.privyUserId",
-  "expected_address: address",
-  "source_digest_sha256: sourceDigestSha256",
-  "status: 'pending'",
-  "'link_verified_wallet_identity'",
-  "p_link_mode: 'legacy_preserve'",
+  "serviceRole.rpc(\n    'bootstrap_verified_legacy_wallet_identity'",
+  'p_provider_user_id: verifiedIdentity.privyUserId',
+  'p_evm_address: address',
+  'p_source_digest_sha256: sourceDigestSha256',
   'return walletCorsPreflight(request, CORS_METHODS)',
   'legacyPreserved: true',
 ]);
@@ -208,9 +246,11 @@ for (const fragment of [
   'body.privyUserId',
   'body.sourceDigestSha256',
   'body.expectedAddress',
+  ".from('wallet_legacy_migration_evidence')",
+  ".insert({",
 ]) {
   if (legacyBootstrap.includes(fragment)) {
-    throw new Error(`legacy bootstrap must not trust browser wallet provenance: ${fragment}`);
+    throw new Error(`legacy bootstrap route must not directly trust or persist browser identity provenance: ${fragment}`);
   }
 }
 if (legacyBootstrap.includes('verifiedIdentity.issuedAt') || legacyBootstrap.includes('verifiedIdentity.expiresAt')) {
@@ -219,10 +259,9 @@ if (legacyBootstrap.includes('verifiedIdentity.issuedAt') || legacyBootstrap.inc
 const bootstrapAuthIndex = legacyBootstrap.indexOf('createAuthenticatedRequestContext(request)');
 const bootstrapRateIndex = legacyBootstrap.indexOf("'consume_wallet_identity_link_rate_limit'");
 const bootstrapVerifyIndex = legacyBootstrap.indexOf('verifyPrivyIdentityToken({');
-const bootstrapEvidenceIndex = legacyBootstrap.indexOf('existing = await readLegacyEvidence(serviceRole, user.id)', bootstrapVerifyIndex);
-const bootstrapLinkIndex = legacyBootstrap.lastIndexOf("'link_verified_wallet_identity'");
-if (!(bootstrapAuthIndex >= 0 && bootstrapRateIndex > bootstrapAuthIndex && bootstrapVerifyIndex > bootstrapRateIndex && bootstrapEvidenceIndex > bootstrapVerifyIndex && bootstrapLinkIndex > bootstrapEvidenceIndex)) {
-  throw new Error('legacy bootstrap must authenticate, rate-limit, verify signed Privy identity, persist provenance, then link');
+const bootstrapRpcIndex = legacyBootstrap.indexOf("'bootstrap_verified_legacy_wallet_identity'");
+if (!(bootstrapAuthIndex >= 0 && bootstrapRateIndex > bootstrapAuthIndex && bootstrapVerifyIndex > bootstrapRateIndex && bootstrapRpcIndex > bootstrapVerifyIndex)) {
+  throw new Error('legacy bootstrap must authenticate, rate-limit, verify signed Privy identity, then invoke the atomic service-role RPC');
 }
 
 const bearerBranchIndex = serverAuth.indexOf('if (bearer.present) {');
@@ -234,8 +273,8 @@ if (!(bearerBranchIndex >= 0 && bearerRejectIndex > bearerBranchIndex && bearerV
 }
 
 const currentSchemaMatch = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
-if (!currentSchemaMatch || Number(currentSchemaMatch[1]) < 77) {
-  throw new Error('runtime schema contract must never regress below trusted identity migration 0077');
+if (!currentSchemaMatch || Number(currentSchemaMatch[1]) < 93) {
+  throw new Error('runtime schema contract must include atomic legacy wallet bootstrap migration 0093');
 }
 
 requireFragments(env, 'environment contract', [
