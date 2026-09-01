@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 
 const routes = [
+  ['/jpvalderrama/campus', 'Campus'],
   ['/jpvalderrama/talks', 'Talks'],
   ['/jpvalderrama/ideas', 'Ideas'],
   ['/jpvalderrama/books', 'Books'],
@@ -15,7 +16,7 @@ export function SubbrandLauncher() {
 
   return (
     <nav
-      aria-label="Explorar submarcas JP Valderrama"
+      aria-label="Explorar submarcas y campus JP Valderrama"
       className="fixed inset-x-4 bottom-4 z-40 mx-auto flex w-fit max-w-[calc(100vw-2rem)] items-center gap-1 overflow-x-auto border border-[#6f0d12]/20 bg-[#fffaf2]/95 p-1.5 shadow-[0_18px_55px_rgba(72,35,24,.14)] backdrop-blur-xl"
     >
       {routes.map(([href, label]) => (
