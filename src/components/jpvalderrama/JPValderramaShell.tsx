@@ -33,6 +33,7 @@ export function JPValderramaHeader({ active }: { active?: string }) {
         </div>
 
         <nav className="flex min-w-0 items-center gap-3 overflow-x-auto text-[10px] font-bold uppercase tracking-[.13em] text-[#665950] sm:gap-5" aria-label="Submarcas JP Valderrama">
+          <a href="/jpvalderrama" className="whitespace-nowrap text-[#6f0d12] lg:hidden" aria-label="Ir a JP Valderrama">JP</a>
           {navItems.map((item) => (
             <a
               key={item.href}
