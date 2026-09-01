@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { BrandLogo } from '@/components/BrandLogo';
 
 const navItems = [
+  { href: '/jpvalderrama/campus', label: 'Campus' },
   { href: '/jpvalderrama/talks', label: 'Talks' },
   { href: '/jpvalderrama/ideas', label: 'Ideas' },
   { href: '/jpvalderrama/books', label: 'Books' },
@@ -32,7 +33,7 @@ export function JPValderramaHeader({ active }: { active?: string }) {
           </a>
         </div>
 
-        <nav className="flex min-w-0 items-center gap-3 overflow-x-auto text-[10px] font-bold uppercase tracking-[.13em] text-[#665950] sm:gap-5" aria-label="Submarcas JP Valderrama">
+        <nav className="flex min-w-0 items-center gap-3 overflow-x-auto text-[10px] font-bold uppercase tracking-[.13em] text-[#665950] sm:gap-5" aria-label="JP Valderrama: campus y submarcas">
           <a href="/jpvalderrama" className="whitespace-nowrap text-[#6f0d12] lg:hidden" aria-label="Ir a JP Valderrama">JP</a>
           {navItems.map((item) => (
             <a
@@ -60,6 +61,8 @@ export function JPValderramaFooter() {
         </div>
         <div className="flex flex-wrap gap-5 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
           <a href="/jpvalderrama">Perfil</a>
+          <a href="/jpvalderrama/campus">Campus</a>
+          <a href="/dashboard/educacion">Mi biblioteca</a>
           <a href="/contact">Contacto</a>
           <a href="/">CTG One</a>
         </div>
