@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0092",
-  "expectedMigrationName": "acquisition_activation_funnel_telemetry",
-  "expectedMigrationCount": 92,
+  "expectedMigration": "0093",
+  "expectedMigrationName": "atomic_legacy_wallet_identity_bootstrap",
+  "expectedMigrationCount": 93,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

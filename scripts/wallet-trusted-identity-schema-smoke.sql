@@ -66,6 +66,22 @@ begin
 
   if has_function_privilege(
     'authenticated',
+    'public.bootstrap_verified_legacy_wallet_identity(uuid,text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'authenticated browser role must not execute bootstrap_verified_legacy_wallet_identity';
+  end if;
+
+  if not has_function_privilege(
+    'service_role',
+    'public.bootstrap_verified_legacy_wallet_identity(uuid,text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'service_role must execute bootstrap_verified_legacy_wallet_identity';
+  end if;
+
+  if has_function_privilege(
+    'authenticated',
     'public.consume_wallet_identity_link_rate_limit(uuid)',
     'EXECUTE'
   ) then
@@ -150,6 +166,31 @@ begin
     raise exception 'idempotent trusted identity retry duplicated canonical rows';
   end if;
 
+  -- Atomic bootstrap must not leave pending provenance behind if the downstream
+  -- link conflicts with an already-established non-legacy mode.
+  begin
+    perform public.bootstrap_verified_legacy_wallet_identity(
+      v_user_a,
+      'did:privy:ctg-wallet-a',
+      v_address_a,
+      repeat('c', 64)
+    );
+    raise exception 'TEST_EXPECTED_ATOMIC_BOOTSTRAP_ROLLBACK';
+  exception when others then
+    if sqlerrm = 'TEST_EXPECTED_ATOMIC_BOOTSTRAP_ROLLBACK' then
+      raise;
+    end if;
+    if position('wallet identity link mode cannot change implicitly' in sqlerrm) = 0 then
+      raise exception 'unexpected atomic bootstrap conflict error: %', sqlerrm;
+    end if;
+  end;
+
+  if exists (
+    select 1 from public.wallet_legacy_migration_evidence where user_id = v_user_a
+  ) then
+    raise exception 'failed atomic bootstrap left orphan legacy evidence';
+  end if;
+
   begin
     perform public.link_verified_wallet_identity(
       v_user_b,
@@ -201,8 +242,9 @@ begin
     end if;
   end;
 
-  -- Legacy provenance is inserted by trusted/operator tooling, not supplied by
-  -- the browser. Its digest represents the deterministic source export.
+  -- Imported legacy provenance uses the digest of its source document. The
+  -- atomic bootstrap must reuse it when principal/address match, even though the
+  -- live identity-claim digest below deliberately differs.
   insert into public.wallet_legacy_migration_evidence(
     user_id,
     provider,
@@ -284,17 +326,21 @@ begin
     end if;
   end;
 
-  v_first := public.link_verified_wallet_identity(
+  v_first := public.bootstrap_verified_legacy_wallet_identity(
     v_user_b,
     'did:privy:ctg-wallet-b',
     '0x' || upper(substr(v_address_b, 3)),
-    'legacy_preserve'
+    repeat('b', 64)
   );
 
   if (v_first->>'legacyPreserved')::boolean is not true
      or v_first->>'address' <> lower(v_address_b)
      or (v_first->>'idempotent')::boolean then
     raise exception 'legacy wallet was not preserved deterministically: %', v_first;
+  end if;
+
+  if (select source_digest_sha256 from public.wallet_legacy_migration_evidence where user_id = v_user_b) <> repeat('a', 64) then
+    raise exception 'atomic bootstrap overwrote imported source-document provenance';
   end if;
 
   if (select status from public.wallet_legacy_migration_evidence where user_id = v_user_b) <> 'consumed'
@@ -316,17 +362,21 @@ begin
     end if;
   end;
 
-  v_second := public.link_verified_wallet_identity(
+  v_second := public.bootstrap_verified_legacy_wallet_identity(
     v_user_b,
     'did:privy:ctg-wallet-b',
     v_address_b,
-    'legacy_preserve'
+    repeat('d', 64)
   );
 
   if not (v_second->>'idempotent')::boolean
      or v_second->>'identityLinkId' <> v_first->>'identityLinkId'
      or v_second->>'externalAccountId' <> v_first->>'externalAccountId' then
-    raise exception 'consumed legacy evidence did not permit a safe idempotent retry';
+    raise exception 'consumed legacy evidence did not permit a safe atomic idempotent retry';
+  end if;
+
+  if (select source_digest_sha256 from public.wallet_legacy_migration_evidence where user_id = v_user_b) <> repeat('a', 64) then
+    raise exception 'idempotent atomic retry mutated imported provenance';
   end if;
 
   if (select count(*) from public.wallet_identity_audit_log where actor_user_id = v_user_a) <> 2
