@@ -1,7 +1,12 @@
 import 'server-only';
 
-import { createPublicKey, verify as verifySignature, type KeyObject } from 'node:crypto';
-import type { JsonWebKey as NodeJsonWebKey } from 'node:crypto';
+import { verify as verifySignature } from 'node:crypto';
+
+import {
+  getPrivyAppId,
+  getPrivyVerificationKey,
+  PrivyServerTrustError,
+} from '@/lib/wallet/privy-server-trust';
 
 const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 const PRIVY_USER_ID_RE = /^did:privy:[A-Za-z0-9._:-]+$/;
@@ -56,31 +61,6 @@ function decodeBase64UrlJson(segment: string): JsonObject {
     throw new PrivyIdentityTokenError(
       'INVALID_PRIVY_IDENTITY_TOKEN',
       'Privy identity token contains invalid JSON.',
-    );
-  }
-}
-
-function getVerificationKey(): KeyObject {
-  const rawKey = process.env.PRIVY_JWT_VERIFICATION_KEY?.trim();
-  if (!rawKey) {
-    throw new PrivyIdentityTokenError(
-      'PRIVY_IDENTITY_NOT_CONFIGURED',
-      'Privy identity-token verification key is not configured.',
-    );
-  }
-
-  try {
-    if (rawKey.startsWith('{')) {
-      const jwk = JSON.parse(rawKey) as NodeJsonWebKey;
-      return createPublicKey({ key: jwk, format: 'jwk' });
-    }
-
-    const pem = rawKey.replace(/\\n/g, '\n');
-    return createPublicKey(pem);
-  } catch {
-    throw new PrivyIdentityTokenError(
-      'PRIVY_IDENTITY_NOT_CONFIGURED',
-      'Privy identity-token verification key is malformed.',
     );
   }
 }
@@ -206,17 +186,22 @@ function selectEmbeddedEvmWallet(
   );
 }
 
-export function verifyPrivyIdentityToken(params: {
+export async function verifyPrivyIdentityToken(params: {
   token: string;
   canonicalCtgUserId: string;
   expectedLegacyAddress?: string | null;
-}): VerifiedPrivyIdentity {
-  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID?.trim();
-  if (!appId) {
-    throw new PrivyIdentityTokenError(
-      'PRIVY_IDENTITY_NOT_CONFIGURED',
-      'Privy app id is not configured.',
-    );
+}): Promise<VerifiedPrivyIdentity> {
+  let appId: string;
+  try {
+    appId = getPrivyAppId();
+  } catch (error) {
+    if (error instanceof PrivyServerTrustError) {
+      throw new PrivyIdentityTokenError(
+        'PRIVY_IDENTITY_NOT_CONFIGURED',
+        `Privy server trust is not configured: ${error.code}.`,
+      );
+    }
+    throw error;
   }
 
   const segments = params.token.trim().split('.');
@@ -235,6 +220,7 @@ export function verifyPrivyIdentityToken(params: {
       'Privy identity token must use ES256.',
     );
   }
+  const kid = typeof header.kid === 'string' && header.kid.trim() ? header.kid.trim() : null;
 
   let signature: Buffer;
   try {
@@ -252,11 +238,24 @@ export function verifyPrivyIdentityToken(params: {
     );
   }
 
+  let verificationKey;
+  try {
+    verificationKey = await getPrivyVerificationKey(kid);
+  } catch (error) {
+    if (error instanceof PrivyServerTrustError) {
+      throw new PrivyIdentityTokenError(
+        'PRIVY_IDENTITY_NOT_CONFIGURED',
+        `Privy identity verifier is unavailable: ${error.code}.`,
+      );
+    }
+    throw error;
+  }
+
   const signingInput = Buffer.from(`${encodedHeader}.${encodedPayload}`, 'ascii');
   const valid = verifySignature(
     'sha256',
     signingInput,
-    { key: getVerificationKey(), dsaEncoding: 'ieee-p1363' },
+    { key: verificationKey, dsaEncoding: 'ieee-p1363' },
     signature,
   );
   if (!valid) {
