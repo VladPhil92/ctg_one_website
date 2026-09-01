@@ -15,6 +15,7 @@ on:
       - 'scripts/test-wallet-legacy-evidence-importer.mjs'
       - 'scripts/fixtures/wallet-legacy-evidence.synthetic-v1.json'
       - 'scripts/test-wallet-trusted-identity-invariants.mjs'
+      - 'scripts/test-wallet-identity-convergence-canary.mjs'
       - 'scripts/wallet-trusted-identity-schema-smoke.sql'
       - 'docs/WALLET_LEGACY_IDENTITY_MIGRATION.md'
       - '.github/workflows/wallet-trusted-identity.yml'
@@ -33,6 +34,7 @@ on:
       - 'scripts/test-wallet-legacy-evidence-importer.mjs'
       - 'scripts/fixtures/wallet-legacy-evidence.synthetic-v1.json'
       - 'scripts/test-wallet-trusted-identity-invariants.mjs'
+      - 'scripts/test-wallet-identity-convergence-canary.mjs'
       - 'scripts/wallet-trusted-identity-schema-smoke.sql'
       - 'docs/WALLET_LEGACY_IDENTITY_MIGRATION.md'
       - '.github/workflows/wallet-trusted-identity.yml'
@@ -69,6 +71,7 @@ jobs:
           node scripts/test-migration-integrity.mjs
           node scripts/test-wallet-unification-invariants.mjs
           node scripts/test-wallet-trusted-identity-invariants.mjs
+          node scripts/test-wallet-identity-convergence-canary.mjs
           node scripts/test-wallet-legacy-evidence-importer.mjs
 
       - name: Typecheck trusted server boundary

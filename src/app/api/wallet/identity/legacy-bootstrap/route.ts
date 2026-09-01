@@ -9,6 +9,10 @@ import {
   createAuthenticatedRequestContext,
   isSupabaseConfigured,
 } from '@/lib/supabase/server';
+import {
+  IdentityConvergenceCanaryError,
+  inspectIdentityConvergenceCanary,
+} from '@/lib/wallet/identity-convergence-canary';
 import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
 import {
   PrivyIdentityTokenError,
@@ -73,9 +77,11 @@ export function OPTIONS(request: Request) {
  * One-time legacy claim boundary.
  *
  * The browser submits no wallet address, Privy principal or provenance data.
- * Both identities are proven by signed bearer material. After cryptographic
- * verification, a service-role-only RPC creates/reuses legacy evidence and
- * links the identity in one PostgreSQL transaction.
+ * During the first production convergence phase only a canonical CTG One admin
+ * account may enter this mutation boundary. The canary gate is evaluated before
+ * rate limiting or Privy mutation sequencing and does not replace either signed
+ * identity proof. After verification, a service-role-only RPC creates/reuses
+ * legacy evidence and links the identity in one PostgreSQL transaction.
  */
 export async function POST(request: Request) {
   if (!isSupabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -90,6 +96,30 @@ export async function POST(request: Request) {
   const auth = await createAuthenticatedRequestContext(request);
   if (!auth) {
     return noStoreJson(request, { error: 'UNAUTHENTICATED' }, { status: 401 });
+  }
+
+  const { user } = auth;
+  try {
+    const canary = await inspectIdentityConvergenceCanary(user.id);
+    if (!canary.eligible) {
+      return noStoreJson(
+        request,
+        { error: 'IDENTITY_CONVERGENCE_CANARY_ADMIN_ONLY' },
+        { status: 403 },
+      );
+    }
+    if (canary.state === 'conflict') {
+      return noStoreJson(request, { error: canary.code }, { status: 409 });
+    }
+  } catch (error) {
+    if (error instanceof IdentityConvergenceCanaryError) {
+      return noStoreJson(request, { error: error.code }, { status: 503 });
+    }
+    return noStoreJson(
+      request,
+      { error: 'IDENTITY_CONVERGENCE_CANARY_UNAVAILABLE' },
+      { status: 503 },
+    );
   }
 
   try {
@@ -107,7 +137,6 @@ export async function POST(request: Request) {
     return noStoreJson(request, { error: 'PRIVY_IDENTITY_TOKEN_REQUIRED' }, { status: 401 });
   }
 
-  const { user } = auth;
   const serviceRole = createAdminClient();
   const { data: rateData, error: rateError } = await serviceRole.rpc(
     'consume_wallet_identity_link_rate_limit',
