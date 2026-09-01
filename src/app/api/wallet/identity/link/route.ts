@@ -6,6 +6,10 @@ import {
   createAuthenticatedRequestContext,
   isSupabaseConfigured,
 } from '@/lib/supabase/server';
+import {
+  IdentityConvergenceCanaryError,
+  inspectIdentityConvergenceCanary,
+} from '@/lib/wallet/identity-convergence-canary';
 import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
 import {
   PrivyIdentityTokenError,
@@ -93,7 +97,49 @@ export async function POST(request: Request) {
     return noStoreJson(request, { error: 'UNAUTHENTICATED' }, { status: 401 });
   }
 
+  let body: z.infer<typeof requestSchema>;
+  try {
+    const rawBody = await request.text();
+    if (Buffer.byteLength(rawBody, 'utf8') > MAX_REQUEST_BYTES) {
+      return noStoreJson(request, { error: 'REQUEST_TOO_LARGE' }, { status: 413 });
+    }
+    body = requestSchema.parse(JSON.parse(rawBody));
+  } catch {
+    return noStoreJson(request, { error: 'INVALID_REQUEST' }, { status: 400 });
+  }
+
   const { user } = auth;
+  const legacyPreserveRequested = body.linkMode === 'legacy_preserve';
+  try {
+    const canary = await inspectIdentityConvergenceCanary(user.id);
+    if (!canary.eligible) {
+      return noStoreJson(
+        request,
+        { error: 'IDENTITY_CONVERGENCE_CANARY_ADMIN_ONLY' },
+        { status: 403 },
+      );
+    }
+    if (canary.state === 'conflict') {
+      return noStoreJson(request, { error: canary.code }, { status: 409 });
+    }
+    if (!legacyPreserveRequested) {
+      return noStoreJson(
+        request,
+        { error: 'IDENTITY_CONVERGENCE_CANARY_LEGACY_ONLY' },
+        { status: 409 },
+      );
+    }
+  } catch (error) {
+    if (error instanceof IdentityConvergenceCanaryError) {
+      return noStoreJson(request, { error: error.code }, { status: 503 });
+    }
+    return noStoreJson(
+      request,
+      { error: 'IDENTITY_CONVERGENCE_CANARY_UNAVAILABLE' },
+      { status: 503 },
+    );
+  }
+
   const serviceRole = createAdminClient();
   const { data: rateData, error: rateError } = await serviceRole.rpc(
     'consume_wallet_identity_link_rate_limit',
@@ -122,17 +168,6 @@ export async function POST(request: Request) {
   const identityToken = request.headers.get('privy-id-token')?.trim();
   if (!identityToken) {
     return noStoreJson(request, { error: 'PRIVY_IDENTITY_TOKEN_REQUIRED' }, { status: 401 });
-  }
-
-  let body: z.infer<typeof requestSchema>;
-  try {
-    const rawBody = await request.text();
-    if (Buffer.byteLength(rawBody, 'utf8') > MAX_REQUEST_BYTES) {
-      return noStoreJson(request, { error: 'REQUEST_TOO_LARGE' }, { status: 413 });
-    }
-    body = requestSchema.parse(JSON.parse(rawBody));
-  } catch {
-    return noStoreJson(request, { error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
   let legacyEvidence: LegacyMigrationEvidence | null = null;
