@@ -41,7 +41,7 @@ export function SuperadminRoleSwitch({ currentMode }: { currentMode: NvetRootRol
       const landingPath = targetMode === 'CLIENT'
         ? '/nvetcareapp/dashboard/citas'
         : targetMode === 'VET_TESTER'
-          ? '/nvetcareapp/dashboard'
+          ? '/nvetcareapp/dashboard/vet-tester'
           : '/nvetcareapp/dashboard/gobernanza';
       router.replace(landingPath);
       router.refresh();
