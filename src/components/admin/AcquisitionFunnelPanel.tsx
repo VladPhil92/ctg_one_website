@@ -67,22 +67,30 @@ export function AcquisitionFunnelPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/admin/analytics/funnel?days=${windowDays}`, { cache: 'no-store' });
+      const response = await fetch(`/api/admin/analytics/funnel?days=${windowDays}`, {
+        cache: 'no-store',
+        signal,
+      });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? 'No fue posible cargar el embudo.');
-      setSnapshot(payload as FunnelSnapshot);
+      if (!signal?.aborted) setSnapshot(payload as FunnelSnapshot);
     } catch (err) {
+      if (signal?.aborted) return;
       setError(err instanceof Error ? err.message : 'No fue posible cargar el embudo.');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, [windowDays]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void refresh(controller.signal);
+    return () => controller.abort();
+  }, [refresh]);
 
   const maxStage = useMemo(() => {
     if (!snapshot) return 1;
