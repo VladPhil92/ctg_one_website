@@ -60,6 +60,123 @@ export type NvetClinicalRecordResult =
   | { ok: true; data: NvetClinicalRecordV3 }
   | { ok: false; status: number; message: string };
 
+type UnknownObject = Record<string, unknown>;
+
+function isObject(value: unknown): value is UnknownObject {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isOptionalNullableString(value: unknown): boolean {
+  return value === undefined || value === null || typeof value === 'string';
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0;
+}
+
+function isPet(value: unknown): value is NvetClinicalRecordPet {
+  if (!isObject(value)) return false;
+  return (
+    typeof value.id === 'string' &&
+    typeof value.name === 'string' &&
+    typeof value.species === 'string' &&
+    isOptionalNullableString(value.breed) &&
+    (value.weight === undefined || value.weight === null || (typeof value.weight === 'number' && Number.isFinite(value.weight))) &&
+    isOptionalNullableString(value.birthDate) &&
+    isOptionalNullableString(value.photo) &&
+    typeof value.createdAt === 'string' &&
+    typeof value.updatedAt === 'string'
+  );
+}
+
+function isOwnerReportedHealthProfile(value: unknown): value is NvetPetHealthProfile {
+  if (!isObject(value)) return false;
+  return (
+    value.schemaVersion === 1 &&
+    value.source === 'OWNER_REPORTED' &&
+    Array.isArray(value.allergies) &&
+    Array.isArray(value.medications) &&
+    Array.isArray(value.conditions) &&
+    Array.isArray(value.vaccinations) &&
+    Array.isArray(value.deworming) &&
+    Array.isArray(value.preventiveCare)
+  );
+}
+
+function isVetAuthoredRecord(value: unknown): value is NvetVetAuthoredClinicalRecord {
+  if (!isObject(value) || !isObject(value.veterinarian)) return false;
+  return (
+    typeof value.appointmentId === 'string' &&
+    value.source === 'VET_AUTHORED' &&
+    typeof value.serviceType === 'string' &&
+    typeof value.date === 'string' &&
+    typeof value.time === 'string' &&
+    isOptionalNullableString(value.completedAt) &&
+    typeof value.lastUpdatedAt === 'string' &&
+    typeof value.veterinarian.name === 'string' &&
+    isOptionalNullableString(value.diagnosis) &&
+    isOptionalNullableString(value.treatment) &&
+    typeof value.hasClinicalNote === 'boolean'
+  );
+}
+
+function isClinicalRecordV3(value: unknown): value is NvetClinicalRecordV3 {
+  if (!isObject(value) || value.schemaVersion !== 3 || typeof value.generatedAt !== 'string') return false;
+  if (!isPet(value.pet)) return false;
+
+  const ownerReported = value.ownerReported;
+  if (!isObject(ownerReported)) return false;
+  if (
+    ownerReported.source !== 'OWNER_REPORTED' ||
+    !isNonNegativeInteger(ownerReported.schemaVersion) ||
+    !isOptionalNullableString(ownerReported.updatedAt) ||
+    typeof ownerReported.available !== 'boolean'
+  ) {
+    return false;
+  }
+  if (
+    (ownerReported.available && !isOwnerReportedHealthProfile(ownerReported.data)) ||
+    (!ownerReported.available && ownerReported.data !== null)
+  ) {
+    return false;
+  }
+
+  const vetAuthored = value.vetAuthored;
+  if (
+    !isObject(vetAuthored) ||
+    vetAuthored.source !== 'VET_AUTHORED' ||
+    !Array.isArray(vetAuthored.records) ||
+    !vetAuthored.records.every(isVetAuthoredRecord)
+  ) {
+    return false;
+  }
+
+  const summary = value.summary;
+  if (
+    !isObject(summary) ||
+    !isNonNegativeInteger(summary.completedAttendances) ||
+    !isNonNegativeInteger(summary.documentedAttendances) ||
+    typeof summary.ownerReportedProfileAvailable !== 'boolean'
+  ) {
+    return false;
+  }
+  if (
+    summary.documentedAttendances > summary.completedAttendances ||
+    summary.completedAttendances !== vetAuthored.records.length ||
+    summary.documentedAttendances !== vetAuthored.records.filter((record) => record.hasClinicalNote).length ||
+    summary.ownerReportedProfileAvailable !== ownerReported.available
+  ) {
+    return false;
+  }
+
+  const provenance = value.provenance;
+  return (
+    isObject(provenance) &&
+    typeof provenance.ownerReported === 'string' &&
+    typeof provenance.vetAuthored === 'string'
+  );
+}
+
 function backendMessage(value: unknown, fallback: string): string {
   if (!value || typeof value !== 'object') return fallback;
   const message = (value as { message?: unknown }).message;
@@ -83,7 +200,7 @@ export async function fetchNvetClinicalRecord(
         cache: 'no-store',
       },
     );
-    const data = await response.json().catch(() => null) as unknown;
+    const data = (await response.json().catch(() => null)) as unknown;
 
     if (!response.ok) {
       return {
@@ -93,12 +210,7 @@ export async function fetchNvetClinicalRecord(
       };
     }
 
-    if (
-      !data ||
-      typeof data !== 'object' ||
-      (data as { schemaVersion?: unknown }).schemaVersion !== 3 ||
-      typeof (data as { pet?: { id?: unknown } }).pet?.id !== 'string'
-    ) {
+    if (!isClinicalRecordV3(data)) {
       return {
         ok: false,
         status: 502,
@@ -106,7 +218,7 @@ export async function fetchNvetClinicalRecord(
       };
     }
 
-    return { ok: true, data: data as NvetClinicalRecordV3 };
+    return { ok: true, data };
   } catch {
     return {
       ok: false,
