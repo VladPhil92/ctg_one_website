@@ -10,6 +10,7 @@ import {
   Mic2,
   PenLine,
 } from 'lucide-react';
+import { BrandLogo } from '@/components/BrandLogo';
 
 const brands = [
   {
@@ -100,15 +101,15 @@ export default function JPValderramaPage() {
 
       <header className="sticky top-0 z-50 border-b border-[#6f0d12]/10 bg-[#f7f0e7]/95 backdrop-blur-xl">
         <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
-          <a href="/" className="flex shrink-0 items-center rounded-sm bg-[#070707] px-3 py-2 shadow-[0_6px_22px_rgba(21,16,13,.10)]" aria-label="Volver a CTG One">
-            <Image src="/images/logo/ctg-one-logo.png" alt="CTG One" width={520} height={123} priority unoptimized className="h-auto w-[154px] sm:w-[176px]" sizes="176px" />
+          <a href="/" className="flex min-h-12 shrink-0 items-center" aria-label="CTG One Technology, volver al inicio">
+            <BrandLogo priority tone="light" className="transition-transform duration-300 hover:-translate-y-px" />
           </a>
           <nav className="hidden items-center gap-7 text-[10px] font-semibold uppercase tracking-[.16em] text-[#665950] lg:flex" aria-label="Navegación JP Valderrama">
             <a href="#perfil" className="hover:text-[#6f0d12]">Perfil</a>
             <a href="#formacion" className="hover:text-[#6f0d12]">Formación</a>
             <a href="#marcas" className="hover:text-[#6f0d12]">Marcas</a>
             <a href="#conferencia" className="hover:text-[#6f0d12]">Conferencia</a>
-            <a href="/contact" className="hover:text-[#6f0d12]">Contacto</a>
+            <a href="#contacto" className="hover:text-[#6f0d12]">Contacto</a>
           </nav>
           <a href="#contenido" className="border-b border-[#6f0d12] pb-1 text-[10px] font-bold uppercase tracking-[.18em] text-[#6f0d12]">JP Valderrama</a>
         </div>
@@ -120,21 +121,21 @@ export default function JPValderramaPage() {
           <div className="mx-auto grid max-w-[1440px] gap-12 px-5 pb-20 pt-14 sm:px-8 sm:pb-24 lg:grid-cols-[1.03fr_.97fr] lg:items-center lg:px-12 lg:pb-28 lg:pt-20">
             <div className="max-w-3xl">
               <p className="mb-6 text-[10px] font-semibold uppercase tracking-[.25em] text-[#6f0d12]">CTG One · Educación · Ideas · Proyectos</p>
-              <Image src="/jpvalderrama/brand.webp" alt="Juan Pablo Valderrama — filósofo, escritor y conferencista" width={1320} height={660} priority unoptimized className="mb-8 h-auto w-full max-w-[660px]" sizes="(max-width: 1024px) 90vw, 660px" />
+              <Image src="/jpvalderrama/brand.webp" alt="Juan Pablo Valderrama — filósofo, escritor y conferencista" width={1536} height={768} priority unoptimized className="mb-8 h-auto w-full max-w-[660px] object-contain" sizes="(max-width: 1024px) 90vw, 660px" />
               <p className="mb-5 text-[10px] font-semibold uppercase leading-6 tracking-[.16em] text-[#665950] sm:text-[11px]">Filósofo · Educador · Escritor · Empresario · Fundador de CTG One · Desarrollador</p>
               <h1 className={`${serif} text-5xl leading-[.98] tracking-[-.04em] text-[#15100d] sm:text-6xl lg:text-[4.9rem]`}>Filosofía, educación, escritura y <span className="text-[#6f0d12]">proyectos.</span></h1>
               <div className="mt-6 flex items-center gap-3" aria-hidden="true"><span className="h-px w-24 bg-[#6f0d12]" /><span className="h-2 w-2 rounded-full bg-[#6f0d12]" /><span className="h-px w-16 bg-[#6f0d12]/35" /></div>
               <p className={`${serif} mt-7 max-w-2xl text-lg leading-8 text-[#534941] sm:text-xl`}>Ideas que piensan. Educación que transforma. Escritura que permanece. Proyectos que construyen futuro.</p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <a href="#marcas" className="inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2] hover:-translate-y-0.5">Explorar <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
-                <a href="/contact" className="inline-flex min-h-12 items-center gap-2 rounded-sm border border-[#6f0d12]/45 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12] hover:bg-[#6f0d12]/5">Contacto <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+                <a href="#contacto" className="inline-flex min-h-12 items-center gap-2 rounded-sm border border-[#6f0d12]/45 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12] hover:bg-[#6f0d12]/5">Contacto <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
               </div>
             </div>
             <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
               <div className="relative border border-[#6f0d12]/15 bg-[#fbf7f1] p-5 shadow-[0_24px_80px_rgba(72,35,24,.08)] sm:p-8">
                 <div className="absolute -left-3 -top-3 h-6 w-6 border-l border-t border-[#6f0d12]/50" aria-hidden="true" />
                 <div className="absolute -bottom-3 -right-3 h-6 w-6 border-b border-r border-[#6f0d12]/50" aria-hidden="true" />
-                <Image src="/jpvalderrama/conference.webp" alt="Conferencia Filosofía o Dinero — El arte de comer papel" width={640} height={640} unoptimized className="mx-auto h-auto w-full max-w-[320px] sm:max-w-[360px]" sizes="(max-width: 640px) 78vw, 360px" />
+                <Image src="/jpvalderrama/conference.webp" alt="Conferencia Filosofía o Dinero — El arte de comer papel" width={1536} height={1536} priority unoptimized className="mx-auto h-auto w-full max-w-[510px] object-contain" sizes="(max-width: 1024px) 82vw, 510px" />
               </div>
             </div>
           </div>
@@ -146,7 +147,7 @@ export default function JPValderramaPage() {
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
               {brands.map((brand) => (
                 <article key={brand.id} id={brand.id} className="group flex h-full flex-col border border-[#6f0d12]/15 bg-[#fbf7f1] p-5 transition-transform duration-300 hover:-translate-y-1 sm:p-6">
-                  <Image src={brand.image} alt={`Logo ${brand.name}`} width={420} height={420} unoptimized className="mx-auto aspect-square w-full max-w-[200px] object-contain" sizes="200px" />
+                  <Image src={brand.image} alt={`Logo ${brand.name}`} width={1536} height={1536} unoptimized className="mx-auto aspect-square w-full max-w-[260px] object-contain" sizes="(max-width: 640px) 70vw, (max-width: 1280px) 38vw, 260px" />
                   <p className="mt-6 text-center text-[10px] font-semibold uppercase leading-5 tracking-[.18em] text-[#6f0d12]">{brand.label}</p>
                   <h3 className={`${serif} mt-3 text-center text-2xl tracking-[.05em] text-[#17110e]`}>{brand.name}</h3>
                   <p className={`${serif} mt-4 flex-1 text-center text-[15px] leading-7 text-[#665950]`}>{brand.description}</p>
@@ -194,10 +195,10 @@ export default function JPValderramaPage() {
                     <div key={label}><dt className={eventLabel}>{label}</dt><dd className={`${serif} mt-1 text-lg ${label === 'Ticket' ? 'text-[#6f0d12]' : 'text-[#241b16]'}`}>{value}</dd></div>
                   ))}
                 </dl>
-                <a href="/contact" className="mt-9 inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.14em] text-[#fffaf2]">Solicitar información <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+                <a href="#contacto" className="mt-9 inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.14em] text-[#fffaf2]">Solicitar información <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
               </div>
               <div className="relative flex items-center justify-center border-t border-[#6f0d12]/12 bg-[#f4eadf] p-7 lg:border-l lg:border-t-0 lg:p-10">
-                <Image src="/jpvalderrama/conference.webp" alt="Pieza visual de la conferencia ¿Filosofía o Dinero?" width={640} height={640} unoptimized className="h-auto w-full max-w-[360px] shadow-[0_18px_55px_rgba(75,32,22,.12)]" sizes="360px" />
+                <Image src="/jpvalderrama/conference.webp" alt="Pieza visual de la conferencia ¿Filosofía o Dinero?" width={1536} height={1536} unoptimized className="h-auto w-full max-w-[500px] object-contain shadow-[0_18px_55px_rgba(75,32,22,.12)]" sizes="(max-width: 1024px) 85vw, 500px" />
               </div>
             </div>
           </div>
