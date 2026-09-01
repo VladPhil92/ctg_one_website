@@ -44,10 +44,13 @@ export function ContinueWithCtgButton({ next, hasExplicitNext = false }: { next:
         return;
       }
 
-      const destination = !hasExplicitNext && data?.user?.role === 'VET'
-        ? '/nvetcareapp/dashboard/veterinario'
-        : next;
-      router.push(destination);
+      if (!hasExplicitNext && data?.user?.role === 'VET') {
+        router.push('/nvetcareapp/dashboard/veterinario');
+        router.refresh();
+        return;
+      }
+
+      router.push(next);
       router.refresh();
     } catch {
       setError('No se pudo contactar el servicio. Intenta de nuevo.');
