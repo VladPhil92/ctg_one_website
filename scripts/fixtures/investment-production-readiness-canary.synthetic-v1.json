@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0094",
-  "expectedMigrationName": "jp_event_registrations",
-  "expectedMigrationCount": 94,
+  "expectedMigration": "0095",
+  "expectedMigrationName": "jp_education_commerce",
+  "expectedMigrationCount": 95,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
