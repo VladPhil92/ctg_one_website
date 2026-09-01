@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { BrandLogo } from '@/components/BrandLogo';
 
 const navItems = [
   { href: '/jpvalderrama/talks', label: 'Talks' },
@@ -12,24 +13,38 @@ const navItems = [
 export function JPValderramaHeader({ active }: { active?: string }) {
   return (
     <header className="sticky top-0 z-50 border-b border-[#6f0d12]/10 bg-[#f7f0e7]/95 backdrop-blur-xl">
-      <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-12">
-        <a href="/jpvalderrama" className="flex min-w-0 items-center gap-3 text-[#17110e]" aria-label="Volver a JP Valderrama">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#6f0d12]/35 text-xs font-semibold text-[#6f0d12]">JPV</span>
-          <span className="hidden font-serif text-base tracking-[.18em] sm:inline">JUAN PABLO VALDERRAMA</span>
-        </a>
-        <nav className="flex items-center gap-3 overflow-x-auto text-[10px] font-bold uppercase tracking-[.13em] text-[#665950] sm:gap-5" aria-label="Submarcas JP Valderrama">
+      <div className="mx-auto flex min-h-[76px] max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-12">
+        <div className="flex min-w-0 shrink-0 items-center gap-4">
+          <a
+            href="/"
+            className="flex min-h-12 shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#6f0d12]"
+            aria-label="CTG One Technology, ir al inicio"
+          >
+            <BrandLogo priority tone="light" className="transition-transform duration-300 hover:-translate-y-px" />
+          </a>
+          <span className="hidden h-8 w-px bg-[#6f0d12]/20 lg:block" aria-hidden="true" />
+          <a
+            href="/jpvalderrama"
+            className="hidden whitespace-nowrap font-serif text-[12px] tracking-[.16em] text-[#6f0d12] lg:inline"
+            aria-label="Ir a JP Valderrama"
+          >
+            JP VALDERRAMA
+          </a>
+        </div>
+
+        <nav className="flex min-w-0 items-center gap-3 overflow-x-auto text-[10px] font-bold uppercase tracking-[.13em] text-[#665950] sm:gap-5" aria-label="Submarcas JP Valderrama">
+          <a href="/jpvalderrama" className="whitespace-nowrap text-[#6f0d12] lg:hidden" aria-label="Ir a JP Valderrama">JP</a>
           {navItems.map((item) => (
             <a
               key={item.href}
               href={item.href}
               aria-current={active === item.label.toLowerCase() ? 'page' : undefined}
-              className={active === item.label.toLowerCase() ? 'border-b border-[#6f0d12] pb-1 text-[#6f0d12]' : 'whitespace-nowrap hover:text-[#6f0d12]'}
+              className={active === item.label.toLowerCase() ? 'whitespace-nowrap border-b border-[#6f0d12] pb-1 text-[#6f0d12]' : 'whitespace-nowrap hover:text-[#6f0d12]'}
             >
               {item.label}
             </a>
           ))}
         </nav>
-        <a href="/" className="hidden text-[10px] font-bold uppercase tracking-[.15em] text-[#6f0d12] lg:inline-flex">CTG One</a>
       </div>
     </header>
   );
