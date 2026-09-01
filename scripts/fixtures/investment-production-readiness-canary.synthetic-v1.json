@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0093",
-  "expectedMigrationName": "atomic_legacy_wallet_identity_bootstrap",
-  "expectedMigrationCount": 93,
+  "expectedMigration": "0094",
+  "expectedMigrationName": "jp_event_registrations",
+  "expectedMigrationCount": 94,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

@@ -1,6 +1,6 @@
-export const EXPECTED_DATABASE_MIGRATION = '0093' as const;
-export const EXPECTED_DATABASE_MIGRATION_NAME = 'atomic_legacy_wallet_identity_bootstrap' as const;
-export const EXPECTED_DATABASE_MIGRATION_COUNT = 93 as const;
+export const EXPECTED_DATABASE_MIGRATION = '0094' as const;
+export const EXPECTED_DATABASE_MIGRATION_NAME = 'jp_event_registrations' as const;
+export const EXPECTED_DATABASE_MIGRATION_COUNT = 94 as const;
 
 // Wallet Canary V1 depends on migrations through 0091, but it remains compatible
 // with later additive global migrations. These constants express that minimum

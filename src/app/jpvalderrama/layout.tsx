@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SubbrandLauncher } from '@/components/jpvalderrama/SubbrandLauncher';
 
 const title = 'JP Valderrama | Filosofía, Educación, Ideas y Proyectos | CTG One';
 const description =
@@ -35,5 +36,10 @@ export const metadata: Metadata = {
 };
 
 export default function JPValderramaLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return children;
+  return (
+    <>
+      {children}
+      <SubbrandLauncher />
+    </>
+  );
 }
