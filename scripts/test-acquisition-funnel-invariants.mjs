@@ -8,6 +8,9 @@ const register = fs.readFileSync('src/app/(auth)/registro/page.tsx', 'utf8');
 const callback = fs.readFileSync('src/app/auth/callback/route.ts', 'utf8');
 const dashboard = fs.readFileSync('src/app/dashboard/layout.tsx', 'utf8');
 const hero = fs.readFileSync('src/components/sections/HeroSection.tsx', 'utf8');
+const adminAnalyticsPage = fs.readFileSync('src/app/admin/analytics/page.tsx', 'utf8');
+const adminAnalyticsPanel = fs.readFileSync('src/components/admin/AcquisitionFunnelPanel.tsx', 'utf8');
+const adminNav = fs.readFileSync('src/components/admin/AdminNav.tsx', 'utf8');
 
 const events = [
   'home_viewed',
@@ -50,4 +53,11 @@ assert.ok(hero.includes("trackFunnelEvent('create_account_clicked'"), 'home acco
 assert.ok(dashboard.includes("trackFunnelEvent('dashboard_viewed'"), 'authenticated dashboard must record activation view');
 assert.ok(dashboard.includes("trackFunnelEvent('first_service_used'"), 'dashboard must record first service activation');
 
-console.log('Acquisition funnel telemetry invariants passed.');
+assert.ok(adminAnalyticsPage.includes("investment_role !== 'SUPER_ADMIN'"), 'analytics dashboard route must remain restricted to SUPER_ADMIN');
+assert.ok(adminAnalyticsPanel.includes('/api/admin/analytics/funnel?days=${windowDays}'), 'analytics dashboard must consume the protected aggregate endpoint');
+assert.ok(adminAnalyticsPanel.includes('home_to_first_service'), 'analytics dashboard must expose end-to-end activation conversion');
+assert.ok(adminAnalyticsPanel.includes('first_service_breakdown'), 'analytics dashboard must expose first-service activation mix');
+assert.ok(adminNav.includes("href: '/admin/analytics'"), 'admin navigation must expose analytics route');
+assert.ok(adminNav.includes("label: 'Analytics', roles: ['SUPER_ADMIN']"), 'analytics navigation item must remain SUPER_ADMIN-only');
+
+console.log('Acquisition funnel telemetry and admin dashboard invariants passed.');
