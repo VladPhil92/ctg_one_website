@@ -9,7 +9,8 @@ import { ContinueWithCtgButton } from './continue-with-ctg-button';
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = safeRedirectPath(searchParams.get('next'), '/nvetcareapp/dashboard');
+  const requestedNext = searchParams.get('next');
+  const next = safeRedirectPath(requestedNext, '/nvetcareapp/dashboard');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +41,10 @@ export function SignInForm() {
         return;
       }
 
-      router.push(next);
+      const destination = !requestedNext && data?.user?.role === 'VET'
+        ? '/nvetcareapp/dashboard/veterinario'
+        : next;
+      router.push(destination);
       router.refresh();
     } catch {
       setError('No se pudo contactar el servicio. Intenta de nuevo.');
