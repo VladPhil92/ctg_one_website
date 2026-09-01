@@ -2,18 +2,16 @@
 
 import Link from 'next/link';
 import { useMemo, useState, useTransition } from 'react';
-import { Bell, CalendarDays, CheckCheck, PawPrint } from 'lucide-react';
+import { Bell, CalendarDays, CheckCheck, PawPrint, WalletCards } from 'lucide-react';
 import { nvetFetchWithRefresh } from '../nvet-fetch';
-
-type NotificationCategory = 'APPOINTMENT' | 'PREVENTIVE';
 
 type NotificationItem = {
   id: string;
   type: string;
-  category: NotificationCategory;
+  category: string;
   title: string;
   message: string;
-  actionPath?: string | null;
+  safeHref: string | null;
   occurredAt: string;
   readAt?: string | null;
 };
@@ -29,8 +27,16 @@ function formatMoment(value: string): string {
   }).format(new Date(value));
 }
 
-function categoryLabel(category: NotificationCategory): string {
-  return category === 'PREVENTIVE' ? 'Prevención' : 'Citas';
+function categoryLabel(category: string): string {
+  if (category === 'PREVENTIVE') return 'Prevención';
+  if (category === 'PAYMENT') return 'Pagos';
+  return 'Citas';
+}
+
+function categoryIcon(category: string) {
+  if (category === 'PREVENTIVE') return PawPrint;
+  if (category === 'PAYMENT') return WalletCards;
+  return CalendarDays;
 }
 
 export function NotificationInbox({ initialItems }: { initialItems: NotificationItem[] }) {
@@ -42,7 +48,7 @@ export function NotificationInbox({ initialItems }: { initialItems: Notification
   const markRead = (id: string) => {
     setError(null);
     startTransition(async () => {
-      const response = await nvetFetchWithRefresh(`/api/nvetcareapp/client/notifications/${id}/read`, {
+      const response = await nvetFetchWithRefresh(`/api/nvetcareapp/notifications/${id}/read`, {
         method: 'PATCH',
       });
       const data = await response.json().catch(() => null) as { readAt?: string; message?: string } | null;
@@ -58,7 +64,7 @@ export function NotificationInbox({ initialItems }: { initialItems: Notification
   const markAllRead = () => {
     setError(null);
     startTransition(async () => {
-      const response = await nvetFetchWithRefresh('/api/nvetcareapp/client/notifications/read-all', {
+      const response = await nvetFetchWithRefresh('/api/nvetcareapp/notifications/read-all', {
         method: 'PATCH',
       });
       const data = await response.json().catch(() => null) as { readAt?: string; message?: string } | null;
@@ -77,7 +83,7 @@ export function NotificationInbox({ initialItems }: { initialItems: Notification
         <Bell className="mx-auto h-7 w-7 text-[#34B27A]" aria-hidden="true" />
         <h2 className="mt-3 text-base font-bold text-[#0D1B2A]">Todo está al día</h2>
         <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#5B6670]">
-          Cuando cambie el estado de una cita o se acerque una fecha preventiva registrada, aparecerá aquí.
+          Cuando cambie una cita, un pago o una fecha preventiva relevante, aparecerá aquí.
         </p>
       </section>
     );
@@ -109,7 +115,7 @@ export function NotificationInbox({ initialItems }: { initialItems: Notification
       <div className="space-y-3">
         {items.map((item) => {
           const unreadItem = !item.readAt;
-          const Icon = item.category === 'PREVENTIVE' ? PawPrint : CalendarDays;
+          const Icon = categoryIcon(item.category);
           return (
             <article
               key={item.id}
@@ -140,9 +146,9 @@ export function NotificationInbox({ initialItems }: { initialItems: Notification
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {item.actionPath && (
+                    {item.safeHref && (
                       <Link
-                        href={item.actionPath}
+                        href={item.safeHref}
                         onClick={() => unreadItem && markRead(item.id)}
                         className="inline-flex items-center rounded-lg bg-[#0D1B2A] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#16293D]"
                       >
