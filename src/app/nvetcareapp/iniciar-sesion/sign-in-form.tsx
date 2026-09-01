@@ -67,7 +67,7 @@ export function SignInForm() {
           <h1 className="text-xl font-semibold text-[#0D1B2A] mb-1">Iniciar sesión</h1>
           <p className="text-sm text-[#4A5A68] mb-6">Accede a tu cuenta para continuar en Nvet Care.</p>
 
-          <ContinueWithCtgButton next={next} />
+          <ContinueWithCtgButton next={next} hasExplicitNext={Boolean(requestedNext)} />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
