@@ -25,5 +25,15 @@ export async function GET() {
     return json({ ok: false, offerings: [] }, 503);
   }
 
-  return json({ ok: true, offerings: data ?? [] });
+  const offerings = (data ?? []).map((offering) => ({
+    ...offering,
+    // Public catalog CTAs for paid products enter the authenticated checkout.
+    // The canonical database access_path remains the post-entitlement content
+    // destination used by the user's library.
+    access_path: typeof offering.price_amount === 'number' && offering.price_amount > 0
+      ? `/jpvalderrama/campus/checkout/${encodeURIComponent(offering.slug)}`
+      : offering.access_path,
+  }));
+
+  return json({ ok: true, offerings });
 }
