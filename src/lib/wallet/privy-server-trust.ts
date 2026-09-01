@@ -228,8 +228,13 @@ export async function getPrivyVerificationKey(kid: string | null): Promise<KeyOb
 
 export async function inspectPrivyServerTrust(): Promise<{ ready: boolean; code: string }> {
   try {
-    getPrivyAppId();
-    await getPrivyVerificationKey(null);
+    const appId = getPrivyAppId();
+    const configuredKey = process.env.PRIVY_JWT_VERIFICATION_KEY?.trim();
+    if (configuredKey) {
+      parseVerificationKey(configuredKey);
+    } else {
+      await fetchPrivyJwks(appId);
+    }
     return { ready: true, code: 'PRIVY_IDENTITY_VERIFIER_READY' };
   } catch (error) {
     if (error instanceof PrivyServerTrustError) {
