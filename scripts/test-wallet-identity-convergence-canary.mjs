@@ -82,6 +82,19 @@ requireFragments(canaryRoute, 'canary evidence route', [
   'return walletCorsPreflight(request, CORS_METHODS)',
 ]);
 
+requireFragments(linkRoute, 'identity link legacy-only canary', [
+  "const legacyPreserveRequested = body.linkMode === 'legacy_preserve'",
+  "'IDENTITY_CONVERGENCE_CANARY_LEGACY_ONLY'",
+  'if (!legacyPreserveRequested)',
+]);
+const bodyIndex = linkRoute.indexOf('body = requestSchema.parse(JSON.parse(rawBody))');
+const linkCanaryIndex = linkRoute.indexOf('inspectIdentityConvergenceCanary(user.id)');
+const legacyOnlyIndex = linkRoute.indexOf("'IDENTITY_CONVERGENCE_CANARY_LEGACY_ONLY'");
+const linkRateIndex = linkRoute.indexOf("'consume_wallet_identity_link_rate_limit'");
+if (!(bodyIndex >= 0 && linkCanaryIndex > bodyIndex && legacyOnlyIndex > linkCanaryIndex && linkRateIndex > legacyOnlyIndex)) {
+  throw new Error('identity link must parse linkMode and reject non-legacy mutations before consuming the canary rate limit');
+}
+
 for (const [label, route, rpcFragment] of [
   ['identity link', linkRoute, "serviceRole.rpc('link_verified_wallet_identity'"],
   ['legacy bootstrap', legacyBootstrap, "'bootstrap_verified_legacy_wallet_identity'"],
