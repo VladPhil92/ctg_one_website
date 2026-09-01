@@ -51,7 +51,10 @@ requireFragments(inspector, 'canary inspector', [
 ]);
 
 const resultStart = inspector.indexOf('function result(params:');
-const resultEnd = inspector.indexOf('export class IdentityConvergenceCanaryError', resultStart);
+const resultEnd = inspector.indexOf('export async function inspectIdentityConvergenceCanary', resultStart);
+if (!(resultStart >= 0 && resultEnd > resultStart)) {
+  throw new Error('privacy-safe canary response builder could not be bounded');
+}
 const resultBuilder = inspector.slice(resultStart, resultEnd);
 for (const forbidden of [
   'userId:',
