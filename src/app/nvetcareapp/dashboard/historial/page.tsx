@@ -53,12 +53,10 @@ export default async function NvetClinicalHistoryPage() {
   }
 
   const completedAppointments = appointmentsResult.ok
-    ? appointmentsResult.appointments.filter((appointment) => appointment.status === 'COMPLETED')
+    ? appointmentsResult.appointments.filter((appointment) => Boolean(appointment.completedAt))
     : [];
   const documentedAppointments = completedAppointments.filter(hasClinicalRecord);
-  const petsWithHistory = new Set(
-    completedAppointments.map((appointment) => `${appointment.pet.name}::${appointment.pet.species}`),
-  ).size;
+  const petsWithHistory = new Set(completedAppointments.map((appointment) => appointment.pet.id)).size;
 
   return (
     <main className="min-h-screen bg-[#F2F4F7] px-4 py-8 pb-28 sm:px-6 sm:py-10 lg:px-8 lg:pb-10">
@@ -72,7 +70,7 @@ export default async function NvetClinicalHistoryPage() {
               Historial clínico
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5B6670]">
-              Consulta la trazabilidad de atenciones completadas de tus mascotas. El historial se construye únicamente con citas y notas clínicas persistidas por el servicio veterinario.
+              Consulta la trazabilidad de las atenciones que alcanzaron el cierre clínico. Una disputa posterior no borra del expediente la evidencia ya documentada durante la atención.
             </p>
           </div>
           <Link
@@ -118,7 +116,7 @@ export default async function NvetClinicalHistoryPage() {
           <div>
             <p className="text-sm font-semibold text-[#0D1B2A]">Historial basado en evidencia clínica real</p>
             <p className="mt-1 text-xs leading-5 text-[#5B6670]">
-              Nvet Care no inventa diagnósticos, tratamientos ni antecedentes. Si una cita completada todavía no tiene nota clínica persistida, la mostramos explícitamente como pendiente de documentación.
+              Nvet Care no inventa diagnósticos, tratamientos ni antecedentes. Una atención entra al historial únicamente cuando tiene `completedAt`; si después queda en disputa, la evidencia clínica permanece visible y la cita conserva su estado actual por separado.
             </p>
           </div>
         </div>
@@ -136,7 +134,7 @@ export default async function NvetClinicalHistoryPage() {
             <Stethoscope className="mx-auto h-7 w-7 text-[#34B27A]" aria-hidden="true" />
             <h2 className="mt-3 text-base font-bold text-[#0D1B2A]">Tu historial clínico comenzará con la primera atención completada</h2>
             <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#5B6670]">
-              Las citas pendientes, confirmadas o en curso permanecen en el módulo de citas. Aquí aparecerán únicamente cuando el ciclo de atención haya finalizado.
+              Las citas pendientes, confirmadas o en curso permanecen en el módulo de citas. Aquí aparecerán cuando el backend registre efectivamente su finalización.
             </p>
             <Link
               href="/nvetcareapp/dashboard/citas"
@@ -168,6 +166,11 @@ export default async function NvetClinicalHistoryPage() {
                           <span className="rounded-full border border-[#0D1B2A]/10 bg-[#F7F8FA] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-[#5B6670]">
                             {appointment.pet.species}
                           </span>
+                          {appointment.status === 'DISPUTED' && (
+                            <span className="rounded-full border border-[#FF8A3D]/25 bg-[#FF8A3D]/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-[#A6531B]">
+                              Cita en disputa
+                            </span>
+                          )}
                         </div>
                         <p className="mt-1 text-sm text-[#0D1B2A]">{appointment.serviceType}</p>
                         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#5B6670]">
@@ -182,15 +185,23 @@ export default async function NvetClinicalHistoryPage() {
                         </div>
                       </div>
                     </div>
-                    <span
-                      className={`rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] ${
-                        documented
-                          ? 'border-[#34B27A]/25 bg-[#34B27A]/10 text-[#237754]'
-                          : 'border-[#FF8A3D]/25 bg-[#FF8A3D]/10 text-[#A6531B]'
-                      }`}
-                    >
-                      {documented ? 'Registro clínico disponible' : 'Sin nota clínica registrada'}
-                    </span>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <span
+                        className={`rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] ${
+                          documented
+                            ? 'border-[#34B27A]/25 bg-[#34B27A]/10 text-[#237754]'
+                            : 'border-[#FF8A3D]/25 bg-[#FF8A3D]/10 text-[#A6531B]'
+                        }`}
+                      >
+                        {documented ? 'Registro clínico disponible' : 'Sin nota clínica registrada'}
+                      </span>
+                      <Link
+                        href={`/nvetcareapp/dashboard/mascotas/${appointment.pet.id}/expediente`}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[#0D1B2A]/10 bg-white px-3 py-1.5 text-[10px] font-bold text-[#237754] transition hover:border-[#34B27A]/30"
+                      >
+                        Ver expediente <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                      </Link>
+                    </div>
                   </div>
 
                   <div className="grid gap-4 p-5 sm:p-6 lg:grid-cols-2">
