@@ -6,17 +6,19 @@ import {
 } from '@/lib/nvetcareapp/session';
 import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
 
-// Keep the public role-switch surface intentionally binary: root authority or
-// the strictly lower CLIENT operating mode.
+// Effective backend modes remain deliberately restricted to SUPERADMIN/CLIENT.
+// VET_TESTER is handled separately as a root-only presentation sandbox and is
+// never forwarded to NestJS as an authority claim.
 const ALLOWED_MODES = new Set<NvetRootRoleMode>(['SUPERADMIN', 'CLIENT']);
+const VET_TESTER_MODE: NvetRootRoleMode = 'VET_TESTER';
 
 /**
- * Session-local role switch for the canonical Nvet SUPERADMIN.
+ * Session-local role/presentation switch for the canonical Nvet SUPERADMIN.
  *
  * This endpoint never rewrites persistent account authority. It only stores
  * an httpOnly mode hint after re-validating that the current Nvet + CTG One
- * identity is the canonical root. The Nvet backend independently enforces
- * the same invariant before honoring CLIENT mode on subsequent requests.
+ * identity is the canonical root. VET_TESTER is a sandbox presentation mode;
+ * real veterinarian BFF routes still require a true VET identity.
  */
 export async function POST(request: NextRequest) {
   let body: { mode?: NvetRootRoleMode };
@@ -26,7 +28,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Cuerpo de solicitud inválido' }, { status: 400 });
   }
 
-  if (!body.mode || !ALLOWED_MODES.has(body.mode)) {
+  const isTesterMode = body.mode === VET_TESTER_MODE;
+  if (!body.mode || (!ALLOWED_MODES.has(body.mode) && !isTesterMode)) {
     return NextResponse.json({ message: 'Modo de rol inválido' }, { status: 400 });
   }
 
@@ -50,13 +53,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const messages: Record<NvetRootRoleMode, string> = {
+    CLIENT: 'Modo usuario activado. Tu autoridad SUPERADMIN permanece intacta.',
+    VET_TESTER: 'Vet Tester activado. La vista usa un sandbox y no otorga autoridad veterinaria.',
+    SUPERADMIN: 'Modo SUPERADMIN restaurado.',
+  };
+
   const response = NextResponse.json({
     ok: true,
     mode: body.mode,
-    message:
-      body.mode === 'CLIENT'
-        ? 'Modo usuario activado. Tu autoridad SUPERADMIN permanece intacta.'
-        : 'Modo SUPERADMIN restaurado.',
+    message: messages[body.mode],
   });
   setNvetRoleModeCookie(response, body.mode);
   return response;

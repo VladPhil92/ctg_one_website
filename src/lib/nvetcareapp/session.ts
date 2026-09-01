@@ -9,7 +9,14 @@ export const NVET_ACCESS_COOKIE = 'nvet_access_token';
 export const NVET_REFRESH_COOKIE = 'nvet_refresh_token';
 export const NVET_ROLE_MODE_COOKIE = 'nvet_role_mode';
 
-export type NvetRootRoleMode = 'SUPERADMIN' | 'CLIENT';
+/**
+ * Session-local presentation modes available only to the canonical root.
+ *
+ * VET_TESTER is intentionally NOT a backend/Nvet role and must never be sent
+ * to NestJS as an authority claim. It renders a sandbox workspace for product
+ * verification while the persisted SUPERADMIN authority remains unchanged.
+ */
+export type NvetRootRoleMode = 'SUPERADMIN' | 'CLIENT' | 'VET_TESTER';
 
 // Public Railway origin of the canonical Nvet Care backend. This is not a
 // credential: it is the server address already used by production. The
@@ -106,7 +113,8 @@ export function setNvetSessionCookies(response: NextResponse, tokens: NvetTokens
  * Stores only a presentation/authorization mode hint. It is httpOnly so the
  * browser cannot manufacture privileged UI state from client-side JS. The
  * Nvet backend still re-validates the canonical SUPERADMIN identity on every
- * request before honoring CLIENT mode; this cookie can never grant authority.
+ * request before honoring CLIENT mode; VET_TESTER never reaches the backend
+ * as an acting role and therefore cannot acquire veterinarian authority.
  */
 export function setNvetRoleModeCookie(response: NextResponse, mode: NvetRootRoleMode): void {
   response.cookies.set(NVET_ROLE_MODE_COOKIE, mode, {
