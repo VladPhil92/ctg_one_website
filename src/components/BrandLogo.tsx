@@ -6,12 +6,6 @@ interface BrandLogoProps {
   priority?: boolean;
   compact?: boolean;
   className?: string;
-  tone?: 'dark' | 'light';
-}
-
-export function BrandLogo({ priority = false, compact = false, className = '', tone = 'dark' }: BrandLogoProps) {
-  const primaryTextClass = tone === 'light' ? 'text-[#17110e]' : 'text-white';
-  const secondaryTextClass = tone === 'light' ? 'text-[#6f625a]' : 'text-white/72';
   tone?: BrandLogoTone;
 }
 
@@ -55,11 +49,6 @@ export function BrandLogo({
 
       <span className="flex min-w-0 flex-col justify-center leading-none">
         <span className="whitespace-nowrap text-[15px] font-semibold tracking-[-0.02em] sm:text-[17px]">
-          <span className={primaryTextClass}>CTG </span>
-          <span className="text-[#e8bf58]">One</span>
-        </span>
-        {!compact && (
-          <span className={`mt-1 whitespace-nowrap text-[8px] font-medium uppercase tracking-[0.28em] sm:text-[9px] ${secondaryTextClass}`}>
           <span className={primaryText}>CTG </span>
           <span className="text-[#e8bf58]">One</span>
         </span>
