@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, FileClock, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, FileClock, HeartPulse, ShieldCheck } from 'lucide-react';
 import { fetchNvetPets } from '@/lib/nvetcareapp/client-booking';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
 import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
@@ -51,12 +51,20 @@ export default async function NvetPetHealthPage({ params }: { params: Promise<{ 
               Mantén un registro estructurado de prevención y antecedentes conocidos para que futuras atenciones comiencen con mejor contexto.
             </p>
           </div>
-          <Link
-            href="/nvetcareapp/dashboard/historial"
-            className="inline-flex items-center gap-2 rounded-xl border border-[#0D1B2A]/10 bg-white px-4 py-2.5 text-sm font-semibold text-[#0D1B2A] transition hover:border-[#34B27A]/30 hover:text-[#237754]"
-          >
-            <FileClock className="h-4 w-4" aria-hidden="true" /> Historial clínico
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/nvetcareapp/dashboard/mascotas/${pet.id}/expediente`}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0D1B2A] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#16293D]"
+            >
+              <HeartPulse className="h-4 w-4" aria-hidden="true" /> Expediente clínico
+            </Link>
+            <Link
+              href="/nvetcareapp/dashboard/historial"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#0D1B2A]/10 bg-white px-4 py-2.5 text-sm font-semibold text-[#0D1B2A] transition hover:border-[#34B27A]/30 hover:text-[#237754]"
+            >
+              <FileClock className="h-4 w-4" aria-hidden="true" /> Historial clínico
+            </Link>
+          </div>
         </div>
 
         <div className="mb-6 flex items-start gap-3 rounded-2xl border border-[#34B27A]/20 bg-[#34B27A]/[0.06] p-4">
@@ -64,7 +72,7 @@ export default async function NvetPetHealthPage({ params }: { params: Promise<{ 
           <div>
             <p className="text-sm font-semibold text-[#0D1B2A]">Dos fuentes, una sola historia de salud</p>
             <p className="mt-1 text-xs leading-5 text-[#5B6670]">
-              Esta ficha preventiva contiene información reportada por ti. El módulo Historial clínico conserva por separado diagnósticos y tratamientos documentados durante servicios veterinarios completados.
+              Esta ficha preventiva contiene información reportada por ti. El expediente clínico V3 conserva esa fuente separada de diagnósticos y tratamientos documentados durante servicios veterinarios completados.
             </p>
           </div>
         </div>
