@@ -8,10 +8,11 @@ export const CONTACT_EMAIL = config.contact.email;
 export const CONTACT_PHONE = config.contact.phone;
 export const LOCATION = config.contact.location;
 export const WEBSITE = config.contact.website;
+export const CTG_WALLET_URL = 'https://wallet.ctgone.com';
 
 export const NAV_ITEMS = [
   { label: 'Home', href: '/' },
-  { label: 'Wallet', href: '/wallet' },
+  { label: 'Wallet', href: CTG_WALLET_URL },
   { label: 'Products', href: '/products' },
   { label: 'Nvet Care', href: '/nvetcareapp' },
   { label: 'About', href: '/about' },
@@ -26,11 +27,11 @@ export const NAV_ITEMS = [
 ] as const;
 
 // Keep the first level consumer-oriented. Technical and roadmap surfaces live
-// one level deeper under the Explore menu. Wallet remains first-level because
-// it is the canonical financial surface for an authenticated CTG One account.
+// one level deeper under the Explore menu. Wallet stays first-level and points
+// directly to its canonical production origin at wallet.ctgone.com.
 export const PRIMARY_NAV_ITEMS = [
   { label: 'Home', href: '/' },
-  { label: 'Wallet', href: '/wallet' },
+  { label: 'Wallet', href: CTG_WALLET_URL },
   { label: 'Products', href: '/products' },
   { label: 'Nvet Care', href: '/nvetcareapp' },
   { label: 'About', href: '/about' },
