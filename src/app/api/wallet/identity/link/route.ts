@@ -164,7 +164,7 @@ export async function POST(request: Request) {
 
   let verifiedIdentity;
   try {
-    verifiedIdentity = verifyPrivyIdentityToken({
+    verifiedIdentity = await verifyPrivyIdentityToken({
       token: identityToken,
       canonicalCtgUserId: user.id,
       expectedLegacyAddress: legacyEvidence?.expected_address_normalized ?? null,

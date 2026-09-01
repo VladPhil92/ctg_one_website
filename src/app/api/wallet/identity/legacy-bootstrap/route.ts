@@ -135,7 +135,7 @@ export async function POST(request: Request) {
 
   let verifiedIdentity;
   try {
-    verifiedIdentity = verifyPrivyIdentityToken({
+    verifiedIdentity = await verifyPrivyIdentityToken({
       token: identityToken,
       canonicalCtgUserId: user.id,
     });

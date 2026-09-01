@@ -10,6 +10,7 @@ import {
   isSupabaseConfigured,
 } from '@/lib/supabase/server';
 import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
+import { inspectPrivyServerTrust } from '@/lib/wallet/privy-server-trust';
 
 const READINESS_VERSION = 'ctg-wallet-identity-readiness-v1' as const;
 const CORS_METHODS = ['GET', 'OPTIONS'] as const;
@@ -45,35 +46,6 @@ function isEcP256Key(key: KeyObject): boolean {
   if (key.asymmetricKeyType !== 'ec') return false;
   const curve = key.asymmetricKeyDetails?.namedCurve;
   return curve === 'prime256v1' || curve === 'P-256';
-}
-
-function inspectPrivyVerifier(): ReadinessCheck {
-  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID?.trim();
-  const rawKey = process.env.PRIVY_JWT_VERIFICATION_KEY?.trim();
-
-  if (!appId) return { ready: false, code: 'PRIVY_APP_ID_MISSING' };
-  if (!rawKey) return { ready: false, code: 'PRIVY_VERIFICATION_KEY_MISSING' };
-
-  try {
-    let key: KeyObject;
-    if (rawKey.startsWith('{')) {
-      const jwk = JSON.parse(rawKey) as NodeJsonWebKey;
-      if (jwk.kty !== 'EC' || jwk.crv !== 'P-256') {
-        return { ready: false, code: 'PRIVY_VERIFICATION_KEY_INCOMPATIBLE' };
-      }
-      key = createPublicKey({ key: jwk, format: 'jwk' });
-    } else {
-      key = createPublicKey(rawKey.replace(/\\n/g, '\n'));
-    }
-
-    if (!isEcP256Key(key)) {
-      return { ready: false, code: 'PRIVY_VERIFICATION_KEY_INCOMPATIBLE' };
-    }
-  } catch {
-    return { ready: false, code: 'PRIVY_VERIFICATION_KEY_INVALID' };
-  }
-
-  return { ready: true, code: 'PRIVY_IDENTITY_VERIFIER_READY' };
 }
 
 function inspectSupabaseJwk(rawKey: unknown): string | null {
@@ -251,11 +223,11 @@ export async function GET(request: Request) {
     return noStoreJson(request, { error: 'UNAUTHENTICATED' }, { status: 401 });
   }
 
-  const [supabaseJwt, storage] = await Promise.all([
+  const [supabaseJwt, storage, privyVerifier] = await Promise.all([
     inspectSupabaseJwtDiscovery(),
     inspectIdentityStorage(auth.user.id),
+    inspectPrivyServerTrust(),
   ]);
-  const privyVerifier = inspectPrivyVerifier();
 
   const ready = supabaseJwt.ready && privyVerifier.ready && storage.ready;
 
