@@ -243,6 +243,12 @@ export async function verifyPrivyIdentityToken(params: {
     verificationKey = await getPrivyVerificationKey(kid);
   } catch (error) {
     if (error instanceof PrivyServerTrustError) {
+      if (error.code === 'PRIVY_VERIFICATION_KEY_NOT_FOUND') {
+        throw new PrivyIdentityTokenError(
+          'INVALID_PRIVY_IDENTITY_TOKEN',
+          'Privy identity token references an unknown verification key.',
+        );
+      }
       throw new PrivyIdentityTokenError(
         'PRIVY_IDENTITY_NOT_CONFIGURED',
         `Privy identity verifier is unavailable: ${error.code}.`,
