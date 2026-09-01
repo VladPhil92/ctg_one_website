@@ -8,12 +8,13 @@ import type { NvetRootRoleMode } from '@/lib/nvetcareapp/session';
 const MODES: Array<{
   mode: NvetRootRoleMode;
   label: string;
+  actionLabel: string;
   icon: typeof ShieldCheck;
   landingPath: string;
 }> = [
-  { mode: 'SUPERADMIN', label: 'SUPERADMIN', icon: ShieldCheck, landingPath: '/nvetcareapp/dashboard/gobernanza' },
-  { mode: 'CLIENT', label: 'Usuario', icon: UserRound, landingPath: '/nvetcareapp/dashboard/citas' },
-  { mode: 'VET_TESTER', label: 'Vet Tester', icon: Stethoscope, landingPath: '/nvetcareapp/dashboard' },
+  { mode: 'SUPERADMIN', label: 'SUPERADMIN', actionLabel: 'Volver a SUPERADMIN', icon: ShieldCheck, landingPath: '/nvetcareapp/dashboard/gobernanza' },
+  { mode: 'CLIENT', label: 'Usuario', actionLabel: 'Cambiar a usuario', icon: UserRound, landingPath: '/nvetcareapp/dashboard/citas' },
+  { mode: 'VET_TESTER', label: 'Vet Tester', actionLabel: 'Cambiar a Vet Tester', icon: Stethoscope, landingPath: '/nvetcareapp/dashboard' },
 ];
 
 export function SuperadminRoleSwitch({ currentMode }: { currentMode: NvetRootRoleMode }) {
@@ -50,7 +51,7 @@ export function SuperadminRoleSwitch({ currentMode }: { currentMode: NvetRootRol
   return (
     <div className="flex max-w-full flex-col items-end gap-1.5">
       <div className="flex max-w-full flex-wrap justify-end gap-2">
-        {MODES.map(({ mode, label, icon: Icon, landingPath }) => {
+        {MODES.map(({ mode, label, actionLabel, icon: Icon, landingPath }) => {
           const active = mode === currentMode;
           const pending = pendingMode === mode;
           return (
@@ -60,6 +61,8 @@ export function SuperadminRoleSwitch({ currentMode }: { currentMode: NvetRootRol
               onClick={() => void switchMode(mode, landingPath)}
               disabled={Boolean(pendingMode) || active}
               aria-pressed={active}
+              aria-label={actionLabel}
+              title={actionLabel}
               className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#8BE0B5] disabled:cursor-default ${
                 active
                   ? 'border-[#34B27A]/60 bg-[#34B27A]/20 text-[#8BE0B5]'
