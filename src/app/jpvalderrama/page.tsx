@@ -10,6 +10,7 @@ import {
   Mic2,
   PenLine,
 } from 'lucide-react';
+import { BrandLogo } from '@/components/BrandLogo';
 
 const brands = [
   {
@@ -99,9 +100,13 @@ export default function JPValderramaPage() {
       <a href="#contenido" className="sr-only z-[100] rounded bg-[#6f0d12] px-4 py-3 text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Saltar al contenido</a>
 
       <header className="sticky top-0 z-50 border-b border-[#6f0d12]/10 bg-[#f7f0e7]/95 backdrop-blur-xl">
-        <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
-          <a href="/" className="flex shrink-0 items-center rounded-sm bg-[#070707] px-3 py-2 shadow-[0_6px_22px_rgba(21,16,13,.10)]" aria-label="Volver a CTG One">
-            <Image src="/images/logo/ctg-one-logo.png" alt="CTG One" width={520} height={123} priority unoptimized className="h-auto w-[154px] sm:w-[176px]" sizes="176px" />
+        <div className="mx-auto flex min-h-[76px] max-w-[1440px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
+          <a
+            href="/"
+            className="flex min-h-12 shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#6f0d12]"
+            aria-label="CTG One Technology, ir al inicio"
+          >
+            <BrandLogo priority tone="light" className="transition-transform duration-300 hover:-translate-y-px" />
           </a>
           <nav className="hidden items-center gap-7 text-[10px] font-semibold uppercase tracking-[.16em] text-[#665950] lg:flex" aria-label="Navegación JP Valderrama">
             <a href="#perfil" className="hover:text-[#6f0d12]">Perfil</a>
