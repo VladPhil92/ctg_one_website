@@ -21,7 +21,7 @@ export interface NvetAppointment {
   notes?: string | null;
   vet: { user: { firstName: string; lastName: string } };
   client: { firstName: string; lastName: string };
-  pet: { name: string; species: string };
+  pet: { id: string; name: string; species: string };
 }
 
 export type NvetAppointmentsResult =
