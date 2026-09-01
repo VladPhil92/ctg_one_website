@@ -109,6 +109,7 @@ export async function POST(request: Request) {
   }
 
   const { user } = auth;
+  const legacyPreserveRequested = body.linkMode === 'legacy_preserve';
   try {
     const canary = await inspectIdentityConvergenceCanary(user.id);
     if (!canary.eligible) {
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
     if (canary.state === 'conflict') {
       return noStoreJson(request, { error: canary.code }, { status: 409 });
     }
-    if (body.linkMode !== 'legacy_preserve') {
+    if (!legacyPreserveRequested) {
       return noStoreJson(
         request,
         { error: 'IDENTITY_CONVERGENCE_CANARY_LEGACY_ONLY' },
@@ -169,28 +170,31 @@ export async function POST(request: Request) {
     return noStoreJson(request, { error: 'PRIVY_IDENTITY_TOKEN_REQUIRED' }, { status: 401 });
   }
 
-  const { data, error } = await serviceRole
-    .from('wallet_legacy_migration_evidence')
-    .select('provider_user_id,expected_address_normalized,status')
-    .eq('user_id', user.id)
-    .eq('provider', 'privy')
-    .maybeSingle();
+  let legacyEvidence: LegacyMigrationEvidence | null = null;
+  if (body.linkMode === 'legacy_preserve') {
+    const { data, error } = await serviceRole
+      .from('wallet_legacy_migration_evidence')
+      .select('provider_user_id,expected_address_normalized,status')
+      .eq('user_id', user.id)
+      .eq('provider', 'privy')
+      .maybeSingle();
 
-  if (error) {
-    return noStoreJson(
-      request,
-      { error: 'LEGACY_MIGRATION_EVIDENCE_UNAVAILABLE' },
-      { status: 503 },
-    );
-  }
+    if (error) {
+      return noStoreJson(
+        request,
+        { error: 'LEGACY_MIGRATION_EVIDENCE_UNAVAILABLE' },
+        { status: 503 },
+      );
+    }
 
-  const legacyEvidence = data as LegacyMigrationEvidence | null;
-  if (!legacyEvidence || legacyEvidence.status === 'rejected') {
-    return noStoreJson(
-      request,
-      { error: 'LEGACY_MIGRATION_EVIDENCE_REQUIRED' },
-      { status: 409 },
-    );
+    legacyEvidence = data as LegacyMigrationEvidence | null;
+    if (!legacyEvidence || legacyEvidence.status === 'rejected') {
+      return noStoreJson(
+        request,
+        { error: 'LEGACY_MIGRATION_EVIDENCE_REQUIRED' },
+        { status: 409 },
+      );
+    }
   }
 
   let verifiedIdentity;
@@ -198,7 +202,7 @@ export async function POST(request: Request) {
     verifiedIdentity = await verifyPrivyIdentityToken({
       token: identityToken,
       canonicalCtgUserId: user.id,
-      expectedLegacyAddress: legacyEvidence.expected_address_normalized,
+      expectedLegacyAddress: legacyEvidence?.expected_address_normalized ?? null,
     });
   } catch (error) {
     if (error instanceof PrivyIdentityTokenError) {
@@ -207,7 +211,10 @@ export async function POST(request: Request) {
     return noStoreJson(request, { error: 'INVALID_PRIVY_IDENTITY_TOKEN' }, { status: 401 });
   }
 
-  if (legacyEvidence.provider_user_id !== verifiedIdentity.privyUserId) {
+  if (
+    legacyEvidence &&
+    legacyEvidence.provider_user_id !== verifiedIdentity.privyUserId
+  ) {
     return noStoreJson(
       request,
       { error: 'LEGACY_PROVIDER_IDENTITY_MISMATCH' },
@@ -215,18 +222,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: identityData, error: identityError } = await serviceRole.rpc(
-    'link_verified_wallet_identity',
-    {
-      p_user_id: user.id,
-      p_provider_user_id: verifiedIdentity.privyUserId,
-      p_evm_address: verifiedIdentity.embeddedEvmAddress,
-      p_link_mode: body.linkMode,
-    },
-  );
+  const { data, error } = await serviceRole.rpc('link_verified_wallet_identity', {
+    p_user_id: user.id,
+    p_provider_user_id: verifiedIdentity.privyUserId,
+    p_evm_address: verifiedIdentity.embeddedEvmAddress,
+    p_link_mode: body.linkMode,
+  });
 
-  if (identityError) {
-    const message = identityError.message ?? '';
+  if (error) {
+    const message = error.message ?? '';
     if (
       message.includes('LEGACY_WALLET_MISMATCH') ||
       message.includes('LEGACY_PROVIDER_IDENTITY_MISMATCH') ||
@@ -245,6 +249,6 @@ export async function POST(request: Request) {
 
   return noStoreJson(request, {
     ok: true,
-    identity: identityData,
+    identity: data,
   });
 }
