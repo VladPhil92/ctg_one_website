@@ -1,4 +1,5 @@
-import { getNvetApiUrl } from './session';
+import { cookies } from 'next/headers';
+import { getNvetApiUrl, NVET_ROLE_MODE_COOKIE } from './session';
 import { getNvetAuthorizationHeaders } from './request';
 import {
   isCanonicalNvetSuperadminSession,
@@ -15,6 +16,7 @@ export interface NvetCurrentUser {
   lastName: string;
   isSuperadmin: boolean;
   isClientMode: boolean;
+  isVetTesterMode: boolean;
 }
 
 export type NvetCurrentUserResult =
@@ -42,15 +44,11 @@ function cleanName(value: unknown): string {
  * prevents a stale/mismatched Nvet cookie from inheriting root UI merely
  * because the browser also holds the canonical CTG One session.
  *
- * The canonical root normally reuses the ADMIN read-model. When the root has
- * explicitly activated Modo usuario, the server-to-server request carries
- * `X-Nvet-Acting-Role: CLIENT`; the Nvet backend accepts that hint only for
- * the canonical SUPERADMIN and returns the CLIENT effective role. The root
- * identity marker remains true so a one-click return to SUPERADMIN is always
- * available without mutating the database role.
- *
- * CTG-provisioned accounts may legitimately have null profile names; missing
- * names therefore no longer turn a valid authenticated session into a 502.
+ * CLIENT is an effective backend role: the server sends X-Nvet-Acting-Role
+ * and NestJS narrows the canonical root to CLIENT. VET_TESTER is deliberately
+ * different: it remains ADMIN at the backend authorization boundary and is
+ * only a local, root-validated sandbox presentation mode. No VET authority is
+ * ever synthesized from the cookie.
  */
 export async function fetchNvetCurrentUser(accessToken: string): Promise<NvetCurrentUserResult> {
   let res: Response;
@@ -84,6 +82,12 @@ export async function fetchNvetCurrentUser(accessToken: string): Promise<NvetCur
 
     const upstreamRole = raw.role;
     const rootClientMode = canonicalSuperadmin && upstreamRole === 'CLIENT';
+    const requestedMode = (await cookies()).get(NVET_ROLE_MODE_COOKIE)?.value;
+    const rootVetTesterMode =
+      canonicalSuperadmin &&
+      !rootClientMode &&
+      requestedMode === 'VET_TESTER';
+
     const effectiveRole: NvetUserRole | undefined = canonicalSuperadmin
       ? rootClientMode
         ? 'CLIENT'
@@ -111,6 +115,7 @@ export async function fetchNvetCurrentUser(accessToken: string): Promise<NvetCur
         role: effectiveRole,
         isSuperadmin: canonicalSuperadmin,
         isClientMode: rootClientMode,
+        isVetTesterMode: rootVetTesterMode,
       },
     };
   } catch {
