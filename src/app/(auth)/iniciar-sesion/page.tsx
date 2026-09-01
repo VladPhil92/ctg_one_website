@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { trackFunnelEvent } from '@/lib/analytics/client';
 import { Button } from '@/components/ui/Button';
 import { AuthInput } from '@/components/auth/AuthInput';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -97,6 +98,7 @@ function IniciarSesionForm() {
         password: parsed.data.password,
       });
       if (signInError) throw signInError;
+      void trackFunnelEvent('first_login', { sourcePath: '/iniciar-sesion' });
       router.push(redirectTo);
       router.refresh();
     } catch (err) {

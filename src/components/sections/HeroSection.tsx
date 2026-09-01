@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Building2, CalendarDays, Layers3, MapPin } from 'lucide-react';
 import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Button } from '@/components/ui/Button';
 import { BlockchainNetwork } from '@/components/BlockchainNetwork';
+import { trackFunnelEvent } from '@/lib/analytics/client';
 import { HERO } from '@/data/content';
 import { getCapabilityProof, getPublicProofStatus } from '@/data/technology-proof';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -21,6 +22,10 @@ const METRIC_ICONS = {
 export const HeroSection: React.FC = () => {
   const { locale, t } = useLanguage();
   const es = locale === 'es';
+
+  useEffect(() => {
+    void trackFunnelEvent('home_viewed', { sourcePath: '/' });
+  }, []);
 
   // Release-ready public acquisition contract: the first viewport identifies
   // CTG One as a multi-service portal and routes users to one shared account.
@@ -87,7 +92,14 @@ export const HeroSection: React.FC = () => {
 
             <FadeInSection delay={0.2}>
               <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-                <Button href="/registro" variant="primary" size="md" arrow className="rounded-xl border border-[#ffd56a]/30 bg-[#d6ae56] px-6 shadow-[0_0_28px_rgba(214,174,86,.1)] hover:-translate-y-px hover:bg-[#f1c75b]">
+                <Button
+                  href="/registro"
+                  onClick={() => { void trackFunnelEvent('create_account_clicked', { sourcePath: '/' }); }}
+                  variant="primary"
+                  size="md"
+                  arrow
+                  className="rounded-xl border border-[#ffd56a]/30 bg-[#d6ae56] px-6 shadow-[0_0_28px_rgba(214,174,86,.1)] hover:-translate-y-px hover:bg-[#f1c75b]"
+                >
                   {es ? 'Crear mi cuenta' : 'Create my account'}
                 </Button>
                 <Button href="/ecosystem" variant="secondary" size="md" arrow className="rounded-xl border-[#248cff]/35 bg-[#07111d]/45 px-6 hover:-translate-y-px hover:border-[#248cff]/55 hover:bg-[#071a32]/45">

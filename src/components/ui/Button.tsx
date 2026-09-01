@@ -79,6 +79,7 @@ export const Button: React.FC<ButtonProps> = ({
         href={href}
         className={baseClasses}
         aria-label={ariaLabel}
+        onClick={onClick}
         target={opensNewTab ? '_blank' : undefined}
         rel={opensNewTab ? 'noopener noreferrer' : undefined}
       >

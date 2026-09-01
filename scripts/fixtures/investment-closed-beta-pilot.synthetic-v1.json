@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0091",
-    "schemaMigrationName": "wallet_canary_execution_guardrails_v1",
-    "schemaMigrationCount": 91,
+    "schemaMigration": "0092",
+    "schemaMigrationName": "acquisition_activation_funnel_telemetry",
+    "schemaMigrationCount": 92,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

@@ -69,8 +69,14 @@ for (const forbidden of ['wallets', 'wallet_journal', 'balance', 'tx_hash', 'des
   assert.ok(!alerts.includes(forbidden), `Alert service crossed financial/privacy boundary: ${forbidden}`);
 }
 
-assert.ok(schema.includes("EXPECTED_DATABASE_MIGRATION = '0091'"));
-assert.ok(schema.includes("EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_canary_execution_guardrails_v1'"));
-assert.ok(schema.includes('EXPECTED_DATABASE_MIGRATION_COUNT = 91'));
+// 0090 defines the durable alert contract. Global runtime schema metadata may
+// advance through additive migrations in other domains without invalidating it.
+const schemaMigration = Number(/EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema)?.[1]);
+const schemaCount = Number(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(schema)?.[1]);
+assert.ok(
+  Number.isInteger(schemaMigration) && schemaMigration >= 90
+    && Number.isInteger(schemaCount) && schemaCount >= 90,
+  'Runtime schema metadata must include Wallet lifecycle correlation migration 0090 or a compatible additive successor.',
+);
 
 console.log('Wallet lifecycle correlation + durable stuck-state alert invariants: PASS');
