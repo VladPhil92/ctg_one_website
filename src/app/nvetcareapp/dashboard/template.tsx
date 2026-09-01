@@ -26,6 +26,7 @@ export default async function NvetDashboardTemplate({ children }: { children: Re
 
   const isSuperadmin = userResult.user.isSuperadmin;
   const isClientView = userResult.user.role === 'CLIENT';
+  const isClientMode = isClientView;
   const isVetTester = userResult.user.isVetTesterMode;
   const userName = `${userResult.user.firstName} ${userResult.user.lastName}`.trim();
   const unreadResult = isClientView && accessToken
@@ -85,12 +86,14 @@ export default async function NvetDashboardTemplate({ children }: { children: Re
             <SuperadminRoleSwitch currentMode={currentMode} />
           </div>
 
-          {currentMode === 'SUPERADMIN' && (
-            <nav className="mt-4 flex gap-2 overflow-x-auto border-t border-white/10 pt-4 pb-1 text-[11px] font-semibold">
-              {ROOT_NAV.map(([href, label]) => (
-                <Link key={href} href={href} className="shrink-0 rounded-lg border border-white/15 px-3 py-2 text-white/80 transition hover:border-[#34B27A]/50 hover:bg-white/10 hover:text-white">{label}</Link>
-              ))}
-            </nav>
+          {!isClientMode && (
+            !isVetTester && (
+              <nav className="mt-4 flex gap-2 overflow-x-auto border-t border-white/10 pt-4 pb-1 text-[11px] font-semibold">
+                {ROOT_NAV.map(([href, label]) => (
+                  <Link key={href} href={href} className="shrink-0 rounded-lg border border-white/15 px-3 py-2 text-white/80 transition hover:border-[#34B27A]/50 hover:bg-white/10 hover:text-white">{label}</Link>
+                ))}
+              </nav>
+            )
           )}
         </div>
       </section>
