@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 // cuenta CTG One simplemente no la ve y usa el formulario existente debajo
 // (no reemplazado, no deprecado). Additiva por completo: si esto falla por
 // cualquier motivo, el formulario de siempre sigue funcionando igual.
-export function ContinueWithCtgButton({ next }: { next: string }) {
+export function ContinueWithCtgButton({ next, hasExplicitNext = false }: { next: string; hasExplicitNext?: boolean }) {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, email } = useAuth();
 
@@ -41,6 +41,12 @@ export function ContinueWithCtgButton({ next }: { next: string }) {
           return;
         }
         setError(data?.message || 'No se pudo continuar con tu cuenta CTG One.');
+        return;
+      }
+
+      if (!hasExplicitNext && data?.user?.role === 'VET') {
+        router.push('/nvetcareapp/dashboard/veterinario');
+        router.refresh();
         return;
       }
 

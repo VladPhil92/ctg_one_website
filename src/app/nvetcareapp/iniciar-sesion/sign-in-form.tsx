@@ -9,7 +9,8 @@ import { ContinueWithCtgButton } from './continue-with-ctg-button';
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = safeRedirectPath(searchParams.get('next'), '/nvetcareapp/dashboard');
+  const requestedNext = searchParams.get('next');
+  const next = safeRedirectPath(requestedNext, '/nvetcareapp/dashboard');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +41,10 @@ export function SignInForm() {
         return;
       }
 
-      router.push(next);
+      const destination = !requestedNext && data?.user?.role === 'VET'
+        ? '/nvetcareapp/dashboard/veterinario'
+        : next;
+      router.push(destination);
       router.refresh();
     } catch {
       setError('No se pudo contactar el servicio. Intenta de nuevo.');
@@ -63,7 +67,7 @@ export function SignInForm() {
           <h1 className="text-xl font-semibold text-[#0D1B2A] mb-1">Iniciar sesión</h1>
           <p className="text-sm text-[#4A5A68] mb-6">Accede a tu cuenta para continuar en Nvet Care.</p>
 
-          <ContinueWithCtgButton next={next} />
+          <ContinueWithCtgButton next={next} hasExplicitNext={Boolean(requestedNext)} />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

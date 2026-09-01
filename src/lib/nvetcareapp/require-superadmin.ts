@@ -7,9 +7,9 @@ import { fetchNvetCurrentUser, type NvetCurrentUser } from './user';
 
 /**
  * Requires the canonical root to be operating in its real SUPERADMIN mode.
- * The root identity marker intentionally remains true while Modo usuario is
- * active so the switch-back control can render; privileged pages therefore
- * must also reject `isClientMode` explicitly.
+ * The root identity marker intentionally remains true while Modo usuario or
+ * Vet Tester is active so the switch-back control can render; privileged
+ * pages therefore reject both test modes before loading governance data.
  */
 export async function requireNvetSuperadmin(): Promise<{
   accessToken: string;
@@ -29,6 +29,10 @@ export async function requireNvetSuperadmin(): Promise<{
 
   if (userResult.user.isClientMode) {
     redirect('/nvetcareapp/dashboard/citas');
+  }
+
+  if (userResult.user.isVetTesterMode) {
+    redirect('/nvetcareapp/dashboard/vet-tester');
   }
 
   return { accessToken, user: userResult.user };
