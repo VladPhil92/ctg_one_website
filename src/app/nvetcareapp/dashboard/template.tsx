@@ -6,6 +6,7 @@ import { NVET_ACCESS_COOKIE, type NvetRootRoleMode } from '@/lib/nvetcareapp/ses
 import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
 import { ClientDashboardShell } from './client-dashboard-shell';
 import { SuperadminRoleSwitch } from './superadmin-role-switch';
+import { VetTesterDashboard } from './vet-tester-dashboard';
 
 const ROOT_NAV = [
   ['/nvetcareapp/dashboard/gobernanza', 'Gobernanza'],
@@ -31,7 +32,9 @@ export default async function NvetDashboardTemplate({ children }: { children: Re
     ? await fetchNvetUnreadNotificationCount(accessToken)
     : null;
   const unreadNotifications = unreadResult?.ok ? unreadResult.data.unread : 0;
-  const content = isClientView ? (
+  const content = isVetTester ? (
+    <VetTesterDashboard />
+  ) : isClientView ? (
     <ClientDashboardShell
       userName={userName}
       userEmail={userResult.user.email}
