@@ -10,11 +10,10 @@ const MODES: Array<{
   label: string;
   actionLabel: string;
   icon: typeof ShieldCheck;
-  landingPath: string;
 }> = [
-  { mode: 'SUPERADMIN', label: 'SUPERADMIN', actionLabel: 'Volver a SUPERADMIN', icon: ShieldCheck, landingPath: '/nvetcareapp/dashboard/gobernanza' },
-  { mode: 'CLIENT', label: 'Usuario', actionLabel: 'Cambiar a usuario', icon: UserRound, landingPath: '/nvetcareapp/dashboard/citas' },
-  { mode: 'VET_TESTER', label: 'Vet Tester', actionLabel: 'Cambiar a Vet Tester', icon: Stethoscope, landingPath: '/nvetcareapp/dashboard' },
+  { mode: 'SUPERADMIN', label: 'SUPERADMIN', actionLabel: 'Volver a SUPERADMIN', icon: ShieldCheck },
+  { mode: 'CLIENT', label: 'Usuario', actionLabel: 'Cambiar a usuario', icon: UserRound },
+  { mode: 'VET_TESTER', label: 'Vet Tester', actionLabel: 'Cambiar a Vet Tester', icon: Stethoscope },
 ];
 
 export function SuperadminRoleSwitch({ currentMode }: { currentMode: NvetRootRoleMode }) {
@@ -22,7 +21,7 @@ export function SuperadminRoleSwitch({ currentMode }: { currentMode: NvetRootRol
   const [pendingMode, setPendingMode] = useState<NvetRootRoleMode | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function switchMode(targetMode: NvetRootRoleMode, landingPath: string) {
+  async function switchMode(targetMode: NvetRootRoleMode) {
     if (pendingMode || targetMode === currentMode) return;
     setPendingMode(targetMode);
     setError(null);
@@ -39,6 +38,11 @@ export function SuperadminRoleSwitch({ currentMode }: { currentMode: NvetRootRol
         return;
       }
 
+      const landingPath = targetMode === 'CLIENT'
+        ? '/nvetcareapp/dashboard/citas'
+        : targetMode === 'VET_TESTER'
+          ? '/nvetcareapp/dashboard'
+          : '/nvetcareapp/dashboard/gobernanza';
       router.replace(landingPath);
       router.refresh();
     } catch {
@@ -51,14 +55,14 @@ export function SuperadminRoleSwitch({ currentMode }: { currentMode: NvetRootRol
   return (
     <div className="flex max-w-full flex-col items-end gap-1.5">
       <div className="flex max-w-full flex-wrap justify-end gap-2">
-        {MODES.map(({ mode, label, actionLabel, icon: Icon, landingPath }) => {
+        {MODES.map(({ mode, label, actionLabel, icon: Icon }) => {
           const active = mode === currentMode;
           const pending = pendingMode === mode;
           return (
             <button
               key={mode}
               type="button"
-              onClick={() => void switchMode(mode, landingPath)}
+              onClick={() => void switchMode(mode)}
               disabled={Boolean(pendingMode) || active}
               aria-pressed={active}
               aria-label={actionLabel}
