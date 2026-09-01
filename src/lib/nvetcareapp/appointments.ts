@@ -19,6 +19,7 @@ export interface NvetAppointment {
   diagnosis?: string | null;
   treatment?: string | null;
   notes?: string | null;
+  completedAt?: string | null;
   vet: { user: { firstName: string; lastName: string } };
   client: { firstName: string; lastName: string };
   pet: { id: string; name: string; species: string };
