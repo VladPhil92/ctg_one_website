@@ -16,6 +16,7 @@ export const NAV_ITEMS = [
   { label: 'Products', href: '/products' },
   { label: 'Nvet Care', href: '/nvetcareapp' },
   { label: 'About', href: '/about' },
+  { label: 'JP Valderrama', href: '/jpvalderrama' },
   { label: 'Craft Beer', href: '/craft-beer' },
   { label: 'Ecosystem', href: '/ecosystem' },
   { label: 'Technology', href: '/services' },
@@ -26,9 +27,9 @@ export const NAV_ITEMS = [
   { label: 'Contact', href: '/contact' },
 ] as const;
 
-// Keep the first level consumer-oriented. Technical and roadmap surfaces live
-// one level deeper under the Explore menu. Wallet stays first-level and points
-// directly to its canonical production origin at wallet.ctgone.com.
+// Keep the first level consumer-oriented. Technical, educational and roadmap
+// surfaces live one level deeper under the Explore menu. Wallet stays first-level
+// and points directly to its canonical production origin at wallet.ctgone.com.
 export const PRIMARY_NAV_ITEMS = [
   { label: 'Home', href: '/' },
   { label: 'Wallet', href: CTG_WALLET_URL },
@@ -39,6 +40,7 @@ export const PRIMARY_NAV_ITEMS = [
 ] as const;
 
 export const PLATFORM_NAV_ITEMS = [
+  { label: 'JP Valderrama', href: '/jpvalderrama' },
   { label: 'Craft Beer', href: '/craft-beer' },
   { label: 'Ecosystem', href: '/ecosystem' },
   { label: 'Technology', href: '/services' },
@@ -88,7 +90,7 @@ export const SOCIAL_LINKS = {
 };
 
 export const BUSINESS_UNITS = [
-  { id: 'education', name: 'Valderrama International School', color: '#d4a259' },
+  { id: 'education', name: 'JP Valderrama', color: '#d4a259' },
   { id: 'hospitality', name: 'CTG Suites', color: '#6b8cae' },
   { id: 'realestate', name: 'Bechara Real Estate', color: '#7da87d' },
   { id: 'tech', name: 'CTG One Technology', color: '#ae8c9a' },
