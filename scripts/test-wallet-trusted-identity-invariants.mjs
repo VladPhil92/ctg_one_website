@@ -219,7 +219,7 @@ if (legacyBootstrap.includes('verifiedIdentity.issuedAt') || legacyBootstrap.inc
 const bootstrapAuthIndex = legacyBootstrap.indexOf('createAuthenticatedRequestContext(request)');
 const bootstrapRateIndex = legacyBootstrap.indexOf("'consume_wallet_identity_link_rate_limit'");
 const bootstrapVerifyIndex = legacyBootstrap.indexOf('verifyPrivyIdentityToken({');
-const bootstrapEvidenceIndex = legacyBootstrap.indexOf(".from('wallet_legacy_migration_evidence')");
+const bootstrapEvidenceIndex = legacyBootstrap.indexOf('existing = await readLegacyEvidence(serviceRole, user.id)', bootstrapVerifyIndex);
 const bootstrapLinkIndex = legacyBootstrap.lastIndexOf("'link_verified_wallet_identity'");
 if (!(bootstrapAuthIndex >= 0 && bootstrapRateIndex > bootstrapAuthIndex && bootstrapVerifyIndex > bootstrapRateIndex && bootstrapEvidenceIndex > bootstrapVerifyIndex && bootstrapLinkIndex > bootstrapEvidenceIndex)) {
   throw new Error('legacy bootstrap must authenticate, rate-limit, verify signed Privy identity, persist provenance, then link');
