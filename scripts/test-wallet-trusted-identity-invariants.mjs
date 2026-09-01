@@ -6,6 +6,7 @@ const files = {
   migration: path.join(root, 'supabase/migrations/20260829234000_0077_trusted_wallet_identity_linking.sql'),
   verifier: path.join(root, 'src/lib/wallet/privy-identity-token.ts'),
   route: path.join(root, 'src/app/api/wallet/identity/link/route.ts'),
+  legacyBootstrap: path.join(root, 'src/app/api/wallet/identity/legacy-bootstrap/route.ts'),
   serverAuth: path.join(root, 'src/lib/supabase/server.ts'),
   cors: path.join(root, 'src/lib/wallet/cors.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
@@ -21,6 +22,7 @@ for (const [label, file] of Object.entries(files)) {
 const migration = fs.readFileSync(files.migration, 'utf8');
 const verifier = fs.readFileSync(files.verifier, 'utf8');
 const route = fs.readFileSync(files.route, 'utf8');
+const legacyBootstrap = fs.readFileSync(files.legacyBootstrap, 'utf8');
 const serverAuth = fs.readFileSync(files.serverAuth, 'utf8');
 const cors = fs.readFileSync(files.cors, 'utf8');
 const schema = fs.readFileSync(files.schema, 'utf8');
@@ -177,6 +179,50 @@ const verifyIndex = route.indexOf('verifyPrivyIdentityToken({');
 const rpcIndex = route.indexOf("serviceRole.rpc('link_verified_wallet_identity'");
 if (!(authIndex >= 0 && adminIndex > authIndex && rateIndex > adminIndex && evidenceIndex > rateIndex && verifyIndex > evidenceIndex && rpcIndex > verifyIndex)) {
   throw new Error('trusted linking must authenticate, rate-limit, load provenance, verify Privy, then mutate');
+}
+
+requireFragments(legacyBootstrap, 'legacy identity bootstrap route', [
+  "const LEGACY_CLAIM_VERSION = 'ctg-wallet-legacy-claim-v1' as const",
+  'const requestSchema = z.object({}).strict()',
+  'createAuthenticatedRequestContext(request)',
+  "'consume_wallet_identity_link_rate_limit'",
+  "request.headers.get('privy-id-token')",
+  'verifyPrivyIdentityToken({',
+  'canonicalCtgUserId: user.id',
+  "createHash('sha256')",
+  ".from('wallet_legacy_migration_evidence')",
+  "provider_user_id: verifiedIdentity.privyUserId",
+  "expected_address: address",
+  "source_digest_sha256: sourceDigestSha256",
+  "status: 'pending'",
+  "'link_verified_wallet_identity'",
+  "p_link_mode: 'legacy_preserve'",
+  'return walletCorsPreflight(request, CORS_METHODS)',
+  'legacyPreserved: true',
+]);
+
+for (const fragment of [
+  'body.walletAddress',
+  'body.evmAddress',
+  'body.providerUserId',
+  'body.privyUserId',
+  'body.sourceDigestSha256',
+  'body.expectedAddress',
+]) {
+  if (legacyBootstrap.includes(fragment)) {
+    throw new Error(`legacy bootstrap must not trust browser wallet provenance: ${fragment}`);
+  }
+}
+if (legacyBootstrap.includes('verifiedIdentity.issuedAt') || legacyBootstrap.includes('verifiedIdentity.expiresAt')) {
+  throw new Error('legacy evidence digest must remain stable across refreshed Privy identity tokens');
+}
+const bootstrapAuthIndex = legacyBootstrap.indexOf('createAuthenticatedRequestContext(request)');
+const bootstrapRateIndex = legacyBootstrap.indexOf("'consume_wallet_identity_link_rate_limit'");
+const bootstrapVerifyIndex = legacyBootstrap.indexOf('verifyPrivyIdentityToken({');
+const bootstrapEvidenceIndex = legacyBootstrap.indexOf(".from('wallet_legacy_migration_evidence')");
+const bootstrapLinkIndex = legacyBootstrap.lastIndexOf("'link_verified_wallet_identity'");
+if (!(bootstrapAuthIndex >= 0 && bootstrapRateIndex > bootstrapAuthIndex && bootstrapVerifyIndex > bootstrapRateIndex && bootstrapEvidenceIndex > bootstrapVerifyIndex && bootstrapLinkIndex > bootstrapEvidenceIndex)) {
+  throw new Error('legacy bootstrap must authenticate, rate-limit, verify signed Privy identity, persist provenance, then link');
 }
 
 const bearerBranchIndex = serverAuth.indexOf('if (bearer.present) {');
