@@ -14,7 +14,10 @@ create table public.jp_event_registrations (
   source_path text not null default '/jpvalderrama/talks',
   created_at timestamptz not null default now(),
   constraint jp_event_registrations_event_slug_check
-    check (event_slug = 'filosofia-o-dinero'),
+    check (
+      char_length(event_slug) between 3 and 80
+      and event_slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'
+    ),
   constraint jp_event_registrations_full_name_check
     check (char_length(btrim(full_name)) between 2 and 120),
   constraint jp_event_registrations_email_check
@@ -28,7 +31,10 @@ create table public.jp_event_registrations (
   constraint jp_event_registrations_status_check
     check (status in ('registered', 'cancelled')),
   constraint jp_event_registrations_source_path_check
-    check (source_path = '/jpvalderrama/talks'),
+    check (
+      source_path = '/jpvalderrama/talks'
+      or source_path like '/jpvalderrama/talks/%'
+    ),
   constraint jp_event_registrations_event_email_key
     unique (event_slug, email)
 );
@@ -43,5 +49,7 @@ grant select, insert, update, delete on table public.jp_event_registrations to s
 
 comment on table public.jp_event_registrations is
   'Server-ingested registrations for confirmed JP Valderrama events. Browser roles have no direct access.';
+comment on column public.jp_event_registrations.event_slug is
+  'Validated canonical event slug. The public API separately allow-lists events that currently accept registrations.';
 comment on column public.jp_event_registrations.consent_at is
   'Timestamp at which the registrant explicitly accepted event-registration data processing.';
