@@ -1,0 +1,59 @@
+name: Materialize JP Valderrama Assets
+
+on:
+  push:
+    branches:
+      - fix/jpvalderrama-rebuild-valid-assets
+    paths:
+      - '.asset-fix/READY'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/jpvalderrama-rebuild-valid-assets
+
+      - name: Decode validated WebP assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for asset in brand talks ideas books projects conference; do
+            cat .asset-fix/${asset}.*.b64 | tr -d '\n\r' | base64 --decode > public/jpvalderrama/${asset}.webp
+          done
+          python - <<'PY'
+          from pathlib import Path
+          expected = {
+              'brand.webp': 'RIFF',
+              'talks.webp': 'RIFF',
+              'ideas.webp': 'RIFF',
+              'books.webp': 'RIFF',
+              'projects.webp': 'RIFF',
+              'conference.webp': 'RIFF',
+          }
+          for filename in expected:
+              path = Path('public/jpvalderrama') / filename
+              data = path.read_bytes()
+              if len(data) < 12 or data[:4] != b'RIFF' or data[8:12] != b'WEBP':
+                  raise SystemExit(f'Invalid WebP asset: {path}')
+              print(f'{path}: {len(data)} bytes OK')
+          PY
+
+      - name: Commit materialized assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/jpvalderrama/*.webp
+          if git diff --cached --quiet; then
+            echo "No asset changes to commit"
+            exit 0
+          fi
+          git commit -m "fix(jpvalderrama): rebuild valid HD image assets"
+          git push origin HEAD:fix/jpvalderrama-rebuild-valid-assets
