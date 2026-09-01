@@ -9,10 +9,7 @@ const TARGET_DIR = path.join(process.cwd(), 'public', 'jpvalderrama');
 const assets = [
   { name: 'brand', parts: 1, bytes: 16670, sha256: '54254de9695e7d6b8f3a81f9bbdc1f233330a9dc1fbb297ee7a3485f52cbe04c' },
   { name: 'conference', parts: 6, bytes: 125920, sha256: '0c0d4fdefc585b3720399f96e7081b0a59352cae49d3604a2c889ab8d5e4a36b' },
-  { name: 'talks', parts: 2, bytes: 27024, sha256: '203b4ec71d32f93c72c2120534de7fd6eb51ecc0c33a535608d504a0f5a13bbf' },
   { name: 'ideas', parts: 2, bytes: 29456, sha256: 'e2a713989a1d040b7fd730286d74f72764d64315b30f59ab9cc5c7902f4068f0' },
-  { name: 'books', parts: 2, bytes: 33532, sha256: '49c0a6b4e6ebaa3ca857f5aebb66a15e9c061067d46d8454e5f6c84da8643a20' },
-  { name: 'projects', parts: 2, bytes: 33236, sha256: 'bb4fd79f95a4054be51108d6031a33186b8d9636c6ce4e0767d9752af144d0ca' },
 ];
 
 await mkdir(TARGET_DIR, { recursive: true });
