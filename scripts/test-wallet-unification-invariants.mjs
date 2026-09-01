@@ -98,6 +98,7 @@ for (const fragment of requiredDomainFragments) {
 
 const requiredCorsFragments = [
   "const PRODUCTION_WALLET_ORIGINS = new Set([",
+  "'https://wallet.ctgone.com'",
   "'https://ctg-one-wallet.vercel.app'",
   '...PRODUCTION_WALLET_ORIGINS',
   'process.env.CTG_WALLET_ALLOWED_ORIGINS',

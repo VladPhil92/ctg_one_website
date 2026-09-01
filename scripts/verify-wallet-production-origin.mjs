@@ -1,6 +1,6 @@
 const healthUrl = process.env.HEALTH_URL || 'https://ctgone.com/api/health';
 const apiOrigin = process.env.WALLET_API_ORIGIN || new URL(healthUrl).origin;
-const walletOrigin = process.env.WALLET_CLIENT_ORIGIN || 'https://ctg-one-wallet.vercel.app';
+const walletOrigin = process.env.WALLET_CLIENT_ORIGIN || 'https://wallet.ctgone.com';
 const deniedOrigin = process.env.WALLET_DENIED_ORIGIN || 'https://wallet-origin-denied.invalid';
 const requestTimeoutMs = Number(process.env.WALLET_ORIGIN_CANARY_REQUEST_TIMEOUT_MS || '10000');
 const overviewUrl = new URL('/api/wallet/overview', apiOrigin).toString();

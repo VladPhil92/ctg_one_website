@@ -6,6 +6,7 @@ const NATIVE_WALLET_ORIGINS = new Set([
 ]);
 
 const PRODUCTION_WALLET_ORIGINS = new Set([
+  'https://wallet.ctgone.com',
   'https://ctg-one-wallet.vercel.app',
 ]);
 
