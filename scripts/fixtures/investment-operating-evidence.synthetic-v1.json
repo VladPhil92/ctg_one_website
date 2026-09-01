@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0094",
-    "schemaMigrationName": "jp_event_registrations",
-    "schemaMigrationCount": 94,
+    "schemaMigration": "0096",
+    "schemaMigrationName": "jp_education_checkout_hardening",
+    "schemaMigrationCount": 96,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
