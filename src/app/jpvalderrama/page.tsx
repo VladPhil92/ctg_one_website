@@ -102,6 +102,12 @@ export default function JPValderramaPage() {
       <header className="sticky top-0 z-50 border-b border-[#6f0d12]/10 bg-[#f7f0e7]/95 backdrop-blur-xl">
         <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
           <a href="/" className="flex min-h-12 shrink-0 items-center" aria-label="CTG One Technology, volver al inicio">
+        <div className="mx-auto flex min-h-[76px] max-w-[1440px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
+          <a
+            href="/"
+            className="flex min-h-12 shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#6f0d12]"
+            aria-label="CTG One Technology, ir al inicio"
+          >
             <BrandLogo priority tone="light" className="transition-transform duration-300 hover:-translate-y-px" />
           </a>
           <nav className="hidden items-center gap-7 text-[10px] font-semibold uppercase tracking-[.16em] text-[#665950] lg:flex" aria-label="Navegación JP Valderrama">

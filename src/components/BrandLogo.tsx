@@ -1,5 +1,7 @@
 import Image from 'next/image';
 
+export type BrandLogoTone = 'dark' | 'light';
+
 interface BrandLogoProps {
   priority?: boolean;
   compact?: boolean;
@@ -10,6 +12,25 @@ interface BrandLogoProps {
 export function BrandLogo({ priority = false, compact = false, className = '', tone = 'dark' }: BrandLogoProps) {
   const primaryTextClass = tone === 'light' ? 'text-[#17110e]' : 'text-white';
   const secondaryTextClass = tone === 'light' ? 'text-[#6f625a]' : 'text-white/72';
+  tone?: BrandLogoTone;
+}
+
+/**
+ * Canonical CTG One Technology institutional lockup.
+ *
+ * Brand invariant:
+ * - the gold CTG nucleus is immutable across every product and sub-brand;
+ * - the CTG One / Technology hierarchy and spacing stay consistent;
+ * - only typography contrast may adapt to the surface behind the lockup.
+ */
+export function BrandLogo({
+  priority = false,
+  compact = false,
+  className = '',
+  tone = 'dark',
+}: BrandLogoProps) {
+  const primaryText = tone === 'light' ? 'text-[#17110e]' : 'text-white';
+  const descriptorText = tone === 'light' ? 'text-[#5f5148]' : 'text-white/72';
 
   return (
     <span
@@ -39,6 +60,11 @@ export function BrandLogo({ priority = false, compact = false, className = '', t
         </span>
         {!compact && (
           <span className={`mt-1 whitespace-nowrap text-[8px] font-medium uppercase tracking-[0.28em] sm:text-[9px] ${secondaryTextClass}`}>
+          <span className={primaryText}>CTG </span>
+          <span className="text-[#e8bf58]">One</span>
+        </span>
+        {!compact && (
+          <span className={`mt-1 whitespace-nowrap text-[8px] font-medium uppercase tracking-[0.28em] sm:text-[9px] ${descriptorText}`}>
             Technology
           </span>
         )}
