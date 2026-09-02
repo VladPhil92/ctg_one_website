@@ -9,6 +9,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const MAX_BODY_BYTES = 4096;
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const CONTROL_CHAR_RE = /[\u0000-\u001f\u007f]/;
 
@@ -24,6 +26,13 @@ function json(body: Record<string, unknown>, status = 200) {
   response.headers.set('Cache-Control', 'private, no-store');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   return response;
+}
+
+function parsePositiveInt(value: string | null, fallback: number, max: number) {
+  if (!value) return fallback;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, max);
 }
 
 async function readBoundedJson(request: Request): Promise<unknown | null> {
@@ -87,13 +96,23 @@ export async function GET(request: Request) {
   const access = await authorizeAdmin(request);
   if ('response' in access) return access.response;
 
+  const url = new URL(request.url);
+  const page = parsePositiveInt(url.searchParams.get('page'), 1, 1000000);
+  const pageSize = parsePositiveInt(url.searchParams.get('pageSize'), DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
   const { admin } = access;
-  const { data: orders, error: ordersError } = await admin
+  const { data: orders, error: ordersError, count } = await admin
     .from('education_orders')
-    .select('id,user_id,status,currency,total_amount,payment_provider,provider_reference,verified_at,created_at')
+    .select(
+      'id,user_id,status,currency,total_amount,payment_provider,provider_reference,verified_at,created_at',
+      { count: 'exact' },
+    )
     .in('status', ['initiated', 'pending', 'paid'])
     .order('created_at', { ascending: false })
-    .limit(150);
+    .order('id', { ascending: false })
+    .range(from, to);
 
   if (ordersError) {
     return json({ ok: false, error: 'EDUCATION_LIFECYCLE_QUEUE_UNAVAILABLE' }, 503);
@@ -160,12 +179,23 @@ export async function GET(request: Request) {
     return json({ ok: false, error: 'EDUCATION_LIFECYCLE_HISTORY_UNAVAILABLE' }, 503);
   }
 
+  const total = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
   return json({
     ok: true,
     queue: (orders ?? []).map((order) => ({
       ...order,
       items: itemsByOrder.get(order.id as string) ?? [],
     })),
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages,
+      hasPreviousPage: page > 1,
+      hasNextPage: page < totalPages,
+    },
     recentEvents: events ?? [],
   });
 }
