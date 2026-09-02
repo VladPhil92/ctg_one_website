@@ -1,7 +1,7 @@
 import type { FunnelServiceKey } from '@/lib/analytics/funnel';
 
 export type DashboardServiceGroup = 'finance' | 'care' | 'knowledge' | 'education';
-export type DashboardServiceStatus = 'LIVE' | 'ACCOUNT' | 'PILOT' | 'DEVELOPMENT' | 'CONSOLIDATION' | 'ROADMAP';
+export type DashboardServiceStatus = 'LIVE' | 'ACCOUNT' | 'BETA' | 'PILOT' | 'DEVELOPMENT' | 'CONSOLIDATION' | 'ROADMAP';
 
 export type DashboardService = {
   id: string;
@@ -107,8 +107,19 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
     serviceKey: 'nvet',
   },
   {
+    id: 'vertice',
+    code: 'CIV-06',
+    title: 'VÉRTICE OS',
+    description: 'Inteligencia ciudadana para reportar, proponer, deliberar, seguir resultados y construir reputación cívica verificable.',
+    href: 'https://vertice.ctgone.com/auth/ctgone/start',
+    cta: 'Entrar con CTG One',
+    group: 'care',
+    status: 'BETA',
+    serviceKey: 'vertice',
+  },
+  {
     id: 'token',
-    code: 'TKN-06',
+    code: 'TKN-07',
     title: 'CTG One Token',
     description: 'Consulta la propuesta, utilidad, documentación y evolución del activo digital del ecosistema.',
     href: '/ctgotoken',
@@ -119,7 +130,7 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
   },
   {
     id: 'knowledge',
-    code: 'KNW-07',
+    code: 'KNW-08',
     title: 'CTG Knowledge',
     description: 'Inteligencia institucional basada en conocimiento autorizado, trazable y consultable.',
     href: '/knowledge',
@@ -130,7 +141,7 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
   },
   {
     id: 'education-jp',
-    code: 'EDU-08',
+    code: 'EDU-09',
     title: 'JP Valderrama',
     description: 'Filosofía, conferencias, libros, ideas, proyectos, contenidos académicos y asesorías institucionales.',
     href: '/jpvalderrama',
@@ -141,7 +152,7 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
   },
   {
     id: 'learning-center',
-    code: 'EDU-09',
+    code: 'EDU-10',
     title: 'Valderrama Learning Center',
     description: 'Tutorías privadas, refuerzo, preparación de exámenes y servicios educativos para familias.',
     href: '/jpvalderrama/learningcenter',
@@ -152,7 +163,7 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
   },
   {
     id: 'education-library',
-    code: 'LIB-10',
+    code: 'LIB-11',
     title: 'Mi Educación',
     description: 'Biblioteca privada de cursos, conferencias, libros, clases, recursos y servicios educativos adquiridos.',
     href: '/dashboard/educacion',
@@ -163,7 +174,7 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
   },
   {
     id: 'rewards',
-    code: 'RWD-11',
+    code: 'RWD-12',
     title: 'CTG Rewards',
     description: 'Beneficios, reconocimiento y fidelización previstos para la experiencia transversal del ecosistema.',
     href: '/rewards',
