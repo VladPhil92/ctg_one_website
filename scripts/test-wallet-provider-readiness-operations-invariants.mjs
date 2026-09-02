@@ -37,8 +37,10 @@ requireCondition(
   'Production provider readiness workflow must execute the repository verifier',
 );
 requireCondition(
-  workflow.includes('wallet-provider-readiness-canary'),
-  'Production provider readiness workflow must preserve its evidence artifact',
+  workflow.includes('actions/upload-artifact@v7')
+    && workflow.includes('path: canary-evidence/wallet-provider-readiness.json')
+    && workflow.includes('if-no-files-found: error'),
+  'Production provider readiness workflow must preserve its evidence artifact and fail if evidence is missing',
 );
 requireCondition(
   verifier.includes('PRIVY_USER_REGISTRY_NOT_CONFIGURED'),
