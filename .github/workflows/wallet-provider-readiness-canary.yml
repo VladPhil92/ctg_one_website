@@ -1,0 +1,49 @@
+name: Wallet Provider Registry Production Canary
+
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wallet-provider-readiness-production
+  cancel-in-progress: true
+
+jobs:
+  provider-registry-canary:
+    name: Verify production Privy user registry
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      HEALTH_URL: https://ctgone.com/api/health
+      WALLET_PROVIDER_READINESS_TIMEOUT_MS: '10000'
+      WALLET_PROVIDER_READINESS_ATTEMPTS: '6'
+      WALLET_PROVIDER_READINESS_INTERVAL_MS: '10000'
+      WALLET_PROVIDER_READINESS_EVIDENCE_PATH: canary-evidence/wallet-provider-readiness.json
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.0
+
+      - name: Verify production provider registry readiness
+        id: provider-readiness
+        run: node scripts/verify-wallet-provider-readiness.mjs
+
+      - name: Archive provider readiness evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: wallet-provider-readiness-${{ github.run_id }}
+          path: canary-evidence/wallet-provider-readiness.json
+          if-no-files-found: error
+          retention-days: 14
