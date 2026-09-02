@@ -5,9 +5,8 @@ import {
   BookOpen,
   BrainCircuit,
   Coins,
-  GraduationCap,
-  Landmark,
   Gift,
+  Landmark,
   LibraryBig,
   PawPrint,
   School,
@@ -17,81 +16,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-type ServiceCard = {
-  code: string;
-  title: string;
-  description: string;
-  href: string;
-  cta: string;
-  icon: typeof PawPrint;
-  status: 'LIVE' | 'ACCOUNT' | 'BETA';
-};
-
-const services: readonly ServiceCard[] = [
-  {
-    code: 'VET-01',
-    title: 'Nvet Care App',
-    description: 'Atención veterinaria, perfiles de mascotas, citas, seguimiento y acceso a la red Nvet Care.',
-    href: '/nvetcareapp',
-    cta: 'Abrir Nvet Care',
-    icon: PawPrint,
-    status: 'LIVE',
-  },
-  {
-    code: 'INV-02',
-    title: 'CTG Craft Beer Inversión',
-    description: 'Participa en lotes productivos y sigue capital, producción, comercialización y liquidaciones.',
-    href: '/inversion/app',
-    cta: 'Abrir inversión',
-    icon: Beer,
-    status: 'LIVE',
-  },
-  {
-    code: 'TKN-03',
-    title: 'CTG One Token',
-    description: 'Consulta la propuesta, utilidad y evolución del activo digital del ecosistema CTG One.',
-    href: '/ctgotoken',
-    cta: 'Explorar Token',
-    icon: Coins,
-    status: 'LIVE',
-  },
-  {
-    code: 'CIV-04',
-    title: 'VÉRTICE OS',
-    description: 'Inteligencia ciudadana para reportar, proponer, deliberar, seguir resultados y construir reputación cívica verificable.',
-    href: 'https://vertice.ctgone.com/auth/ctgone/start',
-    cta: 'Entrar con CTG One',
-    icon: Landmark,
-    status: 'BETA',
-  },
-  {
-    code: 'EDU-05',
-    title: 'JP Valderrama',
-    description: 'Filosofía, conferencias, libros, ideas, proyectos, contenidos académicos y asesorías institucionales.',
-    href: '/jpvalderrama',
-    cta: 'Explorar JP Valderrama',
-    icon: BookOpen,
-    status: 'LIVE',
-  },
-  {
-    code: 'EDU-06',
-    title: 'Valderrama Learning Center',
-    description: 'Tutorías privadas y servicios educativos para familias: refuerzo, exámenes y acompañamiento académico.',
-    href: '/jpvalderrama/learningcenter',
-    cta: 'Abrir Learning Center',
-    icon: School,
-    status: 'LIVE',
-  },
-  {
-    code: 'LIB-07',
-    title: 'Mi Educación',
-    description: 'Tu biblioteca privada de cursos, conferencias, libros, clases, recursos y servicios educativos adquiridos.',
-    href: '/dashboard/educacion',
-    cta: 'Abrir mi biblioteca',
-    icon: LibraryBig,
-    status: 'ACCOUNT',
-  },
-] as const;
 import {
   DASHBOARD_SERVICE_GROUPS,
   DASHBOARD_SERVICES,
@@ -104,6 +28,7 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   identity: ShieldCheck,
   'craft-beer': Beer,
   nvet: PawPrint,
+  vertice: Landmark,
   token: Coins,
   knowledge: BrainCircuit,
   'education-jp': BookOpen,
@@ -115,6 +40,7 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
 const STATUS_LABELS: Record<DashboardServiceStatus, string> = {
   LIVE: 'Activo',
   ACCOUNT: 'Mi cuenta',
+  BETA: 'Beta',
   PILOT: 'Piloto',
   DEVELOPMENT: 'En desarrollo',
   CONSOLIDATION: 'En consolidación',
@@ -182,15 +108,12 @@ export function DashboardServiceHub() {
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-[.25em] text-white/35">CTG ONE / SERVICE HUB</p>
-            <h2 id="ctg-services-title" className="mt-2 font-outfit text-2xl font-semibold tracking-[-.03em] sm:text-3xl">Servicios y productos actuales</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">Accede desde una sola cuenta a las unidades activas del ecosistema, VÉRTICE OS y tu biblioteca educativa personal.</p>
             <p className="text-[9px] font-semibold uppercase tracking-[.25em] text-white/35">CTG ONE / ECOSYSTEM OS</p>
             <h2 id="ctg-services-title" className="mt-2 font-outfit text-2xl font-semibold tracking-[-.03em] sm:text-3xl">
               Un acceso para todo el ecosistema
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">
-              Wallet, inversión, Craft Beer, Nvet Care, Token, conocimiento y educación organizados desde un único centro de servicios.
+              Wallet, inversión, Craft Beer, Nvet Care, VÉRTICE OS, Token, conocimiento y educación organizados desde un único centro de servicios.
             </p>
           </div>
 
@@ -233,9 +156,6 @@ export function DashboardServiceHub() {
           })}
         </div>
 
-        <div className="mt-4 flex items-center gap-3 rounded-2xl border border-white/[.07] bg-white/[.02] px-5 py-4 text-xs leading-5 text-white/40">
-          <GraduationCap className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-          <span>VÉRTICE OS se integra mediante federación segura: CTG One acredita la cuenta y VÉRTICE conserva su propia sesión y nivel de identidad. JP Valderrama concentra filosofía, divulgación y servicios institucionales; Valderrama Learning Center concentra tutorías y servicios educativos privados para familias.</span>
         <div className="mt-8 flex items-start gap-3 rounded-2xl border border-accent/15 bg-accent/[.035] px-5 py-4 text-xs leading-5 text-white/45">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
           <span>
