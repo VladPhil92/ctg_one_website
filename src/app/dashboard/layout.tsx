@@ -3,15 +3,22 @@
 import { useEffect, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { DashboardServiceHub } from '@/components/dashboard/DashboardServiceHub';
 import { trackFunnelEvent } from '@/lib/analytics/client';
 import type { FunnelServiceKey } from '@/lib/analytics/funnel';
 
 const SERVICE_ROUTES: ReadonlyArray<{ prefix: string; serviceKey: FunnelServiceKey }> = [
   { prefix: '/dashboard/inversion', serviceKey: 'investment' },
+  { prefix: '/inversion/app', serviceKey: 'investment' },
   { prefix: '/dashboard/depositos', serviceKey: 'wallet' },
   { prefix: '/dashboard/wallet', serviceKey: 'wallet' },
   { prefix: '/dashboard/kyc', serviceKey: 'identity' },
   { prefix: '/knowledge', serviceKey: 'knowledge' },
+  { prefix: '/nvetcareapp', serviceKey: 'nvet' },
+  { prefix: '/ctgotoken', serviceKey: 'token' },
+  { prefix: '/dashboard/educacion', serviceKey: 'education_library' },
+  { prefix: '/jpvalderrama/learningcenter', serviceKey: 'education_learning_center' },
+  { prefix: '/jpvalderrama', serviceKey: 'education_jp' },
 ];
 
 function serviceForHref(href: string): FunnelServiceKey | null {
@@ -54,5 +61,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return () => document.removeEventListener('click', handleClick, { capture: true });
   }, [isAuthenticated, isLoading, pathname]);
 
-  return children;
+  return (
+    <>
+      {children}
+      {pathname === '/dashboard' ? <DashboardServiceHub /> : null}
+    </>
+  );
 }
