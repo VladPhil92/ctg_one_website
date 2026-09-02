@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0107",
-    "schemaMigrationName": "authorization_surface_hardening",
-    "schemaMigrationCount": 107,
+    "schemaMigration": "0108",
+    "schemaMigrationName": "application_rpc_boundary_compatibility",
+    "schemaMigrationCount": 108,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
