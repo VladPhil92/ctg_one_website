@@ -11,6 +11,11 @@ import {
 } from '@/lib/supabase/server';
 import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
 import { inspectPrivyServerTrust } from '@/lib/wallet/privy-server-trust';
+import {
+  getPrivyUserByCustomAuthId,
+  isPrivyUserRegistryConfigured,
+  PrivyUserRegistryError,
+} from '@/lib/wallet/privy-user-registry';
 
 const READINESS_VERSION = 'ctg-wallet-identity-readiness-v1' as const;
 const CORS_METHODS = ['GET', 'OPTIONS'] as const;
@@ -125,6 +130,24 @@ async function inspectSupabaseJwtDiscovery(): Promise<SupabaseJwtCheck> {
   return { ready: true, code: 'SUPABASE_ASYMMETRIC_JWKS_READY', algorithms };
 }
 
+async function inspectPrivyRegistryReadiness(canonicalUserId: string): Promise<ReadinessCheck> {
+  if (!isPrivyUserRegistryConfigured()) {
+    return { ready: false, code: 'PRIVY_USER_REGISTRY_NOT_CONFIGURED' };
+  }
+
+  try {
+    // A 404/no owner is a valid result. This lookup exists to prove the server
+    // credential and provider API are usable before another OTP can be opened.
+    await getPrivyUserByCustomAuthId(canonicalUserId);
+    return { ready: true, code: 'PRIVY_USER_REGISTRY_READY' };
+  } catch (error) {
+    if (error instanceof PrivyUserRegistryError) {
+      return { ready: false, code: error.code };
+    }
+    return { ready: false, code: 'PRIVY_USER_REGISTRY_UNAVAILABLE' };
+  }
+}
+
 async function inspectIdentityStorage(userId: string): Promise<IdentityStorageCheck> {
   const serviceRole = createAdminClient();
   const [linkResult, accountResult, evidenceResult] = await Promise.all([
@@ -223,13 +246,14 @@ export async function GET(request: Request) {
     return noStoreJson(request, { error: 'UNAUTHENTICATED' }, { status: 401 });
   }
 
-  const [supabaseJwt, storage, privyVerifier] = await Promise.all([
+  const [supabaseJwt, storage, privyVerifier, privyRegistry] = await Promise.all([
     inspectSupabaseJwtDiscovery(),
     inspectIdentityStorage(auth.user.id),
     inspectPrivyServerTrust(),
+    inspectPrivyRegistryReadiness(auth.user.id),
   ]);
 
-  const ready = supabaseJwt.ready && privyVerifier.ready && storage.ready;
+  const ready = supabaseJwt.ready && privyVerifier.ready && privyRegistry.ready && storage.ready;
 
   return noStoreJson(request, {
     version: READINESS_VERSION,
@@ -238,6 +262,7 @@ export async function GET(request: Request) {
       canonicalSession: { ready: true, code: 'CANONICAL_SESSION_READY' },
       supabaseJwt,
       privyVerifier,
+      privyRegistry,
       storage,
     },
   });
