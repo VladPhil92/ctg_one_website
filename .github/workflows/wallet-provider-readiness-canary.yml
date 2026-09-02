@@ -2,8 +2,18 @@ name: Wallet Provider Registry Production Canary
 
 on:
   schedule:
-    - cron: '23 * * * *'
+    - cron: '9,19,29,39,49,59 * * * *'
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: 'Full 40-character Git SHA expected in Render'
+        required: false
+        type: string
+      health_url:
+        description: 'CTG One health endpoint used to prove the deployed Render SHA before probing Privy'
+        required: false
+        default: 'https://ctgone.com/api/health'
+        type: string
 
 permissions:
   contents: read
@@ -16,34 +26,42 @@ jobs:
   provider-registry-canary:
     name: Verify production Privy user registry
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 12
     env:
-      HEALTH_URL: https://ctgone.com/api/health
+      HEALTH_URL: ${{ github.event.inputs.health_url || 'https://ctgone.com/api/health' }}
+      EXPECTED_DEPLOYMENT_SHA: ${{ github.event.inputs.expected_sha || github.sha }}
+      EXPECTED_DEPLOYMENT_BRANCH: main
+      CANARY_ATTEMPTS: '10'
+      CANARY_INTERVAL_MS: '25000'
+      CANARY_REQUEST_TIMEOUT_MS: '10000'
       WALLET_PROVIDER_READINESS_TIMEOUT_MS: '10000'
-      WALLET_PROVIDER_READINESS_ATTEMPTS: '6'
-      WALLET_PROVIDER_READINESS_INTERVAL_MS: '10000'
+      WALLET_PROVIDER_READINESS_ATTEMPTS: '3'
+      WALLET_PROVIDER_READINESS_INTERVAL_MS: '5000'
       WALLET_PROVIDER_READINESS_EVIDENCE_PATH: canary-evidence/wallet-provider-readiness.json
 
     steps:
-      - name: Checkout repository
+      - name: Checkout exact production target
         uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ github.event.inputs.expected_sha || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
           node-version: 22.22.0
 
+      - name: Verify exact Render deployment identity
+        run: node scripts/verify-deployment-health.mjs
+
       - name: Verify production provider registry readiness
         id: provider-readiness
         run: node scripts/verify-wallet-provider-readiness.mjs
 
       - name: Archive provider readiness evidence
-        if: always()
+        if: always() && steps.provider-readiness.outcome != 'skipped'
         uses: actions/upload-artifact@v7
         with:
-          name: wallet-provider-readiness-${{ github.run_id }}
+          name: wallet-provider-readiness-${{ github.event.inputs.expected_sha || github.sha }}
           path: canary-evidence/wallet-provider-readiness.json
           if-no-files-found: error
           retention-days: 14

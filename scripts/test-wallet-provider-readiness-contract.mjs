@@ -36,7 +36,7 @@ for (const forbidden of [
 }
 
 for (const fragment of [
-  "/api/wallet/identity/provider-readiness",
+  '/api/wallet/identity/provider-readiness',
   "last?.body?.version === 'ctg-wallet-provider-readiness-v1'",
   "last?.body?.check?.code === 'PRIVY_USER_REGISTRY_READY'",
   'wallet-provider-readiness.json',
@@ -47,9 +47,17 @@ for (const fragment of [
 
 for (const fragment of [
   'name: Wallet Provider Registry Production Canary',
-  "cron: '23 * * * *'",
+  "cron: '9,19,29,39,49,59 * * * *'",
   'workflow_dispatch:',
-  'ref: main',
+  'expected_sha:',
+  'EXPECTED_DEPLOYMENT_SHA: ${{ github.event.inputs.expected_sha || github.sha }}',
+  'EXPECTED_DEPLOYMENT_BRANCH: main',
+  "CANARY_ATTEMPTS: '10'",
+  "CANARY_INTERVAL_MS: '25000'",
+  "CANARY_REQUEST_TIMEOUT_MS: '10000'",
+  'timeout-minutes: 12',
+  'ref: ${{ github.event.inputs.expected_sha || github.sha }}',
+  'node scripts/verify-deployment-health.mjs',
   'node scripts/verify-wallet-provider-readiness.mjs',
   'Archive provider readiness evidence',
   'retention-days: 14',
@@ -58,8 +66,21 @@ for (const fragment of [
 }
 
 assert.ok(
+  workflow.indexOf('node scripts/verify-deployment-health.mjs')
+    < workflow.indexOf('node scripts/verify-wallet-provider-readiness.mjs'),
+  'Privy readiness must only run after the exact Render deployment identity is certified.',
+);
+assert.ok(
   !/^\s*push:/m.test(workflow),
   'Provider production canary must not run on push because Render deploys only after repository checks pass.',
 );
+assert.ok(
+  !/^\s*pull_request:/m.test(workflow),
+  'Provider production canary must not run on pull requests.',
+);
+assert.ok(
+  !/^\s*workflow_run:/m.test(workflow),
+  'Provider production canary must not create a workflow_run race with Render checksPass deployment.',
+);
 
-console.log('CTG One wallet bounded post-deploy Privy provider readiness certification contract: PASS');
+console.log('CTG One wallet exact-deployment Privy provider readiness certification contract: PASS');
