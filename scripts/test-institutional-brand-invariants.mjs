@@ -70,30 +70,38 @@ for (const file of publicVisualFiles) {
 
 // Large/original visuals use repository-owned source modules so a binary/public
 // folder mismatch cannot silently deploy blank cards or 404 image surfaces.
-const inlineVisualModules = [
-  'conference-00.ts',
-  'conference-01.ts',
-  'conference-02.ts',
-  'ideas-00.ts',
-  'ideas-01.ts',
-  'ideas-02.ts',
-  'ideas-03.ts',
-  'ideas-04.ts',
-  'philosophy-technology-00.ts',
-  'philosophy-technology-01.ts',
-  'philosophy-technology-02.ts',
-  'philosophy-technology-03.ts',
-  'thought-map-00.ts',
-  'thought-map-01.ts',
-  'thought-map-02.ts',
-];
-for (const module of inlineVisualModules) {
-  await access(new URL(`../src/data/jpvalderrama-visuals/${module}`, import.meta.url));
-  const importStem = module.replace(/\.ts$/, '');
-  assert.ok(
-    jpAssetRoute.includes(`@/data/jpvalderrama-visuals/${importStem}`),
-    `JP asset route must import repository-backed visual module ${module}`,
-  );
+const inlineVisualGroups = {
+  conference: ['conference-00.ts', 'conference-01.ts', 'conference-02.ts'],
+  ideas: ['ideas-00.ts', 'ideas-01.ts', 'ideas-02.ts', 'ideas-03.ts', 'ideas-04.ts'],
+  philosophyTechnology: [
+    'philosophy-technology-00.ts',
+    'philosophy-technology-01.ts',
+    'philosophy-technology-02.ts',
+    'philosophy-technology-03.ts',
+  ],
+  thoughtMap: ['thought-map-00.ts', 'thought-map-01.ts', 'thought-map-02.ts'],
+};
+
+for (const [group, modules] of Object.entries(inlineVisualGroups)) {
+  const chunks = [];
+  for (const module of modules) {
+    await access(new URL(`../src/data/jpvalderrama-visuals/${module}`, import.meta.url));
+    const importStem = module.replace(/\.ts$/, '');
+    assert.ok(
+      jpAssetRoute.includes(`@/data/jpvalderrama-visuals/${importStem}`),
+      `JP asset route must import repository-backed visual module ${module}`,
+    );
+
+    const source = await read(`src/data/jpvalderrama-visuals/${module}`);
+    const match = source.match(/^export default '([A-Za-z0-9+/=]+)';\s*$/);
+    assert.ok(match, `JP visual source module ${module} must contain one base64 payload.`);
+    chunks.push(match[1]);
+  }
+
+  const bytes = Buffer.from(chunks.join(''), 'base64');
+  assert.ok(bytes.length >= 512, `JP inline visual ${group} must contain a non-empty image payload.`);
+  assert.equal(bytes.subarray(0, 4).toString('ascii'), 'RIFF', `JP inline visual ${group} must start with RIFF.`);
+  assert.equal(bytes.subarray(8, 12).toString('ascii'), 'WEBP', `JP inline visual ${group} must be WebP.`);
 }
 
 for (const semanticAsset of [
@@ -108,7 +116,8 @@ for (const semanticAsset of [
   'jp-icon',
   'projects-button',
 ]) {
-  assert.ok(jpAssetRoute.includes(`'${semanticAsset}'`), `JP semantic asset ${semanticAsset} must be routed.`);
+  const routeKey = semanticAsset === 'waveform' ? 'waveform:' : `'${semanticAsset}':`;
+  assert.ok(jpAssetRoute.includes(routeKey), `JP semantic asset ${semanticAsset} must be routed.`);
 }
 
 assert.match(jpAssetRoute, /Buffer\.from\(INLINE_ASSETS\[asset\], 'base64'\)/, 'Inline JP visuals must decode from committed source modules.');
