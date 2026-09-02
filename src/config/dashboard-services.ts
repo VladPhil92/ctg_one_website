@@ -14,6 +14,8 @@ export type DashboardService = {
   status: DashboardServiceStatus;
   serviceKey?: FunnelServiceKey;
   aliases?: readonly string[];
+  publicHref?: string;
+  publicCta?: string;
   secondaryAction?: {
     label: string;
     href: string;
@@ -32,19 +34,21 @@ export const DASHBOARD_SERVICE_GROUPS: ReadonlyArray<{
 ] as const;
 
 export const DASHBOARD_SERVICES: readonly DashboardService[] = [
-  { id: 'wallet', code: 'FIN-01', title: 'CTG One Wallet', description: 'Consulta saldo COP, actividad canónica, activos Polygon y vínculos de wallet verificados.', href: '/dashboard/wallet', cta: 'Abrir Wallet', group: 'finance', status: 'ACCOUNT', serviceKey: 'wallet', aliases: ['/dashboard/depositos'], secondaryAction: { label: 'Añadir fondos', href: '/dashboard/depositos' } },
-  { id: 'investment', code: 'INV-02', title: 'CTG Craft Beer Inversión', description: 'Participa en lotes productivos y sigue capital, producción, comercialización y liquidaciones.', href: '/inversion/app', cta: 'Abrir inversión', group: 'finance', status: 'LIVE', serviceKey: 'investment', aliases: ['/dashboard/inversion'] },
+  { id: 'wallet', code: 'FIN-01', title: 'CTG One Wallet', description: 'Consulta saldo COP, actividad canónica, activos Polygon y vínculos de wallet verificados.', href: '/dashboard/wallet', cta: 'Abrir Wallet', group: 'finance', status: 'ACCOUNT', serviceKey: 'wallet', aliases: ['/dashboard/depositos'], publicHref: 'https://wallet.ctgone.com', publicCta: 'Abrir Wallet', secondaryAction: { label: 'Añadir fondos', href: '/dashboard/depositos' } },
+  { id: 'investment', code: 'INV-02', title: 'CTG Craft Beer Inversión', description: 'Participa en lotes productivos y sigue capital, producción, comercialización y liquidaciones.', href: '/inversion/app', cta: 'Abrir inversión', group: 'finance', status: 'LIVE', serviceKey: 'investment', aliases: ['/dashboard/inversion'], publicHref: '/inversion', publicCta: 'Conocer inversión' },
   { id: 'identity', code: 'ID-03', title: 'Identidad CTG One', description: 'Gestiona KYC, permisos financieros y los vínculos de identidad que protegen el ecosistema.', href: '/dashboard/kyc', cta: 'Gestionar identidad', group: 'finance', status: 'ACCOUNT', serviceKey: 'identity' },
-  { id: 'craft-beer', code: 'BRW-04', title: 'CTG Craft Beer', description: 'Explora el portafolio de cerveza artesanal, la marca y su operación productiva en Cartagena.', href: '/craft-beer', cta: 'Explorar Craft Beer', group: 'care', status: 'LIVE', serviceKey: 'craft_beer' },
-  { id: 'nvet', code: 'VET-05', title: 'Nvet Care App', description: 'Atención veterinaria, mascotas, citas, seguimiento, mensajería y acceso a la red Nvet Care.', href: '/nvetcareapp', cta: 'Explorar Nvet Care', group: 'care', status: 'DEVELOPMENT', serviceKey: 'nvet' },
-  { id: 'vertice', code: 'CIV-04', title: 'VÉRTICE OS', description: 'Inteligencia ciudadana para reportar, proponer, deliberar, seguir resultados y construir reputación cívica verificable.', href: 'https://vertice.ctgone.com/auth/ctgone/start', cta: 'Entrar con CTG One', group: 'care', status: 'BETA', serviceKey: 'vertice' },
-  { id: 'token', code: 'TKN-06', title: 'CTG One Token', description: 'Consulta la propuesta, utilidad, documentación y evolución del activo digital del ecosistema.', href: '/ctgotoken', cta: 'Explorar Token', group: 'knowledge', status: 'CONSOLIDATION', serviceKey: 'token' },
-  { id: 'knowledge', code: 'KNW-07', title: 'CTG Knowledge', description: 'Inteligencia institucional basada en conocimiento autorizado, trazable y consultable.', href: '/knowledge', cta: 'Consultar Knowledge', group: 'knowledge', status: 'PILOT', serviceKey: 'knowledge' },
-  { id: 'education-jp', code: 'EDU-08', title: 'JP Valderrama', description: 'Filosofía, conferencias, libros, ideas, proyectos, contenidos académicos y asesorías institucionales.', href: '/jpvalderrama', cta: 'Explorar JP Valderrama', group: 'education', status: 'LIVE', serviceKey: 'education_jp' },
-  { id: 'learning-center', code: 'EDU-09', title: 'Valderrama Learning Center', description: 'Tutorías privadas, refuerzo, preparación de exámenes y servicios educativos para familias.', href: '/jpvalderrama/learningcenter', cta: 'Abrir Learning Center', group: 'education', status: 'LIVE', serviceKey: 'education_learning_center' },
+  { id: 'craft-beer', code: 'BRW-04', title: 'CTG Craft Beer', description: 'Explora el portafolio de cerveza artesanal, la marca y su operación productiva en Cartagena.', href: '/craft-beer', cta: 'Explorar Craft Beer', group: 'care', status: 'LIVE', serviceKey: 'craft_beer', publicHref: '/craft-beer', publicCta: 'Explorar Craft Beer' },
+  { id: 'nvet', code: 'VET-05', title: 'Nvet Care App', description: 'Atención veterinaria, mascotas, citas, seguimiento, mensajería y acceso a la red Nvet Care.', href: '/nvetcareapp', cta: 'Explorar Nvet Care', group: 'care', status: 'DEVELOPMENT', serviceKey: 'nvet', publicHref: '/nvetcareapp', publicCta: 'Explorar Nvet Care' },
+  { id: 'vertice', code: 'CIV-04', title: 'VÉRTICE OS', description: 'Inteligencia ciudadana para reportar, proponer, deliberar, seguir resultados y construir reputación cívica verificable.', href: 'https://vertice.ctgone.com/auth/ctgone/start', cta: 'Entrar con CTG One', group: 'care', status: 'BETA', serviceKey: 'vertice', publicHref: 'https://vertice.ctgone.com', publicCta: 'Explorar VÉRTICE' },
+  { id: 'token', code: 'TKN-06', title: 'CTG One Token', description: 'Consulta la propuesta, utilidad, documentación y evolución del activo digital del ecosistema.', href: '/ctgotoken', cta: 'Explorar Token', group: 'knowledge', status: 'CONSOLIDATION', serviceKey: 'token', publicHref: '/ctgotoken', publicCta: 'Explorar Token' },
+  { id: 'knowledge', code: 'KNW-07', title: 'CTG Knowledge', description: 'Inteligencia institucional basada en conocimiento autorizado, trazable y consultable.', href: '/knowledge', cta: 'Consultar Knowledge', group: 'knowledge', status: 'PILOT', serviceKey: 'knowledge', publicHref: '/knowledge', publicCta: 'Consultar Knowledge' },
+  { id: 'education-jp', code: 'EDU-08', title: 'JP Valderrama', description: 'Filosofía, conferencias, libros, ideas, proyectos, contenidos académicos y asesorías institucionales.', href: '/jpvalderrama', cta: 'Explorar JP Valderrama', group: 'education', status: 'LIVE', serviceKey: 'education_jp', publicHref: '/jpvalderrama', publicCta: 'Explorar JP Valderrama' },
+  { id: 'learning-center', code: 'EDU-09', title: 'Valderrama Learning Center', description: 'Tutorías privadas, refuerzo, preparación de exámenes y servicios educativos para familias.', href: '/jpvalderrama/learningcenter', cta: 'Abrir Learning Center', group: 'education', status: 'LIVE', serviceKey: 'education_learning_center', publicHref: '/jpvalderrama/learningcenter', publicCta: 'Abrir Learning Center' },
   { id: 'education-library', code: 'LIB-10', title: 'Mi Educación', description: 'Biblioteca privada de cursos, conferencias, libros, clases, recursos y servicios educativos adquiridos.', href: '/dashboard/educacion', cta: 'Abrir mi biblioteca', group: 'education', status: 'ACCOUNT', serviceKey: 'education_library' },
   { id: 'rewards', code: 'RWD-11', title: 'CTG Rewards', description: 'Beneficios, reconocimiento y fidelización previstos para la experiencia transversal del ecosistema.', href: '/rewards', cta: 'Explorar roadmap', group: 'care', status: 'ROADMAP' },
 ] as const;
+
+export const PUBLIC_ECOSYSTEM_SERVICES = DASHBOARD_SERVICES.filter((service) => Boolean(service.publicHref));
 
 export const DASHBOARD_SERVICE_ROUTES: ReadonlyArray<{ prefix: string; serviceKey: FunnelServiceKey }> = DASHBOARD_SERVICES.flatMap((service) => {
   if (!service.serviceKey) return [];
