@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0098",
-    "schemaMigrationName": "jp_education_index_hardening",
-    "schemaMigrationCount": 98,
+    "schemaMigration": "0099",
+    "schemaMigrationName": "jp_education_access_lifecycle",
+    "schemaMigrationCount": 99,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
