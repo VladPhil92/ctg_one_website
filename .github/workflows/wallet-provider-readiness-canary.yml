@@ -1,13 +1,6 @@
 name: Wallet Provider Registry Production Canary
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/app/api/wallet/identity/provider-readiness/**'
-      - 'src/lib/wallet/privy-user-registry.ts'
-      - 'scripts/verify-wallet-provider-readiness.mjs'
-      - '.github/workflows/wallet-provider-readiness-canary.yml'
   schedule:
     - cron: '23 * * * *'
   workflow_dispatch:
@@ -34,6 +27,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: main
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -48,7 +43,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: wallet-provider-readiness-${{ github.sha }}
+          name: wallet-provider-readiness-${{ github.run_id }}
           path: canary-evidence/wallet-provider-readiness.json
           if-no-files-found: error
           retention-days: 14
