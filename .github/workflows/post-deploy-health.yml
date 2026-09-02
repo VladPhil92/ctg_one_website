@@ -10,7 +10,7 @@ on:
         required: false
         type: string
       health_url:
-        description: 'Health endpoint to verify; Investment probes derive from the same origin; Wallet CORS probe uses the same origin'
+        description: 'Health endpoint to verify; public, Investment and Wallet probes derive from the same origin'
         required: false
         default: 'https://ctgone.com/api/health'
         type: string
@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   production-canary:
-    name: Verify Render commit, Wallet origin and Investment readiness
+    name: Verify Render commit, public surfaces, Wallet origin and Investment readiness
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
@@ -34,6 +34,7 @@ jobs:
       CANARY_ATTEMPTS: '24'
       CANARY_INTERVAL_MS: '25000'
       CANARY_REQUEST_TIMEOUT_MS: '10000'
+      PUBLIC_SURFACE_CANARY_REQUEST_TIMEOUT_MS: '10000'
       WALLET_CLIENT_ORIGIN: https://wallet.ctgone.com
       WALLET_ORIGIN_CANARY_REQUEST_TIMEOUT_MS: '10000'
       INVESTMENT_CANARY_ATTEMPTS: '3'
@@ -53,6 +54,9 @@ jobs:
 
       - name: Verify production deployment identity
         run: node scripts/verify-deployment-health.mjs
+
+      - name: Verify public surface reliability
+        run: node scripts/verify-public-surface-reliability.mjs
 
       - name: Verify CTG Wallet production-origin CORS contract
         run: node scripts/verify-wallet-production-origin.mjs
