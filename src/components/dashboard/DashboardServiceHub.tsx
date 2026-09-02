@@ -53,8 +53,8 @@ const services: readonly ServiceCard[] = [
     code: 'CIV-04',
     title: 'VÉRTICE OS',
     description: 'Inteligencia ciudadana para reportar, proponer, deliberar, seguir resultados y construir reputación cívica verificable.',
-    href: 'https://vertice.ctgone.com',
-    cta: 'Abrir VÉRTICE',
+    href: 'https://vertice.ctgone.com/auth/ctgone/start',
+    cta: 'Entrar con CTG One',
     icon: Landmark,
     status: 'BETA',
   },
@@ -125,7 +125,7 @@ export function DashboardServiceHub() {
 
         <div className="mt-4 flex items-center gap-3 rounded-2xl border border-white/[.07] bg-white/[.02] px-5 py-4 text-xs leading-5 text-white/40">
           <GraduationCap className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-          <span>VÉRTICE OS se integra como plataforma cívica conectada del ecosistema CTG One. JP Valderrama concentra filosofía, divulgación y servicios institucionales; Valderrama Learning Center concentra tutorías y servicios educativos privados para familias.</span>
+          <span>VÉRTICE OS se integra mediante federación segura: CTG One acredita la cuenta y VÉRTICE conserva su propia sesión y nivel de identidad. JP Valderrama concentra filosofía, divulgación y servicios institucionales; Valderrama Learning Center concentra tutorías y servicios educativos privados para familias.</span>
         </div>
       </div>
     </section>
