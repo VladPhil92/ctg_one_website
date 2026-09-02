@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Ban,
+  ChevronLeft,
+  ChevronRight,
   History,
   RefreshCw,
   RotateCcw,
@@ -52,10 +54,20 @@ type LifecycleEvent = {
   created_at: string;
 };
 
+type Pagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+};
+
 type LifecycleResponse = {
   ok?: boolean;
   error?: string;
   queue?: LifecycleOrder[];
+  pagination?: Pagination;
   recentEvents?: LifecycleEvent[];
 };
 
@@ -77,6 +89,7 @@ export default function EducationAccessLifecyclePage() {
   const { isAuthenticated, isLoading, profile } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<LifecycleResponse>({});
+  const [page, setPage] = useState(1);
   const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'error' | 'forbidden'>('idle');
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -88,11 +101,11 @@ export default function EducationAccessLifecyclePage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (targetPage: number) => {
     if (!isAuthenticated || profile?.role !== 'admin') return;
     setState('loading');
     try {
-      const response = await fetch('/api/education/operations/lifecycle', { cache: 'no-store' });
+      const response = await fetch(`/api/education/operations/lifecycle?page=${targetPage}&pageSize=50`, { cache: 'no-store' });
       const payload = (await response.json().catch(() => ({}))) as LifecycleResponse;
       if (response.status === 403) {
         setState('forbidden');
@@ -102,6 +115,12 @@ export default function EducationAccessLifecyclePage() {
         setState('error');
         return;
       }
+
+      if (payload.pagination && targetPage > payload.pagination.totalPages) {
+        setPage(payload.pagination.totalPages);
+        return;
+      }
+
       setData(payload);
       setState('ready');
     } catch {
@@ -110,8 +129,8 @@ export default function EducationAccessLifecyclePage() {
   }, [isAuthenticated, profile?.role]);
 
   useEffect(() => {
-    if (profile?.role === 'admin') void load();
-  }, [load, profile?.role]);
+    if (profile?.role === 'admin') void load(page);
+  }, [load, page, profile?.role]);
 
   const cancellable = useMemo(
     () => (data.queue ?? []).filter((order) => order.status === 'initiated' || order.status === 'pending'),
@@ -122,6 +141,16 @@ export default function EducationAccessLifecyclePage() {
     [data.queue],
   );
   const history = data.recentEvents ?? [];
+  const pagination: Pagination = data.pagination ?? {
+    page,
+    pageSize: 50,
+    total: data.queue?.length ?? 0,
+    totalPages: 1,
+    hasPreviousPage: page > 1,
+    hasNextPage: false,
+  };
+  const firstVisible = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.pageSize + 1;
+  const lastVisible = Math.min(pagination.page * pagination.pageSize, pagination.total);
 
   function updateDraft(orderId: string, field: keyof Draft, value: string) {
     setDrafts((current) => ({
@@ -179,7 +208,7 @@ export default function EducationAccessLifecyclePage() {
         delete next[order.id];
         return next;
       });
-      await load();
+      await load(page);
     } catch {
       setNotice('No fue posible completar la transición. No se alteró el acceso desde el navegador.');
     } finally {
@@ -224,14 +253,15 @@ export default function EducationAccessLifecyclePage() {
                 <h1 className="mt-3 font-outfit text-4xl font-semibold tracking-[-.045em] sm:text-5xl">Ciclo de vida de órdenes y accesos</h1>
                 <p className="mt-4 max-w-3xl text-sm leading-7 text-white/55">Cancela órdenes aún no pagadas o registra un reembolso verificado. Un reembolso sólo revoca accesos que continúan vinculados a esa misma orden; una concesión posterior permanece intacta.</p>
               </div>
-              <button type="button" onClick={() => void load()} disabled={state === 'loading'} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 px-4 text-[10px] font-bold uppercase tracking-[.13em] text-white/60 disabled:opacity-50"><RefreshCw className={state === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} aria-hidden="true" /> Actualizar</button>
+              <button type="button" onClick={() => void load(page)} disabled={state === 'loading'} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 px-4 text-[10px] font-bold uppercase tracking-[.13em] text-white/60 disabled:opacity-50"><RefreshCw className={state === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} aria-hidden="true" /> Actualizar</button>
             </div>
           </section>
 
-          <section className="mt-5 grid gap-3 sm:grid-cols-3">
-            <Metric icon={<Ban className="h-4 w-4" />} label="Cancelables" value={String(cancellable.length)} />
-            <Metric icon={<RotateCcw className="h-4 w-4" />} label="Reembolsables" value={String(refundable.length)} />
+          <section className="mt-5 grid gap-3 sm:grid-cols-4">
+            <Metric icon={<Ban className="h-4 w-4" />} label="Cancelables / página" value={String(cancellable.length)} />
+            <Metric icon={<RotateCcw className="h-4 w-4" />} label="Reembolsables / página" value={String(refundable.length)} />
             <Metric icon={<History className="h-4 w-4" />} label="Eventos recientes" value={String(history.length)} />
+            <Metric icon={<RefreshCw className="h-4 w-4" />} label="Órdenes operables" value={String(pagination.total)} />
           </section>
 
           {notice ? <p role="status" className="mt-5 rounded-2xl border border-accent/20 bg-accent/10 p-4 text-sm leading-6 text-white/75">{notice}</p> : null}
@@ -240,7 +270,7 @@ export default function EducationAccessLifecyclePage() {
           <LifecycleSection
             title="Órdenes pendientes"
             eyebrow="Cancelar antes del pago"
-            empty="No hay órdenes pendientes que puedan cancelarse."
+            empty="No hay órdenes pendientes en esta página. Usa la navegación para revisar páginas anteriores."
             orders={cancellable}
             drafts={drafts}
             busyId={busyId}
@@ -252,7 +282,7 @@ export default function EducationAccessLifecyclePage() {
           <LifecycleSection
             title="Órdenes pagadas"
             eyebrow="Reembolso verificado"
-            empty="No hay órdenes pagadas disponibles para reembolso."
+            empty="No hay órdenes pagadas en esta página. Usa la navegación para revisar páginas anteriores."
             orders={refundable}
             drafts={drafts}
             busyId={busyId}
@@ -260,6 +290,14 @@ export default function EducationAccessLifecyclePage() {
             updateDraft={updateDraft}
             transition={transition}
           />
+
+          <nav aria-label="Paginación de órdenes educativas" className="mt-8 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[.025] p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-white/40">Mostrando {firstVisible}–{lastVisible} de {pagination.total} órdenes · página {pagination.page} de {pagination.totalPages}</p>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={!pagination.hasPreviousPage || state === 'loading' || busyId !== null} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 px-3 text-[9px] font-bold uppercase tracking-[.13em] text-white/60 disabled:cursor-not-allowed disabled:opacity-35"><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Anterior</button>
+              <button type="button" onClick={() => setPage((current) => current + 1)} disabled={!pagination.hasNextPage || state === 'loading' || busyId !== null} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 px-3 text-[9px] font-bold uppercase tracking-[.13em] text-white/60 disabled:cursor-not-allowed disabled:opacity-35">Siguiente <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+            </div>
+          </nav>
 
           <section className="mt-10">
             <div className="mb-4">
