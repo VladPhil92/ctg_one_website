@@ -102,6 +102,105 @@ assert.ok(expectedMigrationCountMatch, 'EXPECTED_DATABASE_MIGRATION_COUNT must b
 const latest = migrations.at(-1);
 assert.ok(latest, 'Latest migration must be available.');
 
+const productionHistory = JSON.parse(
+  await readFile(
+    join(root, 'scripts', 'fixtures', 'supabase-production-migration-history.json'),
+    'utf8'
+  )
+);
+
+assert.equal(
+  productionHistory?.contractVersion,
+  1,
+  'Supabase production migration history fixture must use contractVersion=1.'
+);
+assert.ok(
+  Array.isArray(productionHistory?.migrations) && productionHistory.migrations.length > 0,
+  'Supabase production migration history fixture must contain migrations.'
+);
+
+const repositoryByLogicalVersion = new Map(
+  migrations.map((migration) => [migration.logicalVersion, migration])
+);
+const productionAnchors = productionHistory.migrations;
+const seenProductionLogicalVersions = new Set();
+const seenProductionRemoteVersions = new Set();
+
+for (let index = 0; index < productionAnchors.length; index += 1) {
+  const anchor = productionAnchors[index];
+  assert.match(
+    anchor.logicalVersion,
+    /^\d{4}$/,
+    'Production migration logicalVersion must be a four-digit string.'
+  );
+  assert.match(
+    anchor.remoteVersion,
+    /^\d{14}$/,
+    `Production migration ${anchor.logicalVersion} must use a 14-digit remote version.`
+  );
+  assert.match(
+    anchor.remoteName,
+    /^[a-z0-9_]+$/,
+    `Production migration ${anchor.logicalVersion} must use a snake_case remote name.`
+  );
+  assert.ok(
+    !seenProductionLogicalVersions.has(anchor.logicalVersion),
+    `Duplicate production logical migration ${anchor.logicalVersion}.`
+  );
+  assert.ok(
+    !seenProductionRemoteVersions.has(anchor.remoteVersion),
+    `Duplicate production remote migration version ${anchor.remoteVersion}.`
+  );
+  seenProductionLogicalVersions.add(anchor.logicalVersion);
+  seenProductionRemoteVersions.add(anchor.remoteVersion);
+
+  if (index > 0) {
+    const previous = productionAnchors[index - 1];
+    assert.equal(
+      Number(anchor.logicalVersion),
+      Number(previous.logicalVersion) + 1,
+      'Production migration provenance anchors must be logically contiguous.'
+    );
+    assert.ok(
+      BigInt(anchor.remoteVersion) > BigInt(previous.remoteVersion),
+      'Production migration provenance remote versions must increase monotonically.'
+    );
+  }
+
+  const repositoryMigration = repositoryByLogicalVersion.get(anchor.logicalVersion);
+  assert.ok(
+    repositoryMigration,
+    `Production migration ${anchor.logicalVersion} is missing from the repository.`
+  );
+  assert.equal(
+    repositoryMigration.remoteVersion,
+    anchor.remoteVersion,
+    `Production migration ${anchor.logicalVersion} version drift: remote=${anchor.remoteVersion}, repository=${repositoryMigration.remoteVersion}.`
+  );
+
+  const normalizedRemoteName = anchor.remoteName.startsWith(`${anchor.logicalVersion}_`)
+    ? anchor.remoteName.slice(anchor.logicalVersion.length + 1)
+    : anchor.remoteName;
+  assert.equal(
+    repositoryMigration.name,
+    normalizedRemoteName,
+    `Production migration ${anchor.logicalVersion} name drift: remote=${anchor.remoteName}, repository=${repositoryMigration.name}.`
+  );
+}
+
+const latestProductionAnchor = productionAnchors.at(-1);
+assert.ok(latestProductionAnchor, 'Latest production migration provenance anchor must exist.');
+assert.equal(
+  latestProductionAnchor.logicalVersion,
+  latest.logicalVersion,
+  `Production migration history fixture must advance with repository schema: production=${latestProductionAnchor.logicalVersion}, repository=${latest.logicalVersion}.`
+);
+assert.equal(
+  latestProductionAnchor.remoteVersion,
+  latest.remoteVersion,
+  `Latest production remote version must match repository latest remote version: production=${latestProductionAnchor.remoteVersion}, repository=${latest.remoteVersion}.`
+);
+
 assert.equal(
   expectedMigrationMatch[1],
   latest.logicalVersion,
@@ -121,5 +220,5 @@ assert.equal(
 );
 
 console.log(
-  `Migration integrity: PASS (${logicalVersions[0]}..${latest.logicalVersion}, ${migrations.length} files, latest=${latest.name}, remote=${latest.remoteVersion})`
+  `Migration integrity: PASS (${logicalVersions[0]}..${latest.logicalVersion}, ${migrations.length} files, latest=${latest.name}, remote=${latest.remoteVersion}, productionAnchors=${productionAnchors.length})`
 );
