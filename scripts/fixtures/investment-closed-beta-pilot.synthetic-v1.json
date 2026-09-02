@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0105",
-    "schemaMigrationName": "wallet_rls_query_plan_hardening",
-    "schemaMigrationCount": 105,
+    "schemaMigration": "0106",
+    "schemaMigrationName": "rls_policy_consolidation",
+    "schemaMigrationCount": 106,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

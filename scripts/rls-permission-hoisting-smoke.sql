@@ -3,9 +3,10 @@
 -- CTG One — RLS permission-call hoisting contract (whole `public` schema)
 --
 -- Migrations 0070 (investment tables), 0071 (accounts and knowledge tables),
--- and 0083 (wallet top-up claims) hoist every row-independent permission call
--- in the reviewed RLS policies into a `(select ...)` InitPlan, so Postgres
--- evaluates it once per query instead of once per candidate row.
+-- 0083 (wallet top-up claims), 0105 (wallet query-plan hardening), and 0106
+-- (policy consolidation) hoist every row-independent permission call in the
+-- reviewed RLS policies into a `(select ...)` InitPlan, so Postgres evaluates
+-- it once per query instead of once per candidate row.
 --
 -- Two things must stay true, and they pull against each other:
 --   1. no policy may go back to calling a permission function per row
@@ -13,7 +14,6 @@
 --   2. no policy may lose its permission check while being rewritten
 --      (the security regression).
 -- Asserting only the first would let a "fix" that deletes the check pass.
-
 do $$
 declare v_unhoisted text[];
 begin
@@ -51,7 +51,7 @@ declare
     'investment_payout_events.investment_payout_events_read_authorized',
     'investment_payouts.investment_payouts_read_authorized',
     'investment_production_events.investment_production_events_ops_select',
-    'investment_production_lots.investment_production_lots_ops_select',
+    'investment_production_lots.investment_production_lots_authenticated_select',
     'investment_reinvestment_requests.investment_reinvestment_requests_select',
     'investment_sale_items.investment_sale_items_read_authorized',
     'investment_sales.investment_sales_read_authorized',

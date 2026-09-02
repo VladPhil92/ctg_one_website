@@ -106,15 +106,36 @@ BEGIN
 END $$;
 
 DO $$
-DECLARE v_lot_public text; v_lot_ops text; v_event_ops text;
+DECLARE v_lot_anon text; v_lot_authenticated text; v_event_ops text;
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='investment_production_lots' AND policyname='investment_production_lots_select') THEN
     RAISE EXCEPTION 'historical unconditional lot SELECT policy still exists';
   END IF;
-  SELECT qual INTO v_lot_public FROM pg_policies WHERE schemaname='public' AND tablename='investment_production_lots' AND policyname='investment_production_lots_public_select' AND cmd='SELECT' AND 'anon'=ANY(roles);
-  SELECT qual INTO v_lot_ops FROM pg_policies WHERE schemaname='public' AND tablename='investment_production_lots' AND policyname='investment_production_lots_ops_select' AND cmd='SELECT' AND 'authenticated'=ANY(roles);
-  IF v_lot_public IS NULL OR v_lot_public NOT LIKE '%status <> ''DRAFT''%' THEN RAISE EXCEPTION 'public lot policy changed: %',v_lot_public; END IF;
-  IF v_lot_ops IS NULL OR v_lot_ops NOT LIKE '%has_investment_permission%ops.read%' THEN RAISE EXCEPTION 'lot ops policy changed: %',v_lot_ops; END IF;
+  IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='investment_production_lots' AND policyname IN ('investment_production_lots_public_select','investment_production_lots_ops_select')) THEN
+    RAISE EXCEPTION 'pre-0106 split lot SELECT policies still exist';
+  END IF;
+
+  SELECT qual INTO v_lot_anon
+  FROM pg_policies
+  WHERE schemaname='public' AND tablename='investment_production_lots'
+    AND policyname='investment_production_lots_anon_select' AND cmd='SELECT'
+    AND 'anon'=ANY(roles) AND NOT ('authenticated'=ANY(roles));
+
+  SELECT qual INTO v_lot_authenticated
+  FROM pg_policies
+  WHERE schemaname='public' AND tablename='investment_production_lots'
+    AND policyname='investment_production_lots_authenticated_select' AND cmd='SELECT'
+    AND 'authenticated'=ANY(roles) AND NOT ('anon'=ANY(roles));
+
+  IF v_lot_anon IS NULL OR v_lot_anon NOT LIKE '%status <> ''DRAFT''%' OR v_lot_anon LIKE '%has_investment_permission%' THEN
+    RAISE EXCEPTION 'anonymous lot policy changed: %',v_lot_anon;
+  END IF;
+  IF v_lot_authenticated IS NULL
+     OR v_lot_authenticated NOT LIKE '%status <> ''DRAFT''%'
+     OR v_lot_authenticated NOT LIKE '%has_investment_permission%ops.read%'
+     OR v_lot_authenticated NOT LIKE '%SELECT has_investment_permission%' THEN
+    RAISE EXCEPTION 'authenticated lot policy changed: %',v_lot_authenticated;
+  END IF;
 
   IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='investment_production_events' AND policyname='investment_production_events_select') THEN
     RAISE EXCEPTION 'historical public production-event policy still exists';
