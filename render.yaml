@@ -30,6 +30,10 @@ services:
         sync: false
       - key: PRIVY_JWT_VERIFICATION_KEY
         sync: false
+      # Server-only Basic Auth credential for Privy's User Management API.
+      # Required by the read-only ownership preflight before another OTP/link.
+      - key: PRIVY_APP_SECRET
+        sync: false
       - key: POLYGON_RPC_URL
         sync: false
       - key: CTG_TOKEN_POLYGON_ADDRESS
