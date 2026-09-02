@@ -9,6 +9,7 @@ export const CONTACT_PHONE = config.contact.phone;
 export const LOCATION = config.contact.location;
 export const WEBSITE = config.contact.website;
 export const CTG_WALLET_URL = 'https://wallet.ctgone.com';
+export const VERTICE_URL = 'https://vertice.ctgone.com';
 
 export const NAV_ITEMS = [
   { label: 'Home', href: '/' },
@@ -17,13 +18,14 @@ export const NAV_ITEMS = [
   { label: 'Nvet Care', href: '/nvetcareapp' },
   { label: 'About', href: '/about' },
   { label: 'JP Valderrama', href: '/jpvalderrama' },
+  { label: 'VÉRTICE', href: VERTICE_URL },
   { label: 'Craft Beer', href: '/craft-beer' },
   { label: 'Ecosystem', href: '/ecosystem' },
   { label: 'Technology', href: '/services' },
   { label: 'Investment', href: '/inversion' },
   { label: 'AI', href: '/ai' },
   { label: 'Rewards', href: '/rewards' },
-  { label: 'Token', href: '/token' },
+  { label: 'CTGO Token', href: '/ctgotoken' },
   { label: 'Contact', href: '/contact' },
 ] as const;
 
@@ -41,6 +43,7 @@ export const PRIMARY_NAV_ITEMS = [
 
 export const PLATFORM_NAV_ITEMS = [
   { label: 'JP Valderrama', href: '/jpvalderrama' },
+  { label: 'VÉRTICE', href: VERTICE_URL },
   { label: 'Craft Beer', href: '/craft-beer' },
   { label: 'Ecosystem', href: '/ecosystem' },
   { label: 'Technology', href: '/services' },
