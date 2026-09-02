@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardServiceHub } from '@/components/dashboard/DashboardServiceHub';
+import { DASHBOARD_SERVICE_ROUTES } from '@/config/dashboard-services';
 import { trackFunnelEvent } from '@/lib/analytics/client';
 import type { FunnelServiceKey } from '@/lib/analytics/funnel';
 
@@ -24,6 +25,10 @@ const SERVICE_ROUTES: ReadonlyArray<{ prefix: string; serviceKey: FunnelServiceK
 
 function serviceForHref(href: string): FunnelServiceKey | null {
   const match = SERVICE_ROUTES.find(({ prefix }) => href === prefix || href.startsWith(`${prefix}?`) || href.startsWith(`${prefix}/`));
+function serviceForHref(href: string): FunnelServiceKey | null {
+  const match = DASHBOARD_SERVICE_ROUTES.find(
+    ({ prefix }) => href === prefix || href.startsWith(`${prefix}?`) || href.startsWith(`${prefix}/`),
+  );
   return match?.serviceKey ?? null;
 }
 

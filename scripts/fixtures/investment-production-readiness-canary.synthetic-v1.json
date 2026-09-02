@@ -9,6 +9,9 @@
   "expectedMigration": "0102",
   "expectedMigrationName": "vertice_federation_authorization_codes",
   "expectedMigrationCount": 102,
+  "expectedMigration": "0101",
+  "expectedMigrationName": "expand_acquisition_service_portfolio_craft_beer",
+  "expectedMigrationCount": 101,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
