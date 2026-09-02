@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0100",
-    "schemaMigrationName": "expand_acquisition_service_portfolio",
-    "schemaMigrationCount": 100,
+    "schemaMigration": "0101",
+    "schemaMigrationName": "expand_acquisition_service_portfolio_craft_beer",
+    "schemaMigrationCount": 101,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

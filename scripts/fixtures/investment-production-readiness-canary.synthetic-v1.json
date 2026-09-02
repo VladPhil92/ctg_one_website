@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0100",
-  "expectedMigrationName": "expand_acquisition_service_portfolio",
-  "expectedMigrationCount": 100,
+  "expectedMigration": "0101",
+  "expectedMigrationName": "expand_acquisition_service_portfolio_craft_beer",
+  "expectedMigrationCount": 101,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
