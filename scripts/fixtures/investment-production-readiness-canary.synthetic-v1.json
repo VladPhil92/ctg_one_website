@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0106",
-  "expectedMigrationName": "rls_policy_consolidation",
-  "expectedMigrationCount": 106,
+  "expectedMigration": "0107",
+  "expectedMigrationName": "authorization_surface_hardening",
+  "expectedMigrationCount": 107,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
