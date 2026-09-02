@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0099",
-  "expectedMigrationName": "jp_education_access_lifecycle",
-  "expectedMigrationCount": 99,
+  "expectedMigration": "0100",
+  "expectedMigrationName": "expand_acquisition_service_portfolio",
+  "expectedMigrationCount": 100,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
