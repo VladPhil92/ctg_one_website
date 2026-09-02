@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { callTrustedAdminRpc } from '@/lib/investment/trusted-admin-rpc-client';
 import { Button } from '@/components/ui/Button';
 import { formatCents } from '@/lib/format';
 import type {
@@ -54,12 +55,14 @@ export default function ProviderReconciliationPage() {
     const supabase = createClient();
     const [inboxResult, healthResult] = await Promise.all([
       supabase.rpc('get_investment_financial_reconciliation_inbox', { p_limit: 200 }),
-      supabase.rpc('get_investment_provider_reconciliation_health'),
+      callTrustedAdminRpc<ProviderReconciliationHealth>('finance.providerHealth'),
     ]);
     if (inboxResult.error) setError(inboxResult.error.message);
     else setRows((inboxResult.data ?? []) as FinancialReconciliationInboxRow[]);
-    if (healthResult.error) setError((current) => current ?? healthResult.error.message);
-    else setHealth(healthResult.data as ProviderReconciliationHealth);
+    if (healthResult.error) {
+      const healthError = healthResult.error;
+      setError((current) => current ?? healthError.message);
+    } else setHealth(healthResult.data as ProviderReconciliationHealth);
     setLoading(false);
   }, []);
 

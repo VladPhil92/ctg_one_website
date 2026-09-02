@@ -14,9 +14,11 @@ async function sourceFiles(dir) {
 }
 
 const repositoryPath = 'src/modules/operations/infrastructure/browser-repository.ts';
-const [page, repository, lotConfig, beerStyleType, files] = await Promise.all([
+const trustedRoutePath = 'src/app/api/investment/admin/trusted-rpc/route.ts';
+const [page, repository, trustedRoute, lotConfig, beerStyleType, files] = await Promise.all([
   readFile('src/app/admin/operations/page.tsx', 'utf8'),
   readFile(repositoryPath, 'utf8'),
+  readFile(trustedRoutePath, 'utf8'),
   readFile('src/lib/production/lot-config.ts', 'utf8'),
   readFile('src/types/beer-style.ts', 'utf8'),
   sourceFiles('src'),
@@ -55,17 +57,26 @@ assert.ok(!page.includes('.rpc('), 'Operations page must not invoke RPCs directl
 
 for (const file of files) {
   const source = await readFile(file, 'utf8');
-  if (file !== repositoryPath && source.includes("rpc('create_production_lot_from_style'")) {
-    assert.fail(`${file} bypasses the operations repository for lot creation.`);
+  if (file !== trustedRoutePath && source.includes("rpc('create_production_lot_from_style'")) {
+    assert.fail(`${file} bypasses the trusted admin server boundary for lot creation.`);
   }
-  if (file !== repositoryPath && source.includes("rpc('update_investment_beer_style_economics'")) {
-    assert.fail(`${file} bypasses the operations repository for beer-style economics.`);
+  if (file !== trustedRoutePath && source.includes("rpc('update_investment_beer_style_economics'")) {
+    assert.fail(`${file} bypasses the trusted admin server boundary for beer-style economics.`);
   }
 }
 
+assert.ok(
+  repository.includes("callTrustedAdminRpc('production.createLotFromStyle'"),
+  'Operations repository must route lot creation through the trusted server boundary.',
+);
+assert.ok(
+  repository.includes("callTrustedAdminRpc('production.updateStyleEconomics'"),
+  'Operations repository must route economics updates through the trusted server boundary.',
+);
+assert.ok(trustedRoute.includes("'create_production_lot_from_style'"), 'Trusted server boundary must own the authoritative lot RPC mapping.');
+assert.ok(trustedRoute.includes("'update_investment_beer_style_economics'"), 'Trusted server boundary must own the authoritative economics RPC mapping.');
+
 for (const rpc of [
-  'create_production_lot_from_style',
-  'update_investment_beer_style_economics',
   'transition_lot_status',
   'generate_bottle_units',
   'update_bottle_units_status',

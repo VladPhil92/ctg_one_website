@@ -160,8 +160,8 @@ assert.ok(
   'Inventory OS must expose a reconciliation read model.',
 );
 assert.ok(
-  inventoryPage.includes("rpc('get_inventory_reconciliation'"),
-  'Admin Inventory page must surface reconciliation results.',
+  inventoryPage.includes("callTrustedAdminRpc<ReconciliationRow[]>('inventory.reconcile'"),
+  'Admin Inventory page must surface reconciliation through the trusted server boundary.',
 );
 assert.ok(
   inventoryPage.includes("rpc('upsert_inventory_location'"),

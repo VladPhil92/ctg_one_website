@@ -100,7 +100,7 @@ for (const code of ['GOLD','IRA','POR','HEF']) assert.ok(beerMasterMigration.inc
 assert.ok(beerMasterMigration.includes('pg_advisory_xact_lock'), 'Lot-code allocation must retain transaction-level serialization.');
 assert.ok(beerMasterMigration.includes("has_investment_permission('production.manage')"), 'Authoritative lot creation must revalidate production authorization.');
 assert.ok(operationsRepository.includes("from('investment_beer_styles')"), 'Production OS repository must read beer styles from master data.');
-assert.ok(operationsRepository.includes("rpc('create_production_lot_from_style'"), 'Production OS repository must create lots through the database-authoritative RPC.');
+assert.ok(operationsRepository.includes("callTrustedAdminRpc('production.createLotFromStyle'"), 'Production OS repository must create lots through the trusted server application boundary.');
 assert.ok(operationsPage.includes('createOperationsBrowserRepository'), 'Production OS page must use the operations infrastructure boundary.');
 assert.ok(!operationsPage.includes('.from('), 'Production OS page must not issue direct table queries.');
 assert.ok(!operationsPage.includes('.rpc('), 'Production OS page must not invoke Supabase RPCs directly.');
