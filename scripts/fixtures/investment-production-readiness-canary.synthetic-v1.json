@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0107",
-  "expectedMigrationName": "authorization_surface_hardening",
-  "expectedMigrationCount": 107,
+  "expectedMigration": "0108",
+  "expectedMigrationName": "application_rpc_boundary_compatibility",
+  "expectedMigrationCount": 108,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
