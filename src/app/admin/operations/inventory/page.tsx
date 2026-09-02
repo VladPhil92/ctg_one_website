@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { callTrustedAdminRpc } from '@/lib/investment/trusted-admin-rpc-client';
 import { Button } from '@/components/ui/Button';
 import { AlertTriangle, Boxes, MapPin, RefreshCw, ShieldCheck, Warehouse } from 'lucide-react';
 
@@ -81,7 +82,7 @@ export default function InventoryReconciliationPage() {
         .order('location_type')
         .order('name'),
       supabase.rpc('get_inventory_location_stock', { p_lot_id: null }),
-      supabase.rpc('get_inventory_reconciliation', { p_lot_id: null }),
+      callTrustedAdminRpc<ReconciliationRow[]>('inventory.reconcile', { p_lot_id: null }),
       supabase.rpc('has_investment_permission', { p_permission: 'inventory.manage' }),
     ]);
 

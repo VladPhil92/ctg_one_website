@@ -88,10 +88,26 @@ BEGIN
 
   IF NOT has_function_privilege(
     'authenticated',
+    'public.create_production_lot_from_style(text,text,integer,integer,bigint,bigint,bigint,bigint,bigint,numeric,numeric,integer)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'authenticated must execute the live transport-aware lot creation RPC';
+  END IF;
+
+  IF NOT has_function_privilege(
+    'authenticated',
     'public.update_investment_beer_style_economics(text,bigint,bigint,bigint,bigint,bigint,numeric,numeric)',
     'EXECUTE'
   ) THEN
-    RAISE EXCEPTION 'authenticated must retain transport-aware beer-style economics RPC';
+    RAISE EXCEPTION 'authenticated must execute the live transport-aware beer-style economics RPC';
+  END IF;
+
+  IF has_function_privilege(
+    'authenticated',
+    'public.get_investment_money_rail_health()',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'authenticated must not directly execute the internal money-rail health helper';
   END IF;
 
   IF has_function_privilege(

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { callTrustedAdminRpc } from '@/lib/investment/trusted-admin-rpc-client';
 import { pageRange } from '@/lib/pagination';
 import type { InvestmentBeerStyle } from '@/types/beer-style';
 import type { InvestmentProductionLot } from '@/types/investment';
@@ -118,13 +119,11 @@ export function createOperationsBrowserRepository() {
     },
 
     async createLot(payload: RpcPayload): OperationsCommandResult {
-      const supabase = createClient();
-      return await supabase.rpc('create_production_lot_from_style', payload);
+      return await callTrustedAdminRpc('production.createLotFromStyle', payload);
     },
 
     async saveBeerStyleEconomics(payload: RpcPayload): OperationsCommandResult {
-      const supabase = createClient();
-      return await supabase.rpc('update_investment_beer_style_economics', payload);
+      return await callTrustedAdminRpc('production.updateStyleEconomics', payload);
     },
 
     async transitionLot(payload: RpcPayload): OperationsCommandResult {
