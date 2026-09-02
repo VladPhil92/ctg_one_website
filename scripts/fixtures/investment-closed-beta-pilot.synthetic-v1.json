@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0106",
-    "schemaMigrationName": "rls_policy_consolidation",
-    "schemaMigrationCount": 106,
+    "schemaMigration": "0108",
+    "schemaMigrationName": "application_rpc_boundary_compatibility",
+    "schemaMigrationCount": 108,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
