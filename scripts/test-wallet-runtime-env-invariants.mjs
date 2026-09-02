@@ -8,6 +8,7 @@ const example = fs.readFileSync(path.join(root, '.env.local.example'), 'utf8');
 const externallyProvisionedKeys = [
   'NEXT_PUBLIC_PRIVY_APP_ID',
   'PRIVY_JWT_VERIFICATION_KEY',
+  'PRIVY_APP_SECRET',
   'POLYGON_RPC_URL',
   'CTG_TOKEN_POLYGON_ADDRESS',
   'WALLET_CRYPTO_SEND_CANARY_USER_IDS',
@@ -58,6 +59,7 @@ if (/^\s*sync:\s*false\s*$/m.test(executionModeBlock)) {
 
 for (const serverOnlyKey of [
   'PRIVY_JWT_VERIFICATION_KEY',
+  'PRIVY_APP_SECRET',
   'POLYGON_RPC_URL',
   'CTG_TOKEN_POLYGON_ADDRESS',
   'WALLET_CRYPTO_SEND_EXECUTION_MODE',
