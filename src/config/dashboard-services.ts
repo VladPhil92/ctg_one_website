@@ -93,6 +93,7 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
     cta: 'Explorar Craft Beer',
     group: 'care',
     status: 'LIVE',
+    serviceKey: 'craft_beer',
   },
   {
     id: 'nvet',
