@@ -21,6 +21,7 @@ export const CLIENT_FUNNEL_EVENT_NAMES = [
 
 export const FUNNEL_SERVICE_KEYS = [
   'investment',
+  'craft_beer',
   'wallet',
   'identity',
   'knowledge',
