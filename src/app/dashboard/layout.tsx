@@ -16,13 +16,13 @@ const SERVICE_ROUTES: ReadonlyArray<{ prefix: string; serviceKey: FunnelServiceK
   { prefix: '/knowledge', serviceKey: 'knowledge' },
   { prefix: '/nvetcareapp', serviceKey: 'nvet' },
   { prefix: '/ctgotoken', serviceKey: 'token' },
+  { prefix: 'https://vertice.ctgone.com', serviceKey: 'vertice' },
   { prefix: '/dashboard/educacion', serviceKey: 'education_library' },
   { prefix: '/jpvalderrama/learningcenter', serviceKey: 'education_learning_center' },
   { prefix: '/jpvalderrama', serviceKey: 'education_jp' },
 ];
 
 function serviceForHref(href: string): FunnelServiceKey | null {
-  if (!href.startsWith('/')) return null;
   const match = SERVICE_ROUTES.find(({ prefix }) => href === prefix || href.startsWith(`${prefix}?`) || href.startsWith(`${prefix}/`));
   return match?.serviceKey ?? null;
 }
