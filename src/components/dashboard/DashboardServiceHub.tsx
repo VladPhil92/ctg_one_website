@@ -4,6 +4,7 @@ import {
   BookOpen,
   Coins,
   GraduationCap,
+  Landmark,
   LibraryBig,
   PawPrint,
   School,
@@ -17,7 +18,7 @@ type ServiceCard = {
   href: string;
   cta: string;
   icon: typeof PawPrint;
-  status: 'LIVE' | 'ACCOUNT';
+  status: 'LIVE' | 'ACCOUNT' | 'BETA';
 };
 
 const services: readonly ServiceCard[] = [
@@ -49,7 +50,16 @@ const services: readonly ServiceCard[] = [
     status: 'LIVE',
   },
   {
-    code: 'EDU-04',
+    code: 'CIV-04',
+    title: 'VÉRTICE OS',
+    description: 'Inteligencia ciudadana para reportar, proponer, deliberar, seguir resultados y construir reputación cívica verificable.',
+    href: 'https://vertice.ctgone.com',
+    cta: 'Abrir VÉRTICE',
+    icon: Landmark,
+    status: 'BETA',
+  },
+  {
+    code: 'EDU-05',
     title: 'JP Valderrama',
     description: 'Filosofía, conferencias, libros, ideas, proyectos, contenidos académicos y asesorías institucionales.',
     href: '/jpvalderrama',
@@ -58,7 +68,7 @@ const services: readonly ServiceCard[] = [
     status: 'LIVE',
   },
   {
-    code: 'EDU-05',
+    code: 'EDU-06',
     title: 'Valderrama Learning Center',
     description: 'Tutorías privadas y servicios educativos para familias: refuerzo, exámenes y acompañamiento académico.',
     href: '/jpvalderrama/learningcenter',
@@ -67,7 +77,7 @@ const services: readonly ServiceCard[] = [
     status: 'LIVE',
   },
   {
-    code: 'LIB-06',
+    code: 'LIB-07',
     title: 'Mi Educación',
     description: 'Tu biblioteca privada de cursos, conferencias, libros, clases, recursos y servicios educativos adquiridos.',
     href: '/dashboard/educacion',
@@ -85,7 +95,7 @@ export function DashboardServiceHub() {
           <div>
             <p className="text-[9px] font-semibold uppercase tracking-[.25em] text-white/35">CTG ONE / SERVICE HUB</p>
             <h2 id="ctg-services-title" className="mt-2 font-outfit text-2xl font-semibold tracking-[-.03em] sm:text-3xl">Servicios y productos actuales</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">Accede desde una sola cuenta a las unidades activas del ecosistema y a tu biblioteca educativa personal.</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">Accede desde una sola cuenta a las unidades activas del ecosistema, VÉRTICE OS y tu biblioteca educativa personal.</p>
           </div>
           <Sparkles className="hidden text-accent sm:block" size={20} aria-hidden="true" />
         </div>
@@ -115,7 +125,7 @@ export function DashboardServiceHub() {
 
         <div className="mt-4 flex items-center gap-3 rounded-2xl border border-white/[.07] bg-white/[.02] px-5 py-4 text-xs leading-5 text-white/40">
           <GraduationCap className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-          <span>JP Valderrama concentra filosofía, divulgación y servicios institucionales; Valderrama Learning Center concentra tutorías y servicios educativos privados para familias.</span>
+          <span>VÉRTICE OS se integra como plataforma cívica conectada del ecosistema CTG One. JP Valderrama concentra filosofía, divulgación y servicios institucionales; Valderrama Learning Center concentra tutorías y servicios educativos privados para familias.</span>
         </div>
       </div>
     </section>
