@@ -59,8 +59,10 @@ export default function ProviderReconciliationPage() {
     ]);
     if (inboxResult.error) setError(inboxResult.error.message);
     else setRows((inboxResult.data ?? []) as FinancialReconciliationInboxRow[]);
-    if (healthResult.error) setError((current) => current ?? healthResult.error.message);
-    else setHealth(healthResult.data as ProviderReconciliationHealth);
+    if (healthResult.error) {
+      const healthError = healthResult.error;
+      setError((current) => current ?? healthError.message);
+    } else setHealth(healthResult.data as ProviderReconciliationHealth);
     setLoading(false);
   }, []);
 
