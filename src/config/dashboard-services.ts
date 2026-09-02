@@ -1,7 +1,7 @@
 import type { FunnelServiceKey } from '@/lib/analytics/funnel';
 
 export type DashboardServiceGroup = 'finance' | 'care' | 'knowledge' | 'education';
-export type DashboardServiceStatus = 'LIVE' | 'ACCOUNT' | 'PILOT' | 'ROADMAP';
+export type DashboardServiceStatus = 'LIVE' | 'ACCOUNT' | 'PILOT' | 'DEVELOPMENT' | 'CONSOLIDATION' | 'ROADMAP';
 
 export type DashboardService = {
   id: string;
@@ -32,8 +32,8 @@ export const DASHBOARD_SERVICE_GROUPS: ReadonlyArray<{
   },
   {
     id: 'care',
-    label: 'Aplicaciones y servicios',
-    description: 'Productos operativos conectados al ecosistema CTG One.',
+    label: 'Aplicaciones y productos',
+    description: 'Productos y experiencias operativas conectadas al ecosistema CTG One.',
   },
   {
     id: 'knowledge',
@@ -85,30 +85,40 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
     serviceKey: 'identity',
   },
   {
+    id: 'craft-beer',
+    code: 'BRW-04',
+    title: 'CTG Craft Beer',
+    description: 'Explora el portafolio de cerveza artesanal, la marca y su operación productiva en Cartagena.',
+    href: '/craft-beer',
+    cta: 'Explorar Craft Beer',
+    group: 'care',
+    status: 'LIVE',
+  },
+  {
     id: 'nvet',
-    code: 'VET-04',
+    code: 'VET-05',
     title: 'Nvet Care App',
     description: 'Atención veterinaria, mascotas, citas, seguimiento, mensajería y acceso a la red Nvet Care.',
     href: '/nvetcareapp',
-    cta: 'Abrir Nvet Care',
+    cta: 'Explorar Nvet Care',
     group: 'care',
-    status: 'LIVE',
+    status: 'DEVELOPMENT',
     serviceKey: 'nvet',
   },
   {
     id: 'token',
-    code: 'TKN-05',
+    code: 'TKN-06',
     title: 'CTG One Token',
     description: 'Consulta la propuesta, utilidad, documentación y evolución del activo digital del ecosistema.',
     href: '/ctgotoken',
     cta: 'Explorar Token',
     group: 'knowledge',
-    status: 'LIVE',
+    status: 'CONSOLIDATION',
     serviceKey: 'token',
   },
   {
     id: 'knowledge',
-    code: 'KNW-06',
+    code: 'KNW-07',
     title: 'CTG Knowledge',
     description: 'Inteligencia institucional basada en conocimiento autorizado, trazable y consultable.',
     href: '/knowledge',
@@ -119,7 +129,7 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
   },
   {
     id: 'education-jp',
-    code: 'EDU-07',
+    code: 'EDU-08',
     title: 'JP Valderrama',
     description: 'Filosofía, conferencias, libros, ideas, proyectos, contenidos académicos y asesorías institucionales.',
     href: '/jpvalderrama',
@@ -130,7 +140,7 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
   },
   {
     id: 'learning-center',
-    code: 'EDU-08',
+    code: 'EDU-09',
     title: 'Valderrama Learning Center',
     description: 'Tutorías privadas, refuerzo, preparación de exámenes y servicios educativos para familias.',
     href: '/jpvalderrama/learningcenter',
@@ -141,7 +151,7 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
   },
   {
     id: 'education-library',
-    code: 'LIB-09',
+    code: 'LIB-10',
     title: 'Mi Educación',
     description: 'Biblioteca privada de cursos, conferencias, libros, clases, recursos y servicios educativos adquiridos.',
     href: '/dashboard/educacion',
@@ -152,7 +162,7 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
   },
   {
     id: 'rewards',
-    code: 'RWD-10',
+    code: 'RWD-11',
     title: 'CTG Rewards',
     description: 'Beneficios, reconocimiento y fidelización previstos para la experiencia transversal del ecosistema.',
     href: '/rewards',
