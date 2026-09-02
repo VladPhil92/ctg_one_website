@@ -123,8 +123,8 @@ assert.ok(
 assert.ok(
   returnsPage.includes('createSalesReturnsBrowserRepository')
     && returnsRepository.includes("rpc('record_sale_return_credit_note'")
-    && returnsRepository.includes("rpc('get_sales_return_reconciliation'"),
-  'Admin returns console must preserve authoritative mutation and reconciliation RPCs through its repository boundary.',
+    && returnsRepository.includes("callTrustedAdminRpc<unknown>('sales.reconcileReturn'"),
+  'Admin returns console must preserve authoritative mutation and trusted reconciliation through its repository boundary.',
 );
 assert.ok(
   settlementPage.includes("sum('REVENUE_REVERSAL')")
