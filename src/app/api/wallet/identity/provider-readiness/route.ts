@@ -12,15 +12,26 @@ export const dynamic = 'force-dynamic';
 
 const READINESS_VERSION = 'ctg-wallet-provider-readiness-v1' as const;
 const READINESS_PROBE_CUSTOM_USER_ID = 'ctg-one-provider-readiness-probe-v1';
+const PROVIDER_PROBE_CACHE_TTL_MS = 30_000;
+
+type ReadinessCheck = {
+  ready: boolean;
+  code: string;
+};
 
 type ProviderReadiness = {
   version: typeof READINESS_VERSION;
   ready: boolean;
-  check: {
-    ready: boolean;
-    code: string;
-  };
+  check: ReadinessCheck;
 };
+
+type CachedProbe = {
+  expiresAt: number;
+  check: ReadinessCheck;
+};
+
+let cachedProbe: CachedProbe | null = null;
+let inFlightProbe: Promise<ReadinessCheck> | null = null;
 
 function json(body: ProviderReadiness, status: number) {
   return NextResponse.json(body, {
@@ -33,61 +44,73 @@ function json(body: ProviderReadiness, status: number) {
   });
 }
 
-/**
- * Public, non-mutating infrastructure probe for the Privy user registry.
- *
- * This endpoint deliberately exposes only a bounded readiness code. It never
- * returns an App ID, App Secret, Privy DID, wallet address, custom user id,
- * access token or linked-account data. A 404/no user for the synthetic lookup
- * is a healthy result because it proves that the configured server credential
- * can reach the read-only Privy User Management endpoint.
- *
- * User-specific ownership remains behind the authenticated
- * /api/wallet/identity/provider-ownership boundary.
- */
-export async function GET() {
+async function executeProviderProbe(): Promise<ReadinessCheck> {
   if (!isPrivyUserRegistryConfigured()) {
-    return json(
-      {
-        version: READINESS_VERSION,
-        ready: false,
-        check: {
-          ready: false,
-          code: 'PRIVY_USER_REGISTRY_NOT_CONFIGURED',
-        },
-      },
-      503,
-    );
+    return {
+      ready: false,
+      code: 'PRIVY_USER_REGISTRY_NOT_CONFIGURED',
+    };
   }
 
   try {
     await getPrivyUserByCustomAuthId(READINESS_PROBE_CUSTOM_USER_ID);
-    return json(
-      {
-        version: READINESS_VERSION,
-        ready: true,
-        check: {
-          ready: true,
-          code: 'PRIVY_USER_REGISTRY_READY',
-        },
-      },
-      200,
-    );
+    return {
+      ready: true,
+      code: 'PRIVY_USER_REGISTRY_READY',
+    };
   } catch (error) {
-    const code = error instanceof PrivyUserRegistryError
-      ? error.code
-      : 'PRIVY_USER_REGISTRY_UNAVAILABLE';
-
-    return json(
-      {
-        version: READINESS_VERSION,
-        ready: false,
-        check: {
-          ready: false,
-          code,
-        },
-      },
-      503,
-    );
+    return {
+      ready: false,
+      code: error instanceof PrivyUserRegistryError
+        ? error.code
+        : 'PRIVY_USER_REGISTRY_UNAVAILABLE',
+    };
   }
+}
+
+async function readProviderProbe(): Promise<ReadinessCheck> {
+  const now = Date.now();
+  if (cachedProbe && cachedProbe.expiresAt > now) {
+    return cachedProbe.check;
+  }
+
+  if (!inFlightProbe) {
+    inFlightProbe = executeProviderProbe();
+  }
+
+  try {
+    const check = await inFlightProbe;
+    cachedProbe = {
+      expiresAt: Date.now() + PROVIDER_PROBE_CACHE_TTL_MS,
+      check,
+    };
+    return check;
+  } finally {
+    inFlightProbe = null;
+  }
+}
+
+/**
+ * Public, non-mutating infrastructure probe for the Privy user registry.
+ *
+ * The provider-backed lookup is globally deduplicated per runtime and cached
+ * briefly so anonymous traffic cannot amplify directly into Privy User
+ * Management calls. Client responses remain no-store; only the bounded
+ * server-side readiness decision is reused for 30 seconds.
+ *
+ * This endpoint deliberately exposes only a bounded readiness code. It never
+ * returns an App ID, App Secret, Privy DID, wallet address, custom user id,
+ * access token or linked-account data. User-specific ownership remains behind
+ * the authenticated /api/wallet/identity/provider-ownership boundary.
+ */
+export async function GET() {
+  const check = await readProviderProbe();
+  return json(
+    {
+      version: READINESS_VERSION,
+      ready: check.ready,
+      check,
+    },
+    check.ready ? 200 : 503,
+  );
 }
