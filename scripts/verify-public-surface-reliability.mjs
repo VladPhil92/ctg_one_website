@@ -27,11 +27,11 @@ const assetPaths = [
   '/api/jpvalderrama/assets/ideas-button',
 ];
 
-async function fetchBounded(path, headers = {}) {
+async function requestBounded(path, headers, consume) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
   try {
-    return await fetch(new URL(path, productionOrigin), {
+    const response = await fetch(new URL(path, productionOrigin), {
       method: 'GET',
       headers: {
         'Cache-Control': 'no-cache',
@@ -42,6 +42,8 @@ async function fetchBounded(path, headers = {}) {
       redirect: 'follow',
       signal: controller.signal,
     });
+    const body = await consume(response);
+    return { response, body };
   } finally {
     clearTimeout(timer);
   }
@@ -52,8 +54,11 @@ const failures = [];
 
 for (const path of pagePaths) {
   try {
-    const response = await fetchBounded(path, { Accept: 'text/html' });
-    const body = await response.text();
+    const { response, body } = await requestBounded(
+      path,
+      { Accept: 'text/html' },
+      (result) => result.text(),
+    );
     const contentType = response.headers.get('content-type') ?? '';
     const observation = {
       path,
@@ -74,8 +79,12 @@ for (const path of pagePaths) {
 
 for (const path of assetPaths) {
   try {
-    const response = await fetchBounded(path, { Accept: 'image/webp,image/*;q=0.8' });
-    const bytes = Buffer.from(await response.arrayBuffer());
+    const { response, body } = await requestBounded(
+      path,
+      { Accept: 'image/webp,image/*;q=0.8' },
+      (result) => result.arrayBuffer(),
+    );
+    const bytes = Buffer.from(body);
     const contentType = response.headers.get('content-type') ?? '';
     const cacheControl = response.headers.get('cache-control') ?? '';
     const etag = response.headers.get('etag') ?? '';
@@ -97,13 +106,16 @@ for (const path of assetPaths) {
     if (/immutable/i.test(cacheControl)) failures.push(`${path}: semantic URL must not be immutable`);
 
     if (etag && response.ok) {
-      const revalidated = await fetchBounded(path, {
-        Accept: 'image/webp,image/*;q=0.8',
-        'If-None-Match': etag,
-      });
+      const { response: revalidated } = await requestBounded(
+        path,
+        {
+          Accept: 'image/webp,image/*;q=0.8',
+          'If-None-Match': etag,
+        },
+        (result) => result.arrayBuffer(),
+      );
       observation.revalidationStatus = revalidated.status;
       if (revalidated.status !== 304) failures.push(`${path}: If-None-Match expected 304, got ${revalidated.status}`);
-      await revalidated.arrayBuffer();
     }
 
     observations.push(observation);
