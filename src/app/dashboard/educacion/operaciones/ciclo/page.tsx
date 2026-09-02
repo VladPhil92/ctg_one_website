@@ -73,6 +73,11 @@ type LifecycleResponse = {
 
 type Draft = { reason: string; reference: string };
 
+type PageLoadResult =
+  | { kind: 'success'; payload: LifecycleResponse }
+  | { kind: 'forbidden' }
+  | { kind: 'error' };
+
 function formatAmount(amount: number, currency: string) {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -105,30 +110,37 @@ export default function EducationAccessLifecyclePage() {
     if (!isAuthenticated || profile?.role !== 'admin') return;
     setState('loading');
 
-    const requestPage = async (requestedPage: number): Promise<LifecycleResponse | null> => {
+    const requestPage = async (requestedPage: number): Promise<PageLoadResult> => {
       const response = await fetch(`/api/education/operations/lifecycle?page=${requestedPage}&pageSize=50`, { cache: 'no-store' });
       const payload = (await response.json().catch(() => ({}))) as LifecycleResponse;
-      if (response.status === 403) {
-        setState('forbidden');
-        return null;
-      }
-      if (!response.ok || !payload.ok) return null;
-      return payload;
+      if (response.status === 403) return { kind: 'forbidden' };
+      if (!response.ok || !payload.ok) return { kind: 'error' };
+      return { kind: 'success', payload };
     };
 
     try {
-      let payload = await requestPage(targetPage);
-      if (!payload) {
-        if (state !== 'forbidden') setState('error');
+      let result = await requestPage(targetPage);
+      if (result.kind === 'forbidden') {
+        setState('forbidden');
+        return;
+      }
+      if (result.kind === 'error') {
+        setState('error');
         return;
       }
 
+      let payload = result.payload;
       if (payload.pagination && targetPage > payload.pagination.totalPages) {
-        payload = await requestPage(Math.max(1, payload.pagination.totalPages));
-        if (!payload) {
-          if (state !== 'forbidden') setState('error');
+        result = await requestPage(Math.max(1, payload.pagination.totalPages));
+        if (result.kind === 'forbidden') {
+          setState('forbidden');
           return;
         }
+        if (result.kind === 'error') {
+          setState('error');
+          return;
+        }
+        payload = result.payload;
       }
 
       setData(payload);
@@ -137,7 +149,7 @@ export default function EducationAccessLifecyclePage() {
     } catch {
       setState('error');
     }
-  }, [isAuthenticated, profile?.role, state]);
+  }, [isAuthenticated, profile?.role]);
 
   useEffect(() => {
     if (profile?.role === 'admin' && state === 'idle') void load(1);
