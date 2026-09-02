@@ -1,5 +1,29 @@
+import type { Metadata } from 'next';
 import { ArrowRight, BookOpenCheck, GraduationCap, Home, Languages, Monitor, School, UsersRound } from 'lucide-react';
 import { JPValderramaFooter, JPValderramaHeader } from '@/components/jpvalderrama/JPValderramaShell';
+
+const title = 'Valderrama Learning Center | Tutorías privadas | CTG One';
+const description = 'Tutorías privadas, refuerzo, preparación de exámenes y acompañamiento académico en modalidad virtual o a domicilio para estudiantes y familias.';
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: 'https://ctgone.com/jpvalderrama/learningcenter',
+  },
+  openGraph: {
+    title,
+    description,
+    url: 'https://ctgone.com/jpvalderrama/learningcenter',
+    siteName: 'CTG One',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title,
+    description,
+  },
+};
 
 const services = [
   ['Tutorías privadas', 'Matemáticas, Física, Ciencias, Inglés, Sociales y Español.', UsersRound],
@@ -35,7 +59,7 @@ export default function ValderramaLearningCenterPage() {
         <div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12">
           <h2 className="font-serif text-4xl sm:text-5xl">Servicios educativos privados</h2>
           <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {services.map(([title, text, Icon]) => <article key={title} className="border border-[#6f0d12]/14 bg-[#fbf7f1] p-7"><Icon className="h-5 w-5 text-[#6f0d12]" /><h3 className="mt-5 font-serif text-2xl">{title}</h3><p className="mt-3 font-serif text-[16px] leading-7 text-[#665950]">{text}</p></article>)}
+            {services.map(([serviceTitle, text, Icon]) => <article key={serviceTitle} className="border border-[#6f0d12]/14 bg-[#fbf7f1] p-7"><Icon className="h-5 w-5 text-[#6f0d12]" /><h3 className="mt-5 font-serif text-2xl">{serviceTitle}</h3><p className="mt-3 font-serif text-[16px] leading-7 text-[#665950]">{text}</p></article>)}
           </div>
           <div className="mt-8 grid gap-5 md:grid-cols-2">
             <article className="border border-[#6f0d12]/14 bg-[#efe3d7] p-7"><Home className="h-5 w-5 text-[#6f0d12]" /><h3 className="mt-4 font-serif text-2xl">A domicilio</h3><p className="mt-3 text-sm leading-7 text-[#665950]">Acompañamiento privado en el hogar según área, grado y objetivo académico.</p></article>
