@@ -7,15 +7,17 @@ const visual = (name: string) => `/api/jpvalderrama/assets/${name}`;
 const subbrands = [
   {
     name: 'Valderrama Talks',
+    shortName: 'Talks',
     label: 'CONFERENCIAS · CLASES · CONVERSACIONES',
     image: 'waveform',
     width: 1536,
-    height: 512,
+    height: 1536,
     href: '/jpvalderrama/talks',
     copy: 'La palabra como espacio de formación: conferencias, clases y conversaciones para públicos diversos.',
   },
   {
     name: 'Valderrama Ideas',
+    shortName: 'Ideas',
     label: 'ENSAYO · ANÁLISIS · PENSAMIENTO',
     image: 'ideas-button',
     width: 1536,
@@ -25,23 +27,27 @@ const subbrands = [
   },
   {
     name: 'Valderrama Books',
+    shortName: 'Books',
     label: 'LIBROS · INVESTIGACIÓN · PUBLICACIÓN',
     image: 'books-desk',
     width: 1536,
-    height: 1024,
+    height: 1536,
     href: '/jpvalderrama/books',
     copy: 'Investigación de largo aliento, manuscritos y proyectos editoriales concebidos para permanecer.',
   },
   {
     name: 'Valderrama Projects',
+    shortName: 'Projects',
     label: 'IDEAS · TECNOLOGÍA · CONSTRUCCIÓN',
-    image: 'philosophy-technology',
+    image: 'projects-button',
     width: 1536,
-    height: 864,
+    height: 1536,
     href: '/jpvalderrama/projects',
     copy: 'Ideas convertidas en proyectos mediante educación, investigación, tecnología y emprendimiento.',
   },
 ] as const;
+
+const credentials = ['Filósofo', 'Educador', 'Escritor', 'Empresario', 'Desarrollador'] as const;
 
 export default function JPValderramaPage() {
   const personSchema = {
@@ -51,124 +57,161 @@ export default function JPValderramaPage() {
     alternateName: 'JP Valderrama',
     url: 'https://ctgone.com/jpvalderrama',
     jobTitle: ['Philosopher', 'Educator', 'Writer', 'Entrepreneur', 'Developer'],
+    knowsAbout: ['Philosophy', 'Education', 'Writing', 'Technology', 'Entrepreneurship'],
     founder: { '@type': 'Organization', name: 'CTG One', url: 'https://ctgone.com' },
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f0e7] text-[#19130f] selection:bg-[#6f0d12] selection:text-[#fffaf2]">
+    <main className="min-h-screen bg-[#FCFBF8] text-[#151515] selection:bg-[#681F27] selection:text-[#FCFBF8]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
-      <a href="#contenido" className="sr-only z-[100] rounded bg-[#6f0d12] px-4 py-3 text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Saltar al contenido</a>
+      <a href="#contenido" className="sr-only z-[100] rounded bg-[#681F27] px-4 py-3 text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Saltar al contenido</a>
 
-      <header className="sticky top-0 z-50 border-b border-[#6f0d12]/10 bg-[#f7f0e7]/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-[#151515]/10 bg-[#FCFBF8]/95 backdrop-blur-xl">
         <div className="mx-auto flex min-h-[76px] max-w-[1500px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
           <a href="/" aria-label="CTG One, ir al inicio" className="flex min-h-12 items-center"><BrandLogo priority tone="light" /></a>
-          <nav className="hidden items-center gap-7 text-[10px] font-semibold uppercase tracking-[.16em] text-[#665950] lg:flex" aria-label="Navegación JP Valderrama">
-            <a href="#mapa" className="hover:text-[#6f0d12]">Pensamiento</a>
-            <a href="#marcas" className="hover:text-[#6f0d12]">Marcas</a>
-            <a href="#perfil" className="hover:text-[#6f0d12]">Perfil</a>
-            <a href="#conferencia" className="hover:text-[#6f0d12]">Conferencia</a>
-            <a href="#contacto" className="hover:text-[#6f0d12]">Contacto</a>
+          <nav className="hidden items-center gap-7 text-[10px] font-semibold uppercase tracking-[.16em] text-[#414141] lg:flex" aria-label="Navegación JP Valderrama">
+            <a href="#pensamiento" className="transition hover:text-[#681F27]">Pensamiento</a>
+            <a href="#universo" className="transition hover:text-[#681F27]">Universo</a>
+            <a href="#talks" className="transition hover:text-[#681F27]">Talks</a>
+            <a href="#perfil" className="transition hover:text-[#681F27]">Perfil</a>
           </nav>
-          <a href="#contenido" className="flex items-center gap-2 border-b border-[#6f0d12] pb-1 text-[10px] font-bold uppercase tracking-[.18em] text-[#6f0d12]">
-            <Image src={visual('jp-icon')} alt="" width={1536} height={1536} unoptimized className="h-7 w-7 rounded-full object-cover" aria-hidden="true" />
-            JP Valderrama
-          </a>
+          <a href="#contacto" className="border border-[#681F27] px-3 py-2.5 text-[9px] font-bold uppercase tracking-[.16em] text-[#681F27] transition hover:bg-[#681F27] hover:text-[#FCFBF8] sm:px-4 sm:text-[10px]">Contacto</a>
         </div>
       </header>
 
       <div id="contenido">
-        <section className="border-b border-[#6f0d12]/10 bg-[#efe3d7]">
-          <div className="mx-auto grid max-w-[1600px] lg:grid-cols-[.88fr_1.12fr] lg:items-stretch">
-            <div className="flex flex-col justify-center px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24 xl:pl-20">
-              <div className="mb-7 flex items-center gap-4">
-                <Image src={visual('jp-icon')} alt="Símbolo original JP Valderrama" width={1536} height={1536} priority unoptimized className="h-16 w-16 rounded-full object-cover shadow-[0_10px_30px_rgba(72,35,24,.10)]" />
-                <p className="text-[10px] font-semibold uppercase tracking-[.24em] text-[#6f0d12]">CTG One · Educación · Ideas · Proyectos</p>
+        <section className="border-b border-[#151515]/10 bg-[#F3EFE6]">
+          <div className="mx-auto grid max-w-[1500px] gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:min-h-[760px] lg:grid-cols-[.82fr_1.18fr] lg:items-center lg:gap-14 lg:px-12 lg:py-20">
+            <div className="order-2 lg:order-1">
+              <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[.22em] text-[#681F27] sm:text-[11px]">
+                <span className="h-px w-10 bg-[#681F27]" aria-hidden="true" />
+                Filosofía aplicada al presente
               </div>
-              <p className="text-[10px] font-semibold uppercase leading-6 tracking-[.16em] text-[#665950] sm:text-[11px]">Filósofo · Educador · Escritor · Empresario · Fundador de CTG One · Desarrollador</p>
-              <h1 className="mt-5 max-w-3xl font-serif text-5xl leading-[.96] tracking-[-.04em] text-[#15100d] sm:text-6xl lg:text-[4.8rem] xl:text-[5.3rem]">Pensar el presente. <span className="text-[#6f0d12]">Construir futuro.</span></h1>
-              <div className="mt-6 flex items-center gap-3" aria-hidden="true"><span className="h-px w-24 bg-[#6f0d12]" /><span className="h-2 w-2 rounded-full bg-[#6f0d12]" /><span className="h-px w-16 bg-[#6f0d12]/35" /></div>
-              <p className="mt-7 max-w-2xl font-serif text-lg leading-8 text-[#534941] sm:text-xl">Filosofía, educación, escritura y tecnología reunidas en una práctica intelectual orientada a comprender, comunicar y transformar.</p>
-              <div className="mt-9 flex flex-wrap gap-3">
-                <a href="#mapa" className="inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Explorar <ArrowRight className="h-4 w-4" /></a>
-                <a href="/jpvalderrama/ideas" className="inline-flex min-h-12 items-center gap-2 border border-[#6f0d12]/45 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Valderrama Ideas <ArrowRight className="h-4 w-4" /></a>
+              <h1 className="mt-7 max-w-[680px] font-serif text-5xl font-normal leading-[.98] tracking-[-.035em] text-[#151515] sm:text-6xl lg:text-[4.5rem] xl:text-[5rem]">Ideas que piensan. Proyectos que transforman.</h1>
+              <p className="mt-7 max-w-[610px] text-base leading-8 text-[#414141] sm:text-lg">Un espacio editorial para filosofía, educación, escritura, conferencias y proyectos interdisciplinarios. La tradición intelectual como herramienta para comprender y construir el presente.</p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <a href="#universo" className="inline-flex min-h-12 items-center gap-2 bg-[#151515] px-6 text-[10px] font-bold uppercase tracking-[.15em] text-white transition hover:bg-[#681F27] sm:text-xs">Explorar universo <ArrowRight className="h-4 w-4" /></a>
+                <a href="#perfil" className="inline-flex min-h-12 items-center gap-2 border border-[#151515]/70 px-6 text-[10px] font-bold uppercase tracking-[.15em] text-[#151515] transition hover:border-[#681F27] hover:text-[#681F27] sm:text-xs">Conocer perfil <ArrowRight className="h-4 w-4" /></a>
+              </div>
+              <div className="mt-10 flex flex-wrap gap-x-5 gap-y-3 border-t border-[#151515]/12 pt-5 text-[9px] font-semibold uppercase tracking-[.14em] text-[#666] sm:text-[10px]">
+                {credentials.map((credential) => <span key={credential}>{credential}</span>)}
               </div>
             </div>
-            <div className="relative min-h-[430px] overflow-hidden lg:min-h-[650px]">
-              <Image src={visual('conference-hero')} alt="Juan Pablo Valderrama en conferencia" fill priority unoptimized className="object-cover object-center" sizes="(max-width: 1024px) 100vw, 58vw" />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#efe3d7]/70 via-transparent to-transparent" aria-hidden="true" />
-            </div>
+
+            <figure className="relative order-1 lg:order-2">
+              <div className="pointer-events-none absolute -bottom-5 -right-4 left-8 top-5 border border-[#681F27]/25" aria-hidden="true" />
+              <div className="relative overflow-hidden bg-[#FCFBF8] shadow-[0_26px_70px_rgba(40,22,18,.10)]">
+                <Image src={visual('philosophy-technology')} alt="Filosofía clásica, libros, tecnología y ciudad contemporánea" width={1536} height={864} priority unoptimized className="aspect-[4/3] h-auto w-full object-cover lg:aspect-[16/10]" sizes="(max-width: 1024px) 100vw, 58vw" />
+                <figcaption className="absolute bottom-3 right-3 bg-[#FCFBF8]/92 px-3 py-2 text-[8px] font-semibold uppercase tracking-[.14em] text-[#414141] sm:bottom-5 sm:right-5 sm:text-[9px]">Tradición intelectual · presente tecnológico</figcaption>
+              </div>
+            </figure>
           </div>
         </section>
 
-        <section id="mapa" className="scroll-mt-24 py-16 sm:py-20 lg:py-24">
-          <div className="mx-auto max-w-[1500px] px-5 sm:px-8 lg:px-12">
-            <div className="mb-8 grid gap-5 lg:grid-cols-[.72fr_1.28fr] lg:items-end">
-              <div><p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#6f0d12]">Método intelectual</p><h2 className="mt-3 font-serif text-4xl leading-tight text-[#17110e] sm:text-5xl">Mapa del pensamiento</h2></div>
-              <p className="max-w-3xl font-serif text-[17px] leading-8 text-[#665950]">De la persona que pregunta al argumento, la contradicción y el concepto; y del concepto nuevamente a la sociedad. Una cartografía visual de la filosofía entendida como práctica viva.</p>
-            </div>
-            <div className="overflow-hidden border border-[#6f0d12]/12 bg-[#fbf7f1] shadow-[0_22px_70px_rgba(72,35,24,.07)]">
-              <Image src={visual('thought-map')} alt="Mapa del Pensamiento: persona, pregunta, argumento, contradicción, concepto y sociedad" width={1536} height={864} unoptimized className="h-auto w-full" sizes="100vw" />
-            </div>
-          </div>
-        </section>
-
-        <section id="marcas" className="scroll-mt-24 border-y border-[#6f0d12]/10 bg-[#fbf7f1] py-20 sm:py-24">
+        <section id="pensamiento" className="scroll-mt-24 py-16 sm:py-20 lg:py-24">
           <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
-            <div className="mb-12 flex items-center gap-5"><span className="h-px flex-1 bg-[#6f0d12]/15" /><h2 className="text-center text-[11px] font-semibold uppercase tracking-[.28em] text-[#4c4038]">Universo JP Valderrama</h2><span className="h-px flex-1 bg-[#6f0d12]/15" /></div>
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mb-9 grid gap-5 lg:grid-cols-[.55fr_1.45fr] lg:gap-16">
+              <div><p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#681F27]">Método intelectual</p></div>
+              <div><h2 className="font-serif text-4xl font-normal leading-[1.06] tracking-[-.025em] text-[#151515] sm:text-5xl">Mapa del pensamiento</h2><p className="mt-5 max-w-3xl text-base leading-8 text-[#414141] sm:text-[17px]">De la persona que pregunta al argumento, la contradicción y el concepto; y del concepto nuevamente a la sociedad. Una cartografía de la filosofía entendida como práctica viva.</p></div>
+            </div>
+            <figure className="border border-[#151515]/12 bg-[#F3EFE6] p-2.5 sm:p-4">
+              <Image src={visual('thought-map')} alt="Mapa del Pensamiento: persona, pregunta, argumento, contradicción, concepto y sociedad" width={1536} height={864} unoptimized className="h-auto w-full" sizes="100vw" />
+              <figcaption className="flex flex-col gap-2 px-1 pt-3 text-[10px] uppercase tracking-[.12em] text-[#777] sm:flex-row sm:items-center sm:justify-between"><span>Persona → Pregunta → Argumento → Contradicción → Concepto → Sociedad</span><span>Pensar es ordenar lo invisible</span></figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section id="universo" className="scroll-mt-24 border-y border-[#151515]/10 bg-white py-16 sm:py-20 lg:py-24">
+          <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+            <div className="mb-10 grid gap-5 lg:grid-cols-[.55fr_1.45fr] lg:gap-16">
+              <div><p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#681F27]">Universo JP Valderrama</p></div>
+              <div><h2 className="font-serif text-4xl font-normal leading-[1.06] tracking-[-.025em] text-[#151515] sm:text-5xl">Cuatro líneas de trabajo. Una misma identidad intelectual.</h2><p className="mt-5 max-w-3xl text-base leading-8 text-[#414141] sm:text-[17px]">Talks, Ideas, Books y Projects forman una colección editorial coherente: palabra, pensamiento, escritura y construcción.</p></div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {subbrands.map((brand) => (
-                <a key={brand.name} href={brand.href} className="group flex min-h-full flex-col overflow-hidden border border-[#6f0d12]/14 bg-[#f7f0e7] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(72,35,24,.10)]">
-                  <div className="flex min-h-[230px] items-center justify-center overflow-hidden bg-[#efe3d7]">
-                    <Image src={visual(brand.image)} alt={`Identidad visual de ${brand.name}`} width={brand.width} height={brand.height} unoptimized className={brand.image === 'ideas-button' ? 'h-auto w-[78%] max-w-[260px] object-contain' : 'h-full min-h-[230px] w-full object-cover'} sizes="(max-width: 640px) 92vw, (max-width: 1280px) 45vw, 330px" />
+                <a key={brand.name} href={brand.href} className="group flex min-h-full flex-col border border-[#151515]/12 bg-[#FCFBF8] p-4 transition duration-300 hover:-translate-y-1 hover:border-[#681F27]/35 hover:shadow-[0_20px_55px_rgba(40,22,18,.08)]">
+                  <div className="flex aspect-square items-center justify-center overflow-hidden bg-[#F3EFE6] p-2">
+                    <Image src={visual(brand.image)} alt={`Identidad oficial de ${brand.name}`} width={brand.width} height={brand.height} unoptimized className="h-full w-full object-contain" sizes="(max-width: 640px) 90vw, (max-width: 1280px) 45vw, 320px" />
                   </div>
-                  <div className="flex flex-1 flex-col p-6"><p className="text-[9px] font-bold uppercase tracking-[.16em] text-[#6f0d12]">{brand.label}</p><h3 className="mt-3 font-serif text-2xl text-[#17110e]">{brand.name}</h3><p className="mt-4 flex-1 font-serif text-[15px] leading-7 text-[#665950]">{brand.copy}</p><span className="mt-6 inline-flex items-center gap-2 border-t border-[#6f0d12]/12 pt-5 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Entrar <ArrowRight className="h-3.5 w-3.5" /></span></div>
+                  <div className="flex flex-1 flex-col px-1 pb-1 pt-5">
+                    <p className="text-[9px] font-bold uppercase tracking-[.16em] text-[#681F27]">{brand.label}</p>
+                    <h3 className="mt-2 font-serif text-3xl font-normal text-[#151515]">{brand.shortName}</h3>
+                    <p className="mt-3 flex-1 text-[13px] leading-6 text-[#5B5B5B]">{brand.copy}</p>
+                    <span className="mt-6 inline-flex items-center gap-2 border-t border-[#151515]/10 pt-4 text-[9px] font-bold uppercase tracking-[.14em] text-[#151515] transition group-hover:text-[#681F27]">Entrar <ArrowRight className="h-3.5 w-3.5" /></span>
+                  </div>
                 </a>
               ))}
             </div>
           </div>
         </section>
 
-        <section id="perfil" className="scroll-mt-24 py-20 sm:py-24 lg:py-28">
-          <div className="mx-auto grid max-w-[1440px] gap-10 px-5 sm:px-8 lg:grid-cols-[1.08fr_.92fr] lg:items-center lg:px-12">
-            <div className="overflow-hidden border border-[#6f0d12]/12 bg-[#fbf7f1]"><Image src={visual('philosophy-technology')} alt="Filosofía, libros, tecnología y ciudad contemporánea" width={1536} height={864} unoptimized className="h-auto w-full" sizes="(max-width: 1024px) 100vw, 55vw" /></div>
-            <div><p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#6f0d12]">Perfil</p><h2 className="mt-4 font-serif text-4xl leading-tight text-[#17110e] sm:text-5xl">La tradición intelectual interrogando el presente tecnológico.</h2><div className="mt-5 h-px w-16 bg-[#6f0d12]" /><p className="mt-6 font-serif text-[17px] leading-8 text-[#564a42]">Juan Pablo Valderrama Pino es filósofo, educador, escritor y empresario. Fundador de CTG One y desarrollador de proyectos interdisciplinarios en educación, tecnología y cultura.</p><p className="mt-4 font-serif text-[17px] leading-8 text-[#564a42]">Su trabajo integra reflexión filosófica, práctica educativa, escritura, pensamiento empresarial e innovación para convertir preguntas rigurosas en aprendizaje, comunicación, producto y acción.</p></div>
-          </div>
-        </section>
-
-        <section className="border-y border-[#6f0d12]/10 bg-[#efe3d7] py-20 sm:py-24">
-          <div className="mx-auto grid max-w-[1440px] gap-12 px-5 sm:px-8 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:px-12">
-            <div><p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#6f0d12]">Filosofía y empresa</p><h2 className="mt-4 font-serif text-4xl leading-tight text-[#17110e] sm:text-5xl">¿Qué lugar ocupan las ideas dentro de la actividad económica?</h2><p className="mt-6 font-serif text-[17px] leading-8 text-[#564a42]">Ética, trabajo, dinero, empresa y formación humana no aparecen como una oposición simple, sino como un campo de problemas: qué producimos, para quién, bajo qué valores y qué clase de vida queremos hacer posible.</p><a href="/jpvalderrama/ideas" className="mt-8 inline-flex min-h-12 items-center gap-2 border border-[#6f0d12]/40 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Leer Ideas <ArrowRight className="h-4 w-4" /></a></div>
-            <div className="overflow-hidden border border-[#6f0d12]/12 bg-[#fbf7f1]"><Image src={visual('philosophy-money')} alt="Ilustración editorial sobre filosofía, libros, dinero y actividad económica" width={1536} height={864} unoptimized className="h-auto w-full" sizes="(max-width: 1024px) 100vw, 58vw" /></div>
-          </div>
-        </section>
-
-        <section className="border-b border-[#6f0d12]/10 bg-[#fbf7f1] py-16 sm:py-20">
-          <div className="mx-auto grid max-w-[1440px] gap-10 px-5 sm:px-8 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-12">
-            <div className="overflow-hidden border border-[#6f0d12]/12 bg-[#19130f]"><Image src={visual('books-desk')} alt="Biblioteca, cuadernos y manuscritos" width={1536} height={1024} unoptimized className="h-auto w-full" sizes="(max-width: 1024px) 100vw, 55vw" /></div>
-            <div><p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#6f0d12]">Valderrama Books</p><h2 className="mt-4 font-serif text-4xl leading-tight text-[#17110e] sm:text-5xl">Leer, investigar, escribir.</h2><p className="mt-6 font-serif text-[17px] leading-8 text-[#564a42]">La escritura de largo aliento necesita tiempo, archivo y método. Valderrama Books convierte notas, lecturas e investigación en argumentos, manuscritos y libros.</p><a href="/jpvalderrama/books" className="mt-8 inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Explorar Books <ArrowRight className="h-4 w-4" /></a></div>
-          </div>
-        </section>
-
-        <section id="conferencia" className="scroll-mt-24 py-20 sm:py-24 lg:py-28">
-          <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
-            <div className="grid overflow-hidden border border-[#6f0d12]/16 bg-[#fbf7f1] lg:grid-cols-[.82fr_1.18fr]">
-              <div className="p-7 sm:p-10 lg:p-14">
-                <Image src={visual('waveform')} alt="Lenguaje visual de Valderrama Talks" width={1536} height={512} unoptimized className="mb-8 h-auto w-full border-y border-[#6f0d12]/10 py-3" sizes="(max-width: 1024px) 90vw, 480px" />
-                <p className="text-[10px] font-bold uppercase tracking-[.23em] text-[#6f0d12]">Conferencia destacada · Valderrama Talks</p><h2 className="mt-4 font-serif text-4xl leading-none text-[#17110e] sm:text-5xl lg:text-6xl">¿Filosofía o <span className="text-[#6f0d12]">Dinero?</span></h2><p className="mt-3 font-serif text-2xl italic text-[#4e4038]">El arte de comer papel</p><div className="mt-7 h-px w-32 bg-[#6f0d12]" />
-                <div className="mt-8 grid gap-4 text-sm text-[#665950] sm:grid-cols-2"><p><strong className="text-[#241b16]">Fecha:</strong> 17 de septiembre</p><p><strong className="text-[#241b16]">Hora:</strong> 7:00 p. m.</p><p><strong className="text-[#241b16]">Duración:</strong> 45 minutos</p><p><strong className="text-[#241b16]">Modalidad:</strong> Google Meet</p><p><strong className="text-[#241b16]">Ticket:</strong> $10.000</p><p><strong className="text-[#241b16]">Inscripciones:</strong> 3186428218</p></div>
-                <a href="/jpvalderrama/talks#inscripcion" className="mt-9 inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.14em] text-[#fffaf2]">Inscribirme <ArrowRight className="h-4 w-4" /></a>
+        <section id="talks" className="scroll-mt-24 bg-[#151515] py-16 text-[#FCFBF8] sm:py-20 lg:py-24">
+          <div className="mx-auto grid max-w-[1440px] gap-10 px-5 sm:px-8 lg:grid-cols-[1.18fr_.82fr] lg:items-center lg:gap-14 lg:px-12">
+            <div className="overflow-hidden border border-white/10 bg-black">
+              <Image src={visual('conference-hero')} alt="Escenario editorial de Valderrama Talks" width={1536} height={864} unoptimized className="h-auto w-full object-cover" sizes="(max-width: 1024px) 100vw, 60vw" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#D4AEB3]">Valderrama Talks · Conferencia destacada</p>
+              <h2 className="mt-4 font-serif text-4xl font-normal leading-[1.02] tracking-[-.025em] text-white sm:text-5xl lg:text-6xl">¿Filosofía o Dinero?</h2>
+              <p className="mt-3 font-serif text-2xl italic text-[#D6D0CB]">El arte de comer papel</p>
+              <p className="mt-6 text-base leading-8 text-[#D0D0D0]">Una conversación sobre vocación, expectativas sociales, economía y el lugar que siguen ocupando las ideas en una vida práctica.</p>
+              <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-4">
+                {[
+                  ['Fecha', '17 de septiembre'],
+                  ['Hora', '7:00 p. m.'],
+                  ['Duración', '45 minutos'],
+                  ['Modalidad', 'Google Meet'],
+                  ['Ticket', '$10.000'],
+                  ['Inscripciones', '3186428218'],
+                ].map(([label, value]) => <div key={label} className="border-t border-white/15 pt-3"><span className="block text-[9px] uppercase tracking-[.14em] text-[#A8A8A8]">{label}</span><strong className="mt-1 block text-sm font-medium text-white sm:text-[15px]">{value}</strong></div>)}
               </div>
-              <div className="flex items-center justify-center border-t border-[#6f0d12]/12 bg-[#f4eadf] p-5 lg:border-l lg:border-t-0 lg:p-8"><Image src={visual('conference-poster')} alt="Afiche oficial de la conferencia ¿Filosofía o Dinero?" width={1536} height={1536} unoptimized className="h-auto w-full max-w-[650px] shadow-[0_18px_55px_rgba(75,32,22,.12)]" sizes="(max-width: 1024px) 92vw, 650px" /></div>
+              <a href="/jpvalderrama/talks#inscripcion" className="mt-8 inline-flex min-h-12 items-center gap-2 bg-[#681F27] px-6 text-[10px] font-bold uppercase tracking-[.15em] text-white transition hover:bg-[#7A252F] sm:text-xs">Inscribirme <ArrowRight className="h-4 w-4" /></a>
             </div>
           </div>
         </section>
 
-        <section id="contacto" className="px-5 pb-12 sm:px-8 lg:px-12">
-          <div className="mx-auto max-w-[1440px] bg-[#650b10] px-7 py-10 text-[#fff7ed] sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:px-14"><div className="max-w-3xl"><p className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#f1d8cf]">Educación · contenido · proyectos</p><h2 className="mt-3 font-serif text-3xl leading-tight sm:text-4xl">¿Colaboramos en educación, contenido o proyectos con impacto?</h2><p className="mt-3 font-serif text-lg text-[#f1e4dd]">Conversemos sobre conferencias, proyectos editoriales, educación y desarrollo institucional.</p></div><a href="/contact" className="mt-7 inline-flex min-h-12 shrink-0 items-center gap-2 bg-[#fff7ed] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#650b10] lg:mt-0">Escribir mensaje <ArrowRight className="h-4 w-4" /></a></div>
+        <section id="perfil" className="scroll-mt-24 bg-[#F3EFE6] py-16 sm:py-20 lg:py-24">
+          <div className="mx-auto grid max-w-[1440px] gap-10 px-5 sm:px-8 lg:grid-cols-[.92fr_1.08fr] lg:items-center lg:gap-16 lg:px-12">
+            <div className="relative flex min-h-[320px] items-center justify-center overflow-hidden border border-[#151515]/12 bg-[#FCFBF8] p-6 sm:min-h-[420px] sm:p-10 lg:min-h-[500px]">
+              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full border border-[#681F27]/20" aria-hidden="true" />
+              <div className="pointer-events-none absolute bottom-8 left-8 h-28 w-28 rounded-full bg-[#681F27]/[.06]" aria-hidden="true" />
+              <Image src={visual('jp-icon')} alt="Juan Pablo Valderrama — filósofo, escritor y conferencista" width={1536} height={768} unoptimized className="relative z-10 h-auto w-full object-contain" sizes="(max-width: 1024px) 90vw, 44vw" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#681F27]">Perfil</p>
+              <h2 className="mt-4 font-serif text-4xl font-normal leading-[1.05] tracking-[-.025em] text-[#151515] sm:text-5xl lg:text-6xl">Pensamiento, educación y construcción.</h2>
+              <p className="mt-6 text-base leading-8 text-[#414141] sm:text-[17px]">Juan Pablo Valderrama Pino es filósofo, educador, escritor y empresario. Fundador de CTG One y desarrollador de proyectos interdisciplinarios en educación, tecnología y cultura.</p>
+              <p className="mt-4 text-base leading-8 text-[#414141] sm:text-[17px]">Su trabajo integra reflexión filosófica, práctica educativa, escritura, pensamiento empresarial e innovación para convertir preguntas rigurosas en aprendizaje, comunicación, producto y acción.</p>
+              <div className="mt-7 flex flex-wrap gap-2">
+                {credentials.map((credential) => <span key={credential} className="border border-[#151515]/15 bg-white/40 px-3 py-2 text-[9px] font-semibold uppercase tracking-[.10em] text-[#414141]">{credential}</span>)}
+              </div>
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <div className="border-t border-[#151515]/12 pt-3"><strong className="font-serif text-lg font-normal">Filosofía</strong><span className="mt-1 block text-[10px] text-[#666]">Universidad de Cartagena</span></div>
+                <div className="border-t border-[#151515]/12 pt-3"><strong className="font-serif text-lg font-normal">Magíster en Filosofía</strong><span className="mt-1 block text-[10px] text-[#666]">Universidad del Norte</span></div>
+                <div className="border-t border-[#151515]/12 pt-3"><strong className="font-serif text-lg font-normal">Leading Change</strong><span className="mt-1 block text-[10px] text-[#666]">Harvard Business School Online</span></div>
+                <div className="border-t border-[#151515]/12 pt-3"><strong className="font-serif text-lg font-normal">Educación bilingüe</strong><span className="mt-1 block text-[10px] text-[#666]">TESOL / TEFL · Google for Education</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white py-20 text-center sm:py-24 lg:py-28">
+          <div className="mx-auto max-w-5xl px-5 sm:px-8">
+            <Image src={visual('jp-icon')} alt="Marca Juan Pablo Valderrama" width={1536} height={768} unoptimized className="mx-auto h-auto w-[220px] object-contain sm:w-[260px]" sizes="260px" />
+            <blockquote className="mx-auto mt-8 max-w-4xl font-serif text-3xl font-normal leading-[1.18] tracking-[-.02em] text-[#151515] sm:text-4xl lg:text-5xl">“La filosofía no explica el mundo, lo transforma.”</blockquote>
+            <p className="mt-6 text-[9px] font-semibold uppercase tracking-[.18em] text-[#777]">Juan Pablo Valderrama</p>
+          </div>
+        </section>
+
+        <section id="contacto" className="border-t border-white/10 bg-[#111] py-14 text-[#FCFBF8] sm:py-16">
+          <div className="mx-auto flex max-w-[1440px] flex-col gap-8 px-5 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:px-12">
+            <div className="max-w-3xl"><p className="text-[10px] font-semibold uppercase tracking-[.20em] text-[#D4AEB3]">Educación · contenido · proyectos</p><h2 className="mt-4 font-serif text-3xl font-normal leading-tight text-white sm:text-4xl">Conferencias, proyectos editoriales, educación y desarrollo institucional.</h2><p className="mt-4 max-w-2xl text-sm leading-7 text-[#AAA] sm:text-base">Un punto de encuentro para convertir ideas en conversaciones, aprendizaje y proyectos concretos.</p></div>
+            <a href="/contact" className="inline-flex min-h-12 shrink-0 items-center gap-2 border border-white px-6 text-[10px] font-bold uppercase tracking-[.15em] text-white transition hover:border-[#681F27] hover:bg-[#681F27] sm:text-xs">Escribir mensaje <ArrowRight className="h-4 w-4" /></a>
+          </div>
         </section>
       </div>
 
-      <footer className="border-t border-[#6f0d12]/10 bg-[#f7f0e7]"><div className="mx-auto flex max-w-[1440px] flex-col gap-3 px-5 py-7 text-[9px] font-semibold uppercase tracking-[.2em] text-[#665950] sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12"><p>CTG One · Educación · Tecnología · Desarrollo humano</p><p className="text-[#6f0d12]">ctgone.com/jpvalderrama</p></div></footer>
+      <footer className="border-t border-white/10 bg-[#111] text-[#EEE]"><div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-5 py-8 sm:px-8 md:flex-row md:items-end md:justify-between lg:px-12"><div><p className="font-serif text-2xl tracking-[.04em] text-white">Juan Pablo Valderrama</p><p className="mt-1 text-[10px] text-[#999]">Filosofía · Educación · Escritura · Proyectos</p></div><div className="flex flex-wrap gap-4 text-[9px] font-semibold uppercase tracking-[.14em] text-[#BBB]"><a href="/jpvalderrama/talks" className="hover:text-white">Talks</a><a href="/jpvalderrama/ideas" className="hover:text-white">Ideas</a><a href="/jpvalderrama/books" className="hover:text-white">Books</a><a href="/jpvalderrama/projects" className="hover:text-white">Projects</a><a href="/contact" className="hover:text-white">Contacto</a></div></div></footer>
     </main>
   );
 }

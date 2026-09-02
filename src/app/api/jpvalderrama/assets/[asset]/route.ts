@@ -6,14 +6,15 @@ export const runtime = 'nodejs';
 
 const ASSETS = {
   'books-desk': 'books.webp',
-  'thought-map': 'projects.webp',
+  'thought-map': 'thought-map.webp',
   'philosophy-money': 'ideas.webp',
   waveform: 'talks.webp',
   'conference-hero': 'conference.webp',
-  'philosophy-technology': 'projects.webp',
+  'philosophy-technology': 'philosophy-technology.webp',
   'conference-poster': 'conference.webp',
   'jp-icon': 'brand.webp',
   'ideas-button': 'ideas.webp',
+  'projects-button': 'projects.webp',
 } as const;
 
 type AssetName = keyof typeof ASSETS;
