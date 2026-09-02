@@ -31,7 +31,7 @@ jobs:
       HEALTH_URL: ${{ github.event.inputs.health_url || 'https://ctgone.com/api/health' }}
       EXPECTED_DEPLOYMENT_SHA: ${{ github.event.inputs.expected_sha || github.sha }}
       EXPECTED_DEPLOYMENT_BRANCH: main
-      CANARY_ATTEMPTS: '24'
+      CANARY_ATTEMPTS: '10'
       CANARY_INTERVAL_MS: '25000'
       CANARY_REQUEST_TIMEOUT_MS: '10000'
       WALLET_PROVIDER_READINESS_TIMEOUT_MS: '10000'
