@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0103",
-    "schemaMigrationName": "vertice_federation_authorization_codes",
-    "schemaMigrationCount": 103,
+    "schemaMigration": "0104",
+    "schemaMigrationName": "converge_acquisition_service_portfolio",
+    "schemaMigrationCount": 104,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
