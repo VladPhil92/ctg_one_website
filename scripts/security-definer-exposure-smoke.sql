@@ -146,6 +146,22 @@ END $$;
 
 DO $$
 DECLARE
+  v_oid oid := to_regprocedure('public.get_investment_money_rail_health()');
+BEGIN
+  IF v_oid IS NULL THEN
+    RAISE EXCEPTION '0108 internal SECURITY DEFINER RPC missing: public.get_investment_money_rail_health()';
+  END IF;
+  IF has_function_privilege('anon',v_oid,'EXECUTE')
+     OR has_function_privilege('authenticated',v_oid,'EXECUTE') THEN
+    RAISE EXCEPTION '0108 internal SECURITY DEFINER RPC still exposed: public.get_investment_money_rail_health()';
+  END IF;
+  IF NOT has_function_privilege('service_role',v_oid,'EXECUTE') THEN
+    RAISE EXCEPTION '0108 internal SECURITY DEFINER RPC missing service_role execution: public.get_investment_money_rail_health()';
+  END IF;
+END $$;
+
+DO $$
+DECLARE
   v_signature text;
   v_oid oid;
 BEGIN
@@ -153,21 +169,22 @@ BEGIN
     'public.create_production_lot_from_style(text,text,integer,integer,bigint,bigint,bigint,bigint,bigint,numeric,numeric,integer)',
     'public.update_investment_beer_style_economics(text,bigint,bigint,bigint,bigint,bigint,numeric,numeric)',
     'public.get_inventory_reconciliation(uuid)',
-    'public.get_investment_money_rail_health()',
     'public.get_investment_provider_reconciliation_health()',
     'public.get_sales_return_reconciliation(uuid)'
   ]::text[]
   LOOP
     v_oid := to_regprocedure(v_signature);
     IF v_oid IS NULL THEN
-      RAISE EXCEPTION '0107 reviewed internal SECURITY DEFINER RPC missing: %',v_signature;
+      RAISE EXCEPTION '0108 live authenticated SECURITY DEFINER RPC missing: %',v_signature;
     END IF;
-    IF has_function_privilege('anon',v_oid,'EXECUTE')
-       OR has_function_privilege('authenticated',v_oid,'EXECUTE') THEN
-      RAISE EXCEPTION '0107 internal SECURITY DEFINER RPC still exposed: %',v_signature;
+    IF has_function_privilege('anon',v_oid,'EXECUTE') THEN
+      RAISE EXCEPTION '0108 live SECURITY DEFINER RPC exposed to anon: %',v_signature;
+    END IF;
+    IF NOT has_function_privilege('authenticated',v_oid,'EXECUTE') THEN
+      RAISE EXCEPTION '0108 live SECURITY DEFINER RPC unavailable to authenticated application flow: %',v_signature;
     END IF;
     IF NOT has_function_privilege('service_role',v_oid,'EXECUTE') THEN
-      RAISE EXCEPTION '0107 internal SECURITY DEFINER RPC missing service_role execution: %',v_signature;
+      RAISE EXCEPTION '0108 live SECURITY DEFINER RPC missing service_role execution: %',v_signature;
     END IF;
   END LOOP;
 END $$;
