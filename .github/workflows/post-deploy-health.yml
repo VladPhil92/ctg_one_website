@@ -10,7 +10,7 @@ on:
         required: false
         type: string
       health_url:
-        description: 'Health endpoint to verify; public, Investment and Wallet probes derive from the same origin'
+        description: 'Health endpoint to verify; Investment probes derive from the same origin; public and Wallet probes use that origin too'
         required: false
         default: 'https://ctgone.com/api/health'
         type: string
