@@ -104,33 +104,44 @@ export default function EducationAccessLifecyclePage() {
   const load = useCallback(async (targetPage: number) => {
     if (!isAuthenticated || profile?.role !== 'admin') return;
     setState('loading');
-    try {
-      const response = await fetch(`/api/education/operations/lifecycle?page=${targetPage}&pageSize=50`, { cache: 'no-store' });
+
+    const requestPage = async (requestedPage: number): Promise<LifecycleResponse | null> => {
+      const response = await fetch(`/api/education/operations/lifecycle?page=${requestedPage}&pageSize=50`, { cache: 'no-store' });
       const payload = (await response.json().catch(() => ({}))) as LifecycleResponse;
       if (response.status === 403) {
         setState('forbidden');
-        return;
+        return null;
       }
-      if (!response.ok || !payload.ok) {
-        setState('error');
+      if (!response.ok || !payload.ok) return null;
+      return payload;
+    };
+
+    try {
+      let payload = await requestPage(targetPage);
+      if (!payload) {
+        if (state !== 'forbidden') setState('error');
         return;
       }
 
       if (payload.pagination && targetPage > payload.pagination.totalPages) {
-        setPage(payload.pagination.totalPages);
-        return;
+        payload = await requestPage(Math.max(1, payload.pagination.totalPages));
+        if (!payload) {
+          if (state !== 'forbidden') setState('error');
+          return;
+        }
       }
 
       setData(payload);
+      setPage(payload.pagination?.page ?? targetPage);
       setState('ready');
     } catch {
       setState('error');
     }
-  }, [isAuthenticated, profile?.role]);
+  }, [isAuthenticated, profile?.role, state]);
 
   useEffect(() => {
-    if (profile?.role === 'admin') void load(page);
-  }, [load, page, profile?.role]);
+    if (profile?.role === 'admin' && state === 'idle') void load(1);
+  }, [load, profile?.role, state]);
 
   const cancellable = useMemo(
     () => (data.queue ?? []).filter((order) => order.status === 'initiated' || order.status === 'pending'),
@@ -265,7 +276,7 @@ export default function EducationAccessLifecyclePage() {
           </section>
 
           {notice ? <p role="status" className="mt-5 rounded-2xl border border-accent/20 bg-accent/10 p-4 text-sm leading-6 text-white/75">{notice}</p> : null}
-          {state === 'error' ? <p role="alert" className="mt-5 rounded-2xl border border-red-400/20 bg-red-500/5 p-4 text-sm text-red-200">No fue posible sincronizar el ciclo de vida educativo. No se modificó ninguna orden.</p> : null}
+          {state === 'error' ? <p role="alert" className="mt-5 rounded-2xl border border-red-400/20 bg-red-500/5 p-4 text-sm text-red-200">No fue posible sincronizar el ciclo de vida educativo. La página visible se conserva; puedes reintentar sin saltar órdenes.</p> : null}
 
           <LifecycleSection
             title="Órdenes pendientes"
@@ -294,8 +305,8 @@ export default function EducationAccessLifecyclePage() {
           <nav aria-label="Paginación de órdenes educativas" className="mt-8 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[.025] p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-white/40">Mostrando {firstVisible}–{lastVisible} de {pagination.total} órdenes · página {pagination.page} de {pagination.totalPages}</p>
             <div className="flex gap-2">
-              <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={!pagination.hasPreviousPage || state === 'loading' || busyId !== null} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 px-3 text-[9px] font-bold uppercase tracking-[.13em] text-white/60 disabled:cursor-not-allowed disabled:opacity-35"><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Anterior</button>
-              <button type="button" onClick={() => setPage((current) => current + 1)} disabled={!pagination.hasNextPage || state === 'loading' || busyId !== null} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 px-3 text-[9px] font-bold uppercase tracking-[.13em] text-white/60 disabled:cursor-not-allowed disabled:opacity-35">Siguiente <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+              <button type="button" onClick={() => void load(Math.max(1, page - 1))} disabled={!pagination.hasPreviousPage || state === 'loading' || busyId !== null} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 px-3 text-[9px] font-bold uppercase tracking-[.13em] text-white/60 disabled:cursor-not-allowed disabled:opacity-35"><ChevronLeft className="h-4 w-4" aria-hidden="true" /> Anterior</button>
+              <button type="button" onClick={() => void load(page + 1)} disabled={!pagination.hasNextPage || state === 'loading' || busyId !== null} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 px-3 text-[9px] font-bold uppercase tracking-[.13em] text-white/60 disabled:cursor-not-allowed disabled:opacity-35">Siguiente <ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
             </div>
           </nav>
 
