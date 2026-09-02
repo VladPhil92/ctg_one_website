@@ -19,8 +19,8 @@ export default function ValderramaIdeasPage() {
   return (
     <JPSubbrandLanding
       active="ideas"
-      image="/jpvalderrama/ideas.webp"
-      imageAlt="Logo Valderrama Ideas"
+      image="/api/jpvalderrama/assets/ideas-button"
+      imageAlt="Identidad original Valderrama Ideas"
       eyebrow="Valderrama Ideas · Ensayo · Análisis · Pensamiento"
       headline="Ideas para pensar el presente con rigor."
       intro="Valderrama Ideas es el archivo editorial de JP Valderrama: un espacio para formular preguntas, construir argumentos y conectar filosofía, educación, tecnología, empresa y cultura."
