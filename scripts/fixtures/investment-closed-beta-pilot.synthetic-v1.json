@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0104",
-    "schemaMigrationName": "converge_acquisition_service_portfolio",
-    "schemaMigrationCount": 104,
+    "schemaMigration": "0105",
+    "schemaMigrationName": "wallet_rls_query_plan_hardening",
+    "schemaMigrationCount": 105,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

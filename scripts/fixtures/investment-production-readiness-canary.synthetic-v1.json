@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0104",
-  "expectedMigrationName": "converge_acquisition_service_portfolio",
-  "expectedMigrationCount": 104,
+  "expectedMigration": "0105",
+  "expectedMigrationName": "wallet_rls_query_plan_hardening",
+  "expectedMigrationCount": 105,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
