@@ -25,6 +25,10 @@ export const FUNNEL_SERVICE_KEYS = [
   'identity',
   'knowledge',
   'nvet',
+  'token',
+  'education_jp',
+  'education_learning_center',
+  'education_library',
 ] as const;
 
 export type FunnelServiceKey = (typeof FUNNEL_SERVICE_KEYS)[number];

@@ -5,6 +5,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 
 const navItems = [
   { href: '/jpvalderrama/campus', label: 'Campus' },
+  { href: '/jpvalderrama/learningcenter', label: 'Learning Center' },
   { href: '/jpvalderrama/talks', label: 'Talks' },
   { href: '/jpvalderrama/ideas', label: 'Ideas' },
   { href: '/jpvalderrama/books', label: 'Books' },
@@ -62,6 +63,7 @@ export function JPValderramaFooter() {
         <div className="flex flex-wrap gap-5 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
           <a href="/jpvalderrama">Perfil</a>
           <a href="/jpvalderrama/campus">Campus</a>
+          <a href="/jpvalderrama/learningcenter">Learning Center</a>
           <a href="/dashboard/educacion">Mi biblioteca</a>
           <a href="/contact">Contacto</a>
           <a href="/">CTG One</a>
