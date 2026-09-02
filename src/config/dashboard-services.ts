@@ -171,6 +171,17 @@ export const DASHBOARD_SERVICES: readonly DashboardService[] = [
     group: 'care',
     status: 'ROADMAP',
   },
+  {
+    id: 'vertice',
+    code: 'CIV-12',
+    title: 'VÉRTICE OS',
+    description: 'Inteligencia ciudadana para reportar, proponer, deliberar, vigilar resultados y construir reputación cívica verificable.',
+    href: 'https://vertice.ctgone.com/auth/ctgone/start',
+    cta: 'Entrar con CTG One',
+    group: 'care',
+    status: 'PILOT',
+    serviceKey: 'vertice',
+  },
 ] as const;
 
 export const DASHBOARD_SERVICE_ROUTES: ReadonlyArray<{
