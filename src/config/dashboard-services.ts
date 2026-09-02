@@ -182,4 +182,4 @@ export const DASHBOARD_SERVICE_ROUTES: ReadonlyArray<{
     prefix,
     serviceKey: service.serviceKey as FunnelServiceKey,
   }));
-});
+}).sort((left, right) => right.prefix.length - left.prefix.length);
