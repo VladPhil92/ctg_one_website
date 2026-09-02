@@ -86,12 +86,12 @@ BEGIN
     RAISE EXCEPTION 'authenticated must not execute transport-less lot creation compatibility RPC';
   END IF;
 
-  IF NOT has_function_privilege(
+  IF has_function_privilege(
     'authenticated',
     'public.update_investment_beer_style_economics(text,bigint,bigint,bigint,bigint,bigint,numeric,numeric)',
     'EXECUTE'
   ) THEN
-    RAISE EXCEPTION 'authenticated must retain transport-aware beer-style economics RPC';
+    RAISE EXCEPTION 'authenticated must not execute transport-aware beer-style economics internal RPC after 0107';
   END IF;
 
   IF has_function_privilege(
