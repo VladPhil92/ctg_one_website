@@ -52,7 +52,8 @@ assert.doesNotMatch(jpPage, /src="\/images\/logo\/ctg-one-logo\.png"/);
 
 // JP Valderrama keeps one institutional header and one canonical brand lockup.
 // Duplicate wrapper/header insertions are treated as a regression before lint,
-// typecheck, build, or browser tests run.
+// typecheck, build, or browser tests run. The editorial container may use the
+// established 1440px width or the HD integration's wider 1500px canvas.
 assert.equal(
   countOccurrences(jpPage, /<header\b/g),
   1,
@@ -64,7 +65,7 @@ assert.equal(
   'JP Valderrama header must render exactly one canonical BrandLogo',
 );
 assert.equal(
-  countOccurrences(jpPage, /min-h-\[76px\][^\n]*max-w-\[1440px\][^\n]*items-center[^\n]*justify-between/g),
+  countOccurrences(jpPage, /min-h-\[76px\][^\n]*max-w-\[(?:1440|1500)px\][^\n]*items-center[^\n]*justify-between/g),
   1,
   'JP Valderrama must keep a single canonical header layout row',
 );
