@@ -6,24 +6,30 @@ import { Container } from '@/components/ui';
 import { BrandLogo } from '@/components/BrandLogo';
 import { FOOTER, CONTACT } from '@/data/content';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CTG_WALLET_URL, VERTICE_URL } from '@/lib/constants';
 import { ArrowUpRight, CircuitBoard, MapPin } from 'lucide-react';
 import styles from '@/styles/CommandCenter.module.css';
 
 const productLinks = [
-  { label: 'CTG One Wallet', href: '/wallet' },
+  { label: 'CTG One Wallet', href: CTG_WALLET_URL },
+  { label: 'Nvet Care', href: '/nvetcareapp' },
+  { label: 'VÉRTICE OS', href: VERTICE_URL },
   { label: 'CTG Craft Beer', href: '/craft-beer' },
   { label: 'CTG Craft Beer Investment', href: '/inversion' },
-  { label: 'Nvet Care', href: '/nvetcareapp' },
+  { label: 'CTGO Token', href: '/ctgotoken' },
 ];
 
 const companyLinks = [
   { label: 'About', href: '/about' },
   { label: 'Ecosystem', href: '/ecosystem' },
+  { label: 'JP Valderrama', href: '/jpvalderrama' },
+  { label: 'Valderrama Learning Center', href: '/jpvalderrama/learningcenter' },
   { label: 'Contact', href: '/contact' },
 ];
 
 const technologyLinks = [
   { label: 'Technology', href: '/services' },
+  { label: 'CTG Knowledge', href: '/knowledge' },
   { label: 'AI', href: '/ai' },
   { label: 'Labs', href: '/labs' },
   { label: 'Technology Status', href: '/technology/status' },
@@ -75,7 +81,7 @@ export const Footer: React.FC = () => {
             {renderLinks(productLinks)}
           </div>
           <div>
-            <div className="mb-4 flex min-h-8 items-center gap-2.5"><span className="h-px w-5 bg-[#248cff]/40" aria-hidden="true" /><h3 className={`${headingClass} text-text-dim`}>{locale === 'es' ? 'Empresa' : 'Company'}</h3></div>
+            <div className="mb-4 flex min-h-8 items-center gap-2.5"><span className="h-px w-5 bg-[#248cff]/40" aria-hidden="true" /><h3 className={`${headingClass} text-text-dim`}>{locale === 'es' ? 'Ecosistema' : 'Ecosystem'}</h3></div>
             {renderLinks(companyLinks)}
           </div>
           <div>

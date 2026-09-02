@@ -5,6 +5,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { HeroSection } from '@/components/sections/HeroSection';
 import { HomeIntroSection } from '@/components/sections/HomeIntroSection';
+import { EcosystemDirectorySection } from '@/components/sections/EcosystemDirectorySection';
 import { WalletProductFeature } from '@/components/sections/WalletProductFeature';
 import { HomeProductShowcases } from '@/components/sections/HomeProductShowcases';
 import { HomeOverviewSection } from '@/components/sections/HomeOverviewSection';
@@ -22,6 +23,7 @@ export default function Home() {
       >
         <HeroSection />
         <HomeIntroSection />
+        <EcosystemDirectorySection />
         <WalletProductFeature />
         <HomeProductShowcases />
         <HomeOverviewSection />
