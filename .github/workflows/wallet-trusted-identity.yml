@@ -16,8 +16,11 @@ on:
       - 'scripts/fixtures/wallet-legacy-evidence.synthetic-v1.json'
       - 'scripts/test-wallet-trusted-identity-invariants.mjs'
       - 'scripts/test-wallet-identity-convergence-canary.mjs'
+      - 'scripts/test-wallet-provider-readiness-contract.mjs'
+      - 'scripts/verify-wallet-provider-readiness.mjs'
       - 'scripts/wallet-trusted-identity-schema-smoke.sql'
       - 'docs/WALLET_LEGACY_IDENTITY_MIGRATION.md'
+      - '.github/workflows/wallet-provider-readiness-canary.yml'
       - '.github/workflows/wallet-trusted-identity.yml'
       - 'package.json'
   push:
@@ -35,8 +38,11 @@ on:
       - 'scripts/fixtures/wallet-legacy-evidence.synthetic-v1.json'
       - 'scripts/test-wallet-trusted-identity-invariants.mjs'
       - 'scripts/test-wallet-identity-convergence-canary.mjs'
+      - 'scripts/test-wallet-provider-readiness-contract.mjs'
+      - 'scripts/verify-wallet-provider-readiness.mjs'
       - 'scripts/wallet-trusted-identity-schema-smoke.sql'
       - 'docs/WALLET_LEGACY_IDENTITY_MIGRATION.md'
+      - '.github/workflows/wallet-provider-readiness-canary.yml'
       - '.github/workflows/wallet-trusted-identity.yml'
       - 'package.json'
 
@@ -73,6 +79,8 @@ jobs:
           node scripts/test-wallet-trusted-identity-invariants.mjs
           node scripts/test-wallet-identity-convergence-canary.mjs
           node scripts/test-wallet-legacy-evidence-importer.mjs
+          node scripts/test-wallet-provider-readiness-contract.mjs
+          node --check scripts/verify-wallet-provider-readiness.mjs
 
       - name: Typecheck trusted server boundary
         run: npx tsc --noEmit
