@@ -45,3 +45,5 @@ assert.ok(paymentProofRoute.indexOf('consumeAuthenticatedRateLimit') < paymentPr
   'Payment proof rate limiting must happen before reading the upload body');
 
 console.log('HTTP security invariants: PASS');
+
+await import('./test-trusted-admin-server-boundary-invariants.mjs');
