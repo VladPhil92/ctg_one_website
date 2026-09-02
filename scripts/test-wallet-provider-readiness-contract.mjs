@@ -15,8 +15,12 @@ for (const fragment of [
   'getPrivyUserByCustomAuthId(READINESS_PROBE_CUSTOM_USER_ID)',
   "code: 'PRIVY_USER_REGISTRY_NOT_CONFIGURED'",
   "code: 'PRIVY_USER_REGISTRY_READY'",
+  'PROVIDER_PROBE_CACHE_TTL_MS = 30_000',
+  'let cachedProbe:',
+  'let inFlightProbe:',
+  'if (cachedProbe && cachedProbe.expiresAt > now)',
+  'if (!inFlightProbe)',
   "'Cache-Control': 'no-store, max-age=0'",
-  'status,',
 ]) {
   assert.ok(route.includes(fragment), `Provider readiness route missing invariant: ${fragment}`);
 }
@@ -44,6 +48,8 @@ for (const fragment of [
 for (const fragment of [
   'name: Wallet Provider Registry Production Canary',
   "cron: '23 * * * *'",
+  'workflow_dispatch:',
+  'ref: main',
   'node scripts/verify-wallet-provider-readiness.mjs',
   'Archive provider readiness evidence',
   'retention-days: 14',
@@ -51,4 +57,9 @@ for (const fragment of [
   assert.ok(workflow.includes(fragment), `Provider readiness workflow missing invariant: ${fragment}`);
 }
 
-console.log('CTG One wallet Privy provider readiness certification contract: PASS');
+assert.ok(
+  !/^\s*push:/m.test(workflow),
+  'Provider production canary must not run on push because Render deploys only after repository checks pass.',
+);
+
+console.log('CTG One wallet bounded post-deploy Privy provider readiness certification contract: PASS');
