@@ -1,0 +1,23 @@
+{
+  "contractVersion": 1,
+  "project": "CTG One Web",
+  "projectId": "mdscwjvlihdiflcvghhk",
+  "capturedAt": "2026-09-02T19:02:00Z",
+  "source": "Supabase production migration history",
+  "migrations": [
+    { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
+    { "logicalVersion": "0096", "remoteVersion": "20260901214127", "remoteName": "jp_education_checkout_hardening" },
+    { "logicalVersion": "0097", "remoteVersion": "20260901232757", "remoteName": "jp_education_settlement_operations" },
+    { "logicalVersion": "0098", "remoteVersion": "20260901235958", "remoteName": "jp_education_index_hardening" },
+    { "logicalVersion": "0099", "remoteVersion": "20260902001302", "remoteName": "jp_education_access_lifecycle" },
+    { "logicalVersion": "0100", "remoteVersion": "20260902005837", "remoteName": "0100_expand_acquisition_service_portfolio" },
+    { "logicalVersion": "0101", "remoteVersion": "20260902135645", "remoteName": "0101_expand_acquisition_service_portfolio_craft_beer" },
+    { "logicalVersion": "0102", "remoteVersion": "20260902135655", "remoteName": "0102_expand_acquisition_service_portfolio_vertice" },
+    { "logicalVersion": "0103", "remoteVersion": "20260902135707", "remoteName": "0103_vertice_federation_authorization_codes" },
+    { "logicalVersion": "0104", "remoteVersion": "20260902135718", "remoteName": "0104_converge_acquisition_service_portfolio" },
+    { "logicalVersion": "0105", "remoteVersion": "20260902140604", "remoteName": "0105_wallet_rls_query_plan_hardening" },
+    { "logicalVersion": "0106", "remoteVersion": "20260902143348", "remoteName": "0106_rls_policy_consolidation" },
+    { "logicalVersion": "0107", "remoteVersion": "20260902153842", "remoteName": "0107_authorization_surface_hardening" },
+    { "logicalVersion": "0108", "remoteVersion": "20260902165429", "remoteName": "application_rpc_boundary_compatibility" }
+  ]
+}
