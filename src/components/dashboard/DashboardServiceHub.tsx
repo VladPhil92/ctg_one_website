@@ -25,6 +25,7 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   wallet: WalletCards,
   investment: Beer,
   identity: ShieldCheck,
+  'craft-beer': Beer,
   nvet: PawPrint,
   token: Coins,
   knowledge: BrainCircuit,
@@ -38,6 +39,8 @@ const STATUS_LABELS: Record<DashboardServiceStatus, string> = {
   LIVE: 'Activo',
   ACCOUNT: 'Mi cuenta',
   PILOT: 'Piloto',
+  DEVELOPMENT: 'En desarrollo',
+  CONSOLIDATION: 'En consolidación',
   ROADMAP: 'Roadmap',
 };
 
@@ -107,7 +110,7 @@ export function DashboardServiceHub() {
               Un acceso para todo el ecosistema
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">
-              Wallet, inversión, identidad, Nvet Care, Token, conocimiento y educación organizados desde un único centro de servicios.
+              Wallet, inversión, Craft Beer, Nvet Care, Token, conocimiento y educación organizados desde un único centro de servicios.
             </p>
           </div>
 
