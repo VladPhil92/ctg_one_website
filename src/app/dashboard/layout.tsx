@@ -8,23 +8,6 @@ import { DASHBOARD_SERVICE_ROUTES } from '@/config/dashboard-services';
 import { trackFunnelEvent } from '@/lib/analytics/client';
 import type { FunnelServiceKey } from '@/lib/analytics/funnel';
 
-const SERVICE_ROUTES: ReadonlyArray<{ prefix: string; serviceKey: FunnelServiceKey }> = [
-  { prefix: '/dashboard/inversion', serviceKey: 'investment' },
-  { prefix: '/inversion/app', serviceKey: 'investment' },
-  { prefix: '/dashboard/depositos', serviceKey: 'wallet' },
-  { prefix: '/dashboard/wallet', serviceKey: 'wallet' },
-  { prefix: '/dashboard/kyc', serviceKey: 'identity' },
-  { prefix: '/knowledge', serviceKey: 'knowledge' },
-  { prefix: '/nvetcareapp', serviceKey: 'nvet' },
-  { prefix: '/ctgotoken', serviceKey: 'token' },
-  { prefix: 'https://vertice.ctgone.com', serviceKey: 'vertice' },
-  { prefix: '/dashboard/educacion', serviceKey: 'education_library' },
-  { prefix: '/jpvalderrama/learningcenter', serviceKey: 'education_learning_center' },
-  { prefix: '/jpvalderrama', serviceKey: 'education_jp' },
-];
-
-function serviceForHref(href: string): FunnelServiceKey | null {
-  const match = SERVICE_ROUTES.find(({ prefix }) => href === prefix || href.startsWith(`${prefix}?`) || href.startsWith(`${prefix}/`));
 function serviceForHref(href: string): FunnelServiceKey | null {
   const match = DASHBOARD_SERVICE_ROUTES.find(
     ({ prefix }) => href === prefix || href.startsWith(`${prefix}?`) || href.startsWith(`${prefix}/`),
