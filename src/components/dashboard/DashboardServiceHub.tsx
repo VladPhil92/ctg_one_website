@@ -6,6 +6,7 @@ import {
   BrainCircuit,
   Coins,
   Gift,
+  Landmark,
   LibraryBig,
   PawPrint,
   School,
@@ -33,6 +34,7 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   'learning-center': School,
   'education-library': LibraryBig,
   rewards: Gift,
+  vertice: Landmark,
 };
 
 const STATUS_LABELS: Record<DashboardServiceStatus, string> = {
@@ -47,6 +49,7 @@ const STATUS_LABELS: Record<DashboardServiceStatus, string> = {
 function ServiceCard({ service }: { service: (typeof DASHBOARD_SERVICES)[number] }) {
   const Icon = SERVICE_ICONS[service.id] ?? Sparkles;
   const muted = service.status === 'ROADMAP';
+  const external = /^https:\/\//.test(service.href);
 
   return (
     <article
@@ -71,7 +74,7 @@ function ServiceCard({ service }: { service: (typeof DASHBOARD_SERVICES)[number]
       <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
         <Link
           href={service.href}
-          prefetch={!muted}
+          prefetch={!muted && !external}
           data-service-key={service.serviceKey}
           className={`inline-flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[.13em] transition-colors ${
             muted ? 'text-white/45 hover:text-white/70' : 'text-accent'
@@ -110,7 +113,7 @@ export function DashboardServiceHub() {
               Un acceso para todo el ecosistema
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">
-              Wallet, inversión, Craft Beer, Nvet Care, Token, conocimiento y educación organizados desde un único centro de servicios.
+              Wallet, inversión, Craft Beer, Nvet Care, VÉRTICE, Token, conocimiento y educación organizados desde un único centro de servicios.
             </p>
           </div>
 
@@ -156,7 +159,7 @@ export function DashboardServiceHub() {
         <div className="mt-8 flex items-start gap-3 rounded-2xl border border-accent/15 bg-accent/[.035] px-5 py-4 text-xs leading-5 text-white/45">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
           <span>
-            Las capacidades financieras conservan sus controles de identidad, permisos y reconciliación. El dashboard centraliza acceso y estado; no sustituye las reglas de autorización de cada producto.
+            Cada producto conserva su propia autorización. VÉRTICE usa un código PKCE de un solo uso para acreditar la cuenta CTG One y crea una sesión VÉRTICE independiente; no comparte cookies, wallets ni credenciales financieras.
           </span>
         </div>
       </div>
