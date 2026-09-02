@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0101",
-  "expectedMigrationName": "expand_acquisition_service_portfolio_craft_beer",
-  "expectedMigrationCount": 101,
+  "expectedMigration": "0103",
+  "expectedMigrationName": "vertice_federation_authorization_codes",
+  "expectedMigrationCount": 103,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

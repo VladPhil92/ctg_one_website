@@ -27,6 +27,7 @@ export const FUNNEL_SERVICE_KEYS = [
   'knowledge',
   'nvet',
   'token',
+  'vertice',
   'education_jp',
   'education_learning_center',
   'education_library',

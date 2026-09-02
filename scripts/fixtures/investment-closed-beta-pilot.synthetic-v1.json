@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0101",
-    "schemaMigrationName": "expand_acquisition_service_portfolio_craft_beer",
-    "schemaMigrationCount": 101,
+    "schemaMigration": "0103",
+    "schemaMigrationName": "vertice_federation_authorization_codes",
+    "schemaMigrationCount": 103,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

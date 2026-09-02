@@ -6,6 +6,7 @@ import {
   BrainCircuit,
   Coins,
   Gift,
+  Landmark,
   LibraryBig,
   PawPrint,
   School,
@@ -27,6 +28,7 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   identity: ShieldCheck,
   'craft-beer': Beer,
   nvet: PawPrint,
+  vertice: Landmark,
   token: Coins,
   knowledge: BrainCircuit,
   'education-jp': BookOpen,
@@ -38,6 +40,7 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
 const STATUS_LABELS: Record<DashboardServiceStatus, string> = {
   LIVE: 'Activo',
   ACCOUNT: 'Mi cuenta',
+  BETA: 'Beta',
   PILOT: 'Piloto',
   DEVELOPMENT: 'En desarrollo',
   CONSOLIDATION: 'En consolidación',
@@ -110,7 +113,7 @@ export function DashboardServiceHub() {
               Un acceso para todo el ecosistema
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">
-              Wallet, inversión, Craft Beer, Nvet Care, Token, conocimiento y educación organizados desde un único centro de servicios.
+              Wallet, inversión, Craft Beer, Nvet Care, VÉRTICE OS, Token, conocimiento y educación organizados desde un único centro de servicios.
             </p>
           </div>
 
