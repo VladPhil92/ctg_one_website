@@ -74,10 +74,31 @@ async function readBase64Files(paths: readonly string[]) {
   return Buffer.from(chunks.join(''), 'base64');
 }
 
+function normalizeRiffPadding(bytes: Buffer) {
+  if (bytes.length < 8) return bytes;
+  const declaredLength = bytes.readUInt32LE(4) + 8;
+  const missingBytes = declaredLength - bytes.length;
+
+  // Legacy text-chunk transport dropped up to two terminal RIFF pad bytes.
+  // RIFF pad bytes carry no image payload, so restoring them to zero is lossless.
+  if (missingBytes > 0 && missingBytes <= 2) {
+    return Buffer.concat([bytes, Buffer.alloc(missingBytes)]);
+  }
+
+  return bytes;
+}
+
 async function loadAsset(asset: AssetName) {
-  if (hasOwn(INLINE_ASSETS, asset)) return Buffer.from(INLINE_ASSETS[asset], 'base64');
-  if (hasOwn(BASE64_FILE_ASSETS, asset)) return readBase64Files(BASE64_FILE_ASSETS[asset]);
-  return readFile(join(process.cwd(), 'public', 'jpvalderrama', FILE_ASSETS[asset]));
+  let bytes: Buffer;
+  if (hasOwn(INLINE_ASSETS, asset)) {
+    bytes = Buffer.from(INLINE_ASSETS[asset], 'base64');
+  } else if (hasOwn(BASE64_FILE_ASSETS, asset)) {
+    bytes = await readBase64Files(BASE64_FILE_ASSETS[asset]);
+  } else {
+    bytes = await readFile(join(process.cwd(), 'public', 'jpvalderrama', FILE_ASSETS[asset]));
+  }
+
+  return normalizeRiffPadding(bytes);
 }
 
 function assertWebp(bytes: Buffer) {
