@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0108",
-    "schemaMigrationName": "application_rpc_boundary_compatibility",
-    "schemaMigrationCount": 108,
+    "schemaMigration": "0109",
+    "schemaMigrationName": "add_vertice_federation_authorities",
+    "schemaMigrationCount": 109,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
