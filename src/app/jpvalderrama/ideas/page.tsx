@@ -1,4 +1,5 @@
 import { JPSubbrandLanding } from '@/components/jpvalderrama/JPValderramaShell';
+import { IDEAS_VISUAL_SRC } from '@/data/jpvalderrama-visuals/ideas-src';
 
 const cards = [
   {
@@ -19,7 +20,7 @@ export default function ValderramaIdeasPage() {
   return (
     <JPSubbrandLanding
       active="ideas"
-      image="/api/jpvalderrama/assets/ideas-button"
+      image={IDEAS_VISUAL_SRC}
       imageAlt="Identidad original Valderrama Ideas"
       eyebrow="Valderrama Ideas · Ensayo · Análisis · Pensamiento"
       headline="Ideas para pensar el presente con rigor."
