@@ -18,6 +18,11 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      # CTG One ↔ VÉRTICE OS server-to-server federation trust.
+      # Provision this secret only in Render. Its value must exactly match
+      # CTG_ONE_FEDERATION_SECRET on the production VÉRTICE API in Railway.
+      - key: VERTICE_FEDERATION_SECRET
+        sync: false
       # Canonical server-to-server origin for Nvet Care. This URL is public
       # infrastructure metadata, not a secret. The BFF also carries the same
       # production fallback so a Render environment drift cannot break login.
