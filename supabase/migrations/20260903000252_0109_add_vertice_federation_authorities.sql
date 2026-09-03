@@ -1,30 +1,32 @@
--- Sovereign, server-only authority attestation for downstream federated services.
--- This table is intentionally inaccessible to anon/authenticated roles: only the
--- service-role federation boundary may evaluate or administer these attestations.
+-- Server-managed authorities exported through CTG One federation.
+-- No client role can read or mutate this table; service_role is used only by
+-- the server-side federation exchange endpoint.
 
-create table if not exists public.vertice_federation_authorities (
-  subject_user_id uuid primary key references auth.users(id) on delete restrict,
-  authority text not null check (authority in ('bootstrap_superadmin')),
-  is_active boolean not null default true,
-  granted_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+create table if not exists public.identity_federation_authorities (
+  provider text not null,
+  subject_user_id uuid not null references auth.users(id) on delete cascade,
+  authority text not null,
+  created_at timestamptz not null default now(),
+  revoked_at timestamptz null,
+  primary key (provider, subject_user_id, authority)
 );
 
-alter table public.vertice_federation_authorities enable row level security;
-revoke all on table public.vertice_federation_authorities from anon, authenticated;
+alter table public.identity_federation_authorities enable row level security;
+revoke all on table public.identity_federation_authorities from anon, authenticated;
+grant select on table public.identity_federation_authorities to service_role;
 
-comment on table public.vertice_federation_authorities is
-  'Server-only CTG One authority attestations consumed by trusted downstream federation.';
+create index if not exists idx_identity_federation_authorities_active
+  on public.identity_federation_authorities(provider, authority, subject_user_id)
+  where revoked_at is null;
 
--- Bootstrap deterministically from the sole current CTG One administrator.
--- No personal UUID or email is committed to source control.
-insert into public.vertice_federation_authorities (subject_user_id, authority)
-select p.id, 'bootstrap_superadmin'
+-- Bootstrap only when CTG One has exactly one server-managed admin profile.
+-- No identifier is embedded in source control. On empty/dev databases this
+-- inserts nothing; on the current production dataset it identifies the sole
+-- administrative identity deterministically.
+insert into public.identity_federation_authorities (provider, subject_user_id, authority)
+select 'vertice', p.id, 'bootstrap_superadmin'
 from public.profiles p
 where p.role = 'admin'
-  and 1 = (
-    select count(*)
-    from public.profiles admins
-    where admins.role = 'admin'
-  )
-on conflict (subject_user_id) do nothing;
+  and (select count(*) from public.profiles where role = 'admin') = 1
+on conflict (provider, subject_user_id, authority) do update
+set revoked_at = null;
