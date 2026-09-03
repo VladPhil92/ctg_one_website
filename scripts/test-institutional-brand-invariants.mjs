@@ -97,6 +97,9 @@ const conferenceFiles = [
   'assets/jpvalderrama-hd/conference.00.b64',
   'assets/jpvalderrama-hd/conference.01.b64',
   'assets/jpvalderrama-hd/conference.02.b64',
+  'assets/jpvalderrama-hd/conference.03.b64',
+  'assets/jpvalderrama-hd/conference.04.b64',
+  'assets/jpvalderrama-hd/conference.05.b64',
 ];
 const conferenceChunks = [];
 for (const file of conferenceFiles) {
