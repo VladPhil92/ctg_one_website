@@ -75,10 +75,26 @@ export async function POST(request: Request) {
     return noStoreJson({ error: 'INVALID_OR_EXPIRED_CODE' }, 401);
   }
 
+  // Authorities are server-managed attestations. They are never derived from
+  // user_metadata or other user-editable claims. VERTICE uses the bootstrap
+  // authority only to establish its first superadmin; ongoing grants are
+  // managed inside VERTICE itself.
+  const { data: authorityRows, error: authorityError } = await admin
+    .from('identity_federation_authorities')
+    .select('authority')
+    .eq('provider', VERTICE_FEDERATION_PROVIDER)
+    .eq('subject_user_id', data.subject_user_id)
+    .is('revoked_at', null);
+
+  if (authorityError) {
+    return noStoreJson({ error: 'FEDERATION_AUTHORITY_LOOKUP_FAILED' }, 503);
+  }
+
   return noStoreJson({
     provider: VERTICE_FEDERATION_PROVIDER,
     subject: data.subject_user_id,
     email: data.subject_email,
     email_verified: true,
+    authorities: (authorityRows ?? []).map((row) => row.authority),
   }, 200);
 }
