@@ -32,17 +32,18 @@ const INLINE_ASSETS = {
   'ideas-button': ideas,
 } as const;
 
+const CONFERENCE_SOURCE = [
+  'assets/jpvalderrama-hd/conference.00.b64',
+  'assets/jpvalderrama-hd/conference.01.b64',
+  'assets/jpvalderrama-hd/conference.02.b64',
+  'assets/jpvalderrama-hd/conference.03.b64',
+  'assets/jpvalderrama-hd/conference.04.b64',
+  'assets/jpvalderrama-hd/conference.05.b64',
+] as const;
+
 const BASE64_FILE_ASSETS = {
-  'conference-hero': [
-    'assets/jpvalderrama-hd/conference.00.b64',
-    'assets/jpvalderrama-hd/conference.01.b64',
-    'assets/jpvalderrama-hd/conference.02.b64',
-  ],
-  'conference-poster': [
-    'assets/jpvalderrama-hd/conference.00.b64',
-    'assets/jpvalderrama-hd/conference.01.b64',
-    'assets/jpvalderrama-hd/conference.02.b64',
-  ],
+  'conference-hero': CONFERENCE_SOURCE,
+  'conference-poster': CONFERENCE_SOURCE,
 } as const;
 
 const FILE_ASSETS = {
