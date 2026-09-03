@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
+import { IDEAS_VISUAL_SRC } from '@/data/jpvalderrama-visuals/ideas-src';
 
 const visual = (name: string) => `/api/jpvalderrama/assets/${name}`;
 
@@ -9,7 +10,7 @@ const subbrands = [
     name: 'Valderrama Talks',
     shortName: 'Talks',
     label: 'CONFERENCIAS · CLASES · CONVERSACIONES',
-    image: 'waveform',
+    image: visual('waveform'),
     width: 1536,
     height: 1536,
     href: '/jpvalderrama/talks',
@@ -19,7 +20,7 @@ const subbrands = [
     name: 'Valderrama Ideas',
     shortName: 'Ideas',
     label: 'ENSAYO · ANÁLISIS · PENSAMIENTO',
-    image: 'ideas-button',
+    image: IDEAS_VISUAL_SRC,
     width: 1536,
     height: 1536,
     href: '/jpvalderrama/ideas',
@@ -29,7 +30,7 @@ const subbrands = [
     name: 'Valderrama Books',
     shortName: 'Books',
     label: 'LIBROS · INVESTIGACIÓN · PUBLICACIÓN',
-    image: 'books-desk',
+    image: visual('books-desk'),
     width: 1536,
     height: 1536,
     href: '/jpvalderrama/books',
@@ -39,7 +40,7 @@ const subbrands = [
     name: 'Valderrama Projects',
     shortName: 'Projects',
     label: 'IDEAS · TECNOLOGÍA · CONSTRUCCIÓN',
-    image: 'projects-button',
+    image: visual('projects-button'),
     width: 1536,
     height: 1536,
     href: '/jpvalderrama/projects',
@@ -131,7 +132,7 @@ export default function JPValderramaPage() {
               {subbrands.map((brand) => (
                 <a key={brand.name} href={brand.href} className="group flex min-h-full flex-col border border-[#151515]/12 bg-[#FCFBF8] p-4 transition duration-300 hover:-translate-y-1 hover:border-[#681F27]/35 hover:shadow-[0_20px_55px_rgba(40,22,18,.08)]">
                   <div className="flex aspect-square items-center justify-center overflow-hidden bg-[#F3EFE6] p-2">
-                    <Image src={visual(brand.image)} alt={`Identidad oficial de ${brand.name}`} width={brand.width} height={brand.height} unoptimized className="h-full w-full object-contain" sizes="(max-width: 640px) 90vw, (max-width: 1280px) 45vw, 320px" />
+                    <Image src={brand.image} alt={`Identidad oficial de ${brand.name}`} width={brand.width} height={brand.height} unoptimized className="h-full w-full object-contain" sizes="(max-width: 640px) 90vw, (max-width: 1280px) 45vw, 320px" />
                   </div>
                   <div className="flex flex-1 flex-col px-1 pb-1 pt-5">
                     <p className="text-[9px] font-bold uppercase tracking-[.16em] text-[#681F27]">{brand.label}</p>
