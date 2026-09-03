@@ -1,9 +1,6 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import conference00 from '@/data/jpvalderrama-visuals/conference-00';
-import conference01 from '@/data/jpvalderrama-visuals/conference-01';
-import conference02 from '@/data/jpvalderrama-visuals/conference-02';
 import ideas00 from '@/data/jpvalderrama-visuals/ideas-00';
 import ideas01 from '@/data/jpvalderrama-visuals/ideas-01';
 import ideas02 from '@/data/jpvalderrama-visuals/ideas-02';
@@ -19,7 +16,6 @@ import thoughtMap02 from '@/data/jpvalderrama-visuals/thought-map-02';
 
 export const runtime = 'nodejs';
 
-const conference = [conference00, conference01, conference02].join('');
 const ideas = [ideas00, ideas01, ideas02, ideas03, ideas04].join('');
 const philosophyTechnology = [
   philosophyTechnology00,
@@ -29,15 +25,24 @@ const philosophyTechnology = [
 ].join('');
 const thoughtMap = [thoughtMap00, thoughtMap01, thoughtMap02].join('');
 
-// These visuals are source-controlled as text chunks so the deploy cannot lose
-// them through binary/public-folder drift. They are decoded only when requested.
 const INLINE_ASSETS = {
   'thought-map': thoughtMap,
   'philosophy-money': ideas,
-  'conference-hero': conference,
   'philosophy-technology': philosophyTechnology,
-  'conference-poster': conference,
   'ideas-button': ideas,
+} as const;
+
+const BASE64_FILE_ASSETS = {
+  'conference-hero': [
+    'assets/jpvalderrama-hd/conference.00.b64',
+    'assets/jpvalderrama-hd/conference.01.b64',
+    'assets/jpvalderrama-hd/conference.02.b64',
+  ],
+  'conference-poster': [
+    'assets/jpvalderrama-hd/conference.00.b64',
+    'assets/jpvalderrama-hd/conference.01.b64',
+    'assets/jpvalderrama-hd/conference.02.b64',
+  ],
 } as const;
 
 const FILE_ASSETS = {
@@ -48,28 +53,42 @@ const FILE_ASSETS = {
 } as const;
 
 type InlineAssetName = keyof typeof INLINE_ASSETS;
+type Base64FileAssetName = keyof typeof BASE64_FILE_ASSETS;
 type FileAssetName = keyof typeof FILE_ASSETS;
-type AssetName = InlineAssetName | FileAssetName;
+type AssetName = InlineAssetName | Base64FileAssetName | FileAssetName;
 
-function isAssetName(value: string): value is AssetName {
-  return Object.prototype.hasOwnProperty.call(INLINE_ASSETS, value)
-    || Object.prototype.hasOwnProperty.call(FILE_ASSETS, value);
+function hasOwn<T extends object>(record: T, value: PropertyKey): value is keyof T {
+  return Object.prototype.hasOwnProperty.call(record, value);
 }
 
-function isInlineAsset(value: AssetName): value is InlineAssetName {
-  return Object.prototype.hasOwnProperty.call(INLINE_ASSETS, value);
+function isAssetName(value: string): value is AssetName {
+  return hasOwn(INLINE_ASSETS, value)
+    || hasOwn(BASE64_FILE_ASSETS, value)
+    || hasOwn(FILE_ASSETS, value);
+}
+
+async function readBase64Files(paths: readonly string[]) {
+  const chunks = await Promise.all(
+    paths.map((path) => readFile(join(process.cwd(), path), 'utf8')),
+  );
+  return Buffer.from(chunks.join(''), 'base64');
 }
 
 async function loadAsset(asset: AssetName) {
-  if (isInlineAsset(asset)) return Buffer.from(INLINE_ASSETS[asset], 'base64');
+  if (hasOwn(INLINE_ASSETS, asset)) return Buffer.from(INLINE_ASSETS[asset], 'base64');
+  if (hasOwn(BASE64_FILE_ASSETS, asset)) return readBase64Files(BASE64_FILE_ASSETS[asset]);
   return readFile(join(process.cwd(), 'public', 'jpvalderrama', FILE_ASSETS[asset]));
 }
 
 function assertWebp(bytes: Buffer) {
-  const isWebp = bytes.length >= 12
+  const hasSignature = bytes.length >= 12
     && bytes.subarray(0, 4).toString('ascii') === 'RIFF'
     && bytes.subarray(8, 12).toString('ascii') === 'WEBP';
-  if (!isWebp || bytes.length < 512) throw new Error('Invalid JP Valderrama WebP asset');
+  const declaredLength = bytes.length >= 8 ? bytes.readUInt32LE(4) + 8 : 0;
+
+  if (!hasSignature || bytes.length < 512 || declaredLength !== bytes.length) {
+    throw new Error(`Invalid JP Valderrama WebP asset: actual=${bytes.length}, declared=${declaredLength}`);
+  }
 }
 
 const CACHE_CONTROL = 'public, max-age=0, must-revalidate';
