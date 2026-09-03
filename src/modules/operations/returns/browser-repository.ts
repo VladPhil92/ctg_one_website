@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { callTrustedAdminRpc } from '@/lib/investment/trusted-admin-rpc-client';
 import { MAX_PAGE_SIZE, pageRange } from '@/lib/pagination';
 
 export type Sale = {
@@ -137,15 +138,13 @@ export function createSalesReturnsBrowserRepository() {
     },
 
     async loadSaleDetails(saleId: string): Promise<SaleReturnDetails> {
-      // Only the latest sale selection may complete. This prevents a slow response
-      // for sale A from overwriting the UI after the operator has selected sale B.
       detailController?.abort();
       const controller = new AbortController();
       detailController = controller;
       const supabase = createClient();
 
       try {
-        const [{ data: items, count: itemCount, error: itemsError }, { data: notes, count: noteCount, error: notesError }, { data: reconciliation, error: reconciliationError }] =
+        const [{ data: items, count: itemCount, error: itemsError }, { data: notes, count: noteCount, error: notesError }, reconciliationResult] =
           await Promise.all([
             supabase
               .from('investment_sale_items')
@@ -164,13 +163,11 @@ export function createSalesReturnsBrowserRepository() {
               .order('id', { ascending: false })
               .limit(MAX_CREDIT_NOTES_PER_SALE_FOR_RETURN_UI)
               .abortSignal(controller.signal),
-            supabase
-              .rpc('get_sales_return_reconciliation', { p_sale_id: saleId })
-              .abortSignal(controller.signal),
+            callTrustedAdminRpc<unknown>('sales.reconcileReturn', { p_sale_id: saleId }, controller.signal),
           ]);
         failOnQuery(itemsError, 'No se pudieron cargar los ítems de la venta');
         failOnQuery(notesError, 'No se pudieron cargar las notas crédito de la venta');
-        failOnQuery(reconciliationError, 'No se pudo reconciliar la venta');
+        failOnQuery(reconciliationResult.error, 'No se pudo reconciliar la venta');
 
         if ((itemCount ?? 0) > MAX_ITEMS_PER_SALE_FOR_RETURN_UI) {
           throw new Error(
@@ -201,6 +198,7 @@ export function createSalesReturnsBrowserRepository() {
           throw new DOMException('Superseded Sales Returns detail request', 'AbortError');
         }
 
+        const reconciliation = reconciliationResult.data;
         const reconciliationRow = Array.isArray(reconciliation) ? reconciliation[0] : reconciliation;
         return {
           items: (items ?? []) as SaleItem[],

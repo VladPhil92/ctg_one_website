@@ -3,9 +3,10 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [workflow, verifier, renderConfig, healthRoute] = await Promise.all([
+const [workflow, verifier, publicSurfaceVerifier, renderConfig, healthRoute] = await Promise.all([
   read('.github/workflows/post-deploy-health.yml'),
   read('scripts/verify-deployment-health.mjs'),
+  read('scripts/verify-public-surface-reliability.mjs'),
   read('render.yaml'),
   read('src/app/api/health/route.ts'),
 ]);
@@ -20,6 +21,12 @@ assert.match(workflow, /cron:\s*['"]7,17,27,37,47,57 \* \* \* \*['"]/, 'Schedule
 assert.match(workflow, /EXPECTED_DEPLOYMENT_SHA:\s*\$\{\{ github\.event\.inputs\.expected_sha \|\| github\.sha \}\}/, 'Canary must compare production to the exact workflow target SHA.');
 assert.match(workflow, /EXPECTED_DEPLOYMENT_BRANCH:\s*main/, 'Production canary must require the main branch.');
 assert.match(workflow, /node scripts\/verify-deployment-health\.mjs/, 'Workflow must execute the repository-owned verifier.');
+assert.match(workflow, /node scripts\/verify-public-surface-reliability\.mjs/, 'Workflow must verify public surfaces after deployment identity converges.');
+assert.ok(
+  workflow.indexOf('node scripts/verify-public-surface-reliability.mjs')
+    > workflow.indexOf('node scripts/verify-deployment-health.mjs'),
+  'Public surface verification must run only after the expected Render deployment identity is proven.',
+);
 assert.match(workflow, /timeout-minutes:\s*12/, 'Canary must have a bounded workflow timeout.');
 
 assert.match(verifier, /payload\?\.deployment\?\.commit !== expectedSha/, 'Verifier must require exact Render commit identity.');
@@ -37,6 +44,37 @@ assert.ok(
   'Request timeout must remain active until the health response body is fully consumed.'
 );
 assert.match(verifier, /process\.exit\(1\)/, 'Non-convergence must fail the canary.');
+
+assert.match(publicSurfaceVerifier, /const pagePaths = \['\/jpvalderrama'\]/, 'Public canary must verify the JP Valderrama landing page.');
+for (const asset of [
+  'books-desk',
+  'thought-map',
+  'philosophy-money',
+  'waveform',
+  'conference-hero',
+  'philosophy-technology',
+  'conference-poster',
+  'jp-icon',
+  'ideas-button',
+]) {
+  assert.ok(
+    publicSurfaceVerifier.includes(`/api/jpvalderrama/assets/${asset}`),
+    `Public canary must verify semantic JP asset ${asset}.`,
+  );
+}
+assert.match(publicSurfaceVerifier, /image\/webp/, 'Public asset canary must require the expected image media type.');
+assert.match(publicSurfaceVerifier, /missing ETag/, 'Public asset canary must require ETag support.');
+assert.match(publicSurfaceVerifier, /If-None-Match/, 'Public asset canary must exercise conditional revalidation.');
+assert.match(publicSurfaceVerifier, /expected 304/, 'Public asset canary must require successful ETag revalidation.');
+assert.match(publicSurfaceVerifier, /must-revalidate/i, 'Public asset canary must require a revalidating cache contract.');
+assert.match(publicSurfaceVerifier, /semantic URL must not be immutable/, 'Public asset canary must reject immutable caching for semantic URLs.');
+assert.match(publicSurfaceVerifier, /requestTimeoutMs > 30000/, 'Public surface network requests must have a hard timeout.');
+assert.ok(
+  publicSurfaceVerifier.indexOf('const body = await consume(response);') > -1
+    && publicSurfaceVerifier.indexOf('const body = await consume(response);') < publicSurfaceVerifier.indexOf('clearTimeout(timer);'),
+  'Public surface timeout must remain active until response bodies are fully consumed.',
+);
+assert.match(publicSurfaceVerifier, /process\.exit\(1\)/, 'Any public surface reliability failure must fail the production canary.');
 
 assert.match(renderConfig, /healthCheckPath:\s*\/api\/health/, 'Render must use the same authoritative health endpoint.');
 assert.match(renderConfig, /autoDeployTrigger:\s*checksPass/, 'Render must remain gated on CI checks before deployment.');

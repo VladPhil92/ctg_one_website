@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+await import('./test-wallet-provider-readiness-operations-invariants.mjs');
+
 const root = process.cwd();
 const migrationPath = path.join(
   root,

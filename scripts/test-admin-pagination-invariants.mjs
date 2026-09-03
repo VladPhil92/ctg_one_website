@@ -88,8 +88,9 @@ assert.match(
   'Selecting a new sale must abort any older detail request before it can overwrite the current selection.',
 );
 assert.ok(
-  (returnsRepository.match(/\.abortSignal\(controller\.signal\)/g) ?? []).length >= 4,
-  'All selected-sale detail queries, including credited items, must share the supersession AbortSignal.',
+  (returnsRepository.match(/\.abortSignal\(controller\.signal\)/g) ?? []).length >= 3
+    && returnsRepository.includes("callTrustedAdminRpc<unknown>('sales.reconcileReturn', { p_sale_id: saleId }, controller.signal)"),
+  'All selected-sale detail queries, including trusted reconciliation and credited items, must share the supersession AbortSignal.',
 );
 assert.match(
   returnsRepository,

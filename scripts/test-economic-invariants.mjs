@@ -66,8 +66,8 @@ assert.ok(economicsTranslations.includes('B2B INC · ${match[1]}'), 'Dynamic B2B
 assert.ok(economicsTranslations.includes("en: 'Batch-snapshot simulator'"), 'Simulator copy must have an English translation contract.');
 
 assert.ok(
-  operationsRepository.includes("rpc('update_investment_beer_style_economics'"),
-  'Production OS infrastructure must provide a database-authoritative preset update path.',
+  operationsRepository.includes("callTrustedAdminRpc('production.updateStyleEconomics'"),
+  'Production OS infrastructure must provide a trusted server-boundary preset update path.',
 );
 assert.ok(
   !operations.includes("rpc('update_investment_beer_style_economics'"),

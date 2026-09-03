@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0106",
-    "schemaMigrationName": "rls_policy_consolidation",
-    "schemaMigrationCount": 106,
+    "schemaMigration": "0109",
+    "schemaMigrationName": "add_vertice_federation_authorities",
+    "schemaMigrationCount": 109,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
