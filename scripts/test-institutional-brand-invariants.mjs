@@ -73,11 +73,16 @@ const assertCompleteWebp = (input, label) => {
   assert.equal(bytes.readUInt32LE(4) + 8, bytes.length, `${label} RIFF length must match the delivered payload.`);
 };
 
-const publicVisualFiles = ['books.webp', 'projects.webp', 'talks.webp', 'brand.webp'];
+const publicVisualFiles = ['books.webp', 'projects.webp', 'talks.webp'];
 for (const file of publicVisualFiles) {
   await access(new URL(`../public/jpvalderrama/${file}`, import.meta.url));
   assert.ok(jpAssetRoute.includes(`'${file}'`), `JP visual route must reference committed asset ${file}`);
 }
+
+await access(new URL('../src/data/jpvalderrama-visuals/jp-icon.ts', import.meta.url));
+assert.match(jpAssetRoute, /import jpIcon from '@\/data\/jpvalderrama-visuals\/jp-icon';/);
+assert.match(jpAssetRoute, /'jp-icon': jpIcon/);
+assert.doesNotMatch(jpAssetRoute, /'jp-icon': 'brand\.webp'/);
 
 const inlineVisualGroups = {
   ideas: ['ideas-00.ts', 'ideas-01.ts', 'ideas-02.ts', 'ideas-03.ts', 'ideas-04.ts'],
@@ -144,9 +149,13 @@ assert.match(jpAssetRoute, /normalizeRiffPadding/);
 assert.match(jpAssetRoute, /missingBytes > 0 && missingBytes <= 2/);
 assert.match(jpAssetRoute, /readUInt32LE\(4\) \+ 8/);
 assert.match(jpAssetRoute, /declaredLength !== bytes\.length/);
+assert.match(jpAssetRoute, /payloadEnd > bytes\.length/);
 assert.match(jpAssetRoute, /assertWebp\(bytes\)/);
 assert.match(jpAssetRoute, /if-none-match/i);
 assert.match(jpAssetRoute, /must-revalidate/);
+assert.match(jpAssetRoute, /X-Content-Type-Options/);
 assert.doesNotMatch(jpAssetRoute, /immutable|max-age=31536000/);
+
+await import('./test-jpvalderrama-asset-integrity-invariants.mjs');
 
 console.log('Institutional CTG One Technology brand-lock invariants: PASS');

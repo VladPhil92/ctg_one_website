@@ -6,6 +6,7 @@ import ideas01 from '@/data/jpvalderrama-visuals/ideas-01';
 import ideas02 from '@/data/jpvalderrama-visuals/ideas-02';
 import ideas03 from '@/data/jpvalderrama-visuals/ideas-03';
 import ideas04 from '@/data/jpvalderrama-visuals/ideas-04';
+import jpIcon from '@/data/jpvalderrama-visuals/jp-icon';
 import philosophyTechnology00 from '@/data/jpvalderrama-visuals/philosophy-technology-00';
 import philosophyTechnology01 from '@/data/jpvalderrama-visuals/philosophy-technology-01';
 import philosophyTechnology02 from '@/data/jpvalderrama-visuals/philosophy-technology-02';
@@ -30,6 +31,7 @@ const INLINE_ASSETS = {
   'philosophy-money': ideas,
   'philosophy-technology': philosophyTechnology,
   'ideas-button': ideas,
+  'jp-icon': jpIcon,
 } as const;
 
 const CONFERENCE_SOURCE = [
@@ -49,7 +51,6 @@ const BASE64_FILE_ASSETS = {
 const FILE_ASSETS = {
   'books-desk': 'books.webp',
   waveform: 'talks.webp',
-  'jp-icon': 'brand.webp',
   'projects-button': 'projects.webp',
 } as const;
 
@@ -109,7 +110,32 @@ function assertWebp(bytes: Buffer) {
   const declaredLength = bytes.length >= 8 ? bytes.readUInt32LE(4) + 8 : 0;
 
   if (!hasSignature || bytes.length < 512 || declaredLength !== bytes.length) {
-    throw new Error(`Invalid JP Valderrama WebP asset: actual=${bytes.length}, declared=${declaredLength}`);
+    throw new Error(`Invalid JP Valderrama WebP container: actual=${bytes.length}, declared=${declaredLength}`);
+  }
+
+  let offset = 12;
+  let hasImageChunk = false;
+  while (offset < bytes.length) {
+    if (offset + 8 > bytes.length) {
+      throw new Error(`Invalid JP Valderrama WebP chunk header at offset=${offset}`);
+    }
+
+    const chunkType = bytes.subarray(offset, offset + 4).toString('ascii');
+    const chunkSize = bytes.readUInt32LE(offset + 4);
+    const payloadEnd = offset + 8 + chunkSize;
+    if (payloadEnd > bytes.length) {
+      throw new Error(`Truncated JP Valderrama WebP chunk: type=${chunkType}, end=${payloadEnd}, actual=${bytes.length}`);
+    }
+
+    if (chunkType === 'VP8 ' || chunkType === 'VP8L' || chunkType === 'VP8X') {
+      hasImageChunk = true;
+    }
+
+    offset = payloadEnd + (chunkSize % 2);
+  }
+
+  if (!hasImageChunk || offset !== bytes.length) {
+    throw new Error(`Invalid JP Valderrama WebP chunk layout: offset=${offset}, actual=${bytes.length}`);
   }
 }
 
@@ -127,6 +153,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ asse
     const headers = {
       'Content-Type': 'image/webp',
       'Cache-Control': CACHE_CONTROL,
+      'X-Content-Type-Options': 'nosniff',
       ETag: etag,
     };
 
