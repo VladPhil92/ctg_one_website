@@ -134,10 +134,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ asse
       return new Response(null, { status: 304, headers });
     }
 
-    return new Response(bytes, {
+    const body = Uint8Array.from(bytes);
+    return new Response(body.buffer, {
       headers: {
         ...headers,
-        'Content-Length': String(bytes.length),
+        'Content-Length': String(body.byteLength),
       },
     });
   } catch (error) {
