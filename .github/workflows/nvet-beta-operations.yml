@@ -1,0 +1,37 @@
+name: Nvet Beta Operations Certification
+
+on:
+  pull_request:
+    paths:
+      - 'src/app/nvetcareapp/dashboard/beta/**'
+      - 'src/app/api/nvetcareapp/admin/beta/**'
+      - 'src/lib/nvetcareapp/beta-operations.ts'
+      - 'src/lib/nvetcareapp/beta-types.ts'
+      - 'src/app/nvetcareapp/dashboard/template.tsx'
+      - 'scripts/test-nvetcareapp-beta-operations-invariants.mjs'
+      - '.github/workflows/nvet-beta-operations.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/app/nvetcareapp/dashboard/beta/**'
+      - 'src/app/api/nvetcareapp/admin/beta/**'
+      - 'src/lib/nvetcareapp/beta-operations.ts'
+      - 'src/lib/nvetcareapp/beta-types.ts'
+      - 'src/app/nvetcareapp/dashboard/template.tsx'
+      - 'scripts/test-nvetcareapp-beta-operations-invariants.mjs'
+      - '.github/workflows/nvet-beta-operations.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Canonical Beta Operations Contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22.x'
+      - name: Verify beta operations authority boundary
+        run: node scripts/test-nvetcareapp-beta-operations-invariants.mjs
