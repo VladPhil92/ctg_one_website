@@ -10,6 +10,7 @@ import { VetTesterDashboard } from './vet-tester-dashboard';
 
 const ROOT_NAV = [
   ['/nvetcareapp/dashboard/gobernanza', 'Gobernanza'],
+  ['/nvetcareapp/dashboard/beta', 'Beta Cartagena'],
   ['/nvetcareapp/dashboard/usuarios', 'Usuarios'],
   ['/nvetcareapp/dashboard/veterinarios', 'Veterinarios'],
   ['/nvetcareapp/dashboard/citas-admin', 'Citas'],
@@ -60,7 +61,7 @@ export default async function NvetDashboardTemplate({ children }: { children: Re
     ? 'Operas con el alcance efectivo de un usuario normal. La identidad raíz no cambia y puedes restaurar SUPERADMIN con un clic.'
     : isVetTester
       ? 'Sandbox funcional del dashboard veterinario. La identidad raíz permanece SUPERADMIN y ninguna acción del tester se persiste como operación clínica o profesional real.'
-      : 'Plano de gobierno operativo, clínico, financiero y de seguridad: gobernanza, usuarios, veterinarios, citas, transacciones, excepciones, auditoría y modos de prueba seguros.';
+      : 'Plano de gobierno operativo, clínico, financiero y de seguridad: gobernanza, Beta Cartagena, usuarios, veterinarios, citas, transacciones, excepciones, auditoría y modos de prueba seguros.';
 
   return (
     <>
