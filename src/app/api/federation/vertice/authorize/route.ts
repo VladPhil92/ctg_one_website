@@ -43,7 +43,19 @@ export async function GET(request: Request) {
 
   const auth = await createAuthenticatedRequestContext(request);
   if (!auth) {
-    return noStoreJson({ error: 'AUTHENTICATION_REQUIRED' }, 401);
+    // This endpoint is reached via a full-page browser navigation from
+    // VÉRTICE (window.location.replace), not fetch/XHR. Returning a bare
+    // JSON 401 here left the CTG One user stuck looking at raw JSON with
+    // no way to sign in. Send them to the normal login page and bounce
+    // back to this same authorize request (preserving code_challenge and
+    // state) once they're authenticated.
+    const loginUrl = new URL('/iniciar-sesion', url.origin);
+    loginUrl.searchParams.set('next', `${url.pathname}${url.search}`);
+    const response = NextResponse.redirect(loginUrl, 302);
+    response.headers.set('Cache-Control', 'no-store');
+    response.headers.set('Referrer-Policy', 'no-referrer');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    return response;
   }
 
   const email = auth.user.email?.trim().toLowerCase() ?? '';
