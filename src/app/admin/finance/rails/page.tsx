@@ -16,6 +16,24 @@ const ACTIVE_STATUSES = ['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'PAYMENT_PROCE
 const localNow = () => { const date = new Date(); const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000); return local.toISOString().slice(0, 16); };
 const freshDraft = (): Draft => ({ payoutRail: 'bank_transfer', providerCode: '', idempotencyKey: crypto.randomUUID(), externalReference: '', paidAt: localNow() });
 
+async function runFinancialControl(payload: Record<string, unknown>): Promise<{ error: { message: string } | null }> {
+  try {
+    const response = await fetch('/api/investment/admin/financial-control', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { error: { message: body?.error ?? 'No se pudo completar la operación financiera' } };
+    }
+    return { error: null };
+  } catch {
+    return { error: { message: 'No se pudo conectar con el control financiero' } };
+  }
+}
+
 export default function PaymentRailsAdminPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [destinations, setDestinations] = useState<Record<string, Destination>>({});
@@ -67,24 +85,60 @@ export default function PaymentRailsAdminPage() {
     finally { setBusyId(null); }
   };
 
-  const approve = (withdrawal: Withdrawal) => run(withdrawal.id, () => createClient().rpc('approve_withdrawal', { p_request_id: withdrawal.id }), 'Retiro aprobado y reservado. Aún no se ha debitado el ledger.');
+  const approve = (withdrawal: Withdrawal) => run(
+    withdrawal.id,
+    () => runFinancialControl({ operation: 'withdrawal.approve', requestId: withdrawal.id }),
+    'Retiro aprobado y reservado. Aún no se ha debitado el ledger.',
+  );
   const initiate = (withdrawal: Withdrawal) => {
     const destination = destinations[withdrawal.participant_user_id]; const draft = drafts[withdrawal.id] ?? freshDraft();
     if (!destination?.bank_account_masked || !destination.payout_destination_fingerprint) { setError('El participante no tiene destino de payout registrado.'); return Promise.resolve(); }
     if (!draft.providerCode.trim()) { setError('Debes indicar el proveedor/banco que procesará el payout.'); return Promise.resolve(); }
-    return run(withdrawal.id, () => createClient().rpc('initiate_investment_payout', { p_request_id: withdrawal.id, p_payout_rail: draft.payoutRail, p_provider_code: draft.providerCode.trim(), p_destination_masked: destination.bank_account_masked, p_destination_fingerprint: destination.payout_destination_fingerprint, p_idempotency_key: draft.idempotencyKey, p_notes: null }), 'Payout iniciado. El retiro permanece reservado hasta confirmación externa.');
+    return run(
+      withdrawal.id,
+      () => runFinancialControl({
+        operation: 'payout.initiate',
+        requestId: withdrawal.id,
+        payoutRail: draft.payoutRail,
+        providerCode: draft.providerCode.trim(),
+        destinationMasked: destination.bank_account_masked,
+        destinationFingerprint: destination.payout_destination_fingerprint,
+        idempotencyKey: draft.idempotencyKey,
+        notes: null,
+      }),
+      'Payout iniciado. El retiro permanece reservado hasta confirmación externa.',
+    );
   };
   const confirm = (withdrawal: Withdrawal) => {
     const rail = reconciliation[withdrawal.id]; const draft = drafts[withdrawal.id] ?? freshDraft();
     if (!rail?.payout_id) { setError('No existe payout autoritativo para este retiro.'); return Promise.resolve(); }
     if (!draft.externalReference.trim() || !draft.paidAt) { setError('Referencia externa y fecha de pago son obligatorias.'); return Promise.resolve(); }
     const paidAt = new Date(draft.paidAt); if (Number.isNaN(paidAt.getTime())) { setError('Fecha de pago inválida.'); return Promise.resolve(); }
-    return run(withdrawal.id, () => createClient().rpc('confirm_investment_payout', { p_payout_id: rail.payout_id, p_external_reference: draft.externalReference.trim(), p_paid_at: paidAt.toISOString(), p_notes: null }), 'Payout confirmado: retiro PAID y WITHDRAWAL_DEBIT registrados atómicamente.');
+    return run(
+      withdrawal.id,
+      () => runFinancialControl({
+        operation: 'payout.confirm',
+        payoutId: rail.payout_id,
+        externalReference: draft.externalReference.trim(),
+        paidAt: paidAt.toISOString(),
+        notes: null,
+      }),
+      'Payout confirmado: retiro PAID y WITHDRAWAL_DEBIT registrados atómicamente.',
+    );
   };
   const fail = (withdrawal: Withdrawal) => {
     const rail = reconciliation[withdrawal.id]; if (!rail?.payout_id) return Promise.resolve();
     const reason = window.prompt('Motivo del fallo del payout'); if (!reason?.trim()) return Promise.resolve();
-    return run(withdrawal.id, () => createClient().rpc('fail_investment_payout', { p_payout_id: rail.payout_id, p_reason: reason.trim(), p_external_reference: null }), 'Payout fallido registrado sin débito. El retiro vuelve a APPROVED para reintento.');
+    return run(
+      withdrawal.id,
+      () => runFinancialControl({
+        operation: 'payout.fail',
+        payoutId: rail.payout_id,
+        reason: reason.trim(),
+        externalReference: null,
+      }),
+      'Payout fallido registrado sin débito. El retiro vuelve a APPROVED para reintento.',
+    );
   };
 
   return <div className="space-y-7">

@@ -9,6 +9,7 @@ const orderAdmin = await read('src/app/inversion/admin/orders/page.tsx');
 const orderAdminRepository = await read('src/modules/investment/admin-orders/browser-repository.ts');
 const manualBankVerification = await read('supabase/migrations/0037_manual_bancolombia_bank_verification.sql');
 const payoutAdmin = await read('src/app/admin/finance/rails/page.tsx');
+const financialControl = await read('src/app/api/investment/admin/financial-control/route.ts');
 const liquidity = await read('src/components/inversion/InvestmentLiquidityPanel.tsx');
 const investmentApp = await read('src/app/inversion/app/page.tsx');
 const nav = await read('src/components/admin/AdminNav.tsx');
@@ -42,18 +43,36 @@ assert.ok(rlsPerformance.includes('alter policy investment_payout_events_read_au
 
 assert.ok(
   orderAdmin.includes('createInvestmentAdminOrdersRepository')
-    && orderAdminRepository.includes("rpc('verify_investment_bancolombia_transfer'")
+    && orderAdminRepository.includes('/api/investment/admin/financial-control')
+    && orderAdminRepository.includes("operation: 'funding.verifyBankTransfer'")
     && manualBankVerification.includes('reconcile_investment_order_payment(')
     && !orderAdminRepository.includes("rpc('approve_investment_order'"),
-  'Investment order admin must preserve the human-verification wrapper through its repository boundary and never call legacy evidence approval.',
+  'Investment order admin must preserve human verification through the reviewed server-only financial control boundary.',
 );
-assert.ok(payoutAdmin.includes("rpc('initiate_investment_payout'") && payoutAdmin.includes("rpc('confirm_investment_payout'") && payoutAdmin.includes("rpc('fail_investment_payout'"), 'Finance Admin OS must operate the payout lifecycle through authoritative RPCs.');
+assert.ok(
+  payoutAdmin.includes('/api/investment/admin/financial-control')
+    && payoutAdmin.includes("operation: 'withdrawal.approve'")
+    && payoutAdmin.includes("operation: 'payout.initiate'")
+    && payoutAdmin.includes("operation: 'payout.confirm'")
+    && payoutAdmin.includes("operation: 'payout.fail'")
+    && !payoutAdmin.includes("rpc('approve_withdrawal'")
+    && !payoutAdmin.includes("rpc('initiate_investment_payout'")
+    && !payoutAdmin.includes("rpc('confirm_investment_payout'")
+    && !payoutAdmin.includes("rpc('fail_investment_payout'"),
+  'Finance Admin OS must execute high-impact payout mutations only through the server-only financial control API.',
+);
+assert.ok(
+  financialControl.includes('createAuthenticatedRequestContext(request)')
+    && financialControl.includes('createAdminClient()')
+    && financialControl.includes('p_actor_user_id: context.user.id'),
+  'Financial control API must bind authenticated actor identity before privileged service-role execution.',
+);
 assert.ok(payoutAdmin.includes('ACTIVE_STATUSES') && payoutAdmin.includes(".eq('status', 'PAID')") && payoutAdmin.includes('.limit(60)'), 'Finance console must load all active withdrawals independently from capped paid history.');
 assert.ok(liquidity.includes("rpc('set_investment_payout_destination'") && liquidity.includes("rpc('request_withdrawal'"), 'Participant liquidity UI must register a masked destination before withdrawal requests.');
 assert.ok(liquidity.includes("crypto.subtle.digest('SHA-256'") && liquidity.includes('No escribas el número completo de cuenta'), 'Participant UI must derive a non-secret fingerprint and explicitly avoid raw bank account storage.');
 assert.ok(investmentApp.includes('InvestmentLiquidityPanel'), 'Canonical /inversion/app participant route must expose the payout-destination/withdrawal flow before withdrawal enforcement.');
 assert.ok(nav.includes("href: '/admin/finance/rails'"), 'Payment Rails console must be reachable from Admin OS.');
 const schemaMatch = schemaVersion.match(/'(\d{4})'/);
-assert.ok(schemaMatch && Number(schemaMatch[1]) >= 33, 'Runtime expected migration must remain at or beyond Payment Rails schema 0033.');
+assert.ok(schemaMatch && Number(schemaMatch[1]) >= 113, 'Runtime expected migration must include Financial Privilege Convergence through 0113.');
 
 console.log('Payment reconciliation & payout rail invariants: PASS');
