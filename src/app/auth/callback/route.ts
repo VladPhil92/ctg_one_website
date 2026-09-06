@@ -8,18 +8,19 @@ const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin;
   const code = requestUrl.searchParams.get('code');
   const next = safeRedirectPath(requestUrl.searchParams.get('next'), '/dashboard');
 
   if (!isSupabaseConfigured || !code) {
-    return NextResponse.redirect(new URL('/iniciar-sesion?error=auth_callback_invalid', requestUrl.origin));
+    return NextResponse.redirect(new URL('/iniciar-sesion?error=auth_callback_invalid', origin));
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    return NextResponse.redirect(new URL('/iniciar-sesion?error=auth_callback_failed', requestUrl.origin));
+    return NextResponse.redirect(new URL('/iniciar-sesion?error=auth_callback_failed', origin));
   }
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
     ]);
   }
 
-  const response = NextResponse.redirect(new URL(next, requestUrl.origin));
+  const response = NextResponse.redirect(new URL(next, origin));
   response.cookies.set(ANALYTICS_COOKIE_NAME, anonymousId, {
     httpOnly: true,
     sameSite: 'lax',
