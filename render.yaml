@@ -1,8 +1,10 @@
 services:
   - type: web
-    name: ctg-one-website
+    name: ctg_one_website
     runtime: node
     branch: main
+    plan: free
+    region: oregon
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
