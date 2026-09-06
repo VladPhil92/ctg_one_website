@@ -1,3 +1,4 @@
+# Blueprint reconciliation marker: 2026-09-06. No functional configuration change.
 services:
   - type: web
     name: ctg_one_website
