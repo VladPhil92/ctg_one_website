@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0111",
-    "schemaMigrationName": "admin_server_rpc_boundaries",
-    "schemaMigrationCount": 111,
+    "schemaMigration": "0112",
+    "schemaMigrationName": "revoke_legacy_admin_rpc_client_execution",
+    "schemaMigrationCount": 112,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
