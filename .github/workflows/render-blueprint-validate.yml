@@ -1,0 +1,41 @@
+name: Render Blueprint Validate
+
+on:
+  pull_request:
+    paths:
+      - "render.yaml"
+      - ".github/workflows/render-blueprint-validate.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "render.yaml"
+      - ".github/workflows/render-blueprint-validate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pinned Render CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="2.26.0"
+          archive="cli_${version}_linux_amd64.zip"
+          url="https://github.com/render-oss/cli/releases/download/v${version}/${archive}"
+          curl -fsSL "$url" -o "$archive"
+          echo "d8dad589005d64219869571f7278c07b717d46f53d0784f09dec3cc8eadd955f  $archive" | sha256sum -c -
+          unzip -q "$archive" -d render-cli
+          binary="$(find render-cli -type f -name 'cli_v*' | head -n 1)"
+          test -n "$binary"
+          sudo install -m 0755 "$binary" /usr/local/bin/render
+          render --version
+
+      - name: Validate render.yaml
+        run: render blueprints validate render.yaml
