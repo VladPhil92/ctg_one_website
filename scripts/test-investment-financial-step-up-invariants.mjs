@@ -3,7 +3,6 @@ import path from 'node:path';
 
 const root = process.cwd();
 const files = {
-  migration: path.join(root, 'supabase/migrations/20260906183008_0115_financial_security_step_up_telemetry.sql'),
   route: path.join(root, 'src/app/api/investment/admin/financial-control/route.ts'),
   stepUp: path.join(root, 'src/lib/security/financial-step-up.ts'),
   telemetry: path.join(root, 'src/lib/security/financial-security-events.ts'),
@@ -64,18 +63,19 @@ const mutationIndex = source.route.indexOf('admin.rpc(rpc, {');
 if (!(stepUpIndex >= 0 && authzIndex > stepUpIndex && mutationIndex > authzIndex)) {
   throw new Error('financial step-up must execute before authorization and before privileged mutation');
 }
-if (source.route.includes('recordFinancialSecurityEvent({\n      ...securityContext,\n      bankReference')) {
-  throw new Error('bank references must never enter financial security telemetry');
-}
 
 requireFragments(source.telemetry, 'structured financial security telemetry', [
   "logger.info('security.financial.operation_succeeded'",
-  'logger.error(',
-  'logger.warn(',
-  "Number(EXPECTED_DATABASE_MIGRATION) >= 115",
-  "admin.rpc('record_financial_security_event_server'",
-  'p_actor_user_id: input.actorUserId',
-  'p_correlation_id: input.correlationId',
+  "logger.error('security.financial.authorization_unavailable'",
+  "logger.error('security.financial.authorization_denied'",
+  "logger.warn('security.financial.operation_rejected'",
+  "logger.warn('security.financial.step_up_required'",
+  'actor_user_id: input.actorUserId',
+  'operation: input.operation',
+  'outcome_reason_code: input.reasonCode',
+  'auth_transport: input.transport',
+  'actor_auth_age_seconds: input.actorAuthAgeSeconds',
+  'correlation_id: input.correlationId',
 ]);
 for (const forbiddenField of [
   'bankReference:',
@@ -86,44 +86,30 @@ for (const forbiddenField of [
   'accessToken:',
   'refreshToken:',
   'otp:',
+  'requestBody:',
 ]) {
   if (source.telemetry.includes(forbiddenField)) {
     throw new Error(`financial security telemetry accepts sensitive field: ${forbiddenField}`);
   }
 }
-
-const normalizedMigration = source.migration.replace(/\s+/g, ' ').trim();
-requireFragments(normalizedMigration, '0115 security journal migration', [
-  'create table if not exists public.financial_security_events',
-  'alter table public.financial_security_events enable row level security;',
-  'revoke all on table public.financial_security_events from public, anon, authenticated, service_role;',
-  'create or replace function public.record_financial_security_event_server(',
-  'security definer',
-  "set search_path = ''",
-  'revoke all on function public.record_financial_security_event_server( uuid, text, text, text, text, integer, uuid ) from public, anon, authenticated, service_role;',
-  'grant execute on function public.record_financial_security_event_server( uuid, text, text, text, text, integer, uuid ) to service_role;',
-  'financial_security_events_immutable',
-]);
-for (const forbiddenColumn of [
-  'bank_reference',
-  'transaction_hash',
-  'destination_masked',
-  'destination_fingerprint',
-  'request_body',
-  'access_token',
-  'refresh_token',
-  'otp_code',
-  'email text',
+for (const forbiddenDependency of [
+  "createAdminClient",
+  "record_financial_security_event_server",
+  "EXPECTED_DATABASE_MIGRATION",
 ]) {
-  if (normalizedMigration.includes(forbiddenColumn)) {
-    throw new Error(`0115 journal schema contains prohibited sensitive field: ${forbiddenColumn}`);
+  if (source.telemetry.includes(forbiddenDependency)) {
+    throw new Error(`Phase 5A telemetry must remain schema-free: ${forbiddenDependency}`);
   }
 }
 
 const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(source.schema)?.[1];
-if (!schemaMigration) throw new Error('unable to resolve runtime schema contract');
-if (Number(schemaMigration) < 115 && !source.telemetry.includes('if (!durableJournalAvailable) return true;')) {
-  throw new Error('durable journal must remain gated while production runtime schema is below 0115');
+const schemaCount = Number(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(source.schema)?.[1]);
+const schemaName = /EXPECTED_DATABASE_MIGRATION_NAME\s*=\s*['"]([^'"]+)['"]/.exec(source.schema)?.[1];
+if (schemaMigration !== '0114' || schemaCount !== 114 || schemaName !== 'revoke_legacy_financial_rpc_client_execution') {
+  throw new Error('Phase 5A must preserve the certified production schema contract at 0114/114');
+}
+if (fs.existsSync(path.join(root, 'supabase/migrations/20260906183008_0115_financial_security_step_up_telemetry.sql'))) {
+  throw new Error('Phase 5A must not merge the deferred 0115 durable journal migration');
 }
 
-console.log('Investment financial step-up + telemetry invariants: PASS');
+console.log('Investment financial step-up + structured telemetry invariants: PASS');
