@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0115",
-    "schemaMigrationName": "financial_security_step_up_telemetry",
-    "schemaMigrationCount": 115,
+    "schemaMigration": "0116",
+    "schemaMigrationName": "jp_education_learning_core",
+    "schemaMigrationCount": 116,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

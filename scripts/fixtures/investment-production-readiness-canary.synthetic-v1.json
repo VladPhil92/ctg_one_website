@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0115",
-  "expectedMigrationName": "financial_security_step_up_telemetry",
-  "expectedMigrationCount": 115,
+  "expectedMigration": "0116",
+  "expectedMigrationName": "jp_education_learning_core",
+  "expectedMigrationCount": 116,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

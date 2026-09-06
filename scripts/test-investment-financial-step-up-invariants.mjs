@@ -152,9 +152,8 @@ for (const forbiddenColumn of [
 
 const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(source.schema)?.[1];
 const schemaCount = Number(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(source.schema)?.[1]);
-const schemaName = /EXPECTED_DATABASE_MIGRATION_NAME\s*=\s*['"]([^'"]+)['"]/.exec(source.schema)?.[1];
-if (schemaMigration !== '0115' || schemaCount !== 115 || schemaName !== 'financial_security_step_up_telemetry') {
-  throw new Error('Phase 5C3 must remain schema-compatible with 0115/115');
+if (!schemaMigration || Number(schemaMigration) < 115 || !Number.isSafeInteger(schemaCount) || schemaCount < 115) {
+  throw new Error('Phase 5C3 requires repository schema compatibility floor 0115/115');
 }
 
 console.log('Investment financial fresh-auth + mandatory MFA AAL2 + durable telemetry invariants: PASS');
