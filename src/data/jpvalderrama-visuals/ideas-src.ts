@@ -7,9 +7,10 @@ import ideas04 from '@/data/jpvalderrama-visuals/ideas-04';
 /**
  * Canonical Valderrama Ideas artwork.
  *
- * Keep the visible Ideas identity independent from the dynamic asset endpoint:
- * the browser receives the complete, repository-owned WebP in the rendered
- * markup instead of depending on a second HTTP request to /api/.../ideas-button.
+ * Keep the repository-owned Base64 source for integrity validation, but serve
+ * the visible artwork through the validated semantic asset endpoint. This
+ * keeps Ideas cacheable, observable and consistent with the rest of the
+ * JP Valderrama visual system instead of embedding a large data URI in HTML.
  */
 export const IDEAS_VISUAL_BASE64 = [ideas00, ideas01, ideas02, ideas03, ideas04].join('');
-export const IDEAS_VISUAL_SRC = `data:image/webp;base64,${IDEAS_VISUAL_BASE64}`;
+export const IDEAS_VISUAL_SRC = '/api/jpvalderrama/assets/ideas-button';
