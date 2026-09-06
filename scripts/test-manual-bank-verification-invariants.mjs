@@ -6,9 +6,11 @@ const migration = await read('supabase/migrations/0037_manual_bancolombia_bank_v
 const trustBoundary = await read('supabase/migrations/0038_payment_proof_server_trust_boundary.sql');
 const referenceNormalization = await read('supabase/migrations/0039_manual_bank_reference_normalization.sql');
 const storageBoundary = await read('supabase/migrations/20260828112310_0073_harden_investment_payment_proof_storage.sql');
+const financialBoundary = await read('supabase/migrations/20260906173817_0113_investment_financial_server_boundaries.sql');
 const checkout = await read('src/components/inversion/InvestmentCheckoutClient.tsx');
 const checkoutRepository = await read('src/modules/investment/checkout/browser-repository.ts');
 const uploadRoute = await read('src/app/api/investment/orders/[orderId]/payment-proof/route.ts');
+const financialControl = await read('src/app/api/investment/admin/financial-control/route.ts');
 const admin = await read('src/app/inversion/admin/orders/page.tsx');
 const adminRepository = await read('src/modules/investment/admin-orders/browser-repository.ts');
 const paymentConfig = await read('src/lib/payment-instructions.ts');
@@ -63,7 +65,19 @@ assert.ok(checkoutRepository.includes('/payment-proof'), 'Checkout repository mu
 assert.ok(!checkoutRepository.includes('FormData'), 'Checkout repository must not regress to multipart FormData uploads.');
 
 assert.ok(admin.includes('createInvestmentAdminOrdersRepository'), 'Finance UI must consume the reviewed investment-admin repository boundary.');
-assert.ok(adminRepository.includes("rpc('verify_investment_bancolombia_transfer'"), 'Finance repository must use the human bank verification RPC.');
+assert.ok(
+  adminRepository.includes('/api/investment/admin/financial-control')
+    && adminRepository.includes("operation: 'funding.verifyBankTransfer'")
+    && !adminRepository.includes("rpc('verify_investment_bancolombia_transfer'"),
+  'Finance repository must route authoritative Bancolombia verification through the server-only financial control API.',
+);
+assert.ok(
+  financialBoundary.includes('verify_investment_bancolombia_transfer_server')
+    && financialBoundary.includes("'finance.manage'")
+    && financialControl.includes("'verify_investment_bancolombia_transfer_server'")
+    && financialControl.includes('p_actor_user_id: context.user.id'),
+  'Bancolombia verification must retain finance.manage and canonical actor binding behind service_role.',
+);
 assert.ok(admin.includes('No confirmes por apariencia del comprobante'), 'Finance UI must explicitly warn that visual proof appearance is not authoritative.');
 assert.ok(adminRepository.includes('createSignedUrl'), 'Finance repository must preserve private proof inspection through a short-lived signed URL.');
 assert.ok(adminRepository.includes("rpc('reject_investment_bank_proof'"), 'Finance repository must retain an explicit proof-rejection path with no money facts.');
@@ -72,6 +86,6 @@ assert.ok(paymentConfig.includes('/api/investment/payment-qr'), 'Investment paym
 assert.ok(!paymentConfig.includes('NEXT_PUBLIC_INVESTMENT_BANCOLOMBIA_QR_URL'), 'Approved QR must not depend on a mutable external runtime image URL.');
 assert.ok(paymentConfig.includes("bankName: 'Bancolombia'") && paymentConfig.includes("accountType: 'Cuenta de Ahorros'"), 'Investment QR configuration must describe the agreed Bancolombia savings rail.');
 const expectedVersion = Number(schemaVersion.match(/'(\d{4})'/)?.[1] ?? '0');
-assert.ok(expectedVersion >= 73, 'Runtime expected migration must include KYC and payment-proof storage hardening through 0073.');
+assert.ok(expectedVersion >= 113, 'Runtime expected migration must include financial server boundaries through 0113.');
 
 console.log('Manual Bancolombia bank verification invariants: PASS');
