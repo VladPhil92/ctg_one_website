@@ -22,9 +22,16 @@ const mergedPullRequest = JSON.parse(
 const commitMetadata = JSON.parse(
   readFileSync(requiredEnv('BR_PROVENANCE_COMMIT_METADATA_PATH'), 'utf8'),
 );
+const mergeShape = requiredEnv('BR_PROVENANCE_MERGE_SHAPE');
 const parents = commitMetadata?.parents;
-if (!Array.isArray(parents) || parents.length !== 2) {
-  throw new Error('Merged-main provenance requires an exact two-parent merge commit');
+if (!Array.isArray(parents) || !['merge-commit', 'squash'].includes(mergeShape)) {
+  throw new Error('Merged-main provenance requires a supported GitHub merge shape');
+}
+if (mergeShape === 'merge-commit' && parents.length !== 2) {
+  throw new Error('Merge-commit provenance requires exactly two parents');
+}
+if (mergeShape === 'squash' && parents.length !== 1) {
+  throw new Error('Squash provenance requires exactly one parent');
 }
 
 const evidence = createInvestmentBusinessRuleMainProvenanceEvidence({
@@ -34,8 +41,9 @@ const evidence = createInvestmentBusinessRuleMainProvenanceEvidence({
   sha: requiredEnv('GITHUB_SHA'),
   headSha: requiredEnv('BR_PROVENANCE_HEAD_SHA'),
   eventBefore: requiredEnv('BR_PROVENANCE_EVENT_BEFORE'),
+  mergeShape,
   mergeFirstParentSha: parents[0]?.sha,
-  mergeSecondParentSha: parents[1]?.sha,
+  mergeSecondParentSha: mergeShape === 'merge-commit' ? parents[1]?.sha : null,
   commitVerified: commitMetadata?.commit?.verification?.verified === true,
   governanceBlobSha: requiredEnv('BR_PROVENANCE_GOVERNANCE_BLOB_SHA'),
   candidateBlobSha: requiredEnv('BR_PROVENANCE_CANDIDATE_BLOB_SHA'),
@@ -55,6 +63,7 @@ console.log(JSON.stringify({
   status: evidence.status,
   trustedMainSha: evidence.trustedMainSha,
   beforeSha: evidence.transition.beforeSha,
+  mergeShape: evidence.transition.mergeShape,
   governanceBlobSha: evidence.governance.blobSha,
   mergePr: evidence.mergePullRequest.number,
   workflowEvidenceCandidateEligible: evidence.workflowEvidenceCandidateEligible,
