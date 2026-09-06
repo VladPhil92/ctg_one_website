@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { logger } from '@/lib/observability/logger';
+import { EXPECTED_DATABASE_MIGRATION } from '@/lib/observability/schema-version';
 import { createAdminClient } from '@/lib/supabase/server';
 
 export type FinancialSecurityOperation =
@@ -38,19 +40,50 @@ type FinancialSecurityEventInput = {
   correlationId: string;
 };
 
+const durableJournalAvailable = Number(EXPECTED_DATABASE_MIGRATION) >= 115;
+
+function emitStructuredSecurityEvent(input: FinancialSecurityEventInput) {
+  const context = {
+    actor_user_id: input.actorUserId,
+    operation: input.operation,
+    outcome_reason_code: input.reasonCode,
+    auth_transport: input.transport,
+    actor_auth_age_seconds: input.actorAuthAgeSeconds,
+    correlation_id: input.correlationId,
+    durable_journal_expected: durableJournalAvailable,
+  };
+
+  switch (input.eventType) {
+    case 'FINANCIAL_OPERATION_SUCCEEDED':
+      logger.info('security.financial.operation_succeeded', context);
+      return;
+    case 'FINANCIAL_AUTHORIZATION_UNAVAILABLE':
+    case 'FINANCIAL_AUTHORIZATION_DENIED':
+      logger.error(`security.financial.${input.eventType.toLowerCase()}`, context);
+      return;
+    default:
+      logger.warn(`security.financial.${input.eventType.toLowerCase()}`, context);
+  }
+}
+
 /**
- * Write categorical security telemetry only. This helper deliberately accepts no
+ * Emit categorical security telemetry only. This helper deliberately accepts no
  * arbitrary metadata or financial payload fields, preventing accidental logging
  * of bank references, transaction hashes, payout destinations, notes, tokens,
  * OTPs, emails, or request bodies.
  *
- * Authoritative domain mutations remain fail-closed in their own PostgreSQL
- * boundaries. Telemetry is best-effort so an observability outage cannot become
- * a money-rail outage; failures are surfaced to server logs with identifiers only.
+ * Structured Render telemetry is always emitted. The append-only PostgreSQL sink
+ * is activated only once the runtime schema contract advances to 0115, so code
+ * deployed against the currently certified 0114 production schema never depends
+ * on a migration that has not been authorized yet.
  */
 export async function recordFinancialSecurityEvent(
   input: FinancialSecurityEventInput,
 ): Promise<boolean> {
+  emitStructuredSecurityEvent(input);
+
+  if (!durableJournalAvailable) return true;
+
   try {
     const admin = createAdminClient();
     const { error } = await admin.rpc('record_financial_security_event_server', {
@@ -64,20 +97,20 @@ export async function recordFinancialSecurityEvent(
     });
 
     if (error) {
-      console.error('[security] financial telemetry write failed', {
-        eventType: input.eventType,
+      logger.error('security.financial.durable_journal_write_failed', {
+        event_type: input.eventType,
         operation: input.operation,
-        correlationId: input.correlationId,
-        code: error.code ?? 'UNKNOWN',
+        correlation_id: input.correlationId,
+        database_error_code: error.code ?? 'UNKNOWN',
       });
       return false;
     }
     return true;
   } catch {
-    console.error('[security] financial telemetry unavailable', {
-      eventType: input.eventType,
+    logger.error('security.financial.durable_journal_unavailable', {
+      event_type: input.eventType,
       operation: input.operation,
-      correlationId: input.correlationId,
+      correlation_id: input.correlationId,
     });
     return false;
   }
