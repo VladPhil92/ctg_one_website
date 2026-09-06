@@ -7,6 +7,7 @@ const files = {
   rateMigration: path.join(root, 'supabase/migrations/20260830151000_0082_wallet_topup_rate_limit_scope.sql'),
   ledgerMigration: path.join(root, 'supabase/migrations/20260830231000_0086_wallet_canonical_cop_ledger_authority.sql'),
   ledgerHardeningMigration: path.join(root, 'supabase/migrations/20260830232000_0087_wallet_canonical_cop_ledger_balance_hardening.sql'),
+  privilegeContractionMigration: path.join(root, 'supabase/migrations/20260906170727_0112_revoke_legacy_admin_rpc_client_execution.sql'),
   route: path.join(root, 'src/app/api/wallet/deposits/route.ts'),
   qrRoute: path.join(root, 'src/app/api/wallet/payment-qr/route.ts'),
   page: path.join(root, 'src/app/dashboard/depositos/page.tsx'),
@@ -197,34 +198,52 @@ requireFragments(source.rateMigration, 'rate-limit SQL contract', [
   'v_window_seconds := 600',
 ]);
 
-const privilegedTopupSignatures = [
+const authenticatedAllowlist = source.securityAllowlist.split(/\r?\n/);
+const stillClientCallableTopupSignatures = [
   'public.approve_deposit(p_transaction_id uuid, p_admin_notes text)',
-  'public.reconcile_wallet_topup_claim(p_claim_id uuid, p_admin_notes text)',
-  'public.reject_wallet_topup_claim(p_claim_id uuid, p_reason text)',
-  'public.verify_wallet_topup_claim(p_claim_id uuid, p_verification_notes text)',
 ];
-for (const signature of privilegedTopupSignatures) {
-  if (!source.securityAllowlist.split(/\r?\n/).includes(signature)) {
-    throw new Error(`reviewed SECURITY DEFINER allowlist missing wallet top-up RPC: ${signature}`);
+for (const signature of stillClientCallableTopupSignatures) {
+  if (!authenticatedAllowlist.includes(signature)) {
+    throw new Error(`reviewed SECURITY DEFINER allowlist missing still-client-callable wallet top-up RPC: ${signature}`);
   }
   if (!source.securityBodies.includes(`${signature}\t`)) {
     throw new Error(`reviewed SECURITY DEFINER body registry missing wallet top-up RPC: ${signature}`);
   }
+}
+
+const retiredTopupSignatures = [
+  'public.reconcile_wallet_topup_claim(p_claim_id uuid, p_admin_notes text)',
+  'public.reject_wallet_topup_claim(p_claim_id uuid, p_reason text)',
+  'public.verify_wallet_topup_claim(p_claim_id uuid, p_verification_notes text)',
+];
+for (const signature of retiredTopupSignatures) {
+  if (authenticatedAllowlist.includes(signature)) {
+    throw new Error(`retired wallet top-up RPC regained authenticated EXECUTE allowlist membership: ${signature}`);
+  }
+  if (!source.securityBodies.includes(`${signature}\t`)) {
+    throw new Error(`historical SECURITY DEFINER body registry lost retired wallet top-up RPC fingerprint: ${signature}`);
+  }
   if (!source.securityGuard.includes(`'${signature}'`)) {
-    throw new Error(`SECURITY DEFINER config guard missing hardened wallet top-up RPC: ${signature}`);
+    throw new Error(`SECURITY DEFINER retirement guard missing wallet top-up RPC: ${signature}`);
   }
 }
+requireFragments(source.privilegeContractionMigration, 'phase 3 privilege contraction', [
+  'revoke all on function public.verify_wallet_topup_claim(uuid, text) from public, anon, authenticated, service_role;',
+  'revoke all on function public.reconcile_wallet_topup_claim(uuid, text) from public, anon, authenticated, service_role;',
+  'revoke all on function public.reject_wallet_topup_claim(uuid, text) from public, anon, authenticated, service_role;',
+]);
 requireFragments(source.securityBodies, 'reviewed SECURITY DEFINER body registry', [
   'public.consume_api_rate_limit(p_scope text)\t',
 ]);
 requireFragments(source.securityGuard, 'SECURITY DEFINER config guard', [
   "ARRAY['search_path=\"\"']::text[]",
+  'retired_authenticated_security_definer_signatures',
 ]);
 
 const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(source.schema);
 const schemaCount = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(source.schema);
-if (!schemaMigration || Number(schemaMigration[1]) < 87 || !schemaCount || Number(schemaCount[1]) < 87) {
-  throw new Error('runtime schema contract must include canonical Saldo CTG ledger hardening through 0087');
+if (!schemaMigration || Number(schemaMigration[1]) < 112 || !schemaCount || Number(schemaCount[1]) < 112) {
+  throw new Error('runtime schema contract must include Phase 3 privilege contraction through 0112');
 }
 
 requireFragments(source.smoke, 'PostgreSQL smoke contract', [
