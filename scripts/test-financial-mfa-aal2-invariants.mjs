@@ -75,9 +75,9 @@ if (!(freshAuthIndex >= 0 && mfaIndex > freshAuthIndex && authzIndex > mfaIndex 
 
 requireFragments(source.client, 'interactive step-up client', [
   "body.code === 'FINANCIAL_MFA_REQUIRED'",
-  "'/dashboard/seguridad/mfa'",
+  '/dashboard/seguridad/mfa',
   "body.code === 'FINANCIAL_STEP_UP_REQUIRED'",
-  "'/iniciar-sesion?next='",
+  '/iniciar-sesion?next=',
   'encodeURIComponent(returnPath)',
 ]);
 requireFragments(source.orders, 'funding consumer', [
@@ -91,7 +91,7 @@ requireFragments(source.login, 'post-password MFA routing', [
   'supabase.auth.signInWithPassword',
   'supabase.auth.mfa.getAuthenticatorAssuranceLevel()',
   "assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2'",
-  "'/dashboard/seguridad/mfa?next='",
+  '/dashboard/seguridad/mfa?next=',
 ]);
 
 requireFragments(source.mfaPage, 'TOTP enrollment/challenge surface', [
