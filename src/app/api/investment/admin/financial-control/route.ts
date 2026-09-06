@@ -7,6 +7,7 @@ import {
   isSupabaseConfigured,
   type AuthenticatedRequestContext,
 } from '@/lib/supabase/server';
+import { evaluateFinancialAuthAssurance } from '@/lib/security/financial-auth-assurance';
 import {
   recordFinancialSecurityEvent,
   type FinancialSecurityOperation,
@@ -31,20 +32,9 @@ const investmentRole = z.enum([
 ]);
 
 const requestSchema = z.discriminatedUnion('operation', [
-  z.object({
-    operation: z.literal('withdrawal.approve'),
-    requestId: uuid,
-  }),
-  z.object({
-    operation: z.literal('withdrawal.reject'),
-    requestId: uuid,
-    reason: z.string().trim().min(3).max(1000),
-  }),
-  z.object({
-    operation: z.literal('role.set'),
-    userId: uuid,
-    role: investmentRole,
-  }),
+  z.object({ operation: z.literal('withdrawal.approve'), requestId: uuid }),
+  z.object({ operation: z.literal('withdrawal.reject'), requestId: uuid, reason: z.string().trim().min(3).max(1000) }),
+  z.object({ operation: z.literal('role.set'), userId: uuid, role: investmentRole }),
   z.object({
     operation: z.literal('funding.verifyBankTransfer'),
     orderId: uuid,
@@ -88,11 +78,7 @@ const requestSchema = z.discriminatedUnion('operation', [
 ]);
 
 type FinancialRequest = z.infer<typeof requestSchema>;
-
-type AuthorizationDecision = {
-  allowed: boolean;
-  failed: boolean;
-};
+type AuthorizationDecision = { allowed: boolean; failed: boolean };
 
 async function authorizeFinancialOperation(
   context: AuthenticatedRequestContext,
@@ -102,12 +88,10 @@ async function authorizeFinancialOperation(
     const { data, error } = await context.supabase.rpc('get_investment_role');
     return { allowed: !error && data === 'SUPER_ADMIN', failed: !!error };
   }
-
   if (operation === 'withdrawal.approve' || operation === 'withdrawal.reject') {
     const { data, error } = await context.supabase.rpc('is_investment_admin');
     return { allowed: !error && data === true, failed: !!error };
   }
-
   const { data, error } = await context.supabase.rpc('has_investment_permission', {
     p_permission: 'finance.manage',
   });
@@ -117,20 +101,11 @@ async function authorizeFinancialOperation(
 function serverRpcFor(request: FinancialRequest): { rpc: string; args: Record<string, unknown> } {
   switch (request.operation) {
     case 'withdrawal.approve':
-      return {
-        rpc: 'approve_withdrawal_server',
-        args: { p_request_id: request.requestId },
-      };
+      return { rpc: 'approve_withdrawal_server', args: { p_request_id: request.requestId } };
     case 'withdrawal.reject':
-      return {
-        rpc: 'reject_withdrawal_server',
-        args: { p_request_id: request.requestId, p_reason: request.reason },
-      };
+      return { rpc: 'reject_withdrawal_server', args: { p_request_id: request.requestId, p_reason: request.reason } };
     case 'role.set':
-      return {
-        rpc: 'set_investment_user_role_server',
-        args: { p_user_id: request.userId, p_role: request.role },
-      };
+      return { rpc: 'set_investment_user_role_server', args: { p_user_id: request.userId, p_role: request.role } };
     case 'funding.verifyBankTransfer':
       return {
         rpc: 'verify_investment_bancolombia_transfer_server',
@@ -191,30 +166,14 @@ function serverRpcFor(request: FinancialRequest): { rpc: string; args: Record<st
 
 function rejectedOperationStatus(message: string) {
   const normalized = message.toLowerCase();
-  if (
-    normalized.includes('actor_forbidden') ||
-    normalized.includes('not authorized') ||
-    normalized.includes('finance.manage required')
-  ) {
-    return 403;
-  }
+  if (normalized.includes('actor_forbidden') || normalized.includes('not authorized') || normalized.includes('finance.manage required')) return 403;
   if (normalized.includes('not found')) return 404;
-  if (
-    normalized.includes('required') ||
-    normalized.includes('invalid') ||
-    normalized.includes('must ') ||
-    normalized.includes('cannot ')
-  ) {
-    return 422;
-  }
+  if (normalized.includes('required') || normalized.includes('invalid') || normalized.includes('must ') || normalized.includes('cannot ')) return 422;
   return 409;
 }
 
 function noStoreJson(body: unknown, status = 200) {
-  return NextResponse.json(body, {
-    status,
-    headers: { 'Cache-Control': 'no-store' },
-  });
+  return NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
 function stepUpReasonCode(reason: string): FinancialSecurityReasonCode {
@@ -247,9 +206,7 @@ export async function POST(request: NextRequest) {
   }
 
   const context = await createAuthenticatedRequestContext(request);
-  if (!context) {
-    return noStoreJson({ error: 'authentication required' }, 401);
-  }
+  if (!context) return noStoreJson({ error: 'authentication required' }, 401);
 
   const operation = parsed.data.operation as FinancialSecurityOperation;
   const correlationId = randomUUID();
@@ -268,15 +225,40 @@ export async function POST(request: NextRequest) {
       eventType: 'FINANCIAL_STEP_UP_REQUIRED',
       reasonCode: stepUpReasonCode(stepUp.reason),
     });
-    return noStoreJson(
-      {
-        error: 'recent authentication required',
-        code: 'FINANCIAL_STEP_UP_REQUIRED',
-        correlationId,
-        maxAgeSeconds: FINANCIAL_STEP_UP_MAX_AGE_SECONDS,
-      },
-      428,
-    );
+    return noStoreJson({
+      error: 'recent authentication required',
+      code: 'FINANCIAL_STEP_UP_REQUIRED',
+      correlationId,
+      maxAgeSeconds: FINANCIAL_STEP_UP_MAX_AGE_SECONDS,
+    }, 428);
+  }
+
+  const assurance = await evaluateFinancialAuthAssurance(context);
+  if (assurance.mode === 'assurance-unavailable') {
+    await recordFinancialSecurityEvent({
+      ...securityContext,
+      eventType: 'FINANCIAL_AUTHORIZATION_UNAVAILABLE',
+      reasonCode: 'AUTH_ASSURANCE_BACKEND_ERROR',
+    });
+    return noStoreJson({
+      error: 'authentication assurance check unavailable',
+      code: 'FINANCIAL_AUTH_ASSURANCE_UNAVAILABLE',
+      correlationId,
+    }, 503);
+  }
+  if (!assurance.allowed && assurance.mode === 'mfa-required') {
+    await recordFinancialSecurityEvent({
+      ...securityContext,
+      eventType: 'FINANCIAL_STEP_UP_REQUIRED',
+      reasonCode: 'AAL2_REQUIRED',
+    });
+    return noStoreJson({
+      error: 'multi-factor authentication challenge required',
+      code: 'FINANCIAL_MFA_CHALLENGE_REQUIRED',
+      correlationId,
+      currentLevel: assurance.currentLevel,
+      nextLevel: assurance.nextLevel,
+    }, 428);
   }
 
   const authorization = await authorizeFinancialOperation(context, parsed.data.operation);
@@ -286,10 +268,7 @@ export async function POST(request: NextRequest) {
       eventType: 'FINANCIAL_AUTHORIZATION_UNAVAILABLE',
       reasonCode: 'AUTHORIZATION_BACKEND_ERROR',
     });
-    return noStoreJson(
-      { error: 'authorization check unavailable', code: 'FINANCIAL_AUTHORIZATION_UNAVAILABLE', correlationId },
-      503,
-    );
+    return noStoreJson({ error: 'authorization check unavailable', code: 'FINANCIAL_AUTHORIZATION_UNAVAILABLE', correlationId }, 503);
   }
   if (!authorization.allowed) {
     await recordFinancialSecurityEvent({
@@ -297,18 +276,12 @@ export async function POST(request: NextRequest) {
       eventType: 'FINANCIAL_AUTHORIZATION_DENIED',
       reasonCode: 'INSUFFICIENT_PRIVILEGE',
     });
-    return noStoreJson(
-      { error: 'forbidden', code: 'FINANCIAL_AUTHORIZATION_DENIED', correlationId },
-      403,
-    );
+    return noStoreJson({ error: 'forbidden', code: 'FINANCIAL_AUTHORIZATION_DENIED', correlationId }, 403);
   }
 
   const { rpc, args } = serverRpcFor(parsed.data);
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc(rpc, {
-    p_actor_user_id: context.user.id,
-    ...args,
-  });
+  const { data, error } = await admin.rpc(rpc, { p_actor_user_id: context.user.id, ...args });
 
   if (error) {
     await recordFinancialSecurityEvent({
@@ -316,10 +289,7 @@ export async function POST(request: NextRequest) {
       eventType: 'FINANCIAL_OPERATION_REJECTED',
       reasonCode: 'DOMAIN_REJECTED',
     });
-    return noStoreJson(
-      { error: 'financial operation rejected', code: 'FINANCIAL_OPERATION_REJECTED', correlationId },
-      rejectedOperationStatus(error.message),
-    );
+    return noStoreJson({ error: 'financial operation rejected', code: 'FINANCIAL_OPERATION_REJECTED', correlationId }, rejectedOperationStatus(error.message));
   }
 
   await recordFinancialSecurityEvent({
@@ -327,6 +297,5 @@ export async function POST(request: NextRequest) {
     eventType: 'FINANCIAL_OPERATION_SUCCEEDED',
     reasonCode: null,
   });
-
   return noStoreJson({ data, correlationId });
 }

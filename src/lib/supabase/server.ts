@@ -43,6 +43,12 @@ export type AuthenticatedRequestContext = {
   supabase: SupabaseClient;
   user: User;
   transport: 'bearer' | 'cookie';
+  /**
+   * Server-only credential retained only after `auth.getUser(token)` succeeds.
+   * It exists so Supabase Auth can evaluate MFA/AAL for native/PWA bearer
+   * requests. Never return, log, persist, or copy this value into telemetry.
+   */
+  verifiedBearerToken: string | null;
 };
 
 function parseBearerToken(request: Request): { present: boolean; token: string | null } {
@@ -92,13 +98,18 @@ export async function createAuthenticatedRequestContext(
     const { data, error } = await supabase.auth.getUser(bearer.token);
     if (error || !data.user) return null;
 
-    return { supabase, user: data.user, transport: 'bearer' };
+    return {
+      supabase,
+      user: data.user,
+      transport: 'bearer',
+      verifiedBearerToken: bearer.token,
+    };
   }
 
   const supabase: SupabaseClient = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) return null;
-  return { supabase, user: data.user, transport: 'cookie' };
+  return { supabase, user: data.user, transport: 'cookie', verifiedBearerToken: null };
 }
 
 // Admin-only client using the service role key, which bypasses Row Level
