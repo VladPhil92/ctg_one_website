@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0110",
-    "schemaMigrationName": "service_federation_rate_limits",
-    "schemaMigrationCount": 110,
+    "schemaMigration": "0111",
+    "schemaMigrationName": "admin_server_rpc_boundaries",
+    "schemaMigrationCount": 111,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

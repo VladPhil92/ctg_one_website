@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0110",
-  "expectedMigrationName": "service_federation_rate_limits",
-  "expectedMigrationCount": 110,
+  "expectedMigration": "0111",
+  "expectedMigrationName": "admin_server_rpc_boundaries",
+  "expectedMigrationCount": 111,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

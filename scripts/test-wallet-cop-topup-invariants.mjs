@@ -157,20 +157,38 @@ if (source.adminQueue.includes('/api/admin/deposits/')) {
 }
 
 requireFragments(source.adminVerifyRoute, 'wallet top-up verification route', [
-  ".rpc('verify_wallet_topup_claim'",
+  "rpc('is_admin')",
+  'createAdminClient()',
+  ".rpc('verify_wallet_topup_claim_server'",
+  'p_actor_user_id: user.id',
   'p_claim_id: id',
   'p_verification_notes:',
 ]);
 requireFragments(source.adminReconcileRoute, 'wallet top-up reconciliation route', [
-  ".rpc('reconcile_wallet_topup_claim'",
+  "rpc('is_admin')",
+  'createAdminClient()',
+  ".rpc('reconcile_wallet_topup_claim_server'",
+  'p_actor_user_id: user.id',
   'p_claim_id: id',
   'p_admin_notes:',
 ]);
 requireFragments(source.adminRejectRoute, 'wallet top-up rejection route', [
-  ".rpc('reject_wallet_topup_claim'",
+  "rpc('is_admin')",
+  'createAdminClient()',
+  ".rpc('reject_wallet_topup_claim_server'",
+  'p_actor_user_id: user.id',
   'p_claim_id: id',
   'p_reason:',
 ]);
+for (const [label, route] of [
+  ['verify', source.adminVerifyRoute],
+  ['reconcile', source.adminReconcileRoute],
+  ['reject', source.adminRejectRoute],
+]) {
+  if (route.includes('error: error.message')) {
+    throw new Error(`wallet top-up ${label} route exposes raw database errors`);
+  }
+}
 
 requireFragments(source.rateLimit, 'rate-limit TypeScript contract', ["'wallet.topup-proof'"]);
 requireFragments(source.rateMigration, 'rate-limit SQL contract', [

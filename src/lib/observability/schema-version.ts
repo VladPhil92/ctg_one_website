@@ -1,6 +1,6 @@
-export const EXPECTED_DATABASE_MIGRATION = '0110' as const;
-export const EXPECTED_DATABASE_MIGRATION_NAME = 'service_federation_rate_limits' as const;
-export const EXPECTED_DATABASE_MIGRATION_COUNT = 110 as const;
+export const EXPECTED_DATABASE_MIGRATION = '0111' as const;
+export const EXPECTED_DATABASE_MIGRATION_NAME = 'admin_server_rpc_boundaries' as const;
+export const EXPECTED_DATABASE_MIGRATION_COUNT = 111 as const;
 
 // Wallet Canary V1 depends on migrations through 0091, but it remains compatible
 // with later additive global migrations. These constants express that minimum

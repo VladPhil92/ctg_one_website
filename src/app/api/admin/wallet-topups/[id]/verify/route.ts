@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 
 const bodySchema = z.object({ notes: z.string().trim().max(2000).optional() });
 
@@ -10,14 +10,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
 
+  const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_admin');
+  if (adminCheckError || isAdmin !== true) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
+
   const parsed = bodySchema.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: 'Solicitud inválida' }, { status: 400 });
 
-  const { data, error } = await supabase.rpc('verify_wallet_topup_claim', {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc('verify_wallet_topup_claim_server', {
+    p_actor_user_id: user.id,
     p_claim_id: id,
     p_verification_notes: parsed.data.notes ?? null,
   });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error) return NextResponse.json({ error: 'No fue posible verificar el abono' }, { status: 400 });
   return NextResponse.json({ ok: true, result: data });
 }
