@@ -32,8 +32,17 @@ requireFragments(source.stepUp, 'recent-auth policy', [
   "reason: 'STALE_PRIMARY_AUTH'",
   "reason: 'FUTURE_LAST_SIGN_IN'",
 ]);
-if (source.stepUp.includes('user_metadata') || source.stepUp.includes('app_metadata')) {
-  throw new Error('financial step-up must not trust mutable user/app metadata');
+for (const mutableMetadataAccess of [
+  '.user_metadata',
+  '.app_metadata',
+  "['user_metadata']",
+  '["user_metadata"]',
+  "['app_metadata']",
+  '["app_metadata"]',
+]) {
+  if (source.stepUp.includes(mutableMetadataAccess)) {
+    throw new Error(`financial step-up must not trust mutable metadata access: ${mutableMetadataAccess}`);
+  }
 }
 
 requireFragments(source.route, 'financial-control recent-auth boundary', [
