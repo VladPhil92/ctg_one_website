@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0111",
-  "expectedMigrationName": "admin_server_rpc_boundaries",
-  "expectedMigrationCount": 111,
+  "expectedMigration": "0112",
+  "expectedMigrationName": "revoke_legacy_admin_rpc_client_execution",
+  "expectedMigrationCount": 112,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
