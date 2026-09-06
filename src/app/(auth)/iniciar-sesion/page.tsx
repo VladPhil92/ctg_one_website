@@ -98,8 +98,17 @@ function IniciarSesionForm() {
         password: parsed.data.password,
       });
       if (signInError) throw signInError;
+
+      const { data: assurance, error: assuranceError } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (assuranceError || !assurance) throw assuranceError ?? new Error('MFA_ASSURANCE_UNAVAILABLE');
+
       void trackFunnelEvent('first_login', { sourcePath: '/iniciar-sesion' });
-      router.push(redirectTo);
+      if (assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2') {
+        router.push(`/dashboard/seguridad/mfa?next=${encodeURIComponent(redirectTo)}`);
+      } else {
+        router.push(redirectTo);
+      }
       router.refresh();
     } catch (err) {
       setError(authErrorMessage(err, locale, 'login'));
