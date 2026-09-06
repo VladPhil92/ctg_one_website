@@ -188,8 +188,8 @@ if (!schemaMigration || Number(schemaMigration[1]) < 114) {
 if (!schemaCount || Number(schemaCount[1]) < 114) {
   throw new Error('runtime schema migration count must include 0114');
 }
-if (!schemaName || schemaName[1] !== 'revoke_legacy_financial_rpc_client_execution') {
-  throw new Error('runtime schema name must identify the 0114 financial privilege contraction');
+if (Number(schemaMigration[1]) === 114 && (!schemaName || schemaName[1] !== 'revoke_legacy_financial_rpc_client_execution')) {
+  throw new Error('runtime schema name must identify the 0114 contraction while 0114 is the latest release schema');
 }
 
 console.log('Investment financial privilege boundary invariants: PASS');
