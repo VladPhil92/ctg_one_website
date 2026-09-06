@@ -1,0 +1,47 @@
+name: Investment Financial Privilege Boundary
+
+on:
+  pull_request:
+    paths:
+      - 'src/app/api/investment/admin/financial-control/**'
+      - 'src/lib/supabase/server.ts'
+      - 'src/lib/observability/schema-version.ts'
+      - 'supabase/migrations/**'
+      - 'scripts/test-investment-financial-privilege-boundary.mjs'
+      - '.github/workflows/investment-financial-privilege-boundary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/app/api/investment/admin/financial-control/**'
+      - 'src/lib/supabase/server.ts'
+      - 'src/lib/observability/schema-version.ts'
+      - 'supabase/migrations/**'
+      - 'scripts/test-investment-financial-privilege-boundary.mjs'
+      - '.github/workflows/investment-financial-privilege-boundary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  financial-privilege-boundary:
+    name: Financial server-only authorization contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify financial privilege invariants
+        run: node scripts/test-investment-financial-privilege-boundary.mjs
+
+      - name: Typecheck financial server boundary
+        run: npx tsc --noEmit
