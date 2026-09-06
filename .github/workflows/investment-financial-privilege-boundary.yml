@@ -4,23 +4,33 @@ on:
   pull_request:
     paths:
       - 'src/app/api/investment/admin/financial-control/**'
+      - 'src/app/(auth)/iniciar-sesion/**'
+      - 'src/app/dashboard/seguridad/mfa/**'
+      - 'src/app/admin/finance/rails/**'
+      - 'src/modules/investment/admin-orders/**'
       - 'src/lib/security/**'
       - 'src/lib/supabase/server.ts'
       - 'src/lib/observability/schema-version.ts'
       - 'supabase/migrations/**'
       - 'scripts/test-investment-financial-privilege-boundary.mjs'
       - 'scripts/test-investment-financial-step-up-invariants.mjs'
+      - 'scripts/test-financial-mfa-aal2-invariants.mjs'
       - '.github/workflows/investment-financial-privilege-boundary.yml'
   push:
     branches: [main]
     paths:
       - 'src/app/api/investment/admin/financial-control/**'
+      - 'src/app/(auth)/iniciar-sesion/**'
+      - 'src/app/dashboard/seguridad/mfa/**'
+      - 'src/app/admin/finance/rails/**'
+      - 'src/modules/investment/admin-orders/**'
       - 'src/lib/security/**'
       - 'src/lib/supabase/server.ts'
       - 'src/lib/observability/schema-version.ts'
       - 'supabase/migrations/**'
       - 'scripts/test-investment-financial-privilege-boundary.mjs'
       - 'scripts/test-investment-financial-step-up-invariants.mjs'
+      - 'scripts/test-financial-mfa-aal2-invariants.mjs'
       - '.github/workflows/investment-financial-privilege-boundary.yml'
 
 permissions:
@@ -49,6 +59,9 @@ jobs:
 
       - name: Verify financial step-up and telemetry invariants
         run: node scripts/test-investment-financial-step-up-invariants.mjs
+
+      - name: Verify Finance OS MFA AAL2 invariants
+        run: node scripts/test-financial-mfa-aal2-invariants.mjs
 
       - name: Typecheck financial server boundary
         run: npx tsc --noEmit
