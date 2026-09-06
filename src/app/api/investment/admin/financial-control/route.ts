@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import {
@@ -6,6 +7,15 @@ import {
   isSupabaseConfigured,
   type AuthenticatedRequestContext,
 } from '@/lib/supabase/server';
+import {
+  recordFinancialSecurityEvent,
+  type FinancialSecurityOperation,
+  type FinancialSecurityReasonCode,
+} from '@/lib/security/financial-security-events';
+import {
+  evaluateFinancialStepUp,
+  FINANCIAL_STEP_UP_MAX_AGE_SECONDS,
+} from '@/lib/security/financial-step-up';
 
 const uuid = z.string().uuid();
 const optionalNotes = z.string().trim().max(1000).nullable().optional();
@@ -207,6 +217,18 @@ function noStoreJson(body: unknown, status = 200) {
   });
 }
 
+function stepUpReasonCode(reason: string): FinancialSecurityReasonCode {
+  switch (reason) {
+    case 'MISSING_LAST_SIGN_IN':
+    case 'INVALID_LAST_SIGN_IN':
+    case 'FUTURE_LAST_SIGN_IN':
+    case 'STALE_PRIMARY_AUTH':
+      return reason;
+    default:
+      return 'STALE_PRIMARY_AUTH';
+  }
+}
+
 export async function POST(request: NextRequest) {
   if (!isSupabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return noStoreJson({ error: 'financial control unavailable' }, 503);
@@ -229,12 +251,56 @@ export async function POST(request: NextRequest) {
     return noStoreJson({ error: 'authentication required' }, 401);
   }
 
+  const operation = parsed.data.operation as FinancialSecurityOperation;
+  const correlationId = randomUUID();
+  const stepUp = evaluateFinancialStepUp(context.user);
+  const securityContext = {
+    actorUserId: context.user.id,
+    operation,
+    transport: context.transport,
+    actorAuthAgeSeconds: stepUp.ageSeconds,
+    correlationId,
+  } as const;
+
+  if (!stepUp.allowed) {
+    await recordFinancialSecurityEvent({
+      ...securityContext,
+      eventType: 'FINANCIAL_STEP_UP_REQUIRED',
+      reasonCode: stepUpReasonCode(stepUp.reason),
+    });
+    return noStoreJson(
+      {
+        error: 'recent authentication required',
+        code: 'FINANCIAL_STEP_UP_REQUIRED',
+        correlationId,
+        maxAgeSeconds: FINANCIAL_STEP_UP_MAX_AGE_SECONDS,
+      },
+      428,
+    );
+  }
+
   const authorization = await authorizeFinancialOperation(context, parsed.data.operation);
   if (authorization.failed) {
-    return noStoreJson({ error: 'authorization check unavailable' }, 503);
+    await recordFinancialSecurityEvent({
+      ...securityContext,
+      eventType: 'FINANCIAL_AUTHORIZATION_UNAVAILABLE',
+      reasonCode: 'AUTHORIZATION_BACKEND_ERROR',
+    });
+    return noStoreJson(
+      { error: 'authorization check unavailable', code: 'FINANCIAL_AUTHORIZATION_UNAVAILABLE', correlationId },
+      503,
+    );
   }
   if (!authorization.allowed) {
-    return noStoreJson({ error: 'forbidden' }, 403);
+    await recordFinancialSecurityEvent({
+      ...securityContext,
+      eventType: 'FINANCIAL_AUTHORIZATION_DENIED',
+      reasonCode: 'INSUFFICIENT_PRIVILEGE',
+    });
+    return noStoreJson(
+      { error: 'forbidden', code: 'FINANCIAL_AUTHORIZATION_DENIED', correlationId },
+      403,
+    );
   }
 
   const { rpc, args } = serverRpcFor(parsed.data);
@@ -245,11 +311,22 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
+    await recordFinancialSecurityEvent({
+      ...securityContext,
+      eventType: 'FINANCIAL_OPERATION_REJECTED',
+      reasonCode: 'DOMAIN_REJECTED',
+    });
     return noStoreJson(
-      { error: 'financial operation rejected' },
+      { error: 'financial operation rejected', code: 'FINANCIAL_OPERATION_REJECTED', correlationId },
       rejectedOperationStatus(error.message),
     );
   }
 
-  return noStoreJson({ data });
+  await recordFinancialSecurityEvent({
+    ...securityContext,
+    eventType: 'FINANCIAL_OPERATION_SUCCEEDED',
+    reasonCode: null,
+  });
+
+  return noStoreJson({ data, correlationId });
 }

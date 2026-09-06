@@ -109,7 +109,7 @@ requireFragments(source.route, 'financial control API', [
   "p_permission: 'finance.manage'",
   'p_actor_user_id: context.user.id',
   "'Cache-Control': 'no-store'",
-  "{ error: 'financial operation rejected' }",
+  "error: 'financial operation rejected'",
 ]);
 
 for (const wrapper of wrappers) {
