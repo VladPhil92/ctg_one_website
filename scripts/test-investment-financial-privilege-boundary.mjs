@@ -5,6 +5,8 @@ const root = process.cwd();
 const files = {
   migration: path.join(root, 'supabase/migrations/20260906173817_0113_investment_financial_server_boundaries.sql'),
   route: path.join(root, 'src/app/api/investment/admin/financial-control/route.ts'),
+  orderRepository: path.join(root, 'src/modules/investment/admin-orders/browser-repository.ts'),
+  payoutAdmin: path.join(root, 'src/app/admin/finance/rails/page.tsx'),
   server: path.join(root, 'src/lib/supabase/server.ts'),
   schema: path.join(root, 'src/lib/observability/schema-version.ts'),
 };
@@ -114,6 +116,39 @@ if (source.route.includes('NextResponse.json({ error: error.message')) {
 }
 if (source.route.includes('return noStoreJson({ error: error.message')) {
   throw new Error('financial control API exposes raw database error messages');
+}
+
+requireFragments(source.orderRepository, 'investment order financial consumer', [
+  '/api/investment/admin/financial-control',
+  "operation: 'funding.verifyBankTransfer'",
+  "operation: 'funding.verifyCryptoTransfer'",
+]);
+for (const forbidden of [
+  "rpc('verify_investment_bancolombia_transfer'",
+  "rpc('verify_investment_crypto_transfer'",
+]) {
+  if (source.orderRepository.includes(forbidden)) {
+    throw new Error(`investment order browser repository bypasses financial control API: ${forbidden}`);
+  }
+}
+
+requireFragments(source.payoutAdmin, 'payout financial consumer', [
+  '/api/investment/admin/financial-control',
+  "operation: 'withdrawal.approve'",
+  "operation: 'payout.initiate'",
+  "operation: 'payout.confirm'",
+  "operation: 'payout.fail'",
+]);
+for (const forbidden of [
+  "rpc('approve_withdrawal'",
+  "rpc('reject_withdrawal'",
+  "rpc('initiate_investment_payout'",
+  "rpc('confirm_investment_payout'",
+  "rpc('fail_investment_payout'",
+]) {
+  if (source.payoutAdmin.includes(forbidden)) {
+    throw new Error(`payout browser UI bypasses financial control API: ${forbidden}`);
+  }
 }
 
 requireFragments(source.server, 'server trust-boundary primitives', [
