@@ -8,8 +8,11 @@ permissions:
   contents: read
   pull-requests: read
 
-# This evidence contract currently verifies exact two-parent merge commits.
-# Merge this recovery PR with the regular "merge" method, not squash/rebase.
+# Verify the exact GitHub-mediated PR transition into main for both regular
+# two-parent merge commits and GitHub squash merges. Rebase/direct pushes remain
+# fail-closed because the pushed SHA must be the merged PR's merge_commit_sha,
+# its first parent must equal the push event's previous main SHA, and GitHub
+# must report exactly one merged PR with that exact base transition.
 concurrency:
   group: investment-br-main-provenance-${{ github.sha }}
   cancel-in-progress: false
@@ -75,11 +78,11 @@ jobs:
             > "${commit_path}"
 
           jq -e --arg sha "${GITHUB_SHA}" \
-            '.sha == $sha and .commit.verification.verified == true and (.parents | length) == 2' \
+            '.sha == $sha and .commit.verification.verified == true and (((.parents | length) == 1) or ((.parents | length) == 2))' \
             "${commit_path}" >/dev/null
 
+          parent_count="$(jq -r '.parents | length' "${commit_path}")"
           first_parent="$(jq -r '.parents[0].sha' "${commit_path}")"
-          second_parent="$(jq -r '.parents[1].sha' "${commit_path}")"
           test "${first_parent}" = "${BR_PROVENANCE_EVENT_BEFORE}"
 
           curl --fail --silent --show-error \
@@ -106,8 +109,20 @@ jobs:
 
           merged_pr_head="$(jq -r '.headSha' "${merged_pr_path}")"
           merged_pr_base="$(jq -r '.baseSha' "${merged_pr_path}")"
-          test "${second_parent}" = "${merged_pr_head}"
           test "${first_parent}" = "${merged_pr_base}"
+          [[ "${merged_pr_head}" =~ ^[0-9a-f]{40}$ ]]
+          test "${merged_pr_head}" != "${merged_pr_base}"
+
+          if [ "${parent_count}" = '2' ]; then
+            second_parent="$(jq -r '.parents[1].sha' "${commit_path}")"
+            test "${second_parent}" = "${merged_pr_head}"
+            echo 'BR_PROVENANCE_MERGE_SHAPE=merge-commit' >> "${GITHUB_ENV}"
+          else
+            # GitHub squash merge: the signed merge_commit_sha has one parent
+            # (the exact prior main SHA); the PR API binds the squashed SHA to
+            # the reviewed PR head and exact base transition.
+            echo 'BR_PROVENANCE_MERGE_SHAPE=squash' >> "${GITHUB_ENV}"
+          fi
 
           echo "BR_PROVENANCE_COMMIT_METADATA_PATH=${commit_path}" >> "${GITHUB_ENV}"
           echo "BR_PROVENANCE_MERGED_PR_PATH=${merged_pr_path}" >> "${GITHUB_ENV}"
