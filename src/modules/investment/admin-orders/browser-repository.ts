@@ -9,6 +9,24 @@ export type PendingInvestmentOrdersPage = {
   totalCount: number;
 };
 
+async function runFinancialControl(operation: Record<string, unknown>): Promise<{ error: RpcError }> {
+  try {
+    const response = await fetch('/api/investment/admin/financial-control', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(operation),
+    });
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      return { error: { message: body?.error ?? 'No se pudo completar la operación financiera' } };
+    }
+    return { error: null };
+  } catch {
+    return { error: { message: 'No se pudo conectar con el control financiero' } };
+  }
+}
+
 export function createInvestmentAdminOrdersRepository() {
   return {
     async listPending(page: number, pageSize: number): Promise<PendingInvestmentOrdersPage> {
@@ -40,8 +58,14 @@ export function createInvestmentAdminOrdersRepository() {
       p_bank_received_at: string;
       p_notes: string | null;
     }): Promise<{ error: RpcError }> {
-      const supabase = createClient();
-      return await supabase.rpc('verify_investment_bancolombia_transfer', payload);
+      return runFinancialControl({
+        operation: 'funding.verifyBankTransfer',
+        orderId: payload.p_order_id,
+        bankReference: payload.p_bank_reference,
+        receivedAmountCents: payload.p_received_amount_cents,
+        bankReceivedAt: payload.p_bank_received_at,
+        notes: payload.p_notes,
+      });
     },
 
     async verifyCryptoTransfer(payload: {
@@ -52,8 +76,15 @@ export function createInvestmentAdminOrdersRepository() {
       p_received_at: string;
       p_notes: string | null;
     }): Promise<{ error: RpcError }> {
-      const supabase = createClient();
-      return await supabase.rpc('verify_investment_crypto_transfer', payload);
+      return runFinancialControl({
+        operation: 'funding.verifyCryptoTransfer',
+        orderId: payload.p_order_id,
+        transactionHash: payload.p_transaction_hash,
+        network: payload.p_network,
+        receivedAmountCents: payload.p_received_amount_cents,
+        receivedAt: payload.p_received_at,
+        notes: payload.p_notes,
+      });
     },
 
     async rejectBankProof(orderId: string, reason: string): Promise<{ error: RpcError }> {
