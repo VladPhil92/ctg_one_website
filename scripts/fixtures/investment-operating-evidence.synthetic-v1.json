@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0113",
-    "schemaMigrationName": "investment_financial_server_boundaries",
-    "schemaMigrationCount": 113,
+    "schemaMigration": "0114",
+    "schemaMigrationName": "revoke_legacy_financial_rpc_client_execution",
+    "schemaMigrationCount": 114,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
