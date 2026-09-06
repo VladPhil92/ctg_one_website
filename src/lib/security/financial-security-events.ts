@@ -1,8 +1,6 @@
 import 'server-only';
 
 import { logger } from '@/lib/observability/logger';
-import { EXPECTED_DATABASE_MIGRATION } from '@/lib/observability/schema-version';
-import { createAdminClient } from '@/lib/supabase/server';
 
 export type FinancialSecurityOperation =
   | 'withdrawal.approve'
@@ -40,9 +38,19 @@ type FinancialSecurityEventInput = {
   correlationId: string;
 };
 
-const durableJournalAvailable = Number(EXPECTED_DATABASE_MIGRATION) >= 115;
-
-function emitStructuredSecurityEvent(input: FinancialSecurityEventInput) {
+/**
+ * Emit categorical security telemetry only. The type intentionally accepts no
+ * arbitrary metadata or financial payload fields, preventing accidental logging
+ * of bank references, transaction hashes, payout destinations, notes, tokens,
+ * OTPs, emails, or raw request bodies.
+ *
+ * Phase 5A is deliberately schema-free so it can deploy against the currently
+ * certified 0114 production database. A durable append-only PostgreSQL journal
+ * belongs to Phase 5B after Supabase migration-write permission is restored.
+ */
+export async function recordFinancialSecurityEvent(
+  input: FinancialSecurityEventInput,
+): Promise<boolean> {
   const context = {
     actor_user_id: input.actorUserId,
     operation: input.operation,
@@ -50,68 +58,25 @@ function emitStructuredSecurityEvent(input: FinancialSecurityEventInput) {
     auth_transport: input.transport,
     actor_auth_age_seconds: input.actorAuthAgeSeconds,
     correlation_id: input.correlationId,
-    durable_journal_expected: durableJournalAvailable,
   };
 
   switch (input.eventType) {
     case 'FINANCIAL_OPERATION_SUCCEEDED':
       logger.info('security.financial.operation_succeeded', context);
-      return;
+      break;
     case 'FINANCIAL_AUTHORIZATION_UNAVAILABLE':
+      logger.error('security.financial.authorization_unavailable', context);
+      break;
     case 'FINANCIAL_AUTHORIZATION_DENIED':
-      logger.error(`security.financial.${input.eventType.toLowerCase()}`, context);
-      return;
-    default:
-      logger.warn(`security.financial.${input.eventType.toLowerCase()}`, context);
+      logger.error('security.financial.authorization_denied', context);
+      break;
+    case 'FINANCIAL_OPERATION_REJECTED':
+      logger.warn('security.financial.operation_rejected', context);
+      break;
+    case 'FINANCIAL_STEP_UP_REQUIRED':
+      logger.warn('security.financial.step_up_required', context);
+      break;
   }
-}
 
-/**
- * Emit categorical security telemetry only. This helper deliberately accepts no
- * arbitrary metadata or financial payload fields, preventing accidental logging
- * of bank references, transaction hashes, payout destinations, notes, tokens,
- * OTPs, emails, or request bodies.
- *
- * Structured Render telemetry is always emitted. The append-only PostgreSQL sink
- * is activated only once the runtime schema contract advances to 0115, so code
- * deployed against the currently certified 0114 production schema never depends
- * on a migration that has not been authorized yet.
- */
-export async function recordFinancialSecurityEvent(
-  input: FinancialSecurityEventInput,
-): Promise<boolean> {
-  emitStructuredSecurityEvent(input);
-
-  if (!durableJournalAvailable) return true;
-
-  try {
-    const admin = createAdminClient();
-    const { error } = await admin.rpc('record_financial_security_event_server', {
-      p_actor_user_id: input.actorUserId,
-      p_event_type: input.eventType,
-      p_operation: input.operation,
-      p_reason_code: input.reasonCode,
-      p_transport: input.transport,
-      p_actor_auth_age_seconds: input.actorAuthAgeSeconds,
-      p_correlation_id: input.correlationId,
-    });
-
-    if (error) {
-      logger.error('security.financial.durable_journal_write_failed', {
-        event_type: input.eventType,
-        operation: input.operation,
-        correlation_id: input.correlationId,
-        database_error_code: error.code ?? 'UNKNOWN',
-      });
-      return false;
-    }
-    return true;
-  } catch {
-    logger.error('security.financial.durable_journal_unavailable', {
-      event_type: input.eventType,
-      operation: input.operation,
-      correlation_id: input.correlationId,
-    });
-    return false;
-  }
+  return true;
 }
