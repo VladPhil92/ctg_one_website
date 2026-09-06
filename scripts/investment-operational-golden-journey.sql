@@ -63,13 +63,14 @@ select public.submit_investment_order_bank_proof_server(
   'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
   'ci-operational-proof.pdf','application/pdf'
 );
+select (public.verify_investment_bancolombia_transfer_server(
+  '00000000-0000-0000-0000-000000000713'::uuid,
+  :'order_id'::uuid,'CI-OP-GJ-001',4600::bigint,now(),'CI operational journey'
+)).id as verified_order_id \gset
 reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000713',true);
-select (public.verify_investment_bancolombia_transfer(
-  :'order_id'::uuid,'CI-OP-GJ-001',4600::bigint,now(),'CI operational journey'
-)).id as verified_order_id \gset
 select public.record_lot_financial_entry(
   :'source_lot_id'::uuid,'PRODUCTION_COST',4600::bigint,'CI authoritative production cost'
 );
@@ -227,12 +228,19 @@ select pg_temp.assert_journey(
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000713',true);
 select public.approve_reinvestment_request(:'reinvestment_request_id'::uuid) as reinvestment_allocation_id \gset
-select public.approve_withdrawal(:'withdrawal_request_id'::uuid);
-select public.initiate_investment_payout(
+reset role;
+
+set local role service_role;
+select public.approve_withdrawal_server(
+  '00000000-0000-0000-0000-000000000713'::uuid, :'withdrawal_request_id'::uuid
+);
+select public.initiate_investment_payout_server(
+  '00000000-0000-0000-0000-000000000713'::uuid,
   :'withdrawal_request_id'::uuid,'bank_transfer','CI_BANK','BANCO ****7711',
   'ci-operational-destination-7711','ci-operational-payout-0001','CI journey payout'
 ) as payout_id \gset
-select public.confirm_investment_payout(
+select public.confirm_investment_payout_server(
+  '00000000-0000-0000-0000-000000000713'::uuid,
   :'payout_id'::uuid,'CI-PAYOUT-CONFIRMED-001',now(),'CI journey confirmed'
 );
 reset role;
