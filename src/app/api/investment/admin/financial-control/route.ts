@@ -251,7 +251,24 @@ export async function POST(request: NextRequest) {
       correlationId,
     }, 503);
   }
-  if (!assurance.allowed && assurance.mode === 'mfa-required') {
+
+  if (!assurance.allowed && assurance.mode === 'mfa-enrollment-required') {
+    await recordFinancialSecurityEvent({
+      ...securityContext,
+      eventType: 'FINANCIAL_STEP_UP_REQUIRED',
+      reasonCode: 'MFA_ENROLLMENT_REQUIRED',
+    });
+    return noStoreJson({
+      error: 'multi-factor authentication enrollment required',
+      code: 'FINANCIAL_MFA_ENROLLMENT_REQUIRED',
+      correlationId,
+      currentLevel: assurance.currentLevel,
+      nextLevel: assurance.nextLevel,
+      enrollmentPath: '/admin/security/mfa',
+    }, 428);
+  }
+
+  if (!assurance.allowed && assurance.mode === 'mfa-challenge-required') {
     await recordFinancialSecurityEvent({
       ...securityContext,
       eventType: 'FINANCIAL_STEP_UP_REQUIRED',
@@ -263,6 +280,7 @@ export async function POST(request: NextRequest) {
       correlationId,
       currentLevel: assurance.currentLevel,
       nextLevel: assurance.nextLevel,
+      challengePath: '/admin/security/mfa',
     }, 428);
   }
 
