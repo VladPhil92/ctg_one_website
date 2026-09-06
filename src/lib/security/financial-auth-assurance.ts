@@ -2,10 +2,16 @@ import 'server-only';
 
 import type { AuthenticatedRequestContext } from '@/lib/supabase/server';
 
+type SupportedAal = 'aal1' | 'aal2';
+
 export type FinancialAuthAssuranceState =
-  | { allowed: true; mode: 'aal1-no-verified-factor' | 'aal2'; currentLevel: 'aal1' | 'aal2'; nextLevel: 'aal1' | 'aal2' }
+  | { allowed: true; mode: 'aal1-no-verified-factor' | 'aal2'; currentLevel: SupportedAal; nextLevel: SupportedAal }
   | { allowed: false; mode: 'mfa-required'; currentLevel: 'aal1'; nextLevel: 'aal2' }
   | { allowed: false; mode: 'assurance-unavailable'; currentLevel: null; nextLevel: null };
+
+function supportedAal(value: unknown): SupportedAal | null {
+  return value === 'aal1' || value === 'aal2' ? value : null;
+}
 
 /**
  * Phase 5C1 is intentionally MFA-aware rather than MFA-mandatory.
@@ -29,9 +35,9 @@ export async function evaluateFinancialAuthAssurance(
     return { allowed: false, mode: 'assurance-unavailable', currentLevel: null, nextLevel: null };
   }
 
-  const currentLevel = data.currentLevel;
-  const nextLevel = data.nextLevel;
-  if ((currentLevel !== 'aal1' && currentLevel !== 'aal2') || (nextLevel !== 'aal1' && nextLevel !== 'aal2')) {
+  const currentLevel = supportedAal(data.currentLevel);
+  const nextLevel = supportedAal(data.nextLevel);
+  if (!currentLevel || !nextLevel) {
     return { allowed: false, mode: 'assurance-unavailable', currentLevel: null, nextLevel: null };
   }
 
