@@ -32,4 +32,6 @@ The five `*_server` RPCs:
 
 ## Rollout strategy
 
-Migration 0111 is additive. The legacy authenticated RPC grants remain temporarily available until the application version using the server-only routes is deployed and verified. A subsequent privilege-contraction migration will revoke direct `authenticated` execution of the legacy administrative RPCs. This avoids a deployment-order outage while still converging toward a single privileged mutation boundary.
+Migration 0111 is additive. The legacy authenticated RPC grants remain temporarily available until the application version using the server-only routes is deployed and verified. This avoids a deployment-order outage while still converging toward a single privileged mutation boundary.
+
+Migration 0112 (`revoke_legacy_admin_rpc_client_execution`) completes the contraction: it revokes all direct execute grants (`public`, `anon`, `authenticated`, `service_role`) on the five legacy administrative RPCs now that every API route delegating to them has been switched to the corresponding `*_server` boundary. The legacy functions remain callable only from inside their `*_server` wrappers, which run as the function owner under `SECURITY DEFINER` and therefore need no explicit grant.
