@@ -39,10 +39,21 @@ export async function createClient() {
 
 const MAX_BEARER_BYTES = 8192;
 
+type AuthenticatorAssuranceResult = Awaited<
+  ReturnType<SupabaseClient['auth']['mfa']['getAuthenticatorAssuranceLevel']>
+>;
+
 export type AuthenticatedRequestContext = {
   supabase: SupabaseClient;
   user: User;
   transport: 'bearer' | 'cookie';
+  /**
+   * Resolve MFA assurance from the already-validated authentication transport.
+   * Bearer callers bind the validated JWT inside this closure so the raw token
+   * never becomes a serializable/loggable context property. Cookie callers use
+   * the SSR session stored in secure cookies.
+   */
+  getAuthenticatorAssuranceLevel: () => Promise<AuthenticatorAssuranceResult>;
 };
 
 function parseBearerToken(request: Request): { present: boolean; token: string | null } {
@@ -74,6 +85,7 @@ export async function createAuthenticatedRequestContext(
   if (bearer.present) {
     if (!bearer.token) return null;
 
+    const validatedBearerToken = bearer.token;
     const supabase: SupabaseClient = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -84,21 +96,32 @@ export async function createAuthenticatedRequestContext(
           detectSessionInUrl: false,
         },
         global: {
-          headers: { Authorization: `Bearer ${bearer.token}` },
+          headers: { Authorization: `Bearer ${validatedBearerToken}` },
         },
       },
     );
 
-    const { data, error } = await supabase.auth.getUser(bearer.token);
+    const { data, error } = await supabase.auth.getUser(validatedBearerToken);
     if (error || !data.user) return null;
 
-    return { supabase, user: data.user, transport: 'bearer' };
+    return {
+      supabase,
+      user: data.user,
+      transport: 'bearer',
+      getAuthenticatorAssuranceLevel: () =>
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(validatedBearerToken),
+    };
   }
 
   const supabase: SupabaseClient = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) return null;
-  return { supabase, user: data.user, transport: 'cookie' };
+  return {
+    supabase,
+    user: data.user,
+    transport: 'cookie',
+    getAuthenticatorAssuranceLevel: () => supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+  };
 }
 
 // Admin-only client using the service role key, which bypasses Row Level
