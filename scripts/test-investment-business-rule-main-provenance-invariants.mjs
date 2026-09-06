@@ -25,6 +25,7 @@ const baseContext = {
   sha: trustedSha,
   headSha: trustedSha,
   eventBefore: beforeSha,
+  mergeShape: 'merge-commit',
   mergeFirstParentSha: beforeSha,
   mergeSecondParentSha: headParentSha,
   commitVerified: true,
@@ -68,6 +69,7 @@ assert.equal(blocked.status, 'BLOCKED_AWAITING_BUSINESS_RULE_APPROVALS');
 assert.equal(blocked.workflowEvidenceCandidateEligible, false);
 assert.equal(blocked.transition.beforeSha, beforeSha);
 assert.equal(blocked.transition.afterSha, trustedSha);
+assert.equal(blocked.transition.mergeShape, 'merge-commit');
 assert.equal(blocked.transition.firstParentSha, beforeSha);
 assert.equal(blocked.transition.secondParentSha, headParentSha);
 assert.equal(blocked.transition.forced, false);
@@ -84,6 +86,15 @@ assert.ok(Object.isFrozen(blocked.transition));
 assert.ok(Object.isFrozen(blocked.governance));
 assert.ok(Object.isFrozen(blocked.governance.ruleStatuses));
 assert.ok(Object.isFrozen(blocked.governance.ruleStatuses[0]));
+
+const squash = createInvestmentBusinessRuleMainProvenanceEvidence({
+  ...baseContext,
+  mergeShape: 'squash',
+  mergeSecondParentSha: null,
+});
+validateInvestmentBusinessRuleMainProvenanceEvidence(squash);
+assert.equal(squash.transition.mergeShape, 'squash');
+assert.equal(squash.transition.secondParentSha, null);
 
 const approvedGovernance = approvedGovernanceFixture();
 const eligibleEvidenceCandidate = createInvestmentBusinessRuleMainProvenanceEvidence({
@@ -136,6 +147,8 @@ for (const [label, override, expected] of [
   ['replayed before', { eventBefore: 'e'.repeat(40) }, /before SHA must equal the merge first parent/i],
   ['first parent drift', { mergeFirstParentSha: 'e'.repeat(40) }, /before SHA must equal the merge first parent/i],
   ['second parent drift', { mergeSecondParentSha: 'e'.repeat(40) }, /head SHA must equal the merge second parent/i],
+  ['invalid merge shape', { mergeShape: 'rebase' }, /merge shape is invalid/i],
+  ['squash second parent', { mergeShape: 'squash' }, /must not claim a merge second parent/i],
   ['unverified commit', { commitVerified: false }, /verified GitHub commit provenance/i],
   ['candidate drift', { candidateBlobSha: 'e'.repeat(40) }, /candidate blob/i],
   ['wrong merge base ref', { mergePullRequest: { ...baseContext.mergePullRequest, baseRef: 'develop' } }, /target main/i],
@@ -180,7 +193,10 @@ assert.match(workflowSource, /test "\$\{event_deleted\}" = 'false'/);
 assert.match(workflowSource, /test "\$\{event_after\}" = "\$\{GITHUB_SHA\}"/);
 assert.match(workflowSource, /BR_PROVENANCE_EVENT_BEFORE/);
 assert.match(workflowSource, /git rev-parse HEAD/);
-assert.match(workflowSource, /\.commit\.verification\.verified == true and \(\.parents \| length\) == 2/);
+assert.match(workflowSource, /\.commit\.verification\.verified == true/);
+assert.match(workflowSource, /\(\.parents \| length\) == 1/);
+assert.match(workflowSource, /\(\.parents \| length\) == 2/);
+assert.match(workflowSource, /BR_PROVENANCE_MERGE_SHAPE/);
 assert.match(workflowSource, /\.parents\[0\]\.sha/);
 assert.match(workflowSource, /\.parents\[1\]\.sha/);
 assert.match(workflowSource, /test "\$\{first_parent\}" = "\$\{BR_PROVENANCE_EVENT_BEFORE\}"/);
@@ -199,7 +215,9 @@ assert.match(workflowSource, /investment-br-main-provenance-\$\{\{ github\.sha \
 const emitterSource = await read('scripts/create-investment-business-rule-main-provenance-evidence.mjs');
 assert.match(emitterSource, /GITHUB_ACTIONS !== 'true'/);
 assert.match(emitterSource, /BR_PROVENANCE_EVENT_BEFORE/);
-assert.match(emitterSource, /parents\.length !== 2/);
+assert.match(emitterSource, /BR_PROVENANCE_MERGE_SHAPE/);
+assert.match(emitterSource, /mergeShape === 'merge-commit'/);
+assert.match(emitterSource, /mergeShape === 'squash'/);
 assert.match(emitterSource, /standaloneAuthorityAllowed/);
 
 const docs = await read('docs/investment/BUSINESS_RULE_MAIN_PROVENANCE.md');
