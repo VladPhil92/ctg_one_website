@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { formatCents } from '@/lib/format';
+import { runFinancialControl } from '@/lib/security/financial-control-client';
 import type { InvestmentPayoutRail, InvestmentPayoutReconciliation } from '@/types/payment-rails';
 import { ArrowDownToLine, CheckCircle2, RefreshCw, Send, ShieldAlert, WalletCards } from 'lucide-react';
 
@@ -15,24 +16,6 @@ type RpcResult = PromiseLike<{ error: { message: string } | null }>;
 const ACTIVE_STATUSES = ['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'PAYMENT_PROCESSING'] as const;
 const localNow = () => { const date = new Date(); const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000); return local.toISOString().slice(0, 16); };
 const freshDraft = (): Draft => ({ payoutRail: 'bank_transfer', providerCode: '', idempotencyKey: crypto.randomUUID(), externalReference: '', paidAt: localNow() });
-
-async function runFinancialControl(payload: Record<string, unknown>): Promise<{ error: { message: string } | null }> {
-  try {
-    const response = await fetch('/api/investment/admin/financial-control', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as { error?: string } | null;
-      return { error: { message: body?.error ?? 'No se pudo completar la operación financiera' } };
-    }
-    return { error: null };
-  } catch {
-    return { error: { message: 'No se pudo conectar con el control financiero' } };
-  }
-}
 
 export default function PaymentRailsAdminPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
