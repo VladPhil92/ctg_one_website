@@ -2,7 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-06T17:07:27Z",
+  "capturedAt": "2026-09-06T17:38:17Z",
   "source": "Supabase production migration history",
   "migrations": [
     { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
@@ -22,6 +22,7 @@
     { "logicalVersion": "0109", "remoteVersion": "20260903000252", "remoteName": "add_vertice_federation_authorities" },
     { "logicalVersion": "0110", "remoteVersion": "20260906153332", "remoteName": "0110_service_federation_rate_limits" },
     { "logicalVersion": "0111", "remoteVersion": "20260906165045", "remoteName": "admin_server_rpc_boundaries" },
-    { "logicalVersion": "0112", "remoteVersion": "20260906170727", "remoteName": "revoke_legacy_admin_rpc_client_execution" }
+    { "logicalVersion": "0112", "remoteVersion": "20260906170727", "remoteName": "revoke_legacy_admin_rpc_client_execution" },
+    { "logicalVersion": "0113", "remoteVersion": "20260906173817", "remoteName": "investment_financial_server_boundaries" }
   ]
 }
