@@ -1,0 +1,79 @@
+name: Render Blueprint Validate
+
+on:
+  pull_request:
+    paths:
+      - "render.yaml"
+      - ".github/workflows/render-blueprint-validate.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "render.yaml"
+      - ".github/workflows/render-blueprint-validate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      RENDER_WORKSPACE_ID: tea-d52cnj7pm1nc73el6pq0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pinned Render CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="2.26.0"
+          archive="cli_${version}_linux_amd64.zip"
+          url="https://github.com/render-oss/cli/releases/download/v${version}/${archive}"
+          curl -fsSL "$url" -o "$archive"
+          echo "d8dad589005d64219869571f7278c07b717d46f53d0784f09dec3cc8eadd955f  $archive" | sha256sum -c -
+          unzip -q "$archive" -d render-cli
+          binary="$(find render-cli -type f -name 'cli_v*' | head -n 1)"
+          test -n "$binary"
+          sudo install -m 0755 "$binary" /usr/local/bin/render
+          render --version
+
+      - name: Validate production blueprint contract
+        shell: ruby {0}
+        run: |
+          require "yaml"
+          config = YAML.safe_load(File.read("render.yaml"), aliases: true)
+          services = config.fetch("services")
+          service = services.find { |item| item["name"] == "ctg_one_website" }
+          raise "ctg_one_website service missing" unless service
+
+          expected = {
+            "type" => "web",
+            "runtime" => "node",
+            "branch" => "main",
+            "plan" => "free",
+            "region" => "oregon",
+            "buildCommand" => "npm ci && npm run build",
+            "startCommand" => "npm run start",
+            "healthCheckPath" => "/api/health",
+            "autoDeployTrigger" => "checksPass"
+          }
+
+          expected.each do |key, value|
+            actual = service[key]
+            raise "#{key} mismatch: expected #{value.inspect}, got #{actual.inspect}" unless actual == value
+          end
+
+          puts "Render production blueprint contract is valid"
+
+      - name: Validate with Render API when credential is provisioned
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${RENDER_API_KEY:-}" ]]; then
+            echo "::notice::RENDER_API_KEY is not provisioned; authenticated Render CLI validation is skipped."
+            exit 0
+          fi
+          render blueprints validate render.yaml --workspace "$RENDER_WORKSPACE_ID"
