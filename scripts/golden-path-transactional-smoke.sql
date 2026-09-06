@@ -163,12 +163,14 @@ select pg_temp.assert_true(
 );
 
 -- ---------------------------------------------------------------------------
--- Finance verifies the actual bank fact. This is the only activation point.
+-- Finance verifies the actual bank fact through the production server boundary.
+-- The service-role wrapper rebinds and revalidates the canonical Finance actor
+-- before invoking the now-internal legacy implementation.
 -- ---------------------------------------------------------------------------
-set local role authenticated;
-select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000301', true);
+set local role service_role;
 
-select (public.verify_investment_bancolombia_transfer(
+select (public.verify_investment_bancolombia_transfer_server(
+  '00000000-0000-0000-0000-000000000301'::uuid,
   :'order_id'::uuid,
   'CI-GP-REF-001',
   4600::bigint,
