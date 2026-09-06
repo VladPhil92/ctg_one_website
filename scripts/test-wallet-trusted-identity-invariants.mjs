@@ -163,10 +163,16 @@ requireFragments(serverAuth, 'canonical wallet request authentication', [
   'const bearer = parseBearerToken(request);',
   'if (bearer.present) {',
   'if (!bearer.token) return null;',
-  'supabase.auth.getUser(bearer.token)',
-  "return { supabase, user: data.user, transport: 'bearer' }",
-  "return { supabase, user: data.user, transport: 'cookie' }",
+  'const { data, error } = await supabase.auth.getUser(bearer.token);',
+  "transport: 'bearer',",
+  'verifiedBearerToken: bearer.token,',
+  "return { supabase, user: data.user, transport: 'cookie', verifiedBearerToken: null }",
 ]);
+const bearerVerificationIndex = serverAuth.indexOf('const { data, error } = await supabase.auth.getUser(bearer.token);');
+const bearerCredentialRetentionIndex = serverAuth.indexOf('verifiedBearerToken: bearer.token,');
+if (!(bearerVerificationIndex >= 0 && bearerCredentialRetentionIndex > bearerVerificationIndex)) {
+  throw new Error('bearer credential may only be retained after server-side Supabase user verification');
+}
 
 requireFragments(cors, 'wallet CORS boundary', [
   'export function isAllowedWalletOrigin',
