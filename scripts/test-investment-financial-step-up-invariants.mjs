@@ -42,15 +42,24 @@ for (const mutableMetadataAccess of [
   }
 }
 
-requireFragments(source.assurance, 'MFA-aware financial assurance policy', [
+requireFragments(source.assurance, 'mandatory Finance MFA assurance policy', [
   'getAuthenticatorAssuranceLevel(',
   'context.verifiedBearerToken ?? undefined',
-  "currentLevel === 'aal1' && nextLevel === 'aal2'",
-  "mode: 'mfa-required'",
+  "mode: 'mfa-enrollment-required'",
+  "mode: 'mfa-challenge-required'",
   "mode: 'aal2'",
-  "mode: 'aal1-no-verified-factor'",
   "mode: 'assurance-unavailable'",
+  "currentLevel === 'aal2'",
+  "nextLevel === 'aal2'",
 ]);
+for (const legacyPermissiveFragment of [
+  "mode: 'aal1-no-verified-factor'",
+  "allowed: true; mode: 'aal1-no-verified-factor'",
+]) {
+  if (source.assurance.includes(legacyPermissiveFragment)) {
+    throw new Error(`Phase 5C3 must not allow AAL1 financial mutations: ${legacyPermissiveFragment}`);
+  }
+}
 if (source.assurance.includes('service_role') || source.assurance.includes('createAdminClient')) {
   throw new Error('MFA assurance must execute in the authenticated user context, never service_role');
 }
@@ -62,14 +71,18 @@ requireFragments(source.server, 'verified bearer assurance transport', [
   "transport: 'cookie', verifiedBearerToken: null",
 ]);
 
-requireFragments(source.route, 'financial-control step-up boundary', [
+requireFragments(source.route, 'mandatory financial-control MFA boundary', [
   'evaluateFinancialStepUp(context.user)',
   'evaluateFinancialAuthAssurance(context)',
   'FINANCIAL_STEP_UP_REQUIRED',
+  'FINANCIAL_MFA_ENROLLMENT_REQUIRED',
   'FINANCIAL_MFA_CHALLENGE_REQUIRED',
   'FINANCIAL_AUTH_ASSURANCE_UNAVAILABLE',
+  "reasonCode: 'MFA_ENROLLMENT_REQUIRED'",
   "reasonCode: 'AAL2_REQUIRED'",
   "reasonCode: 'AUTH_ASSURANCE_BACKEND_ERROR'",
+  "enrollmentPath: '/admin/security/mfa'",
+  "challengePath: '/admin/security/mfa'",
   'FINANCIAL_STEP_UP_MAX_AGE_SECONDS',
   'randomUUID()',
   'recordFinancialSecurityEvent({',
@@ -82,13 +95,23 @@ requireFragments(source.route, 'financial-control step-up boundary', [
 ]);
 const freshAuthIndex = source.route.indexOf('evaluateFinancialStepUp(context.user)');
 const assuranceIndex = source.route.indexOf('evaluateFinancialAuthAssurance(context)');
+const enrollmentBlockIndex = source.route.indexOf("assurance.mode === 'mfa-enrollment-required'");
+const challengeBlockIndex = source.route.indexOf("assurance.mode === 'mfa-challenge-required'");
 const authzIndex = source.route.indexOf('authorizeFinancialOperation(context, parsed.data.operation)');
 const mutationIndex = source.route.indexOf('admin.rpc(rpc, {');
-if (!(freshAuthIndex >= 0 && assuranceIndex > freshAuthIndex && authzIndex > assuranceIndex && mutationIndex > authzIndex)) {
-  throw new Error('financial controls must execute fresh-auth -> MFA assurance -> authorization -> privileged mutation');
+if (!(
+  freshAuthIndex >= 0 &&
+  assuranceIndex > freshAuthIndex &&
+  enrollmentBlockIndex > assuranceIndex &&
+  challengeBlockIndex > enrollmentBlockIndex &&
+  authzIndex > challengeBlockIndex &&
+  mutationIndex > authzIndex
+)) {
+  throw new Error('financial controls must execute fresh-auth -> mandatory MFA enrollment/challenge -> authorization -> privileged mutation');
 }
 
 requireFragments(source.telemetry, 'structured + durable financial security telemetry', [
+  "'MFA_ENROLLMENT_REQUIRED'",
   "'AAL2_REQUIRED'",
   "'AUTH_ASSURANCE_BACKEND_ERROR'",
   "logger.info('security.financial.operation_succeeded'",
@@ -131,7 +154,7 @@ const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec
 const schemaCount = Number(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(source.schema)?.[1]);
 const schemaName = /EXPECTED_DATABASE_MIGRATION_NAME\s*=\s*['"]([^'"]+)['"]/.exec(source.schema)?.[1];
 if (schemaMigration !== '0115' || schemaCount !== 115 || schemaName !== 'financial_security_step_up_telemetry') {
-  throw new Error('Phase 5C1 must remain schema-compatible with 0115/115');
+  throw new Error('Phase 5C3 must remain schema-compatible with 0115/115');
 }
 
-console.log('Investment financial fresh-auth + MFA assurance + durable telemetry invariants: PASS');
+console.log('Investment financial fresh-auth + mandatory MFA AAL2 + durable telemetry invariants: PASS');

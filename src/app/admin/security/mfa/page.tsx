@@ -21,14 +21,15 @@ export default async function FinanceMfaSecurityPage() {
   return (
     <section className="mx-auto max-w-4xl space-y-6">
       <div className="rounded-3xl border border-white/[.08] bg-white/[.025] p-6 sm:p-8">
-        <p className="text-[10px] uppercase tracking-[.24em] text-accent">Finance OS · Security</p>
+        <p className="text-[10px] uppercase tracking-[.24em] text-accent">Finance OS · Security · MFA obligatorio</p>
         <h1 className="mt-3 font-outfit text-3xl font-semibold tracking-tight text-white sm:text-4xl">
           Autenticación multifactor
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-text-dim">
-          Protege las operaciones financieras privilegiadas con un factor TOTP. El QR y el secreto de
-          enrolamiento permanecen entre este navegador y Supabase Auth; CTG One no los registra en sus
-          endpoints, logs ni journal financiero.
+          Finance OS exige AAL2 antes de cualquier operación financiera privilegiada. Si todavía no tienes
+          un factor TOTP, debes enrolarlo aquí; si ya existe, completa el desafío para elevar la sesión. El QR
+          y el secreto de enrolamiento permanecen entre este navegador y Supabase Auth; CTG One no los registra
+          en sus endpoints, logs ni journal financiero.
         </p>
       </div>
 

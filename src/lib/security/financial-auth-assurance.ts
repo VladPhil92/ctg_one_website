@@ -5,8 +5,9 @@ import type { AuthenticatedRequestContext } from '@/lib/supabase/server';
 type SupportedAal = 'aal1' | 'aal2';
 
 export type FinancialAuthAssuranceState =
-  | { allowed: true; mode: 'aal1-no-verified-factor' | 'aal2'; currentLevel: SupportedAal; nextLevel: SupportedAal }
-  | { allowed: false; mode: 'mfa-required'; currentLevel: 'aal1'; nextLevel: 'aal2' }
+  | { allowed: true; mode: 'aal2'; currentLevel: 'aal2'; nextLevel: SupportedAal }
+  | { allowed: false; mode: 'mfa-enrollment-required'; currentLevel: 'aal1'; nextLevel: 'aal1' }
+  | { allowed: false; mode: 'mfa-challenge-required'; currentLevel: 'aal1'; nextLevel: 'aal2' }
   | { allowed: false; mode: 'assurance-unavailable'; currentLevel: null; nextLevel: null };
 
 function supportedAal(value: unknown): SupportedAal | null {
@@ -14,12 +15,11 @@ function supportedAal(value: unknown): SupportedAal | null {
 }
 
 /**
- * Phase 5C1 is intentionally MFA-aware rather than MFA-mandatory.
+ * Phase 5C3 makes AAL2 mandatory for every privileged Finance OS mutation.
  *
- * - aal2/aal2: an enrolled operator already completed MFA -> allow.
- * - aal1/aal2: a verified MFA factor exists but this session has not challenged it -> block.
- * - aal1/aal1: no verified factor is available yet -> preserve Phase 5A fresh-auth while
- *   enrollment UX is rolled out, avoiding an administrative lockout.
+ * - aal2/*: the current session already completed MFA -> allow.
+ * - aal1/aal2: a verified MFA factor exists but this session has not challenged it -> block and require challenge.
+ * - aal1/aal1: no verified factor exists -> block and require enrollment through /admin/security/mfa.
  *
  * The bearer JWT reaches this helper only after server-side `auth.getUser(jwt)` validation.
  * It is passed directly back to Supabase Auth for assurance evaluation and is never logged.
@@ -41,13 +41,13 @@ export async function evaluateFinancialAuthAssurance(
     return { allowed: false, mode: 'assurance-unavailable', currentLevel: null, nextLevel: null };
   }
 
-  if (currentLevel === 'aal1' && nextLevel === 'aal2') {
-    return { allowed: false, mode: 'mfa-required', currentLevel, nextLevel };
-  }
-
   if (currentLevel === 'aal2') {
     return { allowed: true, mode: 'aal2', currentLevel, nextLevel };
   }
 
-  return { allowed: true, mode: 'aal1-no-verified-factor', currentLevel, nextLevel };
+  if (nextLevel === 'aal2') {
+    return { allowed: false, mode: 'mfa-challenge-required', currentLevel, nextLevel };
+  }
+
+  return { allowed: false, mode: 'mfa-enrollment-required', currentLevel, nextLevel };
 }
