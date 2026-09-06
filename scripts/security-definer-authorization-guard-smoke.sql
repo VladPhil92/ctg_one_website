@@ -25,10 +25,10 @@ CREATE TEMP TABLE reviewed_authenticated_security_definer_bodies(
 
 \copy reviewed_authenticated_security_definer_bodies(signature, body_sha256) FROM 'scripts/security-definer-authenticated-body-sha256.txt' WITH (FORMAT csv, DELIMITER E'\t')
 
--- Phase 3 deliberately retires direct client EXECUTE grants for these legacy
--- implementations while preserving their reviewed body fingerprints as an
--- immutable historical authorization record. They may only be reached through
--- the service-role-only *_server wrappers introduced by migration 0111.
+-- Direct authenticated execution of these implementations has been deliberately
+-- retired. Their reviewed body fingerprints remain as immutable historical
+-- authorization evidence. Runtime access is now mediated through service-role-
+-- only *_server wrappers, which independently revalidate the actor in PostgreSQL.
 CREATE TEMP TABLE retired_authenticated_security_definer_signatures(
   signature text PRIMARY KEY
 );
@@ -38,7 +38,15 @@ INSERT INTO retired_authenticated_security_definer_signatures(signature) VALUES
   ('public.reconcile_wallet_topup_claim(p_claim_id uuid, p_admin_notes text)'),
   ('public.reject_wallet_topup_claim(p_claim_id uuid, p_reason text)'),
   ('public.approve_kyc(p_submission_id uuid, p_admin_notes text)'),
-  ('public.reject_kyc(p_submission_id uuid, p_reason text)');
+  ('public.reject_kyc(p_submission_id uuid, p_reason text)'),
+  ('public.approve_withdrawal(p_request_id uuid)'),
+  ('public.reject_withdrawal(p_request_id uuid, p_reason text)'),
+  ('public.set_investment_user_role(p_user_id uuid, p_role text)'),
+  ('public.verify_investment_bancolombia_transfer(p_order_id uuid, p_bank_reference text, p_received_amount_cents bigint, p_bank_received_at timestamp with time zone, p_notes text)'),
+  ('public.verify_investment_crypto_transfer(p_order_id uuid, p_transaction_hash text, p_network text, p_received_amount_cents bigint, p_received_at timestamp with time zone, p_notes text)'),
+  ('public.initiate_investment_payout(p_request_id uuid, p_payout_rail text, p_provider_code text, p_destination_masked text, p_destination_fingerprint text, p_idempotency_key text, p_notes text)'),
+  ('public.confirm_investment_payout(p_payout_id uuid, p_external_reference text, p_paid_at timestamp with time zone, p_notes text)'),
+  ('public.fail_investment_payout(p_payout_id uuid, p_reason text, p_external_reference text)');
 
 CREATE TEMP VIEW actual_authenticated_security_definer_bodies AS
 SELECT

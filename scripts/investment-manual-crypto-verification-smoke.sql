@@ -79,45 +79,43 @@ select pg_temp.assert_ok(
   'proof submission must never create a receipt'
 );
 
--- A participant may not call the crypto verification command.
-set local role authenticated;
-select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000901',true);
+-- The server boundary must reject a participant actor even though service_role
+-- owns the transport. Actor authorization is revalidated inside PostgreSQL.
+set local role service_role;
 select pg_temp.must_fail(
-  format('select public.verify_investment_crypto_transfer(%L::uuid,%L,%L,4600::bigint,now(),null)',
-    :'order_id','0xaaaabbbbccccdddd1111','POLYGON'),
+  format('select public.verify_investment_crypto_transfer_server(%L::uuid,%L::uuid,%L,%L,4600::bigint,now(),null)',
+    '00000000-0000-0000-0000-000000000901',:'order_id','0xaaaabbbbccccdddd1111','POLYGON'),
   'participant self-verification'
 );
-reset role;
 
-set local role authenticated;
-select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000903',true);
-
+-- Finance actor reaches domain validation through the same server-only wrapper.
 -- Amount must equal the exact server-priced capital requirement.
 select pg_temp.must_fail(
-  format('select public.verify_investment_crypto_transfer(%L::uuid,%L,%L,4599::bigint,now(),null)',
-    :'order_id','0xaaaabbbbccccdddd1111','POLYGON'),
+  format('select public.verify_investment_crypto_transfer_server(%L::uuid,%L::uuid,%L,%L,4599::bigint,now(),null)',
+    '00000000-0000-0000-0000-000000000903',:'order_id','0xaaaabbbbccccdddd1111','POLYGON'),
   'amount mismatch'
 );
 -- The network is mandatory.
 select pg_temp.must_fail(
-  format('select public.verify_investment_crypto_transfer(%L::uuid,%L,%L,4600::bigint,now(),null)',
-    :'order_id','0xaaaabbbbccccdddd1111',''),
+  format('select public.verify_investment_crypto_transfer_server(%L::uuid,%L::uuid,%L,%L,4600::bigint,now(),null)',
+    '00000000-0000-0000-0000-000000000903',:'order_id','0xaaaabbbbccccdddd1111',''),
   'missing network'
 );
 -- A plausible transaction hash is mandatory.
 select pg_temp.must_fail(
-  format('select public.verify_investment_crypto_transfer(%L::uuid,%L,%L,4600::bigint,now(),null)',
-    :'order_id','0xabc','POLYGON'),
+  format('select public.verify_investment_crypto_transfer_server(%L::uuid,%L::uuid,%L,%L,4600::bigint,now(),null)',
+    '00000000-0000-0000-0000-000000000903',:'order_id','0xabc','POLYGON'),
   'implausible transaction hash'
 );
 -- Wrong rail command on a crypto order.
 select pg_temp.must_fail(
-  format('select public.verify_investment_bancolombia_transfer(%L::uuid,%L,4600::bigint,now(),null)',
-    :'order_id','CI-CRYPTO-WRONG-RAIL'),
+  format('select public.verify_investment_bancolombia_transfer_server(%L::uuid,%L::uuid,%L,4600::bigint,now(),null)',
+    '00000000-0000-0000-0000-000000000903',:'order_id','CI-CRYPTO-WRONG-RAIL'),
   'bank command against a crypto claim'
 );
 
-select (public.verify_investment_crypto_transfer(
+select (public.verify_investment_crypto_transfer_server(
+  '00000000-0000-0000-0000-000000000903'::uuid,
   :'order_id'::uuid,'0xAAAA-bbbb-cccc-dddd-1111',' polygon ',4600::bigint,now(),'CI crypto verification'
 )).id as verified_id \gset
 reset role;
@@ -163,17 +161,17 @@ select public.submit_investment_order_crypto_proof_server(
   'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
   'ci-crypto-proof-2.pdf','application/pdf'
 );
-reset role;
 
-set local role authenticated;
-select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000903',true);
 select pg_temp.must_fail(
-  format('select public.verify_investment_crypto_transfer(%L::uuid,%L,%L,4600::bigint,now(),null)',
-    :'order2_id','0xaaaa_BBBB.cccc dddd/1111','POLYGON'),
+  format('select public.verify_investment_crypto_transfer_server(%L::uuid,%L::uuid,%L,%L,4600::bigint,now(),null)',
+    '00000000-0000-0000-0000-000000000903',:'order2_id','0xaaaa_BBBB.cccc dddd/1111','POLYGON'),
   'reused transaction hash under a different textual form'
 );
+reset role;
 
 -- Rejection creates no money facts and is rail-labelled in the audit log.
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000903',true);
 select public.reject_investment_bank_proof(:'order2_id'::uuid,'CI crypto rejection');
 reset role;
 
@@ -207,17 +205,16 @@ select public.submit_investment_order_bank_proof_server(
   'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
   'ci-bank-proof.pdf','application/pdf'
 );
-reset role;
-
-set local role authenticated;
-select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000903',true);
 -- Crypto command must not work on a bank claim.
 select pg_temp.must_fail(
-  format('select public.verify_investment_crypto_transfer(%L::uuid,%L,%L,4600::bigint,now(),null)',
-    :'order3_id','0x9999888877776666','POLYGON'),
+  format('select public.verify_investment_crypto_transfer_server(%L::uuid,%L::uuid,%L,%L,4600::bigint,now(),null)',
+    '00000000-0000-0000-0000-000000000903',:'order3_id','0x9999888877776666','POLYGON'),
   'crypto command against a bank claim'
 );
-select public.verify_investment_bancolombia_transfer(:'order3_id'::uuid,'CI-BANK-STILL-OK',4600::bigint,now(),null);
+select public.verify_investment_bancolombia_transfer_server(
+  '00000000-0000-0000-0000-000000000903'::uuid,
+  :'order3_id'::uuid,'CI-BANK-STILL-OK',4600::bigint,now(),null
+);
 reset role;
 
 select pg_temp.assert_ok(

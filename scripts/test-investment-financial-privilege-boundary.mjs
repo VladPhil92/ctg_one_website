@@ -4,6 +4,7 @@ import path from 'node:path';
 const root = process.cwd();
 const files = {
   migration: path.join(root, 'supabase/migrations/20260906173817_0113_investment_financial_server_boundaries.sql'),
+  contraction: path.join(root, 'supabase/migrations/20260906180100_0114_revoke_legacy_financial_rpc_client_execution.sql'),
   route: path.join(root, 'src/app/api/investment/admin/financial-control/route.ts'),
   orderRepository: path.join(root, 'src/modules/investment/admin-orders/browser-repository.ts'),
   payoutAdmin: path.join(root, 'src/app/admin/finance/rails/page.tsx'),
@@ -77,6 +78,27 @@ for (const signature of directClientRevokeSignatures) {
     throw new Error(`financial wrapper is not revoked from direct client execution: ${signature}`);
   }
 }
+
+const legacySignatures = [
+  'public.approve_withdrawal(uuid)',
+  'public.reject_withdrawal(uuid, text)',
+  'public.set_investment_user_role(uuid, text)',
+  'public.verify_investment_bancolombia_transfer(uuid, text, bigint, timestamptz, text)',
+  'public.verify_investment_crypto_transfer(uuid, text, text, bigint, timestamptz, text)',
+  'public.initiate_investment_payout(uuid, text, text, text, text, text, text)',
+  'public.confirm_investment_payout(uuid, text, timestamptz, text)',
+  'public.fail_investment_payout(uuid, text, text)',
+];
+const normalizedContraction = source.contraction.replace(/\s+/g, ' ').trim();
+for (const signature of legacySignatures) {
+  const expected = `revoke all on function ${signature} from public, anon, authenticated, service_role;`;
+  if (!normalizedContraction.includes(expected)) {
+    throw new Error(`legacy financial RPC still lacks full PostgREST-role contraction: ${signature}`);
+  }
+}
+requireFragments(source.contraction, 'legacy financial contraction migration', [
+  'Legacy internal implementation. Direct API execution revoked; use the financial-control server boundary.',
+]);
 
 requireFragments(source.route, 'financial control API', [
   'createAuthenticatedRequestContext(request)',
@@ -160,14 +182,14 @@ requireFragments(source.server, 'server trust-boundary primitives', [
 const schemaMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(source.schema);
 const schemaCount = /EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(source.schema);
 const schemaName = /EXPECTED_DATABASE_MIGRATION_NAME\s*=\s*['"]([^'"]+)['"]/.exec(source.schema);
-if (!schemaMigration || Number(schemaMigration[1]) < 113) {
-  throw new Error('runtime schema contract must include financial server boundaries through 0113');
+if (!schemaMigration || Number(schemaMigration[1]) < 114) {
+  throw new Error('runtime schema contract must include financial privilege contraction through 0114');
 }
-if (!schemaCount || Number(schemaCount[1]) < 113) {
-  throw new Error('runtime schema migration count must include 0113');
+if (!schemaCount || Number(schemaCount[1]) < 114) {
+  throw new Error('runtime schema migration count must include 0114');
 }
-if (!schemaName || schemaName[1] !== 'investment_financial_server_boundaries') {
-  throw new Error('runtime schema name must identify the 0113 financial server boundary');
+if (!schemaName || schemaName[1] !== 'revoke_legacy_financial_rpc_client_execution') {
+  throw new Error('runtime schema name must identify the 0114 financial privilege contraction');
 }
 
 console.log('Investment financial privilege boundary invariants: PASS');
