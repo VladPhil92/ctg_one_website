@@ -18,7 +18,13 @@ assert.doesNotMatch(workflow, /\n\s*push:\s*\n/, 'Post-deploy canary must not be
 assert.doesNotMatch(workflow, /\n\s*pull_request:\s*\n/, 'Post-deploy canary must not run on pull requests.');
 assert.doesNotMatch(workflow, /\n\s*workflow_run:\s*\n/, 'Post-deploy canary must not create a workflow_run check race with Render checksPass deployment.');
 assert.match(workflow, /cron:\s*['"]7,17,27,37,47,57 \* \* \* \*['"]/, 'Scheduled canary cadence must remain bounded and explicit.');
-assert.match(workflow, /EXPECTED_DEPLOYMENT_SHA:\s*\$\{\{ github\.event\.inputs\.expected_sha \|\| github\.sha \}\}/, 'Canary must compare production to the exact workflow target SHA.');
+assert.match(workflow, /name:\s*Resolve deployment target/, 'Scheduled canary must resolve the currently live deployment before checkout.');
+assert.match(workflow, /REQUESTED_SHA:\s*\$\{\{ github\.event\.inputs\.expected_sha \|\| '' \}\}/, 'Only an explicit workflow_dispatch SHA may request strict convergence.');
+assert.match(workflow, /TARGET_SHA=.*deployment.*commit/s, 'Without an explicit SHA, the canary must derive its target from the live health endpoint.');
+assert.match(workflow, /mode=\$MODE/, 'Target resolution must expose whether the run is strict or live-release verification.');
+assert.match(workflow, /ref:\s*\$\{\{ steps\.target\.outputs\.sha \}\}/, 'Canary must checkout the exact release it is validating.');
+assert.match(workflow, /EXPECTED_DEPLOYMENT_SHA:\s*\$\{\{ steps\.target\.outputs\.sha \}\}/, 'Canary verifier must compare production to the resolved deployment SHA.');
+assert.doesNotMatch(workflow, /expected_sha \|\| github\.sha/, 'Scheduled canary must never treat latest main as deployed before Render has converged.');
 assert.match(workflow, /EXPECTED_DEPLOYMENT_BRANCH:\s*main/, 'Production canary must require the main branch.');
 assert.match(workflow, /node scripts\/verify-deployment-health\.mjs/, 'Workflow must execute the repository-owned verifier.');
 assert.match(workflow, /node scripts\/verify-public-surface-reliability\.mjs/, 'Workflow must verify public surfaces after deployment identity converges.');

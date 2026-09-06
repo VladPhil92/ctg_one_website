@@ -54,6 +54,11 @@ export type AuthenticatedRequestContext = {
    * the SSR session stored in secure cookies.
    */
   getAuthenticatorAssuranceLevel: () => Promise<AuthenticatorAssuranceResult>;
+   * Server-only credential retained only after `auth.getUser(token)` succeeds.
+   * It exists so Supabase Auth can evaluate MFA/AAL for native/PWA bearer
+   * requests. Never return, log, persist, or copy this value into telemetry.
+   */
+  verifiedBearerToken: string | null;
 };
 
 function parseBearerToken(request: Request): { present: boolean; token: string | null } {
@@ -110,6 +115,7 @@ export async function createAuthenticatedRequestContext(
       transport: 'bearer',
       getAuthenticatorAssuranceLevel: () =>
         supabase.auth.mfa.getAuthenticatorAssuranceLevel(validatedBearerToken),
+      verifiedBearerToken: bearer.token,
     };
   }
 
@@ -122,6 +128,7 @@ export async function createAuthenticatedRequestContext(
     transport: 'cookie',
     getAuthenticatorAssuranceLevel: () => supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
   };
+  return { supabase, user: data.user, transport: 'cookie', verifiedBearerToken: null };
 }
 
 // Admin-only client using the service role key, which bypasses Row Level
