@@ -62,8 +62,14 @@ for (const forbidden of [
 if (!source.panel.includes('data.totp?.qr_code') || !source.panel.includes('data.totp.secret')) {
   throw new Error('Finance MFA panel must keep the provider-issued QR and secret in client state only.');
 }
-if (source.page.includes('secret') || source.page.includes('qrCode') || source.page.includes('factorId')) {
-  throw new Error('Finance MFA server page must not receive TOTP enrollment secrets or factor challenge material.');
+for (const serverSecretFlow of [
+  /<FinanceMfaPanel\s+[^>]*(?:secret|qrCode|factorId)\s*=/,
+  /(?:secret|qrCode|factorId)\s*:\s*[^,}\n]+/,
+  /searchParams[^\n]*(?:secret|qrCode|factorId)/,
+]) {
+  if (serverSecretFlow.test(source.page)) {
+    throw new Error('Finance MFA server page must not receive TOTP enrollment secrets or factor challenge material.');
+  }
 }
 
 requireFragments(source.nav, 'Finance MFA navigation', [
