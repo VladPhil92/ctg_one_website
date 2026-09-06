@@ -77,7 +77,7 @@ export function createInvestmentBusinessRuleMainProvenanceEvidence({
   sha,
   headSha,
   eventBefore,
-  mergeShape,
+  mergeShape = 'merge-commit',
   mergeFirstParentSha,
   mergeSecondParentSha,
   commitVerified,
