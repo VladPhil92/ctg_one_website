@@ -43,17 +43,18 @@ assert.equal(
   'JP Valderrama must keep a single canonical header layout row',
 );
 
-// Ideas is intentionally self-contained in the visible UI. It was the only
-// subbrand button whose render depended on a second dynamic HTTP request.
+// Ideas must use the same validated, observable semantic asset transport as
+// the rest of the JP Valderrama visual system. Keep the Base64 source only as
+// repository-owned integrity evidence; never embed the full artwork in HTML.
 assert.match(jpPage, /import \{ IDEAS_VISUAL_SRC \} from '@\/data\/jpvalderrama-visuals\/ideas-src';/);
 assert.match(jpPage, /name: 'Valderrama Ideas',[\s\S]*?image: IDEAS_VISUAL_SRC,/);
 assert.doesNotMatch(jpPage, /image: 'ideas-button'/);
 assert.match(jpPage, /<Image src=\{brand\.image\}/);
 assert.match(ideasPage, /import \{ IDEAS_VISUAL_SRC \} from '@\/data\/jpvalderrama-visuals\/ideas-src';/);
 assert.match(ideasPage, /image=\{IDEAS_VISUAL_SRC\}/);
-assert.doesNotMatch(ideasPage, /image="\/api\/jpvalderrama\/assets\/ideas-button"/);
 assert.match(ideasSrc, /export const IDEAS_VISUAL_BASE64 = \[ideas00, ideas01, ideas02, ideas03, ideas04\]\.join\(''\);/);
-assert.match(ideasSrc, /export const IDEAS_VISUAL_SRC = `data:image\/webp;base64,\$\{IDEAS_VISUAL_BASE64\}`;/);
+assert.match(ideasSrc, /export const IDEAS_VISUAL_SRC = '\/api\/jpvalderrama\/assets\/ideas-button';/);
+assert.doesNotMatch(ideasSrc, /data:image\/webp;base64/);
 
 const normalizeRiffPadding = (bytes) => {
   if (bytes.length < 8) return bytes;
