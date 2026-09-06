@@ -16,6 +16,7 @@ import {
   verifyPrivyIdentityToken,
 } from '@/lib/wallet/privy-identity-token';
 
+const JSON_MIME = 'application/json';
 const MAX_REQUEST_BYTES = 4 * 1024;
 const CORS_METHODS = ['POST', 'OPTIONS'] as const;
 
@@ -45,6 +46,13 @@ function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
     NextResponse.json(body, { ...init, headers }),
     CORS_METHODS,
   );
+}
+
+function requestMime(request: Request): string {
+  return (request.headers.get('content-type') ?? '')
+    .split(';', 1)[0]
+    .trim()
+    .toLowerCase();
 }
 
 function privyErrorResponse(request: Request, error: PrivyIdentityTokenError) {
@@ -84,6 +92,14 @@ export async function POST(request: Request) {
       request,
       { error: 'WALLET_IDENTITY_NOT_CONFIGURED' },
       { status: 503 },
+    );
+  }
+
+  if (requestMime(request) !== JSON_MIME) {
+    return noStoreJson(
+      request,
+      { error: 'UNSUPPORTED_MEDIA_TYPE' },
+      { status: 415 },
     );
   }
 

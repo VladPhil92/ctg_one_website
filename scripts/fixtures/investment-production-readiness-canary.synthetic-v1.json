@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0109",
-  "expectedMigrationName": "add_vertice_federation_authorities",
-  "expectedMigrationCount": 109,
+  "expectedMigration": "0111",
+  "expectedMigrationName": "admin_server_rpc_boundaries",
+  "expectedMigrationCount": 111,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
