@@ -3,10 +3,12 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const migration = await read('supabase/migrations/0069_investment_manual_crypto_verification.sql');
+const financialBoundary = await read('supabase/migrations/20260906173817_0113_investment_financial_server_boundaries.sql');
 const checkout = await read('src/components/inversion/InvestmentCheckoutClient.tsx');
 const railChoice = await read('src/components/inversion/InvestmentPaymentRailChoice.tsx');
 const checkoutRepository = await read('src/modules/investment/checkout/browser-repository.ts');
 const uploadRoute = await read('src/app/api/investment/orders/[orderId]/payment-proof/route.ts');
+const financialControl = await read('src/app/api/investment/admin/financial-control/route.ts');
 const admin = await read('src/app/inversion/admin/orders/page.tsx');
 const adminRepository = await read('src/modules/investment/admin-orders/browser-repository.ts');
 const paymentConfig = await read('src/lib/payment-instructions.ts');
@@ -103,8 +105,17 @@ assert.ok(
 );
 
 assert.ok(
-  adminRepository.includes("rpc('verify_investment_crypto_transfer'"),
-  'Finance repository must use the human crypto verification RPC.',
+  adminRepository.includes('/api/investment/admin/financial-control')
+    && adminRepository.includes("operation: 'funding.verifyCryptoTransfer'")
+    && !adminRepository.includes("rpc('verify_investment_crypto_transfer'"),
+  'Finance repository must route human crypto verification through the server-only financial control API.',
+);
+assert.ok(
+  financialBoundary.includes('verify_investment_crypto_transfer_server')
+    && financialBoundary.includes("'finance.manage'")
+    && financialControl.includes("'verify_investment_crypto_transfer_server'")
+    && financialControl.includes('p_actor_user_id: context.user.id'),
+  'Crypto verification must retain finance.manage and canonical actor binding behind service_role.',
 );
 assert.ok(
   admin.includes('explorador público de la red'),
