@@ -13,6 +13,9 @@ const [
   authInput,
   authLayout,
   initialMigration,
+  verticeExchangeRoute,
+  walletIdentityLinkRoute,
+  serviceFederationRateLimitMigration,
 ] = await Promise.all([
   readFile('src/app/(auth)/registro/page.tsx', 'utf8'),
   readFile('src/app/(auth)/iniciar-sesion/page.tsx', 'utf8'),
@@ -25,6 +28,9 @@ const [
   readFile('src/components/auth/AuthInput.tsx', 'utf8'),
   readFile('src/app/(auth)/layout.tsx', 'utf8'),
   readFile('supabase/migrations/0001_init.sql', 'utf8'),
+  readFile('src/app/api/federation/vertice/exchange/route.ts', 'utf8'),
+  readFile('src/app/api/wallet/identity/link/route.ts', 'utf8'),
+  readFile('supabase/migrations/20260906153332_0110_service_federation_rate_limits.sql', 'utf8'),
 ]);
 
 // SSR / PKCE lifecycle and redirect confinement.
@@ -97,5 +103,32 @@ for (const [name, source] of [
 }
 assert.ok(authLayout.includes('<LanguageSwitcher compact />'), 'Authentication shell must expose the language selector.');
 assert.match(authLayout, /min-h-11/, 'Authentication home navigation must retain a 44px target.');
+
+// Zero-trust service API boundaries. The VERTICE exchange is a server-to-server
+// identity boundary, so a valid shared secret alone is insufficient: the body
+// contract, resource consumption, throttling and database privileges must all
+// fail closed and remain regression-tested.
+assert.match(verticeExchangeRoute, /MAX_BODY_BYTES\s*=\s*4\s*\*\s*1024/, 'VERTICE exchange must cap request bodies at 4 KiB.');
+assert.match(verticeExchangeRoute, /requestMime\(request\)\s*!==\s*JSON_MIME/, 'VERTICE exchange must require application/json.');
+assert.match(verticeExchangeRoute, /request\.body\.getReader\(\)/, 'VERTICE exchange must enforce the body bound while streaming, not only through Content-Length.');
+assert.match(verticeExchangeRoute, /consume_service_api_rate_limit/, 'VERTICE exchange must consume the durable service rate limit before code exchange.');
+assert.ok(verticeExchangeRoute.includes("SERVICE_RATE_LIMIT_SCOPE = 'federation.vertice.exchange'"), 'VERTICE exchange must use its dedicated service rate-limit scope.');
+assert.ok(verticeExchangeRoute.includes("SERVICE_RATE_LIMIT_ACTOR = 'vertice'"), 'VERTICE exchange must bind rate limiting to the VERTICE service actor.');
+assert.match(verticeExchangeRoute, /Retry-After/, 'VERTICE exchange must return Retry-After when throttled.');
+assert.match(verticeExchangeRoute, /EXCHANGE_KEYS/, 'VERTICE exchange must reject ambiguous extra JSON fields.');
+assert.match(verticeExchangeRoute, /Cache-Control'?,?\s*'no-store'|headers\.set\('Cache-Control', 'no-store'\)/, 'VERTICE exchange responses must remain non-cacheable.');
+
+assert.match(walletIdentityLinkRoute, /requestMime\(request\)\s*!==\s*JSON_MIME/, 'Wallet identity linking must require application/json.');
+assert.match(walletIdentityLinkRoute, /MAX_REQUEST_BYTES\s*=\s*4\s*\*\s*1024/, 'Wallet identity linking must retain its 4 KiB request bound.');
+assert.match(walletIdentityLinkRoute, /consume_wallet_identity_link_rate_limit/, 'Wallet identity linking must retain durable throttling.');
+assert.match(walletIdentityLinkRoute, /verifyPrivyIdentityToken/, 'Wallet identity linking must retain server-side Privy identity proof verification.');
+
+assert.match(serviceFederationRateLimitMigration, /create table if not exists private\.service_api_rate_limit_windows/i, 'Service rate-limit state must remain private.');
+assert.match(serviceFederationRateLimitMigration, /enable row level security/i, 'Service rate-limit table must keep RLS enabled.');
+assert.match(serviceFederationRateLimitMigration, /security invoker/i, 'Service rate-limit function must remain SECURITY INVOKER.');
+assert.match(serviceFederationRateLimitMigration, /revoke all on function[\s\S]*from public, anon, authenticated/i, 'Service rate-limit function must not be executable by public client roles.');
+assert.match(serviceFederationRateLimitMigration, /grant execute on function[\s\S]*to service_role/i, 'Service rate-limit function must remain service-role-only.');
+assert.match(serviceFederationRateLimitMigration, /p_scope is distinct from 'federation\.vertice\.exchange'/i, 'Service limiter must fail closed outside the admitted VERTICE scope.');
+assert.match(serviceFederationRateLimitMigration, /p_actor_key is distinct from 'vertice'/i, 'Service limiter must fail closed outside the admitted VERTICE actor.');
 
 console.log('Auth lifecycle invariants: PASS');

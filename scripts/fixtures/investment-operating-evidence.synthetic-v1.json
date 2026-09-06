@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0109",
-    "schemaMigrationName": "add_vertice_federation_authorities",
-    "schemaMigrationCount": 109,
+    "schemaMigration": "0110",
+    "schemaMigrationName": "service_federation_rate_limits",
+    "schemaMigrationCount": 110,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
