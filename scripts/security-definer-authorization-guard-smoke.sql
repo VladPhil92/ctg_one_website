@@ -25,6 +25,21 @@ CREATE TEMP TABLE reviewed_authenticated_security_definer_bodies(
 
 \copy reviewed_authenticated_security_definer_bodies(signature, body_sha256) FROM 'scripts/security-definer-authenticated-body-sha256.txt' WITH (FORMAT csv, DELIMITER E'\t')
 
+-- Phase 3 deliberately retires direct client EXECUTE grants for these legacy
+-- implementations while preserving their reviewed body fingerprints as an
+-- immutable historical authorization record. They may only be reached through
+-- the service-role-only *_server wrappers introduced by migration 0111.
+CREATE TEMP TABLE retired_authenticated_security_definer_signatures(
+  signature text PRIMARY KEY
+);
+
+INSERT INTO retired_authenticated_security_definer_signatures(signature) VALUES
+  ('public.verify_wallet_topup_claim(p_claim_id uuid, p_verification_notes text)'),
+  ('public.reconcile_wallet_topup_claim(p_claim_id uuid, p_admin_notes text)'),
+  ('public.reject_wallet_topup_claim(p_claim_id uuid, p_reason text)'),
+  ('public.approve_kyc(p_submission_id uuid, p_admin_notes text)'),
+  ('public.reject_kyc(p_submission_id uuid, p_reason text)');
+
 CREATE TEMP VIEW actual_authenticated_security_definer_bodies AS
 SELECT
   n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS signature,
@@ -85,7 +100,9 @@ BEGIN
   INTO v_stale
   FROM reviewed_authenticated_security_definer_bodies r
   LEFT JOIN actual_authenticated_security_definer_bodies a USING (signature)
-  WHERE a.signature IS NULL;
+  LEFT JOIN retired_authenticated_security_definer_signatures retired USING (signature)
+  WHERE a.signature IS NULL
+    AND retired.signature IS NULL;
 
   SELECT coalesce(array_agg(a.signature ORDER BY a.signature), ARRAY[]::text[])
   INTO v_changed
