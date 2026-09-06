@@ -1,117 +1,134 @@
-import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-
-const source = {
-  page: await read('src/app/inversion/admin/page.tsx'),
-  financialClient: await read('src/lib/investment/financial-client.ts'),
-  financialControlRoute: await read('src/app/api/investment/admin/financial-control/route.ts'),
-  adminAuth: await read('src/lib/auth/admin-auth.ts'),
-  securityPolicy: await read('src/lib/security/financial-security-policy.ts'),
-  telemetry: await read('src/lib/security/financial-security-telemetry.ts'),
-  mfaEnrollment: await read('src/components/security/FinanceMfaEnrollment.tsx'),
-  mfaStatusRoute: await read('src/app/api/auth/mfa/status/route.ts'),
-  mfaEnrollRoute: await read('src/app/api/auth/mfa/enroll/route.ts'),
-  mfaChallengeRoute: await read('src/app/api/auth/mfa/challenge/route.ts'),
-  migration: await read('supabase/migrations/20260906200632_0115_financial_security_step_up_telemetry.sql'),
-  schema: await read('src/lib/observability/schema-version.ts'),
+const root = process.cwd();
+const files = {
+  migration: path.join(root, 'supabase/migrations/20260906200632_0115_financial_security_step_up_telemetry.sql'),
+  route: path.join(root, 'src/app/api/investment/admin/financial-control/route.ts'),
+  stepUp: path.join(root, 'src/lib/security/financial-step-up.ts'),
+  assurance: path.join(root, 'src/lib/security/financial-auth-assurance.ts'),
+  telemetry: path.join(root, 'src/lib/security/financial-security-events.ts'),
+  server: path.join(root, 'src/lib/supabase/server.ts'),
+  schema: path.join(root, 'src/lib/observability/schema-version.ts'),
 };
+
+for (const [label, file] of Object.entries(files)) {
+  if (!fs.existsSync(file)) throw new Error(`Financial step-up ${label} missing: ${path.relative(root, file)}`);
+}
+
+const source = Object.fromEntries(
+  Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, 'utf8')]),
+);
 
 function requireFragments(text, label, fragments) {
   for (const fragment of fragments) {
-    if (!text.includes(fragment)) {
-      throw new Error(`${label} is missing required fragment: ${fragment}`);
-    }
+    if (!text.includes(fragment)) throw new Error(`${label} missing invariant fragment: ${fragment}`);
   }
 }
 
-function forbidFragments(text, label, fragments) {
-  for (const fragment of fragments) {
-    if (text.includes(fragment)) {
-      throw new Error(`${label} contains forbidden fragment: ${fragment}`);
-    }
+requireFragments(source.stepUp, 'recent-auth policy', [
+  'FINANCIAL_STEP_UP_MAX_AGE_SECONDS = 15 * 60',
+  'FINANCIAL_STEP_UP_CLOCK_SKEW_SECONDS = 2 * 60',
+  'last_sign_in_at',
+  'Date.parse(raw)',
+  "reason: 'STALE_PRIMARY_AUTH'",
+  "reason: 'FUTURE_LAST_SIGN_IN'",
+]);
+for (const mutableMetadataAccess of [
+  '.user_metadata', '.app_metadata', "['user_metadata']", '["user_metadata"]', "['app_metadata']", '["app_metadata"]',
+]) {
+  if (source.stepUp.includes(mutableMetadataAccess)) {
+    throw new Error(`financial step-up must not trust mutable metadata access: ${mutableMetadataAccess}`);
   }
 }
 
-requireFragments(source.adminAuth, 'admin auth', [
-  "export type AdminAssurance = 'session' | 'financial';",
-  'requiredAssurance?: AdminAssurance;',
-  "requiredAssurance === 'financial'",
-  'sessionEpochMs',
-  'FINANCE_MAX_SESSION_AGE_MS',
-  'assuranceLevel',
-  "aal2",
-  "error: 'FINANCIAL_FRESH_AUTH_REQUIRED'",
-  "error: 'FINANCIAL_MFA_REQUIRED'",
+requireFragments(source.assurance, 'mandatory Finance MFA assurance policy', [
+  'getAuthenticatorAssuranceLevel(',
+  'context.verifiedBearerToken ?? undefined',
+  "mode: 'mfa-enrollment-required'",
+  "mode: 'mfa-challenge-required'",
+  "mode: 'aal2'",
+  "mode: 'assurance-unavailable'",
+  "currentLevel === 'aal2'",
+  "nextLevel === 'aal2'",
+]);
+for (const legacyPermissiveFragment of [
+  "mode: 'aal1-no-verified-factor'",
+  "allowed: true; mode: 'aal1-no-verified-factor'",
+]) {
+  if (source.assurance.includes(legacyPermissiveFragment)) {
+    throw new Error(`Phase 5C3 must not allow AAL1 financial mutations: ${legacyPermissiveFragment}`);
+  }
+}
+if (source.assurance.includes('service_role') || source.assurance.includes('createAdminClient')) {
+  throw new Error('MFA assurance must execute in the authenticated user context, never service_role');
+}
+
+requireFragments(source.server, 'verified bearer assurance transport', [
+  'verifiedBearerToken: string | null',
+  'const { data, error } = await supabase.auth.getUser(bearer.token)',
+  'verifiedBearerToken: bearer.token',
+  "transport: 'cookie', verifiedBearerToken: null",
 ]);
 
-requireFragments(source.securityPolicy, 'financial security policy', [
-  'FINANCE_MAX_SESSION_AGE_MS',
-  'FINANCE_MAX_FAILED_ATTEMPTS',
-  'FINANCE_LOCKOUT_WINDOW_MS',
-  'resolveFinancialAal2Decision',
+requireFragments(source.route, 'mandatory financial-control MFA boundary', [
+  'evaluateFinancialStepUp(context.user)',
+  'evaluateFinancialAuthAssurance(context)',
+  'FINANCIAL_STEP_UP_REQUIRED',
+  'FINANCIAL_MFA_ENROLLMENT_REQUIRED',
+  'FINANCIAL_MFA_CHALLENGE_REQUIRED',
+  'FINANCIAL_AUTH_ASSURANCE_UNAVAILABLE',
+  "reasonCode: 'MFA_ENROLLMENT_REQUIRED'",
+  "reasonCode: 'AAL2_REQUIRED'",
+  "reasonCode: 'AUTH_ASSURANCE_BACKEND_ERROR'",
+  "enrollmentPath: '/admin/security/mfa'",
+  "challengePath: '/admin/security/mfa'",
+  'FINANCIAL_STEP_UP_MAX_AGE_SECONDS',
+  'randomUUID()',
+  'recordFinancialSecurityEvent({',
+  'FINANCIAL_AUTHORIZATION_UNAVAILABLE',
+  'FINANCIAL_AUTHORIZATION_DENIED',
+  'FINANCIAL_OPERATION_REJECTED',
+  'FINANCIAL_OPERATION_SUCCEEDED',
+  '428',
+  'correlationId',
 ]);
+const freshAuthIndex = source.route.indexOf('evaluateFinancialStepUp(context.user)');
+const assuranceIndex = source.route.indexOf('evaluateFinancialAuthAssurance(context)');
+const enrollmentBlockIndex = source.route.indexOf("assurance.mode === 'mfa-enrollment-required'");
+const challengeBlockIndex = source.route.indexOf("assurance.mode === 'mfa-challenge-required'");
+const authzIndex = source.route.indexOf('authorizeFinancialOperation(context, parsed.data.operation)');
+const mutationIndex = source.route.indexOf('admin.rpc(rpc, {');
+if (!(
+  freshAuthIndex >= 0 &&
+  assuranceIndex > freshAuthIndex &&
+  enrollmentBlockIndex > assuranceIndex &&
+  challengeBlockIndex > enrollmentBlockIndex &&
+  authzIndex > challengeBlockIndex &&
+  mutationIndex > authzIndex
+)) {
+  throw new Error('financial controls must execute fresh-auth -> mandatory MFA enrollment/challenge -> authorization -> privileged mutation');
+}
 
-requireFragments(source.financialControlRoute, 'financial control route', [
-  "requiredAssurance: 'financial'",
-  'recordFinancialSecurityEvent',
-  "eventType: 'financial_control_authorized'",
-  "eventType: 'financial_control_denied'",
+requireFragments(source.telemetry, 'structured + durable financial security telemetry', [
+  "'MFA_ENROLLMENT_REQUIRED'",
+  "'AAL2_REQUIRED'",
+  "'AUTH_ASSURANCE_BACKEND_ERROR'",
+  "logger.info('security.financial.operation_succeeded'",
+  "logger.error('security.financial.authorization_unavailable'",
+  "logger.error('security.financial.authorization_denied'",
+  "logger.warn('security.financial.operation_rejected'",
+  "logger.warn('security.financial.step_up_required'",
+  "admin.rpc('record_financial_security_event_server'",
 ]);
-
-requireFragments(source.telemetry, 'financial telemetry', [
-  'recordFinancialSecurityEvent',
-  'record_financial_security_event_server',
-  'SUPABASE_SERVICE_ROLE_KEY',
-]);
-forbidFragments(source.telemetry, 'financial telemetry', [
-  'console.log(',
-  'console.error(',
-  'bank_reference',
-  'transaction_hash',
-]);
-
-requireFragments(source.mfaStatusRoute, 'MFA status route', [
-  'getAuthenticatorAssuranceLevel',
-  'listFactors',
-  'verifiedFactors',
-  'aal1',
-  'aal2',
-]);
-requireFragments(source.mfaEnrollRoute, 'MFA enroll route', [
-  "factorType: 'totp'",
-  'friendlyName',
-  'qr_code',
-  'secret',
-]);
-requireFragments(source.mfaChallengeRoute, 'MFA challenge route', [
-  'challengeAndVerify',
-  'factorId',
-  'code',
-]);
-requireFragments(source.mfaEnrollment, 'Finance MFA enrollment UX', [
-  'Configurar autenticación financiera',
-  '/api/auth/mfa/enroll',
-  '/api/auth/mfa/challenge',
-  '/api/auth/mfa/status',
-  'qrCode',
-]);
-
-requireFragments(source.page, 'investment admin page', [
-  'FinanceMfaEnrollment',
-  'financialControlRequest',
-  'FINANCIAL_FRESH_AUTH_REQUIRED',
-  'FINANCIAL_MFA_REQUIRED',
-  'Reautenticar',
-  'segundo factor',
-]);
-forbidFragments(source.page, 'investment admin page', [
-  "fetch('/api/investment/admin/financial-control'",
-  'createSupabaseBrowserClient',
-  "from('lot_funding_transactions').update",
-  "from('lot_participant_ledger').insert",
-]);
+for (const forbiddenField of [
+  'bankReference:', 'transactionHash:', 'destinationMasked:', 'destinationFingerprint:', 'notes:',
+  'accessToken:', 'refreshToken:', 'verifiedBearerToken:', 'otp:', 'requestBody:',
+]) {
+  if (source.telemetry.includes(forbiddenField)) {
+    throw new Error(`financial security telemetry accepts sensitive field: ${forbiddenField}`);
+  }
+}
 
 const normalizedMigration = source.migration.replace(/\s+/g, ' ').trim();
 requireFragments(normalizedMigration, '0115 durable journal migration', [
