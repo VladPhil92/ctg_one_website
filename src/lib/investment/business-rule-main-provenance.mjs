@@ -23,6 +23,7 @@ export const INVESTMENT_BUSINESS_RULE_MAIN_PROVENANCE_CLASSIFICATION =
 
 const FULL_SHA_RE = /^[0-9a-f]{40}$/i;
 const ISO_INSTANT_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/;
+const MERGE_SHAPES = Object.freeze(['merge-commit', 'squash']);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -44,7 +45,7 @@ function validateGovernanceCandidateAuthority(candidate) {
   assert(candidate.sourcePr === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.sourcePr, 'Governance candidate PR drifted from immutable PR #256 authority');
 }
 
-function validateMergePullRequest(mergePullRequest, sha, eventBefore, mergeSecondParentSha) {
+function validateMergePullRequest(mergePullRequest, sha, eventBefore, mergeSecondParentSha, mergeShape) {
   assert(mergePullRequest && typeof mergePullRequest === 'object' && !Array.isArray(mergePullRequest), 'Merged pull-request metadata is required');
   assert(Number.isSafeInteger(mergePullRequest.number) && mergePullRequest.number > 0, 'Merged pull-request number is invalid');
   assert(typeof mergePullRequest.url === 'string' && /^https:\/\/github\.com\/VladPhil92\/ctg_one_website\/pull\/\d+$/.test(mergePullRequest.url), 'Merged pull-request URL is invalid');
@@ -53,7 +54,12 @@ function validateMergePullRequest(mergePullRequest, sha, eventBefore, mergeSecon
   assert(FULL_SHA_RE.test(mergePullRequest.baseSha ?? ''), 'Merged pull-request base SHA is invalid');
   assert(FULL_SHA_RE.test(mergePullRequest.headSha ?? ''), 'Merged pull-request head SHA is invalid');
   assert(mergePullRequest.baseSha === eventBefore, 'Merged pull-request base SHA must equal the push before SHA');
-  assert(mergePullRequest.headSha === mergeSecondParentSha, 'Merged pull-request head SHA must equal the merge second parent');
+  assert(mergePullRequest.headSha !== mergePullRequest.baseSha, 'Merged pull-request head SHA must differ from its base SHA');
+  if (mergeShape === 'merge-commit') {
+    assert(mergePullRequest.headSha === mergeSecondParentSha, 'Merged pull-request head SHA must equal the merge second parent');
+  } else {
+    assert(mergeSecondParentSha === null, 'Squash provenance must not claim a merge second parent');
+  }
   assert(mergePullRequest.mergeCommitSha === sha, 'Merged pull-request merge commit must equal the trusted main SHA');
   assert(typeof mergePullRequest.mergedAt === 'string' && ISO_INSTANT_RE.test(mergePullRequest.mergedAt), 'Merged pull-request mergedAt must be an ISO UTC instant');
 }
@@ -71,6 +77,7 @@ export function createInvestmentBusinessRuleMainProvenanceEvidence({
   sha,
   headSha,
   eventBefore,
+  mergeShape,
   mergeFirstParentSha,
   mergeSecondParentSha,
   commitVerified,
@@ -94,13 +101,18 @@ export function createInvestmentBusinessRuleMainProvenanceEvidence({
   assert(headSha === sha, 'Checked-out HEAD must equal the trusted main SHA');
   assert(FULL_SHA_RE.test(eventBefore ?? ''), 'Push before SHA must be a full Git SHA');
   assert(eventBefore !== '0'.repeat(40), 'Push before SHA cannot be the zero SHA');
+  assert(MERGE_SHAPES.includes(mergeShape), 'Merged-main provenance merge shape is invalid');
   assert(FULL_SHA_RE.test(mergeFirstParentSha ?? ''), 'Merge first parent SHA must be a full Git SHA');
-  assert(FULL_SHA_RE.test(mergeSecondParentSha ?? ''), 'Merge second parent SHA must be a full Git SHA');
+  if (mergeShape === 'merge-commit') {
+    assert(FULL_SHA_RE.test(mergeSecondParentSha ?? ''), 'Merge second parent SHA must be a full Git SHA');
+  } else {
+    assert(mergeSecondParentSha === null, 'Squash provenance must not claim a merge second parent');
+  }
   assert(eventBefore === mergeFirstParentSha, 'Push before SHA must equal the merge first parent');
   assert(commitVerified === true, 'Trusted main commit must have verified GitHub commit provenance');
   assert(FULL_SHA_RE.test(governanceBlobSha ?? ''), 'Governance blob SHA must be a full Git SHA');
   assert(candidateBlobSha === INVESTMENT_BUSINESS_RULE_IMMUTABLE_CANDIDATE.blobSha, 'Pinned BR candidate blob does not match immutable PR #256 authority');
-  validateMergePullRequest(mergePullRequest, sha, eventBefore, mergeSecondParentSha);
+  validateMergePullRequest(mergePullRequest, sha, eventBefore, mergeSecondParentSha, mergeShape);
   assert(typeof workflowName === 'string' && workflowName === 'Investment BR Merged-Main Provenance', 'Unexpected provenance workflow name');
   assert(typeof workflowRunId === 'string' && /^\d+$/.test(workflowRunId), 'Workflow run id is invalid');
   assert(typeof workflowRunAttempt === 'string' && /^[1-9]\d*$/.test(workflowRunAttempt), 'Workflow run attempt is invalid');
@@ -126,6 +138,7 @@ export function createInvestmentBusinessRuleMainProvenanceEvidence({
     transition: {
       beforeSha: eventBefore,
       afterSha: sha,
+      mergeShape,
       firstParentSha: mergeFirstParentSha,
       secondParentSha: mergeSecondParentSha,
       forced: false,
@@ -176,8 +189,13 @@ export function validateInvestmentBusinessRuleMainProvenanceEvidence(evidence) {
   assert(FULL_SHA_RE.test(evidence.transition?.beforeSha ?? ''), 'Merged-main provenance before SHA is invalid');
   assert(evidence.transition.beforeSha !== '0'.repeat(40), 'Merged-main provenance before SHA cannot be zero');
   assert(evidence.transition?.afterSha === evidence.trustedMainSha, 'Merged-main provenance after SHA must equal trusted main SHA');
+  assert(MERGE_SHAPES.includes(evidence.transition?.mergeShape), 'Merged-main provenance merge shape is invalid');
   assert(evidence.transition?.firstParentSha === evidence.transition.beforeSha, 'Merged-main provenance first parent must equal before SHA');
-  assert(FULL_SHA_RE.test(evidence.transition?.secondParentSha ?? ''), 'Merged-main provenance second parent SHA is invalid');
+  if (evidence.transition.mergeShape === 'merge-commit') {
+    assert(FULL_SHA_RE.test(evidence.transition?.secondParentSha ?? ''), 'Merged-main provenance second parent SHA is invalid');
+  } else {
+    assert(evidence.transition?.secondParentSha === null, 'Squash provenance second parent must be null');
+  }
   assert(evidence.transition?.forced === false, 'Merged-main provenance cannot originate from a forced push');
   assert(evidence.transition?.deleted === false, 'Merged-main provenance cannot originate from a branch deletion');
   assert(evidence.governance?.path === INVESTMENT_BUSINESS_RULE_GOVERNANCE_PATH, 'Merged-main provenance governance path mismatch');
@@ -199,6 +217,7 @@ export function validateInvestmentBusinessRuleMainProvenanceEvidence(evidence) {
     evidence.trustedMainSha,
     evidence.transition.beforeSha,
     evidence.transition.secondParentSha,
+    evidence.transition.mergeShape,
   );
   assert(evidence.workflow?.name === 'Investment BR Merged-Main Provenance', 'Merged-main provenance workflow mismatch');
   assert(typeof evidence.workflow?.runId === 'string' && /^\d+$/.test(evidence.workflow.runId), 'Merged-main provenance run id is invalid');
