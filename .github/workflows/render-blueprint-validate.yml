@@ -18,6 +18,9 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    env:
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      RENDER_WORKSPACE_ID: tea-d52cnj7pm1nc73el6pq0
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,4 +41,4 @@ jobs:
           render --version
 
       - name: Validate render.yaml
-        run: render blueprints validate render.yaml
+        run: render blueprints validate render.yaml --workspace "$RENDER_WORKSPACE_ID"
