@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0113",
-  "expectedMigrationName": "investment_financial_server_boundaries",
-  "expectedMigrationCount": 113,
+  "expectedMigration": "0114",
+  "expectedMigrationName": "revoke_legacy_financial_rpc_client_execution",
+  "expectedMigrationCount": 114,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
