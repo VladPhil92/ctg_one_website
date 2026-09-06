@@ -49,7 +49,15 @@ export async function GET(request: Request) {
     // no way to sign in. Send them to the normal login page and bounce
     // back to this same authorize request (preserving code_challenge and
     // state) once they're authenticated.
-    const loginUrl = new URL('/iniciar-sesion', url.origin);
+    //
+    // url.origin is derived from the raw incoming request, which behind
+    // Render's internal proxy reflects the internal service address
+    // (e.g. https://localhost:10000) rather than the public ctgone.com
+    // origin the browser actually needs. NEXT_PUBLIC_SITE_URL is the
+    // canonical public origin already relied on elsewhere for this exact
+    // reason (see registro/recuperar-contrasena pages).
+    const publicOrigin = process.env.NEXT_PUBLIC_SITE_URL || url.origin;
+    const loginUrl = new URL('/iniciar-sesion', publicOrigin);
     loginUrl.searchParams.set('next', `${url.pathname}${url.search}`);
     const response = NextResponse.redirect(loginUrl, 302);
     response.headers.set('Cache-Control', 'no-store');
