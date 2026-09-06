@@ -40,5 +40,40 @@ jobs:
           sudo install -m 0755 "$binary" /usr/local/bin/render
           render --version
 
-      - name: Validate render.yaml
-        run: render blueprints validate render.yaml --workspace "$RENDER_WORKSPACE_ID"
+      - name: Validate production blueprint contract
+        shell: ruby {0}
+        run: |
+          require "yaml"
+          config = YAML.safe_load(File.read("render.yaml"), aliases: true)
+          services = config.fetch("services")
+          service = services.find { |item| item["name"] == "ctg_one_website" }
+          raise "ctg_one_website service missing" unless service
+
+          expected = {
+            "type" => "web",
+            "runtime" => "node",
+            "branch" => "main",
+            "plan" => "free",
+            "region" => "oregon",
+            "buildCommand" => "npm ci && npm run build",
+            "startCommand" => "npm run start",
+            "healthCheckPath" => "/api/health",
+            "autoDeployTrigger" => "checksPass"
+          }
+
+          expected.each do |key, value|
+            actual = service[key]
+            raise "#{key} mismatch: expected #{value.inspect}, got #{actual.inspect}" unless actual == value
+          end
+
+          puts "Render production blueprint contract is valid"
+
+      - name: Validate with Render API when credential is provisioned
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${RENDER_API_KEY:-}" ]]; then
+            echo "::notice::RENDER_API_KEY is not provisioned; authenticated Render CLI validation is skipped."
+            exit 0
+          fi
+          render blueprints validate render.yaml --workspace "$RENDER_WORKSPACE_ID"
