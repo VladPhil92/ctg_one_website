@@ -9,6 +9,7 @@ const orderAdmin = await read('src/app/inversion/admin/orders/page.tsx');
 const orderAdminRepository = await read('src/modules/investment/admin-orders/browser-repository.ts');
 const manualBankVerification = await read('supabase/migrations/0037_manual_bancolombia_bank_verification.sql');
 const payoutAdmin = await read('src/app/admin/finance/rails/page.tsx');
+const financialControlClient = await read('src/lib/security/financial-control-client.ts');
 const financialControl = await read('src/app/api/investment/admin/financial-control/route.ts');
 const liquidity = await read('src/components/inversion/InvestmentLiquidityPanel.tsx');
 const investmentApp = await read('src/app/inversion/app/page.tsx');
@@ -43,14 +44,16 @@ assert.ok(rlsPerformance.includes('alter policy investment_payout_events_read_au
 
 assert.ok(
   orderAdmin.includes('createInvestmentAdminOrdersRepository')
-    && orderAdminRepository.includes('/api/investment/admin/financial-control')
+    && orderAdminRepository.includes("import { runFinancialControl } from '@/lib/security/financial-control-client'")
+    && financialControlClient.includes('/api/investment/admin/financial-control')
     && orderAdminRepository.includes("operation: 'funding.verifyBankTransfer'")
     && manualBankVerification.includes('reconcile_investment_order_payment(')
     && !orderAdminRepository.includes("rpc('approve_investment_order'"),
-  'Investment order admin must preserve human verification through the reviewed server-only financial control boundary.',
+  'Investment order admin must preserve human verification through the reviewed shared server-only financial control boundary.',
 );
 assert.ok(
-  payoutAdmin.includes('/api/investment/admin/financial-control')
+  payoutAdmin.includes("import { runFinancialControl } from '@/lib/security/financial-control-client'")
+    && financialControlClient.includes('/api/investment/admin/financial-control')
     && payoutAdmin.includes("operation: 'withdrawal.approve'")
     && payoutAdmin.includes("operation: 'payout.initiate'")
     && payoutAdmin.includes("operation: 'payout.confirm'")
