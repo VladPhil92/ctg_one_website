@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0114",
-    "schemaMigrationName": "revoke_legacy_financial_rpc_client_execution",
-    "schemaMigrationCount": 114,
+    "schemaMigration": "0115",
+    "schemaMigrationName": "financial_security_step_up_telemetry",
+    "schemaMigrationCount": 115,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
