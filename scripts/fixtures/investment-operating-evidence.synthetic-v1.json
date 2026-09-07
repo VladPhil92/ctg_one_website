@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0121",
-    "schemaMigrationName": "jp_education_assessment_time_consistency",
-    "schemaMigrationCount": 121,
+    "schemaMigration": "0123",
+    "schemaMigrationName": "jp_education_assessment_answer_count_fix",
+    "schemaMigrationCount": 123,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
