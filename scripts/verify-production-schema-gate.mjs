@@ -38,47 +38,65 @@ function normalizeLatestName(name) {
   return logicalVersion === expectedMigration ? semanticName : name;
 }
 
-const endpoint = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/rpc/get_runtime_schema_compatibility`;
-const controller = new AbortController();
-const timer = setTimeout(() => controller.abort(), timeoutMs);
-let response;
-let body;
-try {
-  response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      'User-Agent': 'ctg-one-render-production-schema-gate/1.0',
-    },
-    body: '{}',
-    cache: 'no-store',
-    signal: controller.signal,
-  });
-  body = await response.text();
-} finally {
-  clearTimeout(timer);
+async function postPrivilegedRpc(rpcName, payload) {
+  const endpoint = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/rpc/${rpcName}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let response;
+  let body;
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        'User-Agent': 'ctg-one-render-production-schema-gate/1.0',
+      },
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    body = await response.text();
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!response.ok) {
+    throw new Error(`${rpcName} production schema probe failed with HTTP ${response.status}.`);
+  }
+
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error(`${rpcName} production schema probe returned non-JSON data.`);
+  }
 }
 
-if (!response.ok) {
-  throw new Error(`Production schema probe failed with HTTP ${response.status}.`);
-}
+const [compatibilityPayload, requiredMigrationPayload] = await Promise.all([
+  postPrivilegedRpc('get_runtime_schema_compatibility', {}),
+  postPrivilegedRpc('has_runtime_schema_migration', {
+    p_logical_version: expectedMigration,
+    p_expected_name: expectedMigrationName,
+  }),
+]);
 
-let payload;
-try {
-  payload = JSON.parse(body);
-} catch {
-  throw new Error('Production schema probe returned non-JSON data.');
-}
-
-const row = (Array.isArray(payload) ? payload[0] : payload) ?? null;
+const row = (Array.isArray(compatibilityPayload)
+  ? compatibilityPayload[0]
+  : compatibilityPayload) ?? null;
 const observedMigrationCount = row?.migration_count == null ? null : Number(row.migration_count);
 const observedLatestMigrationName = normalizeLatestName(row?.latest_name ?? null);
+const requiredMigrationPresent = requiredMigrationPayload === true;
 
 if (!Number.isInteger(observedMigrationCount) || observedMigrationCount < 1) {
   throw new Error('Production schema probe returned an invalid migration count.');
+}
+
+if (!requiredMigrationPresent) {
+  throw new Error(
+    `Production schema does not contain required logical migration ${expectedMigration}_${expectedMigrationName}. A numerically newer or divergent history is not sufficient; Render deployment is blocked.`
+  );
 }
 
 if (observedMigrationCount < expectedMigrationCount) {
@@ -96,7 +114,8 @@ if (
   );
 }
 
-const exact = observedMigrationCount === expectedMigrationCount
+const exact = requiredMigrationPresent
+  && observedMigrationCount === expectedMigrationCount
   && observedLatestMigrationName === expectedMigrationName;
 const mode = exact ? 'exact' : 'database-ahead-compatible';
 
@@ -109,6 +128,7 @@ console.log(JSON.stringify({
     migrationCount: expectedMigrationCount,
   },
   observed: {
+    requiredMigrationPresent,
     migrationCount: observedMigrationCount,
     latestMigrationName: observedLatestMigrationName,
   },
@@ -117,6 +137,6 @@ console.log(JSON.stringify({
 
 if (!exact) {
   console.warn(
-    `Production schema is ${observedMigrationCount - expectedMigrationCount} migration(s) ahead of this runtime. Deployment remains compatible, but repository/runtime reconciliation should follow.`
+    `Production schema is ${observedMigrationCount - expectedMigrationCount} migration(s) ahead of this runtime, and the exact required migration is present. Deployment remains compatible; repository/runtime reconciliation should follow.`
   );
 }
