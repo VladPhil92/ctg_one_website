@@ -50,6 +50,7 @@ export function EducationFamilyServiceRequest() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          requestKind: 'family',
           institutionName: 'Familia / usuario individual',
           contactName: String(data.get('contactName') ?? ''),
           contactEmail: String(data.get('contactEmail') ?? ''),
@@ -87,7 +88,7 @@ export function EducationFamilyServiceRequest() {
         <CheckCircle2 className="h-7 w-7 text-[#6f0d12]" aria-hidden="true" />
         <h3 className="mt-5 font-serif text-3xl text-[#17110e]">Solicitud registrada.</h3>
         <p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">La solicitud ya quedó asociada a tu cuenta. El siguiente paso es definir disponibilidad, alcance y cotización antes de contratar.</p>
-        <a href="/dashboard/educacion" className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Ver Mis solicitudes <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+        <a href="/dashboard/educacion/servicios" className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Ver solicitud, cotizaciones y agenda <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
       </div>
     );
   }
