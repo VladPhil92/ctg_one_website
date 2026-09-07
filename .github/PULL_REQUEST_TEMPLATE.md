@@ -41,7 +41,7 @@ If this PR adds a migration:
 - [ ] Timestamp version is unique and later than the previous timestamped migration
 - [ ] `EXPECTED_DATABASE_MIGRATION` matches the latest logical `NNNN` migration
 - [ ] Existing applied migration SQL content was not edited; any history-only rename is backed by explicit remote migration-history evidence
-- [ ] Migration-history fixtures are valid JSON and contain each logical migration exactly once
+- [ ] Migration-history fixtures are valid JSON; every recorded production anchor is unique/ordered and the anchor set ends at the latest evidenced production migration
 - [ ] Post-deploy System Health must report Git ↔ Supabase migration alignment as healthy
 
 ## Deployment verification
