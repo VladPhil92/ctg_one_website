@@ -4,7 +4,7 @@ services:
     name: ctg_one_website
     runtime: node
     branch: main
-    plan: free
+    plan: 1c-2g
     region: oregon
     buildCommand: npm ci && npm run build
     startCommand: npm run start
