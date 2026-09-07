@@ -75,7 +75,10 @@ function summarize(payload, httpStatus) {
     },
     schema: {
       compatible: payload?.schema?.compatible ?? null,
+      exact: payload?.schema?.exact ?? null,
       expectedMigrationCount: payload?.schema?.expectedMigrationCount ?? null,
+      observedMigrationCount: payload?.schema?.observedMigrationCount ?? null,
+      observedLatestMigrationName: payload?.schema?.observedLatestMigrationName ?? null,
     },
   };
 }
@@ -124,6 +127,7 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
         failures,
       };
       if (response.ok && failures.length === 0) {
+        const observed = summarize(payload, response.status);
         console.log(JSON.stringify({
           result: 'PASS',
           attempt,
@@ -132,8 +136,11 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
           expectedBranch,
           expectedMigration,
           expectedMigrationCount,
-          observed: summarize(payload, response.status),
+          observed,
         }, null, 2));
+        if (observed.schema.exact === false) {
+          console.warn('Production schema is newer than this runtime requirement; release remains compatible under the DB-first expand/contract policy.');
+        }
         process.exit(0);
       }
     }
