@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [talks, ideas, projects, books, catalog, checkout, library, dashboard, campusPage, campusClient] = await Promise.all([
+const [talks, ideas, projects, books, catalog, checkout, library, dashboard, campusPage, campusClient, learningCenter, familyRequest] = await Promise.all([
   read('src/app/jpvalderrama/talks/page.tsx'),
   read('src/app/jpvalderrama/ideas/page.tsx'),
   read('src/app/jpvalderrama/projects/page.tsx'),
@@ -14,6 +14,8 @@ const [talks, ideas, projects, books, catalog, checkout, library, dashboard, cam
   read('src/app/dashboard/educacion/page.tsx'),
   read('src/app/jpvalderrama/campus/page.tsx'),
   read('src/components/jpvalderrama/EducationCampusClient.tsx'),
+  read('src/app/jpvalderrama/learningcenter/page.tsx'),
+  read('src/components/jpvalderrama/EducationFamilyServiceRequest.tsx'),
 ]);
 
 // Every JP education axis must be a real vertical connected to the shared catalog.
@@ -81,4 +83,13 @@ assert.match(campusPage, /EducationCommerceJourney/);
 assert.match(campusClient, /id="catalogo"/);
 assert.match(campusClient, /id="instituciones"/);
 
-console.log('JP Valderrama education axes, commerce journey and learning dashboard invariants: PASS');
+// Family/student services must have a tracked request rail instead of pretending to be institutions or fixed-price checkout products.
+assert.match(learningCenter, /EducationFamilyServiceRequest/);
+assert.match(learningCenter, /id="solicitud"/);
+assert.match(learningCenter, /diagnóstico.*disponibilidad.*cotización/i);
+assert.match(familyRequest, /\/api\/education\/advisory/);
+assert.match(familyRequest, /Familia \/ usuario individual/);
+assert.match(familyRequest, /Solicitar diagnóstico y cotización/);
+assert.match(familyRequest, /\/dashboard\/educacion/);
+
+console.log('JP Valderrama education axes, commerce journey, service rails and learning dashboard invariants: PASS');
