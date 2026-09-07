@@ -86,11 +86,18 @@ requireFragments(sources.serverAuth, 'wallet bearer authentication', [
   'export async function createAuthenticatedRequestContext(',
   "request.headers.get('authorization')",
   '/^Bearer\\s+([^\\s]+)$/i',
-  'supabase.auth.getUser(bearer.token)',
-  "headers: { Authorization: `Bearer ${bearer.token}` }",
+  'const validatedBearerToken = bearer.token;',
+  'supabase.auth.getUser(validatedBearerToken)',
+  'headers: { Authorization: `Bearer ${validatedBearerToken}` }',
+  'getAuthenticatorAssuranceLevel: () =>',
   "transport: 'bearer'",
   "transport: 'cookie'",
 ]);
+for (const forbiddenTokenProperty of ['verifiedBearerToken:', 'accessToken:', 'access_token:', 'bearerToken:', 'refreshToken:']) {
+  if (sources.serverAuth.includes(forbiddenTokenProperty)) {
+    throw new Error(`wallet bearer authentication must not expose raw credentials on request context: ${forbiddenTokenProperty}`);
+  }
+}
 
 requireFragments(sources.cors, 'wallet CORS policy', [
   "'https://localhost'",

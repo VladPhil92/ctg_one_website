@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import { pageRange } from '@/lib/pagination';
+import { runFinancialControl } from '@/lib/security/financial-control-client';
 import type { InvestmentOrder } from '@/types/investment';
 
 type RpcError = { message: string } | null;
@@ -8,24 +9,6 @@ export type PendingInvestmentOrdersPage = {
   rows: InvestmentOrder[];
   totalCount: number;
 };
-
-async function runFinancialControl(operation: Record<string, unknown>): Promise<{ error: RpcError }> {
-  try {
-    const response = await fetch('/api/investment/admin/financial-control', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(operation),
-    });
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as { error?: string } | null;
-      return { error: { message: body?.error ?? 'No se pudo completar la operación financiera' } };
-    }
-    return { error: null };
-  } catch {
-    return { error: { message: 'No se pudo conectar con el control financiero' } };
-  }
-}
 
 export function createInvestmentAdminOrdersRepository() {
   return {

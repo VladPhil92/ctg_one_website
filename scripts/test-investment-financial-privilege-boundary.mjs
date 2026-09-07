@@ -6,6 +6,7 @@ const files = {
   migration: path.join(root, 'supabase/migrations/20260906173817_0113_investment_financial_server_boundaries.sql'),
   contraction: path.join(root, 'supabase/migrations/20260906180100_0114_revoke_legacy_financial_rpc_client_execution.sql'),
   route: path.join(root, 'src/app/api/investment/admin/financial-control/route.ts'),
+  financialClient: path.join(root, 'src/lib/security/financial-control-client.ts'),
   orderRepository: path.join(root, 'src/modules/investment/admin-orders/browser-repository.ts'),
   payoutAdmin: path.join(root, 'src/app/admin/finance/rails/page.tsx'),
   server: path.join(root, 'src/lib/supabase/server.ts'),
@@ -140,8 +141,14 @@ if (source.route.includes('return noStoreJson({ error: error.message')) {
   throw new Error('financial control API exposes raw database error messages');
 }
 
-requireFragments(source.orderRepository, 'investment order financial consumer', [
+requireFragments(source.financialClient, 'shared financial browser boundary', [
   '/api/investment/admin/financial-control',
+  'credentials: \'same-origin\'',
+  "headers: { 'Content-Type': 'application/json' }",
+]);
+
+requireFragments(source.orderRepository, 'investment order financial consumer', [
+  "import { runFinancialControl } from '@/lib/security/financial-control-client'",
   "operation: 'funding.verifyBankTransfer'",
   "operation: 'funding.verifyCryptoTransfer'",
 ]);
@@ -155,7 +162,7 @@ for (const forbidden of [
 }
 
 requireFragments(source.payoutAdmin, 'payout financial consumer', [
-  '/api/investment/admin/financial-control',
+  "import { runFinancialControl } from '@/lib/security/financial-control-client'",
   "operation: 'withdrawal.approve'",
   "operation: 'payout.initiate'",
   "operation: 'payout.confirm'",
