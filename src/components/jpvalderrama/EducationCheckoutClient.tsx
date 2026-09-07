@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle2, LockKeyhole, MessageCircle, ReceiptText, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, CircleDollarSign, KeyRound, LockKeyhole, MessageCircle, ReceiptText, ShieldCheck, UserRoundCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 type Offering = {
@@ -12,6 +12,11 @@ type Offering = {
   summary: string;
   price_amount: number | null;
   currency: string;
+  access_path: string | null;
+  action_path?: string | null;
+  destination_path?: string | null;
+  commerce_mode?: 'paid' | 'free' | 'inquiry';
+  metadata?: Record<string, unknown> | null;
 };
 
 type CatalogResponse = {
@@ -35,6 +40,14 @@ type CheckoutResponse = {
   order?: CheckoutOrder;
 };
 
+const checkoutSteps = [
+  { icon: UserRoundCheck, title: 'Cuenta', text: 'La orden queda ligada a tu identidad CTG One.' },
+  { icon: ReceiptText, title: 'Orden', text: 'El servidor fija producto, moneda e importe.' },
+  { icon: CircleDollarSign, title: 'Pago', text: 'Coordinas el medio de pago con la referencia de la orden.' },
+  { icon: ShieldCheck, title: 'Verificación', text: 'La transacción se valida antes de conceder acceso.' },
+  { icon: KeyRound, title: 'Acceso', text: 'El entitlement aparece en Mi aprendizaje.' },
+] as const;
+
 function formatPrice(amount: number | null, currency: string) {
   if (amount === null) return 'Precio por confirmar';
   return new Intl.NumberFormat('es-CO', {
@@ -47,6 +60,30 @@ function formatPrice(amount: number | null, currency: string) {
 function makeRequestKey() {
   if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
   return `education-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
+function axisFor(offering: Offering) {
+  const explicitAxis = typeof offering.metadata?.axis === 'string' ? offering.metadata.axis : null;
+  if (explicitAxis === 'talks' || explicitAxis === 'ideas' || explicitAxis === 'books' || explicitAxis === 'projects') return explicitAxis;
+  if (offering.offering_type === 'conference') return 'talks';
+  if (offering.offering_type === 'book') return 'books';
+  if (offering.offering_type === 'course' || offering.offering_type === 'resource') return 'ideas';
+  return null;
+}
+
+function detailPath(offering: Offering) {
+  const axis = axisFor(offering);
+  if (axis) return `/jpvalderrama/${axis}`;
+  if (offering.offering_type === 'class') return '/jpvalderrama/learningcenter';
+  return '/jpvalderrama/campus#catalogo';
+}
+
+function detailLabel(offering: Offering) {
+  if (offering.offering_type === 'conference') return 'Volver a Talks';
+  if (offering.offering_type === 'book') return 'Volver a Books';
+  if (offering.offering_type === 'course' || offering.offering_type === 'resource') return 'Volver a Ideas';
+  if (offering.offering_type === 'class') return 'Ver Learning Center';
+  return 'Volver al catálogo';
 }
 
 export function EducationCheckoutClient({ slug }: { slug: string }) {
@@ -92,6 +129,7 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
 
   async function createOrder() {
     if (!isAuthenticated || !offering || checkoutState === 'submitting') return;
+    if (offering.price_amount === null || offering.price_amount <= 0) return;
 
     requestKeyRef.current ??= makeRequestKey();
     setCheckoutState('submitting');
@@ -121,8 +159,12 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
     }
   }
 
+  const isPaidOffering = Boolean(offering && typeof offering.price_amount === 'number' && offering.price_amount > 0);
+  const sourceHref = offering ? detailPath(offering) : '/jpvalderrama/campus#catalogo';
+  const postAccessHref = offering?.destination_path ?? '/dashboard/educacion';
+
   return (
-    <section className="mx-auto max-w-[1080px] px-5 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
+    <section className="mx-auto max-w-[1180px] px-5 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
       <a href="/jpvalderrama/campus#catalogo" className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Volver al Campus
       </a>
@@ -134,14 +176,15 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
             <h1 className="mt-4 font-serif text-4xl text-[#17110e] sm:text-5xl">Consultando la oferta…</h1>
           ) : offering ? (
             <>
-              <h1 className="mt-4 font-serif text-4xl leading-tight tracking-[-.025em] text-[#17110e] sm:text-5xl">{offering.title}</h1>
+              <p className="mt-4 text-[10px] font-bold uppercase tracking-[.16em] text-[#8a7568]">{offering.offering_type}</p>
+              <h1 className="mt-2 font-serif text-4xl leading-tight tracking-[-.025em] text-[#17110e] sm:text-5xl">{offering.title}</h1>
               <p className="mt-5 max-w-2xl font-serif text-[17px] leading-8 text-[#665950]">{offering.summary}</p>
               <div className="mt-8 border-y border-[#6f0d12]/12 py-6">
-                <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#665950]">Total de la orden</p>
+                <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#665950]">{isPaidOffering ? 'Total de la orden' : 'Modalidad comercial'}</p>
                 <p className="mt-2 font-serif text-4xl text-[#6f0d12]">{formatPrice(offering.price_amount, offering.currency)}</p>
               </div>
-              <a href="/jpvalderrama/talks#conferencia" className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
-                Ver detalles del evento <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <a href={sourceHref} className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
+                {detailLabel(offering)} <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
             </>
           ) : (
@@ -156,22 +199,39 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
           <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#6f0d12]/20 text-[#6f0d12]">
             <ReceiptText className="h-5 w-5" aria-hidden="true" />
           </div>
-          <p className="mt-6 text-[10px] font-bold uppercase tracking-[.2em] text-[#6f0d12]">Orden autenticada</p>
-          <h2 className="mt-3 font-serif text-3xl text-[#17110e]">Pago asistido, acceso verificado.</h2>
-          <p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">CTG One crea primero una orden ligada a tu cuenta. Ningún clic, registro o soporte de pago concede contenido por sí solo: el acceso aparece en tu biblioteca únicamente después de verificar la transacción.</p>
+          <p className="mt-6 text-[10px] font-bold uppercase tracking-[.2em] text-[#6f0d12]">Ruta transaccional</p>
+          <h2 className="mt-3 font-serif text-3xl text-[#17110e]">Orden primero. Acceso después de verificar.</h2>
+          <p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">CTG One no confunde registro, intención de compra o soporte de pago con acceso. Para productos pagados, el entitlement solo aparece tras una verificación operativa de la transacción.</p>
+
+          <ol className="mt-7 space-y-4 border-t border-[#6f0d12]/12 pt-6">
+            {checkoutSteps.map(({ icon: Icon, title, text }, index) => (
+              <li key={title} className="flex gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#6f0d12]/18 text-[#6f0d12]"><Icon className="h-3.5 w-3.5" aria-hidden="true" /></span>
+                <div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">{index + 1}. {title}</p><p className="mt-1 text-xs leading-5 text-[#665950]">{text}</p></div>
+              </li>
+            ))}
+          </ol>
 
           <div className="mt-6 space-y-4 border-t border-[#6f0d12]/12 pt-6 text-sm leading-6 text-[#564a42]">
             <div className="flex gap-3"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-[#6f0d12]" aria-hidden="true" /><span>El importe se toma del catálogo del servidor; el navegador no puede modificar el precio.</span></div>
             <div className="flex gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#6f0d12]" aria-hidden="true" /><span>La orden usa una clave idempotente para evitar duplicados por reintentos.</span></div>
           </div>
 
-          {!isLoading && !isAuthenticated ? (
+          {offering && !isPaidOffering ? (
+            <div className="mt-8 border border-[#6f0d12]/18 bg-[#fffaf2] p-6">
+              <p className="font-serif text-lg text-[#17110e]">Esta oferta no utiliza el checkout pagado.</p>
+              <p className="mt-2 text-sm leading-6 text-[#665950]">Los accesos gratuitos se activan desde su ruta de aprendizaje; los servicios sin precio fijo se gestionan mediante solicitud y cotización.</p>
+              <a href={postAccessHref} className="mt-4 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Continuar por la ruta correcta <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+            </div>
+          ) : null}
+
+          {!isLoading && !isAuthenticated && isPaidOffering ? (
             <a href={loginHref} className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">
               Iniciar sesión para continuar <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </a>
           ) : null}
 
-          {isAuthenticated && offering && checkoutState !== 'created' && checkoutState !== 'entitled' ? (
+          {isAuthenticated && offering && isPaidOffering && checkoutState !== 'created' && checkoutState !== 'entitled' ? (
             <button type="button" onClick={createOrder} disabled={checkoutState === 'submitting'} className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2] disabled:cursor-wait disabled:opacity-70">
               {checkoutState === 'submitting' ? 'Creando orden…' : 'Crear orden de pago'} <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -191,7 +251,7 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
                 <MessageCircle className="h-4 w-4" aria-hidden="true" /> Continuar por WhatsApp
               </a>
               <a href="/dashboard/educacion" className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
-                Ver mis órdenes <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                Ver estado de mi orden <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
             </div>
           ) : null}
@@ -199,7 +259,8 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
           {checkoutState === 'entitled' ? (
             <div className="mt-8 border border-[#6f0d12]/18 bg-[#fffaf2] p-6">
               <p className="font-serif text-lg text-[#17110e]">Esta oferta ya está activa en tu cuenta.</p>
-              <a href="/dashboard/educacion" className="mt-4 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Abrir mi biblioteca <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+              <a href={postAccessHref} className="mt-4 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Abrir acceso <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+              <a href="/dashboard/educacion" className="ml-4 mt-4 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Mi aprendizaje</a>
             </div>
           ) : null}
 

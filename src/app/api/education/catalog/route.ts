@@ -9,6 +9,13 @@ function json(body: Record<string, unknown>, status = 200) {
   return response;
 }
 
+function resolveActionPath(offering: { slug: string; price_amount: number | null; access_path: string | null }) {
+  if (typeof offering.price_amount === 'number' && offering.price_amount > 0) {
+    return `/jpvalderrama/campus/checkout/${encodeURIComponent(offering.slug)}`;
+  }
+  return offering.access_path;
+}
+
 export async function GET() {
   if (!isSupabaseConfigured) {
     return json({ ok: false, offerings: [] }, 503);
@@ -25,15 +32,24 @@ export async function GET() {
     return json({ ok: false, offerings: [] }, 503);
   }
 
-  const offerings = (data ?? []).map((offering) => ({
-    ...offering,
-    // Public catalog CTAs for paid products enter the authenticated checkout.
-    // The canonical database access_path remains the post-entitlement content
-    // destination used by the user's library.
-    access_path: typeof offering.price_amount === 'number' && offering.price_amount > 0
-      ? `/jpvalderrama/campus/checkout/${encodeURIComponent(offering.slug)}`
-      : offering.access_path,
-  }));
+  const offerings = (data ?? []).map((offering) => {
+    const destinationPath = offering.access_path;
+    const actionPath = resolveActionPath(offering);
+    return {
+      ...offering,
+      // Backwards-compatible public CTA consumed by the existing Campus.
+      access_path: actionPath,
+      // Explicit fields stop axis pages and checkout from conflating purchase
+      // entry with the post-entitlement destination.
+      action_path: actionPath,
+      destination_path: destinationPath,
+      commerce_mode: typeof offering.price_amount !== 'number'
+        ? 'inquiry'
+        : offering.price_amount > 0
+          ? 'paid'
+          : 'free',
+    };
+  });
 
   return json({ ok: true, offerings });
 }
