@@ -102,13 +102,21 @@ assert.match(quoteDecisionApi, /decline_education_service_quote/);
 assert.match(quoteDecisionApi, /createAuthenticatedRequestContext/);
 assert.doesNotMatch(quoteDecisionApi, /createAdminClient/);
 
-// Admin operations may create proposals/sessions, but do not invoke the payment settlement or entitlement boundaries.
+// Admin operations may create proposals/sessions and close the academic session lifecycle,
+// but still do not invoke payment settlement or entitlement boundaries.
 assert.match(adminServicesApi, /create_quote/);
 assert.match(adminServicesApi, /schedule_session/);
+assert.match(adminServicesApi, /update_session_status/);
+assert.match(adminServicesApi, /z\.enum\(\['completed', 'cancelled', 'no_show'\]\)/);
+assert.match(adminServicesApi, /SESSION_STATUS_TERMINAL/);
+assert.match(adminServicesApi, /SESSION_NOT_STARTED/);
+assert.match(adminServicesApi, /SESSION_REQUEST_MISMATCH/);
+assert.match(adminServicesApi, /\.eq\('status', 'scheduled'\)/);
 assert.match(adminServicesApi, /createAdminClient/);
 assert.match(adminServicesApi, /rpc\('is_admin'\)/);
 assert.match(adminServicesApi, /QUOTE_NOT_ACCEPTED/);
 assert.doesNotMatch(adminServicesApi, /settle_education_order/);
+assert.doesNotMatch(adminServicesApi, /complete_education_order/);
 assert.doesNotMatch(adminServicesApi, /education_entitlements.*insert/);
 
 assert.match(servicesDashboard, /Mis servicios y agenda/);
@@ -117,5 +125,10 @@ assert.match(servicesDashboard, /Aceptar alcance/);
 assert.match(adminServicesPage, /Servicios, propuestas y agenda/);
 assert.match(adminServicesPage, /Emitir cotización/);
 assert.match(adminServicesPage, /Programar sesión/);
+assert.match(adminServicesPage, /Agenda y cumplimiento/);
+assert.match(adminServicesPage, /updateSessionStatus/);
+assert.match(adminServicesPage, /Completar/);
+assert.match(adminServicesPage, /No asistió/);
+assert.match(adminServicesPage, /Cancelar/);
 
-console.log('JP Valderrama education platform, commerce and academic operations invariants: PASS');
+console.log('JP Valderrama education platform, commerce and academic fulfillment invariants: PASS');
