@@ -15,6 +15,7 @@ type RuntimeSchemaCompatibilityRow = {
 
 export type RuntimeSchemaCompatibility = {
   compatible: boolean;
+  exact: boolean;
   probeAvailable: boolean;
   configured: boolean;
   errorCode: string | null;
@@ -29,7 +30,7 @@ function normalizeRuntimeMigrationName(name: string | null): string | null {
   // timestamp-era YYYYMMDDHHMMSS_NNNN_name.sql migrations are recorded by
   // Supabase as `NNNN_name`. Strip the prefix only when it matches the exact
   // logical migration expected by this application release. A mismatched
-  // prefix is preserved so the compatibility comparison remains fail-closed.
+  // prefix is preserved so the exact-version comparison remains fail-closed.
   const timestampEraMatch = /^(\d{4})_(.+)$/.exec(name);
   if (!timestampEraMatch) return name;
 
@@ -47,6 +48,7 @@ export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCo
   if (!configured) {
     return {
       compatible: false,
+      exact: false,
       probeAvailable: false,
       configured: false,
       errorCode: 'privileged_probe_not_configured',
@@ -62,6 +64,7 @@ export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCo
     if (error) {
       return {
         compatible: false,
+        exact: false,
         probeAvailable: false,
         configured: true,
         errorCode: error.code ?? 'unknown',
@@ -73,13 +76,30 @@ export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCo
     const row = ((Array.isArray(data) ? data[0] : data) ?? null) as RuntimeSchemaCompatibilityRow | null;
     const observedMigrationCount = row?.migration_count == null ? null : Number(row.migration_count);
     const observedLatestMigrationName = normalizeRuntimeMigrationName(row?.latest_name ?? null);
+    const exact = Boolean(
+      row
+      && observedMigrationCount === EXPECTED_DATABASE_MIGRATION_COUNT
+      && observedLatestMigrationName === EXPECTED_DATABASE_MIGRATION_NAME
+    );
+
+    // Deployments follow a DB-first expand/contract protocol. A runtime may
+    // safely serve against a schema that is newer than its minimum requirement;
+    // a schema behind the runtime remains fail-closed. When counts are equal,
+    // the semantic latest-migration name must still match exactly so divergent
+    // histories cannot be treated as compatible.
+    const compatible = Boolean(
+      row
+      && Number.isInteger(observedMigrationCount)
+      && observedMigrationCount != null
+      && (
+        observedMigrationCount > EXPECTED_DATABASE_MIGRATION_COUNT
+        || exact
+      )
+    );
 
     return {
-      compatible: Boolean(
-        row
-        && observedMigrationCount === EXPECTED_DATABASE_MIGRATION_COUNT
-        && observedLatestMigrationName === EXPECTED_DATABASE_MIGRATION_NAME
-      ),
+      compatible,
+      exact,
       probeAvailable: Boolean(row),
       configured: true,
       errorCode: null,
@@ -89,6 +109,7 @@ export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCo
   } catch {
     return {
       compatible: false,
+      exact: false,
       probeAvailable: false,
       configured: true,
       errorCode: 'runtime_probe_failed',
