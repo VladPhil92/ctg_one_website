@@ -5,12 +5,14 @@ on:
     paths:
       - "render.yaml"
       - ".github/workflows/render-blueprint-validate.yml"
+      - "scripts/verify-production-schema-gate.mjs"
   push:
     branches:
       - main
     paths:
       - "render.yaml"
       - ".github/workflows/render-blueprint-validate.yml"
+      - "scripts/verify-production-schema-gate.mjs"
 
 permissions:
   contents: read
@@ -55,7 +57,7 @@ jobs:
             "branch" => "main",
             "plan" => "1c-2g",
             "region" => "oregon",
-            "buildCommand" => "npm ci && npm run build",
+            "buildCommand" => "npm ci && node scripts/verify-production-schema-gate.mjs && npm run build",
             "startCommand" => "npm run start",
             "healthCheckPath" => "/api/health",
             "autoDeployTrigger" => "checksPass"
@@ -66,7 +68,21 @@ jobs:
             raise "#{key} mismatch: expected #{value.inspect}, got #{actual.inspect}" unless actual == value
           end
 
+          env_vars = Array(service["envVars"])
+          env_keys = env_vars.filter_map { |item| item["key"] }
+          %w[NEXT_PUBLIC_SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY].each do |required_key|
+            raise "#{required_key} missing from Render blueprint" unless env_keys.include?(required_key)
+          end
+
           puts "Render production blueprint contract is valid"
+
+      - name: Validate schema-gate contract without production credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "Production schema is behind this release" scripts/verify-production-schema-gate.mjs
+          grep -Fq "db-first-expand-contract" scripts/verify-production-schema-gate.mjs
+          grep -Fq "SUPABASE_SERVICE_ROLE_KEY" scripts/verify-production-schema-gate.mjs
 
       - name: Validate with Render API when credential is provisioned
         shell: bash
