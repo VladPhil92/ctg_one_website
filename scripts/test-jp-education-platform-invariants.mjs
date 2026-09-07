@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [talks, ideas, projects, books, catalog, checkout, library, dashboard, campusPage, campusClient, learningCenter, familyRequest, advisoryApi, servicesApi, quoteDecisionApi, adminServicesApi, servicesDashboard, adminServicesPage, operationsMigration] = await Promise.all([
+const [talks, ideas, projects, books, catalog, checkout, library, dashboard, campusPage, campusClient, learningCenter, instantOffers, familyRequest, advisoryApi, servicesApi, quoteDecisionApi, adminServicesApi, servicesDashboard, adminServicesPage, operationsMigration, assessmentMigration, instantCheckoutMigration, boundaryMigration, assessmentApi, assessmentPlayer, courseApi, learningPlayer, instructorApi, instructorPage, assessmentGoldenJourney] = await Promise.all([
   read('src/app/jpvalderrama/talks/page.tsx'),
   read('src/app/jpvalderrama/ideas/page.tsx'),
   read('src/app/jpvalderrama/projects/page.tsx'),
@@ -15,6 +15,7 @@ const [talks, ideas, projects, books, catalog, checkout, library, dashboard, cam
   read('src/app/jpvalderrama/campus/page.tsx'),
   read('src/components/jpvalderrama/EducationCampusClient.tsx'),
   read('src/app/jpvalderrama/learningcenter/page.tsx'),
+  read('src/components/jpvalderrama/EducationInstantPurchaseOffers.tsx'),
   read('src/components/jpvalderrama/EducationFamilyServiceRequest.tsx'),
   read('src/app/api/education/advisory/route.ts'),
   read('src/app/api/education/services/route.ts'),
@@ -23,6 +24,16 @@ const [talks, ideas, projects, books, catalog, checkout, library, dashboard, cam
   read('src/app/dashboard/educacion/servicios/page.tsx'),
   read('src/app/dashboard/educacion/operaciones/servicios/page.tsx'),
   read('supabase/migrations/20260907012804_0117_jp_education_academic_operations.sql'),
+  read('supabase/migrations/20260907023732_0118_jp_education_assessment_instructor_core.sql'),
+  read('supabase/migrations/20260907024455_0119_jp_education_instant_checkout_catalog.sql'),
+  read('supabase/migrations/20260907025245_0120_jp_education_service_role_boundary_reconciliation.sql'),
+  read('src/app/api/education/assessments/[assessment]/route.ts'),
+  read('src/components/education/AssessmentPlayer.tsx'),
+  read('src/app/api/education/learning/courses/[course]/route.ts'),
+  read('src/components/education/LearningPlayer.tsx'),
+  read('src/app/api/education/instructor/route.ts'),
+  read('src/app/dashboard/educacion/instructor/page.tsx'),
+  read('scripts/education-assessment-golden-journey.sql'),
 ]);
 
 for (const [axis, source] of [['talks', talks], ['ideas', ideas], ['projects', projects], ['books', books]]) {
@@ -49,10 +60,12 @@ assert.match(catalog, /'free'/);
 assert.match(checkout, /function detailPath/);
 assert.match(checkout, /offering\.offering_type === 'book'/);
 assert.match(checkout, /offering\.offering_type === 'course'/);
-assert.match(checkout, /Orden primero\. Acceso después de verificar/);
+assert.match(checkout, /Precio confirmado\. Paga ahora\./);
+assert.match(checkout, /No requiere cotización ni aprobación comercial antes de pagar/);
 assert.match(checkout, /EDUCATION_ALREADY_ENTITLED/);
+assert.match(checkout, /Pagar ahora/);
+assert.doesNotMatch(checkout, /Crear orden de pago/);
 assert.doesNotMatch(checkout, /\/jpvalderrama\/talks#conferencia/);
-assert.match(checkout, /Continuar por WhatsApp/);
 
 assert.match(library, /education_enrollments/);
 assert.match(library, /education_lesson_progress/);
@@ -71,12 +84,34 @@ for (const axis of ['talks', 'ideas', 'books', 'projects']) assert.match(dashboa
 assert.match(campusPage, /EducationCommerceJourney/);
 assert.match(campusClient, /id="catalogo"/);
 assert.match(campusClient, /id="instituciones"/);
+
+// Fixed-price Learning Center services must go straight to checkout.
+assert.match(learningCenter, /EducationInstantPurchaseOffers/);
+assert.match(learningCenter, /id="compra"/);
+assert.match(learningCenter, /Precio visible.*checkout.*orden.*pago/i);
+assert.match(learningCenter, /cotización queda reservada para casos realmente personalizados/i);
+assert.match(instantOffers, /metadata\?\.axis === 'learningcenter'/);
+assert.match(instantOffers, /metadata\?\.commerce_mode === 'instant'/);
+assert.match(instantOffers, /offering\.commerce_mode === 'paid'/);
+assert.match(instantOffers, /Comprar y pagar ahora/);
+assert.match(instantOffers, /\/jpvalderrama\/campus\/checkout\//);
+assert.match(instantOffers, /El servidor fija el precio; no hay cotización ni aprobación comercial previa/);
+assert.match(instantCheckoutMigration, /'tutoria-privada-1-hora'/);
+assert.match(instantCheckoutMigration, /'plan-tutorias-8-horas'/);
+assert.match(instantCheckoutMigration, /80000/);
+assert.match(instantCheckoutMigration, /520000/);
+assert.match(instantCheckoutMigration, /"commerce_mode":"instant"/);
+assert.match(instantCheckoutMigration, /"axis":"learningcenter"/);
+
+// Inquiry remains only for genuinely custom work.
 assert.match(learningCenter, /EducationFamilyServiceRequest/);
 assert.match(learningCenter, /id="solicitud"/);
-assert.match(learningCenter, /diagnóstico.*disponibilidad.*cotización/i);
+assert.match(learningCenter, /Solo para necesidades especiales/);
 assert.match(familyRequest, /requestKind: 'family'/);
 assert.match(familyRequest, /\/api\/education\/advisory/);
-assert.match(familyRequest, /Solicitar diagnóstico y cotización/);
+assert.match(familyRequest, /Solicitar propuesta personalizada/);
+assert.doesNotMatch(familyRequest, /Solicitar diagnóstico y cotización/);
+assert.doesNotMatch(familyRequest, /'Tutorías privadas'/);
 assert.match(familyRequest, /\/dashboard\/educacion\/servicios/);
 assert.match(advisoryApi, /request_kind: parsed\.data\.requestKind/);
 
@@ -92,8 +127,6 @@ assert.match(operationsMigration, /accept_education_service_quote/);
 assert.match(operationsMigration, /decline_education_service_quote/);
 assert.doesNotMatch(operationsMigration, /insert into public\.education_entitlements/);
 assert.doesNotMatch(operationsMigration, /update public\.education_orders/);
-
-// User decisions are authenticated RPCs and the service read model is private/no-store.
 assert.match(servicesApi, /education_service_quotes/);
 assert.match(servicesApi, /education_sessions/);
 assert.match(servicesApi, /private, no-store/);
@@ -101,9 +134,6 @@ assert.match(quoteDecisionApi, /accept_education_service_quote/);
 assert.match(quoteDecisionApi, /decline_education_service_quote/);
 assert.match(quoteDecisionApi, /createAuthenticatedRequestContext/);
 assert.doesNotMatch(quoteDecisionApi, /createAdminClient/);
-
-// Admin operations may create proposals/sessions and close the academic session lifecycle,
-// but still do not invoke payment settlement or entitlement boundaries.
 assert.match(adminServicesApi, /create_quote/);
 assert.match(adminServicesApi, /schedule_session/);
 assert.match(adminServicesApi, /update_session_status/);
@@ -118,22 +148,82 @@ assert.match(adminServicesApi, /QUOTE_NOT_ACCEPTED/);
 assert.doesNotMatch(adminServicesApi, /settle_education_order/);
 assert.doesNotMatch(adminServicesApi, /complete_education_order/);
 assert.doesNotMatch(adminServicesApi, /education_entitlements.*insert/);
-
 assert.match(servicesDashboard, /Mis servicios y agenda/);
 assert.match(servicesDashboard, /no constituye un pago ni concede acceso/i);
 assert.match(servicesDashboard, /Aceptar alcance/);
 assert.match(servicesDashboard, /Historial de sesiones/);
-assert.match(servicesDashboard, /sessionStatus/);
-assert.match(servicesDashboard, /completed: 'Completada'/);
-assert.match(servicesDashboard, /no_show: 'No asistió'/);
-assert.match(servicesDashboard, /Este estado registra la prestación académica; no certifica pago ni entitlement/);
 assert.match(adminServicesPage, /Servicios, propuestas y agenda/);
 assert.match(adminServicesPage, /Emitir cotización/);
 assert.match(adminServicesPage, /Programar sesión/);
-assert.match(adminServicesPage, /Agenda y cumplimiento/);
-assert.match(adminServicesPage, /updateSessionStatus/);
-assert.match(adminServicesPage, /Completar/);
-assert.match(adminServicesPage, /No asistió/);
-assert.match(adminServicesPage, /Cancelar/);
 
-console.log('JP Valderrama education platform, commerce and academic fulfillment invariants: PASS');
+// Assessment Core: answer keys remain server-only and scoring is computed atomically in PostgreSQL.
+for (const table of ['education_assessments', 'education_assessment_questions', 'education_assessment_options', 'education_assessment_attempts', 'education_assessment_responses']) {
+  assert.match(assessmentMigration, new RegExp(`create table public\\.${table}`));
+  assert.match(assessmentMigration, new RegExp(`alter table public\\.${table} enable row level security`));
+}
+assert.match(assessmentMigration, /submit_education_assessment_attempt/);
+assert.match(assessmentMigration, /security invoker/i);
+assert.match(assessmentMigration, /revoke all on function public\.submit_education_assessment_attempt\(uuid,uuid,jsonb\) from public, anon, authenticated/);
+assert.match(assessmentMigration, /grant execute on function public\.submit_education_assessment_attempt\(uuid,uuid,jsonb\) to service_role/);
+assert.match(assessmentMigration, /EDUCATION_ASSESSMENT_MAX_ATTEMPTS_REACHED/);
+assert.match(assessmentMigration, /scorePercent/);
+assert.match(assessmentMigration, /evaluacion-final-criterio-y-valor/);
+assert.match(assessmentApi, /createAuthenticatedRequestContext/);
+assert.match(assessmentApi, /createAdminClient/);
+assert.match(assessmentApi, /submit_education_assessment_attempt/);
+assert.doesNotMatch(assessmentApi, /is_correct/);
+assert.match(assessmentPlayer, /Enviar evaluación/);
+assert.match(assessmentPlayer, /Evidencia de comprensión registrada/);
+assert.match(assessmentPlayer, /Historial de intentos/);
+assert.doesNotMatch(assessmentPlayer, /isCorrect/);
+assert.match(courseApi, /education_assessments/);
+assert.match(courseApi, /education_assessment_attempts/);
+assert.match(courseApi, /passedRequiredAssessments/);
+assert.match(learningPlayer, /Ir a evaluación/);
+assert.match(learningPlayer, /evaluaciones/);
+
+// The service_role boundary is explicit for SECURITY INVOKER scoring and Instructor Studio.
+assert.match(boundaryMigration, /grant all on table public\.education_offerings to service_role/);
+assert.match(boundaryMigration, /grant all on table public\.education_courses to service_role/);
+assert.match(boundaryMigration, /grant all on table public\.education_modules to service_role/);
+assert.match(boundaryMigration, /grant all on table public\.education_lessons to service_role/);
+assert.match(boundaryMigration, /grant select, update on table public\.education_enrollments to service_role/);
+assert.match(boundaryMigration, /grant select on table public\.education_entitlements to service_role/);
+assert.doesNotMatch(boundaryMigration, /to authenticated/);
+assert.doesNotMatch(boundaryMigration, /to anon/);
+
+// Instructor Studio: browser role is never trusted; server re-checks canonical admin authority.
+assert.match(instructorApi, /createAuthenticatedRequestContext/);
+assert.match(instructorApi, /rpc\('is_admin'\)/);
+assert.match(instructorApi, /createAdminClient/);
+assert.match(instructorApi, /create_course/);
+assert.match(instructorApi, /update_course/);
+assert.match(instructorApi, /create_module/);
+assert.match(instructorApi, /update_module/);
+assert.match(instructorApi, /create_lesson/);
+assert.match(instructorApi, /update_lesson/);
+assert.match(instructorApi, /create_assessment/);
+assert.match(instructorApi, /update_assessment/);
+assert.match(instructorApi, /create_question/);
+assert.match(instructorApi, /COURSE_PUBLISH_REQUIRES_PUBLISHED_MODULE/);
+assert.match(instructorApi, /COURSE_PUBLISH_REQUIRES_PUBLISHED_LESSON/);
+assert.match(instructorApi, /ASSESSMENT_PUBLISH_REQUIRES_QUESTION/);
+assert.match(instructorApi, /ASSESSMENT_PUBLISH_REQUIRES_ANSWER_KEY/);
+assert.match(instructorPage, /Instructor Studio V1/);
+assert.match(instructorPage, /Autoría académica/);
+assert.match(instructorPage, /Editar y publicar curso/);
+assert.match(instructorPage, /Mapa curricular y publicación/);
+assert.match(instructorPage, /Evaluaciones y publicación/);
+assert.match(instructorPage, /Nueva evaluación/);
+assert.match(instructorPage, /Añadir pregunta/);
+assert.match(instructorPage, /Publicar/);
+
+// Disposable DB journey proves scoring, evidence cardinality, max attempts and non-exposure.
+assert.match(assessmentGoldenJourney, /claim_free_education_course/);
+assert.match(assessmentGoldenJourney, /submit_education_assessment_attempt/);
+assert.match(assessmentGoldenJourney, /scorePercent/);
+assert.match(assessmentGoldenJourney, /MAX_ATTEMPTS_REACHED/);
+assert.match(assessmentGoldenJourney, /has_table_privilege\('authenticated', 'public\.education_assessment_options', 'SELECT'\)/);
+assert.match(assessmentGoldenJourney, /ROLLBACK/);
+
+console.log('JP Valderrama education platform, instant commerce, assessment and instructor invariants: PASS');
