@@ -120,6 +120,7 @@ BEGIN
 
   -- Freeze exact reviewed search_path values. The migration-health RPC is the
   -- only historical exception because it intentionally needs pg_catalog explicit.
+  -- Education quote decision RPCs intentionally pin pg_catalog before public.
   -- Wallet COP top-up administration uses an empty search_path deliberately:
   -- every application object is schema-qualified and only pg_catalog remains
   -- implicitly visible, which is stricter than the legacy public-only policy.
@@ -130,6 +131,11 @@ BEGIN
     CASE
       WHEN a.signature = 'public.get_system_migration_health()'
         THEN ARRAY['search_path=public, pg_catalog']::text[]
+      WHEN a.signature IN (
+        'public.accept_education_service_quote(p_quote_id uuid)',
+        'public.decline_education_service_quote(p_quote_id uuid)'
+      )
+        THEN ARRAY['search_path=pg_catalog, public']::text[]
       WHEN a.signature IN (
         'public.approve_deposit(p_transaction_id uuid, p_admin_notes text)',
         'public.reconcile_wallet_topup_claim(p_claim_id uuid, p_admin_notes text)',
