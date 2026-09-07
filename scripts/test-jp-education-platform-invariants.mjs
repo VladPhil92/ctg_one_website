@@ -200,15 +200,24 @@ assert.match(instructorApi, /createAdminClient/);
 assert.match(instructorApi, /create_course/);
 assert.match(instructorApi, /update_course/);
 assert.match(instructorApi, /create_module/);
+assert.match(instructorApi, /update_module/);
 assert.match(instructorApi, /create_lesson/);
+assert.match(instructorApi, /update_lesson/);
 assert.match(instructorApi, /create_assessment/);
+assert.match(instructorApi, /update_assessment/);
 assert.match(instructorApi, /create_question/);
+assert.match(instructorApi, /COURSE_PUBLISH_REQUIRES_PUBLISHED_MODULE/);
 assert.match(instructorApi, /COURSE_PUBLISH_REQUIRES_PUBLISHED_LESSON/);
+assert.match(instructorApi, /ASSESSMENT_PUBLISH_REQUIRES_QUESTION/);
+assert.match(instructorApi, /ASSESSMENT_PUBLISH_REQUIRES_ANSWER_KEY/);
 assert.match(instructorPage, /Instructor Studio V1/);
 assert.match(instructorPage, /Autoría académica/);
 assert.match(instructorPage, /Editar y publicar curso/);
+assert.match(instructorPage, /Mapa curricular y publicación/);
+assert.match(instructorPage, /Evaluaciones y publicación/);
 assert.match(instructorPage, /Nueva evaluación/);
 assert.match(instructorPage, /Añadir pregunta/);
+assert.match(instructorPage, /Publicar/);
 
 // Disposable DB journey proves scoring, evidence cardinality, max attempts and non-exposure.
 assert.match(assessmentGoldenJourney, /claim_free_education_course/);
