@@ -28,6 +28,14 @@ type ServiceRateLimitRow = {
   retry_after_seconds: number;
 };
 
+type FederatedKycAssurance = {
+  status: 'verified';
+  level: 2;
+  source: 'ctg_one_kyc';
+  reference: string;
+  verified_at: string;
+};
+
 class RequestBodyError extends Error {
   constructor(
     readonly code: 'INVALID_JSON' | 'PAYLOAD_TOO_LARGE',
@@ -106,6 +114,49 @@ function parseExchangeBody(value: unknown): ExchangeBody | null {
   const record = value as Record<string, unknown>;
   if (Object.keys(record).some((key) => !EXCHANGE_KEYS.has(key))) return null;
   return record;
+}
+
+async function resolveVerifiedKycAssurance(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+): Promise<FederatedKycAssurance | null> {
+  // Identity elevation is optional for authentication but fail-closed for
+  // assurance: any inconsistent/unavailable KYC state means no claim is sent.
+  const { data: profile, error: profileError } = await admin
+    .from('profiles')
+    .select('kyc_status')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (profileError || profile?.kyc_status !== 'verified') return null;
+
+  const { data: submission, error: submissionError } = await admin
+    .from('kyc_submissions')
+    .select('id, status, reviewed_at')
+    .eq('user_id', userId)
+    .eq('status', 'verified')
+    .not('reviewed_at', 'is', null)
+    .order('reviewed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (
+    submissionError
+    || !submission
+    || submission.status !== 'verified'
+    || typeof submission.reviewed_at !== 'string'
+    || Number.isNaN(Date.parse(submission.reviewed_at))
+  ) {
+    return null;
+  }
+
+  return {
+    status: 'verified',
+    level: 2,
+    source: 'ctg_one_kyc',
+    reference: submission.id,
+    verified_at: new Date(submission.reviewed_at).toISOString(),
+  };
 }
 
 export async function POST(request: Request) {
@@ -208,11 +259,14 @@ export async function POST(request: Request) {
     return noStoreJson({ error: 'FEDERATION_AUTHORITY_LOOKUP_FAILED' }, 503);
   }
 
+  const identityAssurance = await resolveVerifiedKycAssurance(admin, data.subject_user_id);
+
   return noStoreJson({
     provider: VERTICE_FEDERATION_PROVIDER,
     subject: data.subject_user_id,
     email: data.subject_email,
     email_verified: true,
     authorities: (authorityRows ?? []).map((row) => row.authority),
+    ...(identityAssurance ? { identity_assurance: identityAssurance } : {}),
   }, 200);
 }
