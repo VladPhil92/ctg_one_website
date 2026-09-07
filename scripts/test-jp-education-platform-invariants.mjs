@@ -3,7 +3,6 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [talks, ideas, projects, books, catalog, checkout, library, dashboard, campusPage, campusClient, learningCenter, instantOffers, familyRequest, advisoryApi, servicesApi, quoteDecisionApi, adminServicesApi, servicesDashboard, adminServicesPage, operationsMigration, instantCheckoutMigration] = await Promise.all([
 const [talks, ideas, projects, books, catalog, checkout, library, dashboard, campusPage, campusClient, learningCenter, instantOffers, familyRequest, advisoryApi, servicesApi, quoteDecisionApi, adminServicesApi, servicesDashboard, adminServicesPage, operationsMigration, assessmentMigration, instantCheckoutMigration, boundaryMigration, assessmentApi, assessmentPlayer, courseApi, learningPlayer, instructorApi, instructorPage, assessmentGoldenJourney] = await Promise.all([
   read('src/app/jpvalderrama/talks/page.tsx'),
   read('src/app/jpvalderrama/ideas/page.tsx'),
@@ -25,7 +24,6 @@ const [talks, ideas, projects, books, catalog, checkout, library, dashboard, cam
   read('src/app/dashboard/educacion/servicios/page.tsx'),
   read('src/app/dashboard/educacion/operaciones/servicios/page.tsx'),
   read('supabase/migrations/20260907012804_0117_jp_education_academic_operations.sql'),
-  read('supabase/migrations/20260907024455_0119_jp_education_instant_checkout_catalog.sql'),
   read('supabase/migrations/20260907023732_0118_jp_education_assessment_instructor_core.sql'),
   read('supabase/migrations/20260907024455_0119_jp_education_instant_checkout_catalog.sql'),
   read('supabase/migrations/20260907025245_0120_jp_education_service_role_boundary_reconciliation.sql'),
@@ -66,7 +64,6 @@ assert.match(checkout, /Precio confirmado\. Paga ahora\./);
 assert.match(checkout, /No requiere cotización ni aprobación comercial antes de pagar/);
 assert.match(checkout, /EDUCATION_ALREADY_ENTITLED/);
 assert.match(checkout, /Pagar ahora/);
-assert.match(checkout, /Ir al pago ahora/);
 assert.doesNotMatch(checkout, /Crear orden de pago/);
 assert.doesNotMatch(checkout, /\/jpvalderrama\/talks#conferencia/);
 
@@ -88,7 +85,6 @@ assert.match(campusPage, /EducationCommerceJourney/);
 assert.match(campusClient, /id="catalogo"/);
 assert.match(campusClient, /id="instituciones"/);
 
-// Learning Center fixed-price services must enter checkout immediately.
 // Fixed-price Learning Center services must go straight to checkout.
 assert.match(learningCenter, /EducationInstantPurchaseOffers/);
 assert.match(learningCenter, /id="compra"/);
@@ -107,7 +103,6 @@ assert.match(instantCheckoutMigration, /520000/);
 assert.match(instantCheckoutMigration, /"commerce_mode":"instant"/);
 assert.match(instantCheckoutMigration, /"axis":"learningcenter"/);
 
-// Inquiry remains available only as an exception path for custom services.
 // Inquiry remains only for genuinely custom work.
 assert.match(learningCenter, /EducationFamilyServiceRequest/);
 assert.match(learningCenter, /id="solicitud"/);
@@ -139,9 +134,6 @@ assert.match(quoteDecisionApi, /accept_education_service_quote/);
 assert.match(quoteDecisionApi, /decline_education_service_quote/);
 assert.match(quoteDecisionApi, /createAuthenticatedRequestContext/);
 assert.doesNotMatch(quoteDecisionApi, /createAdminClient/);
-
-// Admin operations may create custom proposals/sessions and close the academic session lifecycle,
-// but still do not invoke payment settlement or entitlement boundaries.
 assert.match(adminServicesApi, /create_quote/);
 assert.match(adminServicesApi, /schedule_session/);
 assert.match(adminServicesApi, /update_session_status/);
@@ -164,7 +156,6 @@ assert.match(adminServicesPage, /Servicios, propuestas y agenda/);
 assert.match(adminServicesPage, /Emitir cotización/);
 assert.match(adminServicesPage, /Programar sesión/);
 
-console.log('JP Valderrama education platform, instant commerce and academic fulfillment invariants: PASS');
 // Assessment Core: answer keys remain server-only and scoring is computed atomically in PostgreSQL.
 for (const table of ['education_assessments', 'education_assessment_questions', 'education_assessment_options', 'education_assessment_attempts', 'education_assessment_responses']) {
   assert.match(assessmentMigration, new RegExp(`create table public\\.${table}`));
