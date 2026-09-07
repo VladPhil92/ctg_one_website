@@ -8,6 +8,10 @@
 alter table public.education_advisory_requests
   add column request_kind text not null default 'institution';
 
+update public.education_advisory_requests
+set request_kind = 'family'
+where institution_name = 'Familia / usuario individual';
+
 alter table public.education_advisory_requests
   add constraint education_advisory_request_kind_check
   check (request_kind in ('institution', 'family', 'individual', 'project'));
@@ -84,7 +88,7 @@ create table public.education_sessions (
   constraint education_sessions_quote_user_fk
     foreign key (quote_id, user_id)
     references public.education_service_quotes(id, user_id)
-    on delete set null,
+    on delete restrict,
   constraint education_sessions_type_check
     check (session_type in ('diagnostic', 'tutoring', 'class', 'advisory', 'project', 'conference', 'other')),
   constraint education_sessions_title_check check (char_length(btrim(title)) between 2 and 180),
@@ -145,40 +149,28 @@ declare
   v_valid_until timestamptz;
   v_now timestamptz := clock_timestamp();
 begin
-  if v_user_id is null then
-    raise exception 'EDUCATION_QUOTE_UNAUTHENTICATED';
-  end if;
-  if p_quote_id is null then
-    raise exception 'EDUCATION_QUOTE_ID_REQUIRED';
-  end if;
+  if v_user_id is null then raise exception 'EDUCATION_QUOTE_UNAUTHENTICATED'; end if;
+  if p_quote_id is null then raise exception 'EDUCATION_QUOTE_ID_REQUIRED'; end if;
 
   select q.request_id, q.status, q.valid_until
     into v_request_id, v_status, v_valid_until
   from public.education_service_quotes q
-  where q.id = p_quote_id
-    and q.user_id = v_user_id
+  where q.id = p_quote_id and q.user_id = v_user_id
   for update;
 
-  if not found then
-    raise exception 'EDUCATION_QUOTE_NOT_FOUND';
-  end if;
+  if not found then raise exception 'EDUCATION_QUOTE_NOT_FOUND'; end if;
   if v_status = 'accepted' then
     return jsonb_build_object('quoteId', p_quote_id, 'status', 'accepted', 'replayed', true);
   end if;
-  if v_status <> 'sent' then
-    raise exception 'EDUCATION_QUOTE_NOT_ACTIONABLE';
-  end if;
+  if v_status <> 'sent' then raise exception 'EDUCATION_QUOTE_NOT_ACTIONABLE'; end if;
   if v_valid_until is not null and v_valid_until <= v_now then
-    update public.education_service_quotes
-       set status = 'expired', updated_at = v_now
-     where id = p_quote_id;
+    update public.education_service_quotes set status = 'expired', updated_at = v_now where id = p_quote_id;
     raise exception 'EDUCATION_QUOTE_EXPIRED';
   end if;
 
   update public.education_service_quotes
      set status = 'accepted', accepted_at = v_now, declined_at = null, updated_at = v_now
    where id = p_quote_id;
-
   update public.education_advisory_requests
      set status = 'won', updated_at = v_now
    where id = v_request_id and user_id = v_user_id;
@@ -199,34 +191,24 @@ declare
   v_status text;
   v_now timestamptz := clock_timestamp();
 begin
-  if v_user_id is null then
-    raise exception 'EDUCATION_QUOTE_UNAUTHENTICATED';
-  end if;
-  if p_quote_id is null then
-    raise exception 'EDUCATION_QUOTE_ID_REQUIRED';
-  end if;
+  if v_user_id is null then raise exception 'EDUCATION_QUOTE_UNAUTHENTICATED'; end if;
+  if p_quote_id is null then raise exception 'EDUCATION_QUOTE_ID_REQUIRED'; end if;
 
   select q.request_id, q.status
     into v_request_id, v_status
   from public.education_service_quotes q
-  where q.id = p_quote_id
-    and q.user_id = v_user_id
+  where q.id = p_quote_id and q.user_id = v_user_id
   for update;
 
-  if not found then
-    raise exception 'EDUCATION_QUOTE_NOT_FOUND';
-  end if;
+  if not found then raise exception 'EDUCATION_QUOTE_NOT_FOUND'; end if;
   if v_status = 'declined' then
     return jsonb_build_object('quoteId', p_quote_id, 'status', 'declined', 'replayed', true);
   end if;
-  if v_status <> 'sent' then
-    raise exception 'EDUCATION_QUOTE_NOT_ACTIONABLE';
-  end if;
+  if v_status <> 'sent' then raise exception 'EDUCATION_QUOTE_NOT_ACTIONABLE'; end if;
 
   update public.education_service_quotes
      set status = 'declined', declined_at = v_now, accepted_at = null, updated_at = v_now
    where id = p_quote_id;
-
   update public.education_advisory_requests
      set status = 'closed', updated_at = v_now
    where id = v_request_id and user_id = v_user_id;
