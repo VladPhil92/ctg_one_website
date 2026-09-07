@@ -11,6 +11,7 @@ const checkout = await read('src/components/inversion/InvestmentCheckoutClient.t
 const checkoutRepository = await read('src/modules/investment/checkout/browser-repository.ts');
 const uploadRoute = await read('src/app/api/investment/orders/[orderId]/payment-proof/route.ts');
 const financialControl = await read('src/app/api/investment/admin/financial-control/route.ts');
+const financialControlClient = await read('src/lib/security/financial-control-client.ts');
 const admin = await read('src/app/inversion/admin/orders/page.tsx');
 const adminRepository = await read('src/modules/investment/admin-orders/browser-repository.ts');
 const paymentConfig = await read('src/lib/payment-instructions.ts');
@@ -66,10 +67,11 @@ assert.ok(!checkoutRepository.includes('FormData'), 'Checkout repository must no
 
 assert.ok(admin.includes('createInvestmentAdminOrdersRepository'), 'Finance UI must consume the reviewed investment-admin repository boundary.');
 assert.ok(
-  adminRepository.includes('/api/investment/admin/financial-control')
+  adminRepository.includes("import { runFinancialControl } from '@/lib/security/financial-control-client'")
+    && financialControlClient.includes('/api/investment/admin/financial-control')
     && adminRepository.includes("operation: 'funding.verifyBankTransfer'")
     && !adminRepository.includes("rpc('verify_investment_bancolombia_transfer'"),
-  'Finance repository must route authoritative Bancolombia verification through the server-only financial control API.',
+  'Finance repository must route authoritative Bancolombia verification through the shared server-only financial control boundary.',
 );
 assert.ok(
   financialBoundary.includes('verify_investment_bancolombia_transfer_server')

@@ -43,8 +43,7 @@ for (const mutableMetadataAccess of [
 }
 
 requireFragments(source.assurance, 'mandatory Finance MFA assurance policy', [
-  'getAuthenticatorAssuranceLevel(',
-  'context.verifiedBearerToken ?? undefined',
+  'await context.getAuthenticatorAssuranceLevel()',
   "mode: 'mfa-enrollment-required'",
   "mode: 'mfa-challenge-required'",
   "mode: 'aal2'",
@@ -63,13 +62,22 @@ for (const legacyPermissiveFragment of [
 if (source.assurance.includes('service_role') || source.assurance.includes('createAdminClient')) {
   throw new Error('MFA assurance must execute in the authenticated user context, never service_role');
 }
+if (source.assurance.includes('verifiedBearerToken')) {
+  throw new Error('MFA assurance policy must not receive the raw validated bearer token as context data');
+}
 
 requireFragments(source.server, 'verified bearer assurance transport', [
-  'verifiedBearerToken: string | null',
-  'const { data, error } = await supabase.auth.getUser(bearer.token)',
-  'verifiedBearerToken: bearer.token',
-  "transport: 'cookie', verifiedBearerToken: null",
+  'const validatedBearerToken = bearer.token',
+  'supabase.auth.getUser(validatedBearerToken)',
+  'getAuthenticatorAssuranceLevel: () =>',
+  'supabase.auth.mfa.getAuthenticatorAssuranceLevel(validatedBearerToken)',
+  'supabase.auth.mfa.getAuthenticatorAssuranceLevel()',
 ]);
+for (const forbiddenTokenProperty of ['verifiedBearerToken:', 'accessToken:', 'access_token:', 'bearerToken:', 'refreshToken:']) {
+  if (source.server.includes(forbiddenTokenProperty)) {
+    throw new Error(`validated bearer token must stay closure-bound and out of auth-context properties: ${forbiddenTokenProperty}`);
+  }
+}
 
 requireFragments(source.route, 'mandatory financial-control MFA boundary', [
   'evaluateFinancialStepUp(context.user)',

@@ -17,11 +17,6 @@ import {
   evaluateFinancialStepUp,
   FINANCIAL_STEP_UP_MAX_AGE_SECONDS,
 } from '@/lib/security/financial-step-up';
-import {
-  evaluateFinancialMfa,
-  FINANCIAL_MFA_PATH,
-  recordFinancialMfaDecision,
-} from '@/lib/security/financial-mfa';
 
 const uuid = z.string().uuid();
 const optionalNotes = z.string().trim().max(1000).nullable().optional();
@@ -282,31 +277,6 @@ export async function POST(request: NextRequest) {
       nextLevel: assurance.nextLevel,
       challengePath: '/admin/security/mfa',
     }, 428);
-  }
-
-  const mfa = await evaluateFinancialMfa(context);
-  recordFinancialMfaDecision(context.user.id, operation, correlationId, mfa);
-  if (mfa.failed) {
-    return noStoreJson(
-      {
-        error: 'MFA assurance check unavailable',
-        code: 'FINANCIAL_MFA_CHECK_UNAVAILABLE',
-        correlationId,
-      },
-      503,
-    );
-  }
-  if (!mfa.allowed) {
-    return noStoreJson(
-      {
-        error: 'multi-factor authentication required',
-        code: 'FINANCIAL_MFA_REQUIRED',
-        reason: mfa.reason,
-        correlationId,
-        mfaPath: FINANCIAL_MFA_PATH,
-      },
-      428,
-    );
   }
 
   const authorization = await authorizeFinancialOperation(context, parsed.data.operation);

@@ -21,15 +21,14 @@ function supportedAal(value: unknown): SupportedAal | null {
  * - aal1/aal2: a verified MFA factor exists but this session has not challenged it -> block and require challenge.
  * - aal1/aal1: no verified factor exists -> block and require enrollment through /admin/security/mfa.
  *
- * The bearer JWT reaches this helper only after server-side `auth.getUser(jwt)` validation.
- * It is passed directly back to Supabase Auth for assurance evaluation and is never logged.
+ * MFA assurance is resolved through the authenticated request context. Native/PWA
+ * bearer callers bind the already validated JWT inside a server-only closure;
+ * browser callers resolve assurance from the validated cookie session.
  */
 export async function evaluateFinancialAuthAssurance(
   context: AuthenticatedRequestContext,
 ): Promise<FinancialAuthAssuranceState> {
-  const { data, error } = await context.supabase.auth.mfa.getAuthenticatorAssuranceLevel(
-    context.verifiedBearerToken ?? undefined,
-  );
+  const { data, error } = await context.getAuthenticatorAssuranceLevel();
 
   if (error || !data) {
     return { allowed: false, mode: 'assurance-unavailable', currentLevel: null, nextLevel: null };
