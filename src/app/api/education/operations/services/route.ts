@@ -36,7 +36,14 @@ const sessionSchema = z.object({
   participantNote: z.string().max(2000).optional(),
 }).strict();
 
-const payloadSchema = z.discriminatedUnion('action', [quoteSchema, sessionSchema]);
+const sessionStatusSchema = z.object({
+  action: z.literal('update_session_status'),
+  requestId: z.string().regex(UUID_RE),
+  sessionId: z.string().regex(UUID_RE),
+  status: z.enum(['completed', 'cancelled', 'no_show']),
+}).strict();
+
+const payloadSchema = z.discriminatedUnion('action', [quoteSchema, sessionSchema, sessionStatusSchema]);
 
 function json(body: Record<string, unknown>, status = 200) {
   const response = NextResponse.json(body, { status });
@@ -148,6 +155,41 @@ export async function POST(request: Request) {
       .eq('id', serviceRequest.id);
 
     return json({ ok: true, quote }, 201);
+  }
+
+  if (parsed.data.action === 'update_session_status') {
+    const { data: session, error: sessionLookupError } = await access.admin
+      .from('education_sessions')
+      .select('id,user_id,request_id,status,starts_at')
+      .eq('id', parsed.data.sessionId)
+      .maybeSingle();
+    if (sessionLookupError) return json({ ok: false, error: 'SESSION_LOOKUP_FAILED' }, 503);
+    if (!session) return json({ ok: false, error: 'SESSION_NOT_FOUND' }, 404);
+    if (session.request_id !== serviceRequest.id || session.user_id !== serviceRequest.user_id) {
+      return json({ ok: false, error: 'SESSION_REQUEST_MISMATCH' }, 409);
+    }
+    if (session.status === parsed.data.status) {
+      return json({ ok: true, session: { id: session.id, status: session.status }, replayed: true });
+    }
+    if (session.status !== 'scheduled') {
+      return json({ ok: false, error: 'SESSION_STATUS_TERMINAL' }, 409);
+    }
+    if (parsed.data.status !== 'cancelled' && Date.parse(session.starts_at) > Date.now()) {
+      return json({ ok: false, error: 'SESSION_NOT_STARTED' }, 409);
+    }
+
+    const now = new Date().toISOString();
+    const { data: updatedSession, error: updateError } = await access.admin
+      .from('education_sessions')
+      .update({ status: parsed.data.status, updated_at: now })
+      .eq('id', session.id)
+      .eq('status', 'scheduled')
+      .select('id,user_id,request_id,quote_id,session_type,title,status,modality,starts_at,ends_at,timezone,meeting_url,location_label,participant_note,updated_at')
+      .maybeSingle();
+    if (updateError) return json({ ok: false, error: 'SESSION_STATUS_UPDATE_FAILED' }, 503);
+    if (!updatedSession) return json({ ok: false, error: 'SESSION_STATUS_CONFLICT' }, 409);
+
+    return json({ ok: true, session: updatedSession, replayed: false });
   }
 
   if (Date.parse(parsed.data.endsAt) <= Date.parse(parsed.data.startsAt)) {

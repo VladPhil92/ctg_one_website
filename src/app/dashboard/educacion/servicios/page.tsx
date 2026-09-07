@@ -61,6 +61,10 @@ const quoteStatus: Record<string, string> = {
   expired: 'Vencida', cancelled: 'Cancelada', draft: 'Borrador',
 };
 
+const sessionStatus: Record<string, string> = {
+  scheduled: 'Programada', completed: 'Completada', cancelled: 'Cancelada', no_show: 'No asistió',
+};
+
 function money(amount: number, currency: string) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
 }
@@ -123,6 +127,9 @@ export default function EducationServicesPage() {
 
   const requestsById = useMemo(() => new Map((data.requests ?? []).map((item) => [item.id, item])), [data.requests]);
   const upcoming = (data.sessions ?? []).filter((item) => item.status === 'scheduled' && Date.parse(item.ends_at) >= Date.now());
+  const history = (data.sessions ?? [])
+    .filter((item) => item.status !== 'scheduled' || Date.parse(item.ends_at) < Date.now())
+    .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at));
 
   if (isLoading || !isAuthenticated) return <div className="min-h-screen bg-[#030303]" />;
 
@@ -133,7 +140,7 @@ export default function EducationServicesPage() {
         <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[.055] to-white/[.015] p-6 sm:p-8">
           <a href="/dashboard/educacion" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" /> Mi aprendizaje</a>
           <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div><p className="text-[9px] font-semibold uppercase tracking-[.24em] text-white/35">Education OS / Commerce & Academic Operations</p><h1 className="mt-3 font-outfit text-4xl font-semibold tracking-[-.045em] sm:text-5xl">Mis servicios y agenda</h1><p className="mt-4 max-w-3xl text-sm leading-7 text-white/55">Sigue solicitudes personalizadas, revisa cotizaciones y consulta sesiones programadas. Aceptar una cotización confirma el alcance; no registra un pago.</p></div>
+            <div><p className="text-[9px] font-semibold uppercase tracking-[.24em] text-white/35">Education OS / Academic Fulfillment</p><h1 className="mt-3 font-outfit text-4xl font-semibold tracking-[-.045em] sm:text-5xl">Mis servicios y agenda</h1><p className="mt-4 max-w-3xl text-sm leading-7 text-white/55">Sigue solicitudes personalizadas, revisa cotizaciones y consulta sesiones programadas o finalizadas. Aceptar una cotización confirma el alcance; no registra un pago.</p></div>
             <button type="button" onClick={() => void load()} disabled={state === 'loading'} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 px-4 text-[10px] font-bold uppercase tracking-[.13em] text-white/60 disabled:opacity-50"><RefreshCw className={state === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} /> Actualizar</button>
           </div>
         </section>
@@ -152,6 +159,14 @@ export default function EducationServicesPage() {
           <div className="grid gap-4 xl:grid-cols-2">
             {state === 'ready' && upcoming.length === 0 ? <Empty text="Todavía no tienes sesiones programadas." /> : null}
             {upcoming.map((session) => <article key={session.id} className="rounded-2xl border border-white/10 bg-white/[.025] p-5 sm:p-6"><div className="flex items-start justify-between gap-4"><div><p className="text-[9px] font-bold uppercase tracking-[.16em] text-accent">{session.session_type}</p><h3 className="mt-2 font-outfit text-xl font-semibold">{session.title}</h3></div><span className="text-[9px] font-bold uppercase tracking-[.12em] text-emerald-300">Programada</span></div><p className="mt-4 flex items-center gap-2 text-sm text-white/65"><CalendarDays className="h-4 w-4 text-accent" /> {dateTime(session.starts_at)}</p><p className="mt-2 flex items-center gap-2 text-xs text-white/40"><Clock3 className="h-3.5 w-3.5" /> Hasta {dateTime(session.ends_at)} · {session.timezone}</p>{session.modality === 'virtual' && session.meeting_url ? <a href={session.meeting_url} rel="noreferrer" target="_blank" className="mt-5 inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-accent"><Video className="h-4 w-4" /> Abrir enlace de sesión</a> : null}{session.location_label ? <p className="mt-4 flex items-start gap-2 text-xs leading-6 text-white/45"><MapPin className="mt-1 h-3.5 w-3.5 shrink-0" /> {session.location_label}</p> : null}{session.participant_note ? <p className="mt-3 text-xs leading-6 text-white/40">{session.participant_note}</p> : null}</article>)}
+          </div>
+        </section>
+
+        <section className="mt-10">
+          <div className="mb-4"><p className="text-[9px] font-semibold uppercase tracking-[.24em] text-white/35">Fulfillment</p><h2 className="mt-2 font-outfit text-2xl font-semibold">Historial de sesiones</h2></div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {state === 'ready' && history.length === 0 ? <Empty text="Las sesiones completadas, canceladas o registradas como inasistencia aparecerán aquí." /> : null}
+            {history.map((session) => <article key={session.id} className="rounded-2xl border border-white/10 bg-white/[.025] p-5"><div className="flex items-start justify-between gap-4"><div><p className="text-[9px] font-bold uppercase tracking-[.16em] text-white/35">{session.session_type}</p><h3 className="mt-2 text-sm font-semibold text-white/85">{session.title}</h3></div><span className="text-right text-[9px] font-bold uppercase tracking-[.12em] text-accent">{sessionStatus[session.status] ?? session.status}</span></div><p className="mt-4 flex items-center gap-2 text-xs text-white/45"><CalendarDays className="h-3.5 w-3.5 text-accent" /> {dateTime(session.starts_at)}</p><p className="mt-2 text-[10px] leading-5 text-white/30">Este estado registra la prestación académica; no certifica pago ni entitlement.</p></article>)}
           </div>
         </section>
 
