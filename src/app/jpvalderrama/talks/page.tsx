@@ -1,5 +1,7 @@
 import Image from 'next/image';
 import { ArrowRight, CalendarDays, Clock3, MapPin, Ticket } from 'lucide-react';
+import { EducationAxisCatalog } from '@/components/jpvalderrama/EducationAxisCatalog';
+import { EducationCommerceJourney } from '@/components/jpvalderrama/EducationCommerceJourney';
 import { JPValderramaFooter, JPValderramaHeader } from '@/components/jpvalderrama/JPValderramaShell';
 import { TalkRegistrationForm } from '@/components/jpvalderrama/TalkRegistrationForm';
 
@@ -8,19 +10,23 @@ const eventDetails = [
   { label: 'Hora', value: '7:00 p. m.', icon: Clock3 },
   { label: 'Duración', value: '45 minutos', icon: Clock3 },
   { label: 'Modalidad', value: 'Google Meet', icon: MapPin },
-  { label: 'Ticket', value: '$10.000', icon: Ticket },
+  { label: 'Ticket', value: '$10.000 COP', icon: Ticket },
 ] as const;
+
+const checkoutHref = '/jpvalderrama/campus/checkout/filosofia-o-dinero';
 
 export default function ValderramaTalksPage() {
   const eventSchema = {
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: '¿Filosofía o Dinero? — El arte de comer papel',
+    startDate: '2026-09-17T19:00:00-05:00',
+    endDate: '2026-09-17T19:45:00-05:00',
     eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
     eventStatus: 'https://schema.org/EventScheduled',
     location: { '@type': 'VirtualLocation', name: 'Google Meet' },
     organizer: { '@type': 'Person', name: 'Juan Pablo Valderrama Pino', url: 'https://ctgone.com/jpvalderrama' },
-    offers: { '@type': 'Offer', price: '10000', priceCurrency: 'COP', url: 'https://ctgone.com/jpvalderrama/talks#inscripcion' },
+    offers: { '@type': 'Offer', price: '10000', priceCurrency: 'COP', url: `https://ctgone.com${checkoutHref}` },
   };
 
   return (
@@ -40,12 +46,15 @@ export default function ValderramaTalksPage() {
               <h1 className="mt-4 font-serif text-5xl leading-[.98] tracking-[-.035em] text-[#17110e] sm:text-6xl lg:text-[4.7rem]">Ideas complejas, conversaciones que pueden transformar.</h1>
               <div className="mt-6 flex items-center gap-3" aria-hidden="true"><span className="h-px w-24 bg-[#6f0d12]" /><span className="h-2 w-2 rounded-full bg-[#6f0d12]" /></div>
               <p className="mt-7 max-w-2xl font-serif text-lg leading-8 text-[#564a42] sm:text-xl">Conferencias, clases y conversaciones de JP Valderrama para conectar filosofía, educación, cultura, tecnología y experiencia práctica con públicos diversos.</p>
-              <a href="#conferencia" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Ver próxima conferencia <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <a href="#filosofia-o-dinero" className="inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Próxima conferencia <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+                <a href="#oferta" className="inline-flex min-h-12 items-center gap-2 rounded-sm border border-[#6f0d12]/35 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Catálogo Talks</a>
+              </div>
             </div>
           </div>
         </section>
 
-        <section id="conferencia" className="scroll-mt-24 py-16 sm:py-20 lg:py-24">
+        <section id="filosofia-o-dinero" className="scroll-mt-24 py-16 sm:py-20 lg:py-24">
           <div className="mx-auto max-w-[1320px] px-5 sm:px-8 lg:px-12">
             <div className="grid overflow-hidden border border-[#6f0d12]/16 bg-[#fbf7f1] lg:grid-cols-[.9fr_1.1fr]">
               <div className="relative bg-[#efe3d7] p-5 sm:p-8">
@@ -61,20 +70,28 @@ export default function ValderramaTalksPage() {
                     <div key={label} className="flex gap-3 border-t border-[#6f0d12]/12 pt-4"><Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#6f0d12]" aria-hidden="true" /><div><dt className="text-[10px] font-bold uppercase tracking-[.16em] text-[#665950]">{label}</dt><dd className="mt-1 font-serif text-[16px] text-[#241a15]">{value}</dd></div></div>
                   ))}
                 </dl>
-                <div className="mt-8 flex flex-wrap gap-3"><a href="#inscripcion" className="inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Inscribirme <ArrowRight className="h-4 w-4" aria-hidden="true" /></a><a href="https://wa.me/573186428218" className="inline-flex min-h-12 items-center rounded-sm border border-[#6f0d12]/40 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Consultar por WhatsApp</a></div>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <a href={checkoutHref} className="inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Comprar ticket <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+                  <a href="#inscripcion" className="inline-flex min-h-12 items-center rounded-sm border border-[#6f0d12]/40 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Registrar interés / asistencia</a>
+                </div>
+                <p className="mt-4 text-xs leading-6 text-[#75665c]">La compra y la inscripción son operaciones distintas: la compra crea una orden autenticada; el formulario inferior sirve para registro operativo y comunicaciones del evento.</p>
               </div>
             </div>
           </div>
         </section>
 
+        <EducationAxisCatalog axis="talks" title="Talks disponibles" intro="Los eventos con precio confirmado entran siempre al checkout educativo de CTG One. Después de la verificación del pago, el acceso queda asociado a tu cuenta y aparece en Mi aprendizaje." />
+
         <section id="inscripcion" className="scroll-mt-24 border-y border-[#6f0d12]/10 bg-[#efe3d7] py-16 sm:py-20">
           <div className="mx-auto grid max-w-[1200px] gap-10 px-5 sm:px-8 lg:grid-cols-[.85fr_1.15fr] lg:items-start lg:px-12">
-            <div className="max-w-xl"><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#6f0d12]">Registro operativo</p><h2 className="mt-4 font-serif text-4xl leading-tight text-[#17110e] sm:text-5xl">Inscripción digital a Valderrama Talks.</h2><p className="mt-6 font-serif text-[17px] leading-8 text-[#564a42]">La inscripción queda almacenada de manera persistente para gestionar asistencia y comunicaciones relacionadas con el evento. No necesitas crear una cuenta de CTG One para registrarte.</p><div className="mt-7 border-l border-[#6f0d12]/35 pl-5 text-sm leading-7 text-[#665950]"><p><strong className="text-[#3c3029]">Importante:</strong> registrarte no equivale a pagar el ticket. Esta fase no solicita datos financieros ni ejecuta cobros.</p></div></div>
+            <div className="max-w-xl"><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#6f0d12]">Registro operativo</p><h2 className="mt-4 font-serif text-4xl leading-tight text-[#17110e] sm:text-5xl">Déjanos tus datos para asistencia y comunicaciones.</h2><p className="mt-6 font-serif text-[17px] leading-8 text-[#564a42]">Este registro es útil incluso antes de comprar y no requiere una cuenta de CTG One. El ticket, cuando aplica, se compra por separado mediante el checkout autenticado.</p><div className="mt-7 border-l border-[#6f0d12]/35 pl-5 text-sm leading-7 text-[#665950]"><p><strong className="text-[#3c3029]">Importante:</strong> registrarte no equivale a pagar ni concede un entitlement. El acceso pagado solo se habilita después de la verificación de la orden.</p></div></div>
             <TalkRegistrationForm />
           </div>
         </section>
 
-        <section className="py-16 sm:py-20"><div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12"><div className="grid gap-8 border border-[#6f0d12]/14 bg-[#fbf7f1] p-8 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center"><div className="max-w-3xl"><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#6f0d12]">Programación</p><h2 className="mt-3 font-serif text-3xl text-[#17110e] sm:text-4xl">Un catálogo público que crecerá con fechas confirmadas.</h2><p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">“¿Filosofía o Dinero?” es la primera conferencia publicada en esta plataforma. Nuevas charlas, clases y ciclos aparecerán aquí cuando su programación y contenido estén confirmados.</p></div><a href="/contact" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-[#6f0d12]/40 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Proponer una charla <ArrowRight className="h-4 w-4" aria-hidden="true" /></a></div></div></section>
+        <section className="py-16 sm:py-20"><div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12"><div className="grid gap-8 border border-[#6f0d12]/14 bg-[#fbf7f1] p-8 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center"><div className="max-w-3xl"><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#6f0d12]">Talks para organizaciones</p><h2 className="mt-3 font-serif text-3xl text-[#17110e] sm:text-4xl">Conferencias y conversaciones privadas se contratan por alcance.</h2><p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">Para colegios, universidades, empresas e instituciones, la ruta correcta no es comprar un ticket público: primero se define audiencia, tema, modalidad, fecha y alcance; después se emite una propuesta.</p></div><a href="/jpvalderrama/campus#instituciones" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-[#6f0d12]/40 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Contratar una charla <ArrowRight className="h-4 w-4" aria-hidden="true" /></a></div></div></section>
+
+        <EducationCommerceJourney />
       </div>
       <JPValderramaFooter />
     </main>

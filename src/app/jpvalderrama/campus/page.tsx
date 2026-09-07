@@ -1,5 +1,6 @@
-import { JPValderramaFooter, JPValderramaHeader } from '@/components/jpvalderrama/JPValderramaShell';
 import { EducationCampusClient } from '@/components/jpvalderrama/EducationCampusClient';
+import { EducationCommerceJourney } from '@/components/jpvalderrama/EducationCommerceJourney';
+import { JPValderramaFooter, JPValderramaHeader } from '@/components/jpvalderrama/JPValderramaShell';
 
 export default function EducationCampusPage() {
   return (
@@ -8,6 +9,7 @@ export default function EducationCampusPage() {
       <JPValderramaHeader active="campus" />
       <div id="contenido">
         <EducationCampusClient />
+        <EducationCommerceJourney />
       </div>
       <JPValderramaFooter />
     </main>
