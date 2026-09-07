@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 const readme = await read('README.md');
+const docsIndex = await read('docs/README.md');
 const systemState = await read('docs/architecture/SYSTEM_STATE.md');
-const historicalAudit = await read('docs/architecture/REPOSITORY_AUDIT_CURRENT.md');
 
 assert.ok(
   systemState.includes('CURRENT GOVERNANCE MAP')
@@ -16,8 +16,16 @@ assert.ok(
 );
 
 assert.ok(
-  historicalAudit.includes('SUPERSEDED') && historicalAudit.includes('DO NOT USE AS CURRENT SYSTEM STATE'),
-  'The dated repository audit must never masquerade as current system state.',
+  docsIndex.includes('CTG One Documentation Map')
+    && docsIndex.includes('architecture/SYSTEM_STATE.md')
+    && docsIndex.includes('src/lib/observability/schema-version.ts')
+    && docsIndex.includes('src/data/technology-proof.ts'),
+  'docs/README.md must act as the repository documentation entry point and authority map.',
+);
+
+await assert.rejects(
+  access(new URL('../docs/architecture/REPOSITORY_AUDIT_CURRENT.md', import.meta.url)),
+  'The misleading superseded repository audit must stay removed.',
 );
 
 assert.ok(
@@ -46,6 +54,18 @@ assert.ok(
     && readme.includes('EXPECTED_DATABASE_MIGRATION_NAME')
     && readme.includes('EXPECTED_DATABASE_MIGRATION_COUNT'),
   'README must direct database-version checks to the runtime schema contract.',
+);
+
+assert.ok(
+  readme.includes('JP Valderrama')
+    && readme.includes('/jpvalderrama/campus')
+    && readme.includes('/dashboard/educacion'),
+  'README must include the current education bounded context and primary routes.',
+);
+
+assert.ok(
+  systemState.includes('fixed price') || systemState.includes('fixed-price') || systemState.includes('published fixed price'),
+  'SYSTEM_STATE must preserve the direct fixed-price education commerce rule.',
 );
 
 console.log('Documentation governance invariants: PASS');
