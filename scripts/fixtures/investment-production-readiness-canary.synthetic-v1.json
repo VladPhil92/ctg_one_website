@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0120",
-  "expectedMigrationName": "jp_education_service_role_boundary_reconciliation",
-  "expectedMigrationCount": 120,
+  "expectedMigration": "0121",
+  "expectedMigrationName": "jp_education_assessment_time_consistency",
+  "expectedMigrationCount": 121,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
