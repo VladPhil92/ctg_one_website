@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0120",
-    "schemaMigrationName": "jp_education_service_role_boundary_reconciliation",
-    "schemaMigrationCount": 120,
+    "schemaMigration": "0121",
+    "schemaMigrationName": "jp_education_assessment_time_consistency",
+    "schemaMigrationCount": 121,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
