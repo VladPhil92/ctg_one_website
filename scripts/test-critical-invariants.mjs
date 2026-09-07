@@ -51,7 +51,10 @@ assert.ok(health.includes("'Cache-Control': 'no-store, max-age=0'"), 'Health res
 assert.ok(!health.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Health endpoint must never expose or inspect the Supabase service-role secret.');
 assert.ok(render.includes('healthCheckPath: /api/health'), 'Render must use the application health endpoint.');
 assert.ok(render.includes('autoDeployTrigger: checksPass'), 'Render must wait for repository checks before deployment.');
-assert.ok(render.includes('buildCommand: npm ci && npm run build'), 'Render must perform a clean production build.');
+assert.ok(
+  render.includes('buildCommand: npm ci && node scripts/verify-production-schema-gate.mjs && npm run build'),
+  'Render must install dependencies, prove production schema readiness, and only then perform the production build.'
+);
 assert.ok(render.includes('NEXT_PUBLIC_SITE_URL'), 'Render blueprint must define the canonical site URL.');
 assert.ok(render.includes('https://ctgone.com'), 'Render blueprint must use ctgone.com as the canonical production URL.');
 assert.ok(render.includes('SUPABASE_SERVICE_ROLE_KEY\n        sync: false'), 'Service-role secret must never be committed into the Render blueprint.');

@@ -27,14 +27,18 @@ export async function GET(request: Request) {
     privilegedSchemaProbeConfigured: schema.configured,
     siteUrlConfigured: Boolean(process.env.NEXT_PUBLIC_SITE_URL),
     deploymentCommitAvailable: deployment.provider !== 'render' || Boolean(deployment.commit),
+    databaseRequiredMigrationPresent: schema.requiredMigrationPresent,
     databaseSchemaCompatible: schema.compatible,
+    databaseSchemaExact: schema.exact,
   };
 
   const baseChecksHealthy = checks.supabasePublicConfig
     && checks.privilegedSchemaProbeConfigured
     && checks.siteUrlConfigured
     && checks.deploymentCommitAvailable;
-  const productionHealthy = baseChecksHealthy && checks.databaseSchemaCompatible;
+  const productionHealthy = baseChecksHealthy
+    && checks.databaseRequiredMigrationPresent
+    && checks.databaseSchemaCompatible;
   const status = productionHealthy
     ? 'ok'
     : deployment.provider === 'render'
@@ -48,6 +52,9 @@ export async function GET(request: Request) {
     schema: {
       probeAvailable: schema.probeAvailable,
       errorCode: schema.errorCode,
+      compatible: schema.compatible,
+      exact: schema.exact,
+      requiredMigrationPresent: schema.requiredMigrationPresent,
       expectedMigrationCount: EXPECTED_DATABASE_MIGRATION_COUNT,
       expectedLatestMigrationName: EXPECTED_DATABASE_MIGRATION_NAME,
       observedMigrationCount: schema.observedMigrationCount,
@@ -64,7 +71,11 @@ export async function GET(request: Request) {
       deployment,
       schema: {
         compatible: schema.compatible,
+        exact: schema.exact,
+        requiredMigrationPresent: schema.requiredMigrationPresent,
         expectedMigrationCount: EXPECTED_DATABASE_MIGRATION_COUNT,
+        observedMigrationCount: schema.observedMigrationCount,
+        observedLatestMigrationName: schema.observedLatestMigrationName,
         probeAvailable: schema.probeAvailable,
       },
     },

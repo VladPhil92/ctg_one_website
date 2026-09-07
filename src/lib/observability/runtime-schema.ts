@@ -15,6 +15,8 @@ type RuntimeSchemaCompatibilityRow = {
 
 export type RuntimeSchemaCompatibility = {
   compatible: boolean;
+  exact: boolean;
+  requiredMigrationPresent: boolean;
   probeAvailable: boolean;
   configured: boolean;
   errorCode: string | null;
@@ -29,7 +31,7 @@ function normalizeRuntimeMigrationName(name: string | null): string | null {
   // timestamp-era YYYYMMDDHHMMSS_NNNN_name.sql migrations are recorded by
   // Supabase as `NNNN_name`. Strip the prefix only when it matches the exact
   // logical migration expected by this application release. A mismatched
-  // prefix is preserved so the compatibility comparison remains fail-closed.
+  // prefix is preserved so the exact-version comparison remains fail-closed.
   const timestampEraMatch = /^(\d{4})_(.+)$/.exec(name);
   if (!timestampEraMatch) return name;
 
@@ -47,6 +49,8 @@ export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCo
   if (!configured) {
     return {
       compatible: false,
+      exact: false,
+      requiredMigrationPresent: false,
       probeAvailable: false,
       configured: false,
       errorCode: 'privileged_probe_not_configured',
@@ -57,29 +61,64 @@ export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCo
 
   try {
     const admin = createAdminClient();
-    const { data, error } = await admin.rpc('get_runtime_schema_compatibility');
+    const [compatibilityResult, requirementResult] = await Promise.all([
+      admin.rpc('get_runtime_schema_compatibility'),
+      admin.rpc('has_runtime_schema_migration', {
+        p_logical_version: EXPECTED_DATABASE_MIGRATION,
+        p_expected_name: EXPECTED_DATABASE_MIGRATION_NAME,
+      }),
+    ]);
 
-    if (error) {
+    if (compatibilityResult.error || requirementResult.error) {
       return {
         compatible: false,
+        exact: false,
+        requiredMigrationPresent: false,
         probeAvailable: false,
         configured: true,
-        errorCode: error.code ?? 'unknown',
+        errorCode:
+          compatibilityResult.error?.code
+          ?? requirementResult.error?.code
+          ?? 'unknown',
         observedMigrationCount: null,
         observedLatestMigrationName: null,
       };
     }
 
-    const row = ((Array.isArray(data) ? data[0] : data) ?? null) as RuntimeSchemaCompatibilityRow | null;
+    const row = ((Array.isArray(compatibilityResult.data)
+      ? compatibilityResult.data[0]
+      : compatibilityResult.data) ?? null) as RuntimeSchemaCompatibilityRow | null;
+    const requiredMigrationPresent = requirementResult.data === true;
     const observedMigrationCount = row?.migration_count == null ? null : Number(row.migration_count);
     const observedLatestMigrationName = normalizeRuntimeMigrationName(row?.latest_name ?? null);
+    const exact = Boolean(
+      row
+      && requiredMigrationPresent
+      && observedMigrationCount === EXPECTED_DATABASE_MIGRATION_COUNT
+      && observedLatestMigrationName === EXPECTED_DATABASE_MIGRATION_NAME
+    );
+
+    // Deployments follow a DB-first expand/contract protocol. A runtime may
+    // safely serve against a schema that is newer than its minimum requirement
+    // only when production proves the runtime's exact required logical migration
+    // is actually present. Migration count alone is not accepted as evidence,
+    // because a divergent history can be numerically ahead while missing the
+    // required migration. Equal-version histories remain exact-name checked.
+    const compatible = Boolean(
+      row
+      && requiredMigrationPresent
+      && Number.isInteger(observedMigrationCount)
+      && observedMigrationCount != null
+      && (
+        observedMigrationCount > EXPECTED_DATABASE_MIGRATION_COUNT
+        || exact
+      )
+    );
 
     return {
-      compatible: Boolean(
-        row
-        && observedMigrationCount === EXPECTED_DATABASE_MIGRATION_COUNT
-        && observedLatestMigrationName === EXPECTED_DATABASE_MIGRATION_NAME
-      ),
+      compatible,
+      exact,
+      requiredMigrationPresent,
       probeAvailable: Boolean(row),
       configured: true,
       errorCode: null,
@@ -89,6 +128,8 @@ export async function probeRuntimeSchemaCompatibility(): Promise<RuntimeSchemaCo
   } catch {
     return {
       compatible: false,
+      exact: false,
+      requiredMigrationPresent: false,
       probeAvailable: false,
       configured: true,
       errorCode: 'runtime_probe_failed',

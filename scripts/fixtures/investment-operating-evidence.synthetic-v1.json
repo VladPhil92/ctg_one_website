@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0124",
-    "schemaMigrationName": "jp_education_service_role_privilege_portability_reconciliation",
-    "schemaMigrationCount": 124,
+    "schemaMigration": "0125",
+    "schemaMigrationName": "runtime_schema_requirement_probe",
+    "schemaMigrationCount": 125,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
