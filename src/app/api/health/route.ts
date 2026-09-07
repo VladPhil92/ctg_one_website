@@ -28,6 +28,7 @@ export async function GET(request: Request) {
     siteUrlConfigured: Boolean(process.env.NEXT_PUBLIC_SITE_URL),
     deploymentCommitAvailable: deployment.provider !== 'render' || Boolean(deployment.commit),
     databaseSchemaCompatible: schema.compatible,
+    databaseSchemaExact: schema.exact,
   };
 
   const baseChecksHealthy = checks.supabasePublicConfig
@@ -48,6 +49,8 @@ export async function GET(request: Request) {
     schema: {
       probeAvailable: schema.probeAvailable,
       errorCode: schema.errorCode,
+      compatible: schema.compatible,
+      exact: schema.exact,
       expectedMigrationCount: EXPECTED_DATABASE_MIGRATION_COUNT,
       expectedLatestMigrationName: EXPECTED_DATABASE_MIGRATION_NAME,
       observedMigrationCount: schema.observedMigrationCount,
@@ -64,7 +67,10 @@ export async function GET(request: Request) {
       deployment,
       schema: {
         compatible: schema.compatible,
+        exact: schema.exact,
         expectedMigrationCount: EXPECTED_DATABASE_MIGRATION_COUNT,
+        observedMigrationCount: schema.observedMigrationCount,
+        observedLatestMigrationName: schema.observedLatestMigrationName,
         probeAvailable: schema.probeAvailable,
       },
     },
