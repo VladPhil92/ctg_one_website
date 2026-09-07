@@ -132,7 +132,7 @@ Shared evidence includes:
 
 Centralized telemetry, SLOs and alerting maturity must be described according to actual implementation rather than roadmap prose.
 
-### Infrastructure layer
+### Infrastructure Layer — LIVE
 
 Current delivery model:
 
@@ -154,15 +154,23 @@ ctgone.com
 Supabase / external providers
 ```
 
+`LIVE` on this layer describes the deployed delivery path itself; it does not promote every application capability transported by that path.
+
 ## Ecosystem registry
 
 Do not maintain a manual business-unit list in this architecture document. The canonical public ecosystem registry lives in `src/data/content.ts`.
 
 That registry may evolve independently from technical bounded contexts. A business can belong to the ecosystem without having a mature dedicated software domain, and a shared technical capability can serve multiple businesses.
 
-## Maturity governance
+## Maturity model
 
-Capability maturity is not manually maintained here. The authoritative public maturity source is `src/data/technology-proof.ts`.
+Capability maturity is governed by the authoritative public source `src/data/technology-proof.ts`; this section defines the semantics, not a second status registry.
+
+- **LIVE** — deployed, functioning and supported by appropriate production evidence.
+- **BETA** — deliberately released to a controlled or limited operating scope with evidence and known constraints.
+- **PARTIAL** — real implementation exists, but coverage, integration or operational completeness is limited.
+- **IN DEVELOPMENT** — active implementation exists, but the capability is not ready to be represented as operationally available.
+- **ROADMAP** — planned direction without sufficient implementation/production evidence.
 
 A capability cannot be promoted based only on:
 
