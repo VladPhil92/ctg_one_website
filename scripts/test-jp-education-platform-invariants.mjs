@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [talks, ideas, projects, books, catalog, checkout, library, dashboard, campusPage, campusClient, learningCenter, familyRequest, advisoryApi, servicesApi, quoteDecisionApi, adminServicesApi, servicesDashboard, adminServicesPage, operationsMigration, assessmentMigration, assessmentApi, assessmentPlayer, courseApi, learningPlayer, instructorApi, instructorPage, assessmentGoldenJourney] = await Promise.all([
+const [talks, ideas, projects, books, catalog, checkout, library, dashboard, campusPage, campusClient, learningCenter, instantOffers, familyRequest, advisoryApi, servicesApi, quoteDecisionApi, adminServicesApi, servicesDashboard, adminServicesPage, operationsMigration, assessmentMigration, instantCheckoutMigration, boundaryMigration, assessmentApi, assessmentPlayer, courseApi, learningPlayer, instructorApi, instructorPage, assessmentGoldenJourney] = await Promise.all([
   read('src/app/jpvalderrama/talks/page.tsx'),
   read('src/app/jpvalderrama/ideas/page.tsx'),
   read('src/app/jpvalderrama/projects/page.tsx'),
@@ -15,6 +15,7 @@ const [talks, ideas, projects, books, catalog, checkout, library, dashboard, cam
   read('src/app/jpvalderrama/campus/page.tsx'),
   read('src/components/jpvalderrama/EducationCampusClient.tsx'),
   read('src/app/jpvalderrama/learningcenter/page.tsx'),
+  read('src/components/jpvalderrama/EducationInstantPurchaseOffers.tsx'),
   read('src/components/jpvalderrama/EducationFamilyServiceRequest.tsx'),
   read('src/app/api/education/advisory/route.ts'),
   read('src/app/api/education/services/route.ts'),
@@ -24,6 +25,8 @@ const [talks, ideas, projects, books, catalog, checkout, library, dashboard, cam
   read('src/app/dashboard/educacion/operaciones/servicios/page.tsx'),
   read('supabase/migrations/20260907012804_0117_jp_education_academic_operations.sql'),
   read('supabase/migrations/20260907023732_0118_jp_education_assessment_instructor_core.sql'),
+  read('supabase/migrations/20260907024455_0119_jp_education_instant_checkout_catalog.sql'),
+  read('supabase/migrations/20260907025245_0120_jp_education_service_role_boundary_reconciliation.sql'),
   read('src/app/api/education/assessments/[assessment]/route.ts'),
   read('src/components/education/AssessmentPlayer.tsx'),
   read('src/app/api/education/learning/courses/[course]/route.ts'),
@@ -57,10 +60,13 @@ assert.match(catalog, /'free'/);
 assert.match(checkout, /function detailPath/);
 assert.match(checkout, /offering\.offering_type === 'book'/);
 assert.match(checkout, /offering\.offering_type === 'course'/);
-assert.match(checkout, /Orden primero\. Acceso después de verificar/);
+assert.match(checkout, /Precio confirmado\. Paga ahora\./);
+assert.match(checkout, /No requiere cotización ni aprobación comercial antes de pagar/);
 assert.match(checkout, /EDUCATION_ALREADY_ENTITLED/);
+assert.match(checkout, /Pagar ahora/);
+assert.match(checkout, /Ir al pago ahora/);
+assert.doesNotMatch(checkout, /Crear orden de pago/);
 assert.doesNotMatch(checkout, /\/jpvalderrama\/talks#conferencia/);
-assert.match(checkout, /Continuar por WhatsApp/);
 
 assert.match(library, /education_enrollments/);
 assert.match(library, /education_lesson_progress/);
@@ -79,12 +85,34 @@ for (const axis of ['talks', 'ideas', 'books', 'projects']) assert.match(dashboa
 assert.match(campusPage, /EducationCommerceJourney/);
 assert.match(campusClient, /id="catalogo"/);
 assert.match(campusClient, /id="instituciones"/);
+
+// Fixed-price Learning Center services must go straight to checkout.
+assert.match(learningCenter, /EducationInstantPurchaseOffers/);
+assert.match(learningCenter, /id="compra"/);
+assert.match(learningCenter, /Precio visible.*checkout.*orden.*pago/i);
+assert.match(learningCenter, /cotización queda reservada para casos realmente personalizados/i);
+assert.match(instantOffers, /metadata\?\.axis === 'learningcenter'/);
+assert.match(instantOffers, /metadata\?\.commerce_mode === 'instant'/);
+assert.match(instantOffers, /offering\.commerce_mode === 'paid'/);
+assert.match(instantOffers, /Comprar y pagar ahora/);
+assert.match(instantOffers, /\/jpvalderrama\/campus\/checkout\//);
+assert.match(instantOffers, /El servidor fija el precio; no hay cotización ni aprobación comercial previa/);
+assert.match(instantCheckoutMigration, /'tutoria-privada-1-hora'/);
+assert.match(instantCheckoutMigration, /'plan-tutorias-8-horas'/);
+assert.match(instantCheckoutMigration, /80000/);
+assert.match(instantCheckoutMigration, /520000/);
+assert.match(instantCheckoutMigration, /"commerce_mode":"instant"/);
+assert.match(instantCheckoutMigration, /"axis":"learningcenter"/);
+
+// Inquiry remains only for genuinely custom work.
 assert.match(learningCenter, /EducationFamilyServiceRequest/);
 assert.match(learningCenter, /id="solicitud"/);
-assert.match(learningCenter, /diagnóstico.*disponibilidad.*cotización/i);
+assert.match(learningCenter, /Solo para necesidades especiales/);
 assert.match(familyRequest, /requestKind: 'family'/);
 assert.match(familyRequest, /\/api\/education\/advisory/);
-assert.match(familyRequest, /Solicitar diagnóstico y cotización/);
+assert.match(familyRequest, /Solicitar propuesta personalizada/);
+assert.doesNotMatch(familyRequest, /Solicitar diagnóstico y cotización/);
+assert.doesNotMatch(familyRequest, /'Tutorías privadas'/);
 assert.match(familyRequest, /\/dashboard\/educacion\/servicios/);
 assert.match(advisoryApi, /request_kind: parsed\.data\.requestKind/);
 
@@ -155,6 +183,16 @@ assert.match(courseApi, /passedRequiredAssessments/);
 assert.match(learningPlayer, /Ir a evaluación/);
 assert.match(learningPlayer, /evaluaciones/);
 
+// The service_role boundary is explicit for SECURITY INVOKER scoring and Instructor Studio.
+assert.match(boundaryMigration, /grant all on table public\.education_offerings to service_role/);
+assert.match(boundaryMigration, /grant all on table public\.education_courses to service_role/);
+assert.match(boundaryMigration, /grant all on table public\.education_modules to service_role/);
+assert.match(boundaryMigration, /grant all on table public\.education_lessons to service_role/);
+assert.match(boundaryMigration, /grant select, update on table public\.education_enrollments to service_role/);
+assert.match(boundaryMigration, /grant select on table public\.education_entitlements to service_role/);
+assert.doesNotMatch(boundaryMigration, /to authenticated/);
+assert.doesNotMatch(boundaryMigration, /to anon/);
+
 // Instructor Studio: browser role is never trusted; server re-checks canonical admin authority.
 assert.match(instructorApi, /createAuthenticatedRequestContext/);
 assert.match(instructorApi, /rpc\('is_admin'\)/);
@@ -180,4 +218,4 @@ assert.match(assessmentGoldenJourney, /MAX_ATTEMPTS_REACHED/);
 assert.match(assessmentGoldenJourney, /has_table_privilege\('authenticated', 'public\.education_assessment_options', 'SELECT'\)/);
 assert.match(assessmentGoldenJourney, /ROLLBACK/);
 
-console.log('JP Valderrama education platform, commerce, assessment and instructor invariants: PASS');
+console.log('JP Valderrama education platform, instant commerce, assessment and instructor invariants: PASS');
