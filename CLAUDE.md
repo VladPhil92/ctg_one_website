@@ -1,52 +1,81 @@
 # CLAUDE.md
 
-Repository-wide guidance for working on `ctgone.com`.
+Repository-wide engineering guidance for `ctgone.com` / `VladPhil92/ctg_one_website`.
 
-## CTG Craft Beer Inversión
+## Read this first
 
-A new, isolated capability living at `/inversion` inside this same site,
-for Cervecería Cartagena S.A.S. / CTG Craft Beer's production-lot investment
-program. Full documentation: `docs/investment/` (start with
-`PRODUCT_CONSTITUTION.md`, `EXISTING_SITE_INTEGRATION.md`, and the ADRs in
-`docs/investment/adr/`).
+This repository is no longer an isolated marketing site with one new Investment module. It is a production-oriented **modular monolith** containing shared CTG One platform capabilities and multiple bounded contexts.
 
-### NEVER
+Before changing a governed concern, consult:
 
-- Never rebuild, redesign, or migrate the existing `ctgone.com` site.
-- Never refactor or reformat code unrelated to the change at hand.
-- Never change global styles (`tailwind.config.ts`, `src/app/globals.css`)
-  or existing CTG branding/logos for this initiative.
-- Never modify the global `Navbar`/`Footer`, existing marketing pages
-  (`/`, `/about`, `/ecosystem`, `/services`, `/rewards`, `/token`,
-  `/contact`), or the existing accounts system
-  (`AuthContext`, `/registro`, `/iniciar-sesion`, `/dashboard`,
-  `supabase/migrations/0001-0003*.sql`) except through a separately
-  authorized, explicitly scoped change.
-- Never invent business rules or financial formulas — see
-  `docs/investment/BUSINESS_MODEL.md` §Pending Business Decisions.
-- Never hard-delete financial records (ledger, settlements, withdrawals,
-  reinvestments, audit log) — lifecycle states and reversals only.
-- Never bypass the append-only ledger or the production-lot state machine
-  with a direct table write.
-- Never mutate a finalized settlement.
-- Never use floating-point for money — integer COP cents everywhere.
-- Never expose one participant's data to another.
-- Never write guaranteed-return marketing language ("rentabilidad
-  garantizada", "50% de retorno", "riesgo cero").
-- Never rename existing environment variables; new investment variables are
-  `CTG_INVESTMENT_*`-namespaced.
+- `docs/README.md` — documentation map and authority rules;
+- `docs/architecture/SYSTEM_STATE.md` — source-of-truth registry;
+- `docs/architecture/CTG_ONE_OS.md` — shared architecture;
+- `docs/architecture/ECOSYSTEM_CONTRACT_REGISTRY.md` — cross-product contracts;
+- `src/data/technology-proof.ts` — public capability maturity;
+- `src/lib/observability/schema-version.ts` — expected database migration identity/count;
+- `.github/workflows/ci.yml` and `package.json` — CI contract.
 
-### ALWAYS
+Domain-specific work must also read the relevant documentation under `docs/<domain>/`.
 
-- Read `docs/investment/EXISTING_SITE_INTEGRATION.md` and the relevant ADRs
-  before touching anything under this initiative.
-- Keep new code under `src/app/inversion/**`, `src/app/api/investment/**`,
-  and additive `supabase/migrations/0004_investment_*.sql` — isolated from
-  existing routes/tables (ADR-000, ADR-001).
-- Keep authoritative financial calculations server-side, inside
-  `SECURITY DEFINER` Postgres functions that re-check authorization
-  themselves (mirrors the existing `approve_deposit`/`approve_kyc` pattern).
-- Run `npm run build` and a headless-browser check of the existing protected
-  routes before considering a change to this initiative done (see
-  `docs/investment/TESTING_STRATEGY.md`).
-- Keep diffs scoped to the task — small, reviewable PRs, not one giant pass.
+## Architecture
+
+The application is a Next.js/React/TypeScript modular monolith backed by Supabase/PostgreSQL and deployed on Render. PostgreSQL and server-side code remain authoritative for money, settlement, inventory, entitlements, identity elevation, permissions and other consequential state.
+
+Major bounded contexts include:
+
+- Identity / KYC / account lifecycle;
+- Wallet / Saldo CTG / canonical ledger;
+- CTG Craft Beer Investment;
+- JP Valderrama education, Campus and Learning Center;
+- CTG Knowledge;
+- Nvet Care federation;
+- VÉRTICE federation;
+- shared observability, security and operational tooling.
+
+Do not assume two contexts share the same maturity merely because they live in one repository.
+
+## NEVER
+
+- Never rewrite or edit an already-applied migration; add a new contiguous migration.
+- Never downgrade `EXPECTED_DATABASE_MIGRATION*` to an older migration to make a branch pass.
+- Never resolve merge conflicts by keeping both versions of constants, JSON entries, JSX blocks, tests or imports.
+- Never bypass server/database authorization boundaries for financial, entitlement, KYC, wallet, inventory or settlement mutations.
+- Never use floating-point arithmetic for authoritative money calculations.
+- Never hard-delete append-only financial/audit facts when the domain requires reversals or lifecycle transitions.
+- Never expose service-role credentials, private documents, KYC artifacts or secrets to browser code or Git.
+- Never promote a capability to `LIVE` from prose, UI presence, an installed dependency or a prototype. Public maturity is governed by `src/data/technology-proof.ts` and production evidence.
+- Never invent business rules, financial formulas, settlement evidence or provider confirmations.
+- Never merge a PR whose intended work is already present in `main`; close it as superseded when the final diff is empty.
+- Never perform broad unrelated refactors inside a narrowly scoped fix.
+
+## ALWAYS
+
+- Sync with the latest `main` before final review and inspect the resulting diff for duplicate conflict-resolution artifacts.
+- Keep bounded-context logic scoped and use explicit contracts for cross-context integration.
+- Revalidate authorization server-side for consequential operations.
+- Use idempotency for payment, ledger, settlement and other retry-sensitive workflows.
+- Add or update invariants/tests when changing a governed boundary.
+- Run the repository quality gates appropriate to the change, including `npm test`, production dependency audit, typecheck and production build.
+- Preserve fail-closed behavior when runtime state, capability evidence or external-provider state is uncertain.
+- Update explanatory documentation when architecture, operational procedures or developer guidance materially changes.
+- Treat `README.md` as an overview, not a runtime state database.
+
+## Pull-request hygiene
+
+Before merge:
+
+1. update the branch from the latest `main`;
+2. inspect the complete changed-file list and diff;
+3. verify conflict resolution did not duplicate declarations, JSON records, JSX, tests or migration metadata;
+4. confirm the PR still has an intentional delta against `main`;
+5. run required CI;
+6. if the delta is empty because later work already superseded it, close the PR instead of manufacturing a merge.
+
+## Database discipline
+
+Legacy migrations `0001`–`0071` remain grandfathered. Newer migrations use timestamped contiguous logical versions. The authoritative current expectation is always the value in `src/lib/observability/schema-version.ts`; do not copy a migration number into documentation as a permanent fact.
+
+## Documentation discipline
+
+Historical audits and phase reports are snapshots, not current system state. Current truth must be derived from the authoritative sources listed in `docs/architecture/SYSTEM_STATE.md`. When a historical document becomes misleading, either archive it clearly or remove it when it no longer provides useful traceability.
