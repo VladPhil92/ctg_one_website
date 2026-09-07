@@ -21,6 +21,15 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      # JP Valderrama Education real-time checkout provider. These credentials
+      # remain server-side and the Wompi path fails closed until all three are
+      # provisioned in Render for the same environment (test or production).
+      - key: WOMPI_PUBLIC_KEY
+        sync: false
+      - key: WOMPI_INTEGRITY_SECRET
+        sync: false
+      - key: WOMPI_EVENTS_SECRET
+        sync: false
       # CTG One ↔ VÉRTICE OS server-to-server federation trust.
       # Provision this secret only in Render. Its value must exactly match
       # CTG_ONE_FEDERATION_SECRET on the production VÉRTICE API in Railway.
