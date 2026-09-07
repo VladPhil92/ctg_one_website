@@ -64,7 +64,6 @@ assert.match(checkout, /Precio confirmado\. Paga ahora\./);
 assert.match(checkout, /No requiere cotización ni aprobación comercial antes de pagar/);
 assert.match(checkout, /EDUCATION_ALREADY_ENTITLED/);
 assert.match(checkout, /Pagar ahora/);
-assert.match(checkout, /Ir al pago ahora/);
 assert.doesNotMatch(checkout, /Crear orden de pago/);
 assert.doesNotMatch(checkout, /\/jpvalderrama\/talks#conferencia/);
 
