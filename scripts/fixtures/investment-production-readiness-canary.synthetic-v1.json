@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0118",
-  "expectedMigrationName": "jp_education_assessment_instructor_core",
-  "expectedMigrationCount": 118,
+  "expectedMigration": "0124",
+  "expectedMigrationName": "jp_education_service_role_privilege_portability_reconciliation",
+  "expectedMigrationCount": 124,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
