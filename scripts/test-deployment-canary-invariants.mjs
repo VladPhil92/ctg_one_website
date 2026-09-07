@@ -3,12 +3,24 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [workflow, verifier, publicSurfaceVerifier, renderConfig, healthRoute] = await Promise.all([
+const [
+  workflow,
+  verifier,
+  publicSurfaceVerifier,
+  renderConfig,
+  healthRoute,
+  runtimeSchema,
+  schemaGate,
+  blueprintValidator,
+] = await Promise.all([
   read('.github/workflows/post-deploy-health.yml'),
   read('scripts/verify-deployment-health.mjs'),
   read('scripts/verify-public-surface-reliability.mjs'),
   read('render.yaml'),
   read('src/app/api/health/route.ts'),
+  read('src/lib/observability/runtime-schema.ts'),
+  read('scripts/verify-production-schema-gate.mjs'),
+  read('.github/workflows/render-blueprint-validate.yml'),
 ]);
 
 assert.match(workflow, /name:\s*Post-Deploy Health Canary/, 'Deployment canary workflow must have a stable name.');
@@ -42,6 +54,8 @@ assert.match(verifier, /payload\?\.checks\?\.databaseSchemaCompatible !== true/,
 assert.match(verifier, /payload\?\.schema\?\.compatible !== true/, 'Verifier must require the health response schema to be compatible.');
 assert.match(verifier, /deployment\?\.expectedDatabaseMigration !== expectedMigration/, 'Verifier must compare deployed expected migration to repository metadata.');
 assert.match(verifier, /schema\?\.expectedMigrationCount !== expectedMigrationCount/, 'Verifier must compare deployed migration count to repository metadata.');
+assert.match(verifier, /schema:\s*\{[\s\S]*exact:/, 'Verifier diagnostics must expose exact-versus-compatible schema state.');
+assert.match(verifier, /observedMigrationCount:/, 'Verifier diagnostics must expose observed production migration count.');
 assert.match(verifier, /attempts > 60/, 'Verifier must cap retry attempts.');
 assert.match(verifier, /requestTimeoutMs > 30000/, 'Each network request must have a hard timeout.');
 assert.ok(
@@ -85,10 +99,34 @@ assert.match(publicSurfaceVerifier, /process\.exit\(1\)/, 'Any public surface re
 assert.match(renderConfig, /healthCheckPath:\s*\/api\/health/, 'Render must use the same authoritative health endpoint.');
 assert.match(renderConfig, /autoDeployTrigger:\s*checksPass/, 'Render must remain gated on CI checks before deployment.');
 assert.match(renderConfig, /branch:\s*main/, 'Render must deploy the canonical main branch.');
+assert.match(
+  renderConfig,
+  /buildCommand:\s*npm ci && node scripts\/verify-production-schema-gate\.mjs && npm run build/,
+  'Render must verify production schema readiness after dependency installation and before compiling the release.',
+);
+
+assert.match(schemaGate, /get_runtime_schema_compatibility/, 'Build gate must use the privileged canonical schema probe.');
+assert.match(schemaGate, /SUPABASE_SERVICE_ROLE_KEY/, 'Build gate must require server-only Supabase authority.');
+assert.match(schemaGate, /observedMigrationCount < expectedMigrationCount/, 'Build gate must block runtime-ahead deployments.');
+assert.match(schemaGate, /observedMigrationCount === expectedMigrationCount/, 'Build gate must validate equal-version semantic identity.');
+assert.match(schemaGate, /observedLatestMigrationName !== expectedMigrationName/, 'Equal-version divergence must fail closed.');
+assert.match(schemaGate, /database-ahead-compatible/, 'Build gate must explicitly allow a DB-first compatible rollout.');
+assert.match(schemaGate, /db-first-expand-contract/, 'Build gate must identify the deployment compatibility policy.');
+assert.doesNotMatch(schemaGate, /console\.(?:log|warn|error)\([^\n]*serviceRoleKey/, 'Build gate must never log the service-role credential.');
+
+assert.match(runtimeSchema, /exact:\s*boolean/, 'Runtime schema probe must distinguish exact identity from compatibility.');
+assert.match(runtimeSchema, /observedMigrationCount > EXPECTED_DATABASE_MIGRATION_COUNT/, 'A newer production schema must remain compatible with the previous runtime.');
+assert.match(runtimeSchema, /\|\| exact/, 'Equal-version runtime compatibility must require exact semantic identity.');
+assert.match(runtimeSchema, /observedLatestMigrationName === EXPECTED_DATABASE_MIGRATION_NAME/, 'Exact runtime schema identity must require the expected semantic migration name.');
+
+assert.match(blueprintValidator, /verify-production-schema-gate\.mjs/, 'Blueprint validation must protect the production schema build gate from drift.');
+assert.match(blueprintValidator, /NEXT_PUBLIC_SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY/, 'Blueprint validation must require both schema-gate credentials to be declared.');
 
 assert.match(healthRoute, /deploymentCommitAvailable/, 'Health endpoint must expose deployment commit availability.');
 assert.match(healthRoute, /databaseSchemaCompatible/, 'Health endpoint must expose runtime schema compatibility.');
+assert.match(healthRoute, /databaseSchemaExact/, 'Health endpoint must expose exact schema identity without making it an availability requirement.');
+assert.match(healthRoute, /observedMigrationCount:\s*schema\.observedMigrationCount/, 'Health payload must expose observed schema count for drift diagnostics.');
 assert.match(healthRoute, /deployment,\s*\n\s*schema:/, 'Health payload must expose deployment and schema identity together.');
 assert.match(healthRoute, /'Cache-Control': 'no-store, max-age=0'/, 'Health endpoint must not be served from stale cache.');
 
-console.log('Post-deploy health canary invariants: PASS');
+console.log('Post-deploy health canary and deployment orchestration invariants: PASS');
