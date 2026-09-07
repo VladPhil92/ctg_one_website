@@ -30,19 +30,34 @@ type CheckoutOrder = {
   offeringTitle: string;
 };
 
+type CheckoutPayment =
+  | {
+      provider: 'wompi';
+      mode: 'test' | 'prod';
+      checkoutUrl: string;
+      reference: string;
+      amountInCents: number;
+      currency: string;
+    }
+  | {
+      provider: 'manual_assisted';
+      mode: 'assisted';
+    };
+
 type CheckoutResponse = {
   ok?: boolean;
   error?: string;
   replayed?: boolean;
   order?: CheckoutOrder;
+  payment?: CheckoutPayment;
 };
 
 const checkoutSteps = [
   { icon: UserRoundCheck, title: 'Cuenta', text: 'La orden queda ligada a tu identidad CTG One.' },
   { icon: ReceiptText, title: 'Orden', text: 'El servidor fija producto, moneda e importe; no hay cotización previa.' },
-  { icon: CircleDollarSign, title: 'Pago', text: 'Pasas inmediatamente al canal de pago con la referencia de la orden.' },
-  { icon: ShieldCheck, title: 'Verificación', text: 'La transacción se valida antes de conceder acceso.' },
-  { icon: KeyRound, title: 'Acceso', text: 'El entitlement aparece en Mi aprendizaje.' },
+  { icon: CircleDollarSign, title: 'Pago', text: 'Pasas inmediatamente al checkout seguro del proveedor cuando el gateway está habilitado.' },
+  { icon: ShieldCheck, title: 'Verificación', text: 'Solo el evento firmado del proveedor puede confirmar la transacción.' },
+  { icon: KeyRound, title: 'Acceso', text: 'El entitlement aparece en Mi aprendizaje después del settlement verificado.' },
 ] as const;
 
 function formatPrice(amount: number | null, currency: string) {
@@ -84,7 +99,7 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
   const requestKeyRef = useRef<string | null>(null);
   const [offering, setOffering] = useState<Offering | null>(null);
   const [catalogState, setCatalogState] = useState<'loading' | 'ready' | 'unavailable'>('loading');
-  const [checkoutState, setCheckoutState] = useState<'idle' | 'submitting' | 'created' | 'error' | 'entitled'>('idle');
+  const [checkoutState, setCheckoutState] = useState<'idle' | 'submitting' | 'redirecting' | 'created' | 'error' | 'entitled'>('idle');
   const [order, setOrder] = useState<CheckoutOrder | null>(null);
 
   useEffect(() => {
@@ -114,12 +129,12 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
   const whatsappHref = useMemo(() => {
     if (!order) return 'https://wa.me/573186428218';
     const amount = formatPrice(order.totalAmount, order.currency);
-    const text = `Hola, quiero completar ahora el pago de mi orden educativa CTG One ${order.id} por ${amount}: ${order.offeringTitle}.`;
+    const text = `Hola, necesito completar por canal asistido el pago de mi orden educativa CTG One ${order.id} por ${amount}: ${order.offeringTitle}.`;
     return `https://wa.me/573186428218?text=${encodeURIComponent(text)}`;
   }, [order]);
 
   async function createOrder() {
-    if (!isAuthenticated || !offering || checkoutState === 'submitting') return;
+    if (!isAuthenticated || !offering || checkoutState === 'submitting' || checkoutState === 'redirecting') return;
     if (offering.price_amount === null || offering.price_amount <= 0) return;
     requestKeyRef.current ??= makeRequestKey();
     setCheckoutState('submitting');
@@ -134,11 +149,18 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
         setCheckoutState('entitled');
         return;
       }
-      if (!response.ok || !payload.ok || !payload.order) {
+      if (!response.ok || !payload.ok || !payload.order || !payload.payment) {
         setCheckoutState('error');
         return;
       }
+
       setOrder(payload.order);
+      if (payload.payment.provider === 'wompi') {
+        setCheckoutState('redirecting');
+        window.location.assign(payload.payment.checkoutUrl);
+        return;
+      }
+
       setCheckoutState('created');
     } catch {
       setCheckoutState('error');
@@ -186,7 +208,7 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
           <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#6f0d12]/20 text-[#6f0d12]"><ReceiptText className="h-5 w-5" aria-hidden="true" /></div>
           <p className="mt-6 text-[10px] font-bold uppercase tracking-[.2em] text-[#6f0d12]">Ruta transaccional</p>
           <h2 className="mt-3 font-serif text-3xl text-[#17110e]">Precio confirmado. Paga ahora.</h2>
-          <p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">Cuando el precio ya está publicado, la compra no pasa por una cotización. CTG One crea la orden con el importe del servidor y te lleva directamente al pago; el acceso se activa solo después de verificar la transacción.</p>
+          <p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">Cuando el precio ya está publicado, la compra no pasa por una cotización. CTG One crea la orden con el importe del servidor y, cuando el gateway está habilitado, abre directamente el checkout seguro del proveedor.</p>
 
           <ol className="mt-7 space-y-4 border-t border-[#6f0d12]/12 pt-6">
             {checkoutSteps.map(({ icon: Icon, title, text }, index) => (
@@ -199,7 +221,7 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
 
           <div className="mt-6 space-y-4 border-t border-[#6f0d12]/12 pt-6 text-sm leading-6 text-[#564a42]">
             <div className="flex gap-3"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-[#6f0d12]" aria-hidden="true" /><span>El importe se toma del catálogo del servidor; el navegador no puede modificar el precio.</span></div>
-            <div className="flex gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#6f0d12]" aria-hidden="true" /><span>La orden usa una clave idempotente para evitar duplicados por reintentos.</span></div>
+            <div className="flex gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#6f0d12]" aria-hidden="true" /><span>El retorno del navegador nunca marca una orden como pagada: la activación depende del evento firmado del proveedor.</span></div>
           </div>
 
           {offering && !isPaidOffering ? (
@@ -215,8 +237,8 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
           ) : null}
 
           {isAuthenticated && offering && isPaidOffering && checkoutState !== 'created' && checkoutState !== 'entitled' ? (
-            <button type="button" onClick={createOrder} disabled={checkoutState === 'submitting'} className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2] disabled:cursor-wait disabled:opacity-70">
-              {checkoutState === 'submitting' ? 'Preparando pago…' : 'Pagar ahora'} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <button type="button" onClick={createOrder} disabled={checkoutState === 'submitting' || checkoutState === 'redirecting'} className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2] disabled:cursor-wait disabled:opacity-70">
+              {checkoutState === 'submitting' ? 'Preparando pago seguro…' : checkoutState === 'redirecting' ? 'Abriendo Wompi…' : 'Pagar ahora'} <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
           ) : null}
 
@@ -225,12 +247,12 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#6f0d12]" aria-hidden="true" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#6f0d12]">Orden lista · continúa al pago</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#6f0d12]">Orden creada · canal asistido temporal</p>
                   <p className="mt-2 break-all font-mono text-xs text-[#564a42]">{order.id}</p>
                 </div>
               </div>
-              <p className="mt-5 font-serif text-[15px] leading-7 text-[#665950]">No necesitas esperar una cotización ni una aprobación comercial. Continúa ahora al canal de pago con esta referencia; la verificación posterior es la que activa el acceso.</p>
-              <a href={whatsappHref} target="_blank" rel="noreferrer" className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]"><MessageCircle className="h-4 w-4" aria-hidden="true" /> Ir al pago ahora</a>
+              <p className="mt-5 font-serif text-[15px] leading-7 text-[#665950]">El gateway de pago en línea no está configurado en este entorno. La orden conserva el precio publicado, pero para completar este pago debes usar temporalmente el canal asistido.</p>
+              <a href={whatsappHref} target="_blank" rel="noreferrer" className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]"><MessageCircle className="h-4 w-4" aria-hidden="true" /> Continuar por canal asistido</a>
               <a href="/dashboard/educacion" className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Ver estado de mi orden <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
             </div>
           ) : null}
@@ -243,7 +265,7 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
             </div>
           ) : null}
 
-          {checkoutState === 'error' ? <p role="alert" className="mt-5 text-sm leading-6 text-[#6f0d12]">No fue posible crear la orden. Intenta nuevamente; ningún cobro ni acceso fue generado.</p> : null}
+          {checkoutState === 'error' ? <p role="alert" className="mt-5 text-sm leading-6 text-[#6f0d12]">No fue posible preparar el pago. Intenta nuevamente; ningún acceso se activa sin una transacción verificada.</p> : null}
         </aside>
       </div>
     </section>
