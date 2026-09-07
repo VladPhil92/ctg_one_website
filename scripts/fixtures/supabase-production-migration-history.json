@@ -2,7 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-07T02:37:32Z",
+  "capturedAt": "2026-09-07T02:44:55Z",
   "source": "Supabase production migration history",
   "migrations": [
     { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
@@ -28,6 +28,7 @@
     { "logicalVersion": "0115", "remoteVersion": "20260906200632", "remoteName": "0115_financial_security_step_up_telemetry" },
     { "logicalVersion": "0116", "remoteVersion": "20260906230742", "remoteName": "0116_jp_education_learning_core" },
     { "logicalVersion": "0117", "remoteVersion": "20260907012804", "remoteName": "0117_jp_education_academic_operations" },
-    { "logicalVersion": "0118", "remoteVersion": "20260907023732", "remoteName": "0118_jp_education_assessment_instructor_core" }
+    { "logicalVersion": "0118", "remoteVersion": "20260907023732", "remoteName": "0118_jp_education_assessment_instructor_core" },
+    { "logicalVersion": "0119", "remoteVersion": "20260907024455", "remoteName": "0119_jp_education_instant_checkout_catalog" }
   ]
 }
