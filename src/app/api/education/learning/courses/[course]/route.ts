@@ -7,40 +7,12 @@ import {
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-type EnrollmentRpc = {
-  courseId?: string;
-  enrollmentId?: string;
-  status?: string;
-};
-
-type ModuleRow = {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string;
-  position: number;
-};
-
-type LessonRow = {
-  id: string;
-  module_id: string;
-  slug: string;
-  title: string;
-  summary: string;
-  lesson_type: string;
-  body: string;
-  media_url: string | null;
-  duration_minutes: number;
-  position: number;
-};
-
-type ProgressRow = {
-  lesson_id: string;
-  status: string;
-  progress_percent: number;
-  last_position_seconds: number;
-  completed_at: string | null;
-};
+type EnrollmentRpc = { courseId?: string; enrollmentId?: string; status?: string };
+type ModuleRow = { id: string; slug: string; title: string; summary: string; position: number };
+type LessonRow = { id: string; module_id: string; slug: string; title: string; summary: string; lesson_type: string; body: string; media_url: string | null; duration_minutes: number; position: number };
+type ProgressRow = { lesson_id: string; status: string; progress_percent: number; last_position_seconds: number; completed_at: string | null };
+type AssessmentRow = { id: string; slug: string; title: string; instructions: string; passing_score: number | string; max_attempts: number; required_for_completion: boolean; position: number };
+type AttemptRow = { assessment_id: string; attempt_number: number; score_percent: number | string; passed: boolean; submitted_at: string };
 
 function json(body: Record<string, unknown>, status = 200) {
   const response = NextResponse.json(body, { status });
@@ -50,160 +22,76 @@ function json(body: Record<string, unknown>, status = 200) {
 }
 
 function enrollmentFailure(message: string) {
-  if (message.includes('EDUCATION_COURSE_ACCESS_REQUIRED')) {
-    return { status: 403, code: 'EDUCATION_COURSE_ACCESS_REQUIRED' };
-  }
-  if (message.includes('EDUCATION_LEARNING_COURSE_UNAVAILABLE')) {
-    return { status: 404, code: 'EDUCATION_LEARNING_COURSE_UNAVAILABLE' };
-  }
-  if (message.includes('EDUCATION_LEARNING_COURSE_SLUG_INVALID')) {
-    return { status: 400, code: 'EDUCATION_LEARNING_COURSE_SLUG_INVALID' };
-  }
+  if (message.includes('EDUCATION_COURSE_ACCESS_REQUIRED')) return { status: 403, code: 'EDUCATION_COURSE_ACCESS_REQUIRED' };
+  if (message.includes('EDUCATION_LEARNING_COURSE_UNAVAILABLE')) return { status: 404, code: 'EDUCATION_LEARNING_COURSE_UNAVAILABLE' };
+  if (message.includes('EDUCATION_LEARNING_COURSE_SLUG_INVALID')) return { status: 400, code: 'EDUCATION_LEARNING_COURSE_SLUG_INVALID' };
   return { status: 503, code: 'EDUCATION_LEARNING_ENROLLMENT_FAILED' };
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ course: string }> },
-) {
-  if (!isSupabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return json({ ok: false, error: 'EDUCATION_LEARNING_UNAVAILABLE' }, 503);
-  }
-
+export async function GET(request: Request, { params }: { params: Promise<{ course: string }> }) {
+  if (!isSupabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) return json({ ok: false, error: 'EDUCATION_LEARNING_UNAVAILABLE' }, 503);
   const auth = await createAuthenticatedRequestContext(request);
   if (!auth) return json({ ok: false, error: 'UNAUTHENTICATED' }, 401);
 
   const { course: rawCourse } = await params;
   const courseSlug = rawCourse.trim().toLowerCase();
-  if (!SLUG_RE.test(courseSlug) || courseSlug.length > 100) {
-    return json({ ok: false, error: 'EDUCATION_LEARNING_COURSE_SLUG_INVALID' }, 400);
-  }
+  if (!SLUG_RE.test(courseSlug) || courseSlug.length > 100) return json({ ok: false, error: 'EDUCATION_LEARNING_COURSE_SLUG_INVALID' }, 400);
 
   const admin = createAdminClient();
-  const { data: enrollmentData, error: enrollmentError } = await admin.rpc(
-    'ensure_education_course_enrollment',
-    { p_user_id: auth.user.id, p_course_slug: courseSlug },
-  );
-
-  if (enrollmentError) {
-    const failure = enrollmentFailure(enrollmentError.message);
-    return json({ ok: false, error: failure.code }, failure.status);
-  }
-
+  const { data: enrollmentData, error: enrollmentError } = await admin.rpc('ensure_education_course_enrollment', { p_user_id: auth.user.id, p_course_slug: courseSlug });
+  if (enrollmentError) { const failure = enrollmentFailure(enrollmentError.message); return json({ ok: false, error: failure.code }, failure.status); }
   const enrollment = enrollmentData as EnrollmentRpc | null;
-  if (!enrollment?.courseId || !enrollment.enrollmentId) {
-    return json({ ok: false, error: 'EDUCATION_LEARNING_ENROLLMENT_RESPONSE_INVALID' }, 503);
-  }
+  if (!enrollment?.courseId || !enrollment.enrollmentId) return json({ ok: false, error: 'EDUCATION_LEARNING_ENROLLMENT_RESPONSE_INVALID' }, 503);
 
-  const [courseResult, modulesResult] = await Promise.all([
-    admin
-      .from('education_courses')
-      .select('id, slug, title, summary, estimated_minutes, status')
-      .eq('id', enrollment.courseId)
-      .eq('status', 'published')
-      .single(),
-    admin
-      .from('education_modules')
-      .select('id, slug, title, summary, position')
-      .eq('course_id', enrollment.courseId)
-      .eq('status', 'published')
-      .order('position', { ascending: true }),
+  const [courseResult, modulesResult, assessmentsResult] = await Promise.all([
+    admin.from('education_courses').select('id,slug,title,summary,estimated_minutes,status').eq('id', enrollment.courseId).eq('status', 'published').single(),
+    admin.from('education_modules').select('id,slug,title,summary,position').eq('course_id', enrollment.courseId).eq('status', 'published').order('position', { ascending: true }),
+    admin.from('education_assessments').select('id,slug,title,instructions,passing_score,max_attempts,required_for_completion,position').eq('course_id', enrollment.courseId).eq('status', 'published').order('position', { ascending: true }),
   ]);
-
-  if (courseResult.error || modulesResult.error || !courseResult.data) {
-    return json({ ok: false, error: 'EDUCATION_LEARNING_READ_FAILED' }, 503);
-  }
+  if (courseResult.error || modulesResult.error || assessmentsResult.error || !courseResult.data) return json({ ok: false, error: 'EDUCATION_LEARNING_READ_FAILED' }, 503);
 
   const modules = (modulesResult.data ?? []) as ModuleRow[];
   const moduleIds = modules.map((module) => module.id);
   let lessons: LessonRow[] = [];
-
   if (moduleIds.length > 0) {
-    const lessonsResult = await admin
-      .from('education_lessons')
-      .select('id, module_id, slug, title, summary, lesson_type, body, media_url, duration_minutes, position')
-      .in('module_id', moduleIds)
-      .eq('status', 'published')
-      .order('position', { ascending: true });
-
-    if (lessonsResult.error) {
-      return json({ ok: false, error: 'EDUCATION_LEARNING_READ_FAILED' }, 503);
-    }
+    const lessonsResult = await admin.from('education_lessons').select('id,module_id,slug,title,summary,lesson_type,body,media_url,duration_minutes,position').in('module_id', moduleIds).eq('status', 'published').order('position', { ascending: true });
+    if (lessonsResult.error) return json({ ok: false, error: 'EDUCATION_LEARNING_READ_FAILED' }, 503);
     lessons = (lessonsResult.data ?? []) as LessonRow[];
   }
 
   const lessonIds = lessons.map((lesson) => lesson.id);
   let progressRows: ProgressRow[] = [];
   if (lessonIds.length > 0) {
-    const progressResult = await admin
-      .from('education_lesson_progress')
-      .select('lesson_id, status, progress_percent, last_position_seconds, completed_at')
-      .eq('enrollment_id', enrollment.enrollmentId)
-      .in('lesson_id', lessonIds);
-
-    if (progressResult.error) {
-      return json({ ok: false, error: 'EDUCATION_LEARNING_PROGRESS_READ_FAILED' }, 503);
-    }
+    const progressResult = await admin.from('education_lesson_progress').select('lesson_id,status,progress_percent,last_position_seconds,completed_at').eq('enrollment_id', enrollment.enrollmentId).in('lesson_id', lessonIds);
+    if (progressResult.error) return json({ ok: false, error: 'EDUCATION_LEARNING_PROGRESS_READ_FAILED' }, 503);
     progressRows = (progressResult.data ?? []) as ProgressRow[];
   }
 
+  const assessments = (assessmentsResult.data ?? []) as AssessmentRow[];
+  const assessmentIds = assessments.map((assessment) => assessment.id);
+  let attemptRows: AttemptRow[] = [];
+  if (assessmentIds.length > 0) {
+    const attemptResult = await admin.from('education_assessment_attempts').select('assessment_id,attempt_number,score_percent,passed,submitted_at').eq('enrollment_id', enrollment.enrollmentId).eq('user_id', auth.user.id).in('assessment_id', assessmentIds).order('attempt_number', { ascending: false });
+    if (attemptResult.error) return json({ ok: false, error: 'EDUCATION_ASSESSMENT_PROGRESS_READ_FAILED' }, 503);
+    attemptRows = (attemptResult.data ?? []) as AttemptRow[];
+  }
+
   const progressByLesson = new Map(progressRows.map((row) => [row.lesson_id, row]));
-  const nestedModules = modules.map((module) => ({
-    ...module,
-    lessons: lessons
-      .filter((lesson) => lesson.module_id === module.id)
-      .sort((left, right) => left.position - right.position)
-      .map((lesson) => ({
-        id: lesson.id,
-        slug: lesson.slug,
-        title: lesson.title,
-        summary: lesson.summary,
-        lessonType: lesson.lesson_type,
-        body: lesson.body,
-        mediaUrl: lesson.media_url,
-        durationMinutes: lesson.duration_minutes,
-        position: lesson.position,
-        progress: progressByLesson.get(lesson.id) ?? {
-          lesson_id: lesson.id,
-          status: 'not_started',
-          progress_percent: 0,
-          last_position_seconds: 0,
-          completed_at: null,
-        },
-      })),
-  }));
+  const nestedModules = modules.map((module) => ({ ...module, lessons: lessons.filter((lesson) => lesson.module_id === module.id).sort((left, right) => left.position - right.position).map((lesson) => ({ id: lesson.id, slug: lesson.slug, title: lesson.title, summary: lesson.summary, lessonType: lesson.lesson_type, body: lesson.body, mediaUrl: lesson.media_url, durationMinutes: lesson.duration_minutes, position: lesson.position, progress: progressByLesson.get(lesson.id) ?? { lesson_id: lesson.id, status: 'not_started', progress_percent: 0, last_position_seconds: 0, completed_at: null } })) }));
 
   const totalLessons = lessons.length;
-  const courseProgressPercent = totalLessons === 0
-    ? 0
-    : Math.floor(
-        lessons.reduce(
-          (sum, lesson) => sum + (progressByLesson.get(lesson.id)?.progress_percent ?? 0),
-          0,
-        ) / totalLessons,
-      );
-  const completedLessons = lessons.filter(
-    (lesson) => progressByLesson.get(lesson.id)?.status === 'completed',
-  ).length;
+  const courseProgressPercent = totalLessons === 0 ? 0 : Math.floor(lessons.reduce((sum, lesson) => sum + (progressByLesson.get(lesson.id)?.progress_percent ?? 0), 0) / totalLessons);
+  const completedLessons = lessons.filter((lesson) => progressByLesson.get(lesson.id)?.status === 'completed').length;
+  const assessmentReadModel = assessments.map((assessment) => {
+    const attempts = attemptRows.filter((attempt) => attempt.assessment_id === assessment.id);
+    const bestScore = attempts.reduce((best, attempt) => Math.max(best, Number(attempt.score_percent)), 0);
+    return { id: assessment.id, slug: assessment.slug, title: assessment.title, instructions: assessment.instructions, passingScore: Number(assessment.passing_score), maxAttempts: assessment.max_attempts, requiredForCompletion: assessment.required_for_completion, position: assessment.position, attempts: attempts.length, attemptsRemaining: Math.max(assessment.max_attempts - attempts.length, 0), passed: attempts.some((attempt) => attempt.passed), bestScore, href: `/learn/assessment/${assessment.id}` };
+  });
 
   return json({
     ok: true,
-    enrollment: {
-      id: enrollment.enrollmentId,
-      status: enrollment.status ?? 'active',
-    },
-    course: {
-      id: courseResult.data.id,
-      slug: courseResult.data.slug,
-      title: courseResult.data.title,
-      summary: courseResult.data.summary,
-      estimatedMinutes: courseResult.data.estimated_minutes,
-      modules: nestedModules,
-    },
-    progress: {
-      courseProgressPercent,
-      completedLessons,
-      totalLessons,
-    },
+    enrollment: { id: enrollment.enrollmentId, status: enrollment.status ?? 'active' },
+    course: { id: courseResult.data.id, slug: courseResult.data.slug, title: courseResult.data.title, summary: courseResult.data.summary, estimatedMinutes: courseResult.data.estimated_minutes, modules: nestedModules, assessments: assessmentReadModel },
+    progress: { courseProgressPercent, completedLessons, totalLessons, requiredAssessments: assessmentReadModel.filter((item) => item.requiredForCompletion).length, passedRequiredAssessments: assessmentReadModel.filter((item) => item.requiredForCompletion && item.passed).length },
   });
 }
