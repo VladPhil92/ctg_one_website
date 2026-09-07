@@ -163,15 +163,29 @@ requireFragments(serverAuth, 'canonical wallet request authentication', [
   'const bearer = parseBearerToken(request);',
   'if (bearer.present) {',
   'if (!bearer.token) return null;',
-  'const { data, error } = await supabase.auth.getUser(bearer.token);',
+  'const validatedBearerToken = bearer.token;',
+  'const { data, error } = await supabase.auth.getUser(validatedBearerToken);',
   "transport: 'bearer',",
-  'verifiedBearerToken: bearer.token,',
-  "return { supabase, user: data.user, transport: 'cookie', verifiedBearerToken: null }",
+  'getAuthenticatorAssuranceLevel: () =>',
+  'supabase.auth.mfa.getAuthenticatorAssuranceLevel(validatedBearerToken)',
+  "transport: 'cookie',",
+  'supabase.auth.mfa.getAuthenticatorAssuranceLevel()',
 ]);
-const bearerVerificationIndex = serverAuth.indexOf('const { data, error } = await supabase.auth.getUser(bearer.token);');
-const bearerCredentialRetentionIndex = serverAuth.indexOf('verifiedBearerToken: bearer.token,');
-if (!(bearerVerificationIndex >= 0 && bearerCredentialRetentionIndex > bearerVerificationIndex)) {
-  throw new Error('bearer credential may only be retained after server-side Supabase user verification');
+for (const forbiddenTokenProperty of [
+  'verifiedBearerToken:',
+  'accessToken:',
+  'access_token:',
+  'bearerToken:',
+  'refreshToken:',
+]) {
+  if (serverAuth.includes(forbiddenTokenProperty)) {
+    throw new Error(`canonical wallet auth must keep bearer credentials closure-bound: ${forbiddenTokenProperty}`);
+  }
+}
+const bearerVerificationIndex = serverAuth.indexOf('const { data, error } = await supabase.auth.getUser(validatedBearerToken);');
+const bearerAssuranceBindingIndex = serverAuth.indexOf('supabase.auth.mfa.getAuthenticatorAssuranceLevel(validatedBearerToken)');
+if (!(bearerVerificationIndex >= 0 && bearerAssuranceBindingIndex > bearerVerificationIndex)) {
+  throw new Error('validated bearer credential may only be closure-bound for assurance after server-side Supabase user verification');
 }
 
 requireFragments(cors, 'wallet CORS boundary', [
@@ -272,10 +286,17 @@ if (!(bootstrapAuthIndex >= 0 && bootstrapRateIndex > bootstrapAuthIndex && boot
 
 const bearerBranchIndex = serverAuth.indexOf('if (bearer.present) {');
 const bearerRejectIndex = serverAuth.indexOf('if (!bearer.token) return null;', bearerBranchIndex);
-const bearerVerifyIndex = serverAuth.indexOf('supabase.auth.getUser(bearer.token)', bearerBranchIndex);
+const bearerTokenBindIndex = serverAuth.indexOf('const validatedBearerToken = bearer.token;', bearerBranchIndex);
+const bearerVerifyIndex = serverAuth.indexOf('supabase.auth.getUser(validatedBearerToken)', bearerBranchIndex);
 const cookieVerifyIndex = serverAuth.indexOf('supabase.auth.getUser()', bearerBranchIndex);
-if (!(bearerBranchIndex >= 0 && bearerRejectIndex > bearerBranchIndex && bearerVerifyIndex > bearerRejectIndex && cookieVerifyIndex > bearerVerifyIndex)) {
-  throw new Error('invalid bearer authentication must fail closed before any cookie fallback');
+if (!(
+  bearerBranchIndex >= 0 &&
+  bearerRejectIndex > bearerBranchIndex &&
+  bearerTokenBindIndex > bearerRejectIndex &&
+  bearerVerifyIndex > bearerTokenBindIndex &&
+  cookieVerifyIndex > bearerVerifyIndex
+)) {
+  throw new Error('invalid bearer authentication must fail closed and validate the bound bearer before any cookie fallback');
 }
 
 const currentSchemaMatch = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schema);
