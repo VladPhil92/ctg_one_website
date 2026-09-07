@@ -53,8 +53,14 @@ function validatePayload(payload) {
   if (payload?.checks?.deploymentCommitAvailable !== true) {
     failures.push('checks.deploymentCommitAvailable!=true');
   }
+  if (payload?.checks?.databaseRequiredMigrationPresent !== true) {
+    failures.push('checks.databaseRequiredMigrationPresent!=true');
+  }
   if (payload?.checks?.databaseSchemaCompatible !== true) {
     failures.push('checks.databaseSchemaCompatible!=true');
+  }
+  if (payload?.schema?.requiredMigrationPresent !== true) {
+    failures.push('schema.requiredMigrationPresent!=true');
   }
   if (payload?.schema?.compatible !== true) failures.push('schema.compatible!=true');
   if (payload?.schema?.expectedMigrationCount !== expectedMigrationCount) {
@@ -76,6 +82,7 @@ function summarize(payload, httpStatus) {
     schema: {
       compatible: payload?.schema?.compatible ?? null,
       exact: payload?.schema?.exact ?? null,
+      requiredMigrationPresent: payload?.schema?.requiredMigrationPresent ?? null,
       expectedMigrationCount: payload?.schema?.expectedMigrationCount ?? null,
       observedMigrationCount: payload?.schema?.observedMigrationCount ?? null,
       observedLatestMigrationName: payload?.schema?.observedLatestMigrationName ?? null,
@@ -139,7 +146,7 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
           observed,
         }, null, 2));
         if (observed.schema.exact === false) {
-          console.warn('Production schema is newer than this runtime requirement; release remains compatible under the DB-first expand/contract policy.');
+          console.warn('Production schema is newer than this runtime requirement, and the required migration is explicitly present; release remains compatible under the DB-first expand/contract policy.');
         }
         process.exit(0);
       }
