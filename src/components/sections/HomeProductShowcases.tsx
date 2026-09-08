@@ -7,6 +7,7 @@ import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { useLanguage } from '@/contexts/LanguageContext';
 import nvetHomeBannerSrc from '@/data/nvet-home-banner';
+import { getCapabilityProof, getPublicProofStatus, type PublicProofStatus } from '@/data/technology-proof';
 
 const LinkButton = ({ href, children, accent = 'gold' }: { href: string; children: React.ReactNode; accent?: 'gold' | 'green' | 'outline' }) => {
   const classes = accent === 'green'
@@ -22,9 +23,20 @@ const LinkButton = ({ href, children, accent = 'gold' }: { href: string; childre
   );
 };
 
+const PUBLIC_STATUS_LABELS: Record<PublicProofStatus, { es: string; en: string }> = {
+  LIVE: { es: 'Activo', en: 'Live' },
+  BETA: { es: 'Beta', en: 'Beta' },
+  PARTIAL: { es: 'Parcial', en: 'Partial' },
+  'IN DEVELOPMENT': { es: 'En desarrollo', en: 'In development' },
+  ROADMAP: { es: 'Hoja de ruta', en: 'Roadmap' },
+};
+
 export const HomeProductShowcases: React.FC = () => {
   const { locale } = useLanguage();
   const es = locale === 'es';
+  const ctgoProof = getCapabilityProof('web3');
+  const ctgoStatus = getPublicProofStatus(ctgoProof);
+  const ctgoStatusLabel = PUBLIC_STATUS_LABELS[ctgoStatus][es ? 'es' : 'en'];
 
   return (
     <section className="relative overflow-hidden bg-[#030507] py-20 sm:py-28 md:py-32">
@@ -126,13 +138,15 @@ export const HomeProductShowcases: React.FC = () => {
             <div className="relative grid min-h-[520px] lg:grid-cols-[0.92fr_1.08fr]">
               <div className="flex flex-col justify-center p-7 sm:p-10 md:p-12 lg:p-14">
                 <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#d6ae56]/20 bg-[#d6ae56]/[0.04] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#f1c75b]">
-                  <Coins size={14} /> {es ? 'CTGO · En consolidación' : 'CTGO · Under consolidation'}
+                  <Coins size={14} /> CTGO · {ctgoStatusLabel}
                 </div>
                 <h3 className="max-w-xl font-outfit text-4xl font-semibold leading-[1.02] tracking-[-0.04em] text-white sm:text-5xl">
-                  {es ? 'Un token real, en proceso de consolidación.' : 'A real token, under consolidation.'}
+                  {es ? 'CTGO está en hoja de ruta.' : 'CTGO is on the roadmap.'}
                 </h3>
                 <p className="mt-6 max-w-xl text-sm leading-relaxed text-text-muted sm:text-base">
-                  {es ? 'CTGO ya fue desplegado en Polygon. Antes de cualquier apertura pública, estamos fortaleciendo su liquidez y completando su verificación y auditoría de seguridad.' : 'CTGO has already been deployed on Polygon. Before any public rollout, we are strengthening its liquidity and completing verification and a security audit.'}
+                  {es
+                    ? 'CTG One mantiene CTGO como una capacidad Web3 en hoja de ruta. Existen librerías Web3 en el proyecto, pero no publicamos un contrato o red de producción como verificados hasta contar con evidencia técnica trazable.'
+                    : 'CTG One keeps CTGO as a Web3 roadmap capability. Web3 libraries exist in the project, but we do not publish a production contract or network as verified until traceable technical evidence is available.'}
                 </p>
                 <div className="mt-8">
                   <LinkButton href="/ctgotoken" accent="outline">{es ? 'Conocer CTGO' : 'Explore CTGO'}</LinkButton>
