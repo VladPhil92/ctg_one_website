@@ -1,1 +1,0 @@
-export const DASHBOARD_HERO_IMAGE_VERSION = '20260908-fullhd-2';

@@ -1,1 +1,0 @@
-Serves the authenticated dashboard hero image from the repository-safe verified payload. Do not replace with connector-written binary assets without validating the resulting file signature and dimensions.
