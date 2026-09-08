@@ -6,8 +6,8 @@ import {
   validateEvaluationDatasetAgainstCorpus,
 } from '../src/lib/ai/evaluation-corpus.mjs';
 
-const manifestPath = 'scripts/fixtures/knowledge-evaluation-corpus.public-v3.json';
-const datasetPath = 'scripts/fixtures/knowledge-evaluation-dataset.public-v3.json';
+const manifestPath = 'scripts/fixtures/knowledge-evaluation-corpus.public-v4.json';
+const datasetPath = 'scripts/fixtures/knowledge-evaluation-dataset.public-v4.json';
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const dataset = JSON.parse(readFileSync(datasetPath, 'utf8'));
 const moduleSource = readFileSync('src/lib/ai/evaluation-corpus.mjs', 'utf8');
