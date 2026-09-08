@@ -1,8 +1,22 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import { DASHBOARD_HERO_IMAGE } from '@/data/dashboardHeroImage';
 
+const DASHBOARD_SLOGAN = 'La tecnología al servicio de una sociedad más humana';
+
 export default function DashboardHeroVisualOverride() {
+  useEffect(() => {
+    const slogan = document.querySelector<HTMLElement>(
+      "main > section[aria-labelledby='dashboard-title'] > div:last-child > p",
+    );
+
+    if (slogan) {
+      slogan.textContent = DASHBOARD_SLOGAN;
+    }
+  }, []);
+
   return (
     <style jsx global>{`
       main > section[aria-labelledby='dashboard-title'] {
@@ -11,18 +25,6 @@ export default function DashboardHeroVisualOverride() {
           url("${DASHBOARD_HERO_IMAGE}") !important;
         background-position: center 52% !important;
         background-size: cover !important;
-      }
-
-      main > section[aria-labelledby='dashboard-title'] > div:last-child > p {
-        font-size: 0 !important;
-        line-height: 1.35 !important;
-      }
-
-      main > section[aria-labelledby='dashboard-title'] > div:last-child > p::after {
-        content: 'La tecnología al servicio de una sociedad más humana';
-        display: block;
-        font-size: 13px;
-        line-height: 1.35;
       }
     `}</style>
   );
