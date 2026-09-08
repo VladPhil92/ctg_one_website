@@ -97,7 +97,7 @@ assert.match(legacyDashboard, /redirect\('\/inversion\/app'\)/, 'Legacy particip
 assert.match(legacyCheckout, /redirect\(`\/inversion\/app\/nueva\//, 'Legacy checkout URLs must redirect to the canonical checkout.');
 assert.match(appLayout, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false/, 'Authenticated participant surfaces must be noindex/nofollow.');
 
-assert.match(accountDashboard, /PERSONAL OS/, 'Account dashboard must retain the Personal OS identity.');
+assert.match(accountDashboard, /TU ECOSISTEMA CTG ONE/, 'Account dashboard must retain the CTG One ecosystem identity.');
 assert.match(accountSurface, /Volver al Personal OS/, 'Secondary account workflows must expose a consistent return path.');
 assert.match(accountSurface, /prefers-reduced-motion:reduce/, 'Shared account motion must honor reduced-motion preferences.');
 assert.match(accountSurface, /accountHero/, 'Shared account workflows must retain the Personal OS command-surface hierarchy.');
