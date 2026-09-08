@@ -19,6 +19,15 @@ function proofItemBlock(id) {
   return proof.slice(blockStart, nextBlock === -1 ? proof.length : nextBlock);
 }
 
+function serviceBlock(id) {
+  const marker = `{ id: '${id}'`;
+  const markerIndex = dashboardServices.indexOf(marker);
+  assert.notEqual(markerIndex, -1, `Dashboard service ${id} must exist.`);
+
+  const nextBlock = dashboardServices.indexOf('\n  {', markerIndex + marker.length);
+  return dashboardServices.slice(markerIndex, nextBlock === -1 ? dashboardServices.length : nextBlock);
+}
+
 assert.match(
   proofItemBlock('investment-platform'),
   /publicStatus: 'BETA'/,
@@ -45,25 +54,25 @@ for (const [serviceId, capabilityId, variableName] of [
     `${serviceId} must resolve maturity from ${capabilityId}.`,
   );
   assert.match(
-    dashboardServices,
-    new RegExp(`id: '${serviceId}'[\\s\\S]*?status: ${variableName}`),
+    serviceBlock(serviceId),
+    new RegExp(`status: ${variableName}`),
     `${serviceId} must render its canonical maturity variable instead of a manual status.`,
   );
 }
 
 assert.doesNotMatch(
-  dashboardServices,
-  /id: 'investment'[\s\S]*?status: 'LIVE'/,
+  serviceBlock('investment'),
+  /status: 'LIVE'/,
   'Investment must not be presented as LIVE while canonical public maturity is BETA.',
 );
 assert.doesNotMatch(
-  dashboardServices,
-  /id: 'knowledge'[\s\S]*?status: 'PILOT'/,
+  serviceBlock('knowledge'),
+  /status: 'PILOT'/,
   'Knowledge must not maintain a second PILOT label independent of canonical BETA.',
 );
 assert.doesNotMatch(
-  dashboardServices,
-  /id: 'token'[\s\S]*?status: 'CONSOLIDATION'/,
+  serviceBlock('token'),
+  /status: 'CONSOLIDATION'/,
   'CTGO must not maintain a second consolidation label independent of canonical ROADMAP.',
 );
 
