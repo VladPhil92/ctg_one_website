@@ -9,6 +9,7 @@ import { applyWalletCors, walletCorsPreflight } from '@/lib/wallet/cors';
 
 const CORS_METHODS = ['GET', 'OPTIONS'] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const WALLET_INTENT_READ_COLUMNS = 'id,user_id,intent_type,idempotency_key,status,rail,chain_id,asset_symbol,amount_base_units,amount_cents,destination_address,tx_hash,external_reference,replaced_by_reference,created_at,updated_at,settled_at,expires_at' as const;
 
 function noStoreJson(request: Request, body: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
@@ -43,26 +44,7 @@ export async function GET(
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('wallet_intents_v2')
-    .select([
-      'id',
-      'user_id',
-      'intent_type',
-      'idempotency_key',
-      'status',
-      'rail',
-      'chain_id',
-      'asset_symbol',
-      'amount_base_units',
-      'amount_cents',
-      'destination_address',
-      'tx_hash',
-      'external_reference',
-      'replaced_by_reference',
-      'created_at',
-      'updated_at',
-      'settled_at',
-      'expires_at',
-    ].join(','))
+    .select(WALLET_INTENT_READ_COLUMNS)
     .eq('id', intentId)
     .eq('user_id', auth.user.id)
     .maybeSingle();
