@@ -19,13 +19,17 @@ function proofItemBlock(id) {
   return proof.slice(blockStart, nextBlock === -1 ? proof.length : nextBlock);
 }
 
+const dashboardRegistryStart = dashboardServices.indexOf('export const DASHBOARD_SERVICES:');
+assert.notEqual(dashboardRegistryStart, -1, 'DASHBOARD_SERVICES registry must exist.');
+const dashboardRegistry = dashboardServices.slice(dashboardRegistryStart);
+
 function serviceBlock(id) {
   const marker = `{ id: '${id}'`;
-  const markerIndex = dashboardServices.indexOf(marker);
+  const markerIndex = dashboardRegistry.indexOf(marker);
   assert.notEqual(markerIndex, -1, `Dashboard service ${id} must exist.`);
 
-  const nextBlock = dashboardServices.indexOf('\n  {', markerIndex + marker.length);
-  return dashboardServices.slice(markerIndex, nextBlock === -1 ? dashboardServices.length : nextBlock);
+  const nextBlock = dashboardRegistry.indexOf('\n  {', markerIndex + marker.length);
+  return dashboardRegistry.slice(markerIndex, nextBlock === -1 ? dashboardRegistry.length : nextBlock);
 }
 
 assert.match(
