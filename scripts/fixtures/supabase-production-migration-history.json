@@ -2,7 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-08T18:34:12Z",
+  "capturedAt": "2026-09-08T23:11:45Z",
   "source": "Supabase production migration history",
   "migrations": [
     { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
@@ -30,7 +30,7 @@
     { "logicalVersion": "0117", "remoteVersion": "20260907012804", "remoteName": "0117_jp_education_academic_operations" },
     { "logicalVersion": "0118", "remoteVersion": "20260907023732", "remoteName": "0118_jp_education_assessment_instructor_core" },
     { "logicalVersion": "0119", "remoteVersion": "20260907024455", "remoteName": "0119_jp_education_instant_checkout_catalog" },
-    { "logicalVersion": "0120", "remoteVersion": "20260907025245", "remoteName": "0120_jp_education_service_role_boundary_reconciliation" },
+    { "logicalVersion": "0120", "remoteVersion": "20260907025245", "remoteName": "0120_jp_education_service_role_privilege_portability_reconciliation" },
     { "logicalVersion": "0121", "remoteVersion": "20260907030547", "remoteName": "0121_jp_education_assessment_time_consistency" },
     { "logicalVersion": "0122", "remoteVersion": "20260907031457", "remoteName": "0122_jp_education_wompi_provider_boundary" },
     { "logicalVersion": "0123", "remoteVersion": "20260907032218", "remoteName": "0123_jp_education_assessment_answer_count_fix" },
@@ -39,6 +39,7 @@
     { "logicalVersion": "0126", "remoteVersion": "20260908140320", "remoteName": "0126_crowdfunding_settlement_foundation" },
     { "logicalVersion": "0127", "remoteVersion": "20260908140427", "remoteName": "0127_crowdfunding_provider_reconciliation" },
     { "logicalVersion": "0128", "remoteVersion": "20260908140710", "remoteName": "0128_crowdfunding_fk_index_hardening" },
-    { "logicalVersion": "0129", "remoteVersion": "20260908183412", "remoteName": "0129_crowdfunding_review_hardening" }
+    { "logicalVersion": "0129", "remoteVersion": "20260908183412", "remoteName": "0129_crowdfunding_review_hardening" },
+    { "logicalVersion": "0130", "remoteVersion": "20260908231145", "remoteName": "0130_expand_identity_federation_providers" }
   ]
 }
