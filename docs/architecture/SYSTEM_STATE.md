@@ -4,7 +4,7 @@ Status: **CURRENT GOVERNANCE MAP**
 
 This document does not duplicate runtime state. It defines where each class of truth lives so documentation, public claims, CI and production do not drift independently.
 
-For repository navigation, start with `docs/README.md`.
+For repository navigation, start with `docs/README.md`. For the operational parity procedure between GitHub, Render, runtime health and public claims, use `docs/infrastructure/PRODUCTION_REPOSITORY_PARITY.md`.
 
 ## Source-of-truth registry
 
@@ -14,10 +14,12 @@ For repository navigation, start with `docs/README.md`.
 | Expected database migration | `src/lib/observability/schema-version.ts` | migration-integrity tests + `/api/health` |
 | Migration implementation/history in Git | `supabase/migrations/` | clean-database CI job |
 | Runtime database compatibility | `src/lib/observability/runtime-schema.ts` | `/api/health` + Admin System Health |
-| Public capability maturity | `src/data/technology-proof.ts` | capability-truth CI invariants + `/technology/status` |
+| Public capability maturity | `src/data/technology-proof.ts` | capability-truth + public-maturity-coherence invariants + `/technology/status` |
+| Public ecosystem navigation/descriptions | `src/config/dashboard-services.ts` | web-quality/public-maturity-coherence invariants |
 | Public ecosystem registry | `src/data/content.ts` | content/web-quality invariants |
 | Ecosystem technology mapping | `src/data/ecosystem-technology.ts` | capability-truth/web-quality invariants |
-| Production deployment identity | Render environment + `src/lib/observability/deployment.ts` | `/api/health` and structured logs |
+| Production deployment identity | Render environment + `src/lib/observability/deployment.ts` | Render deployed SHA ↔ GitHub release SHA + `/api/health` + structured logs |
+| Production/repository parity procedure | `docs/infrastructure/PRODUCTION_REPOSITORY_PARITY.md` | release audit before/after merge and deploy |
 | Structured logging contract | `src/lib/observability/logger.ts` | observability CI invariants |
 | Request correlation | `src/lib/observability/request-context.ts` | observability CI invariants |
 | HTTP security policy | `next.config.js` and route-level guards | HTTP security invariants |
@@ -36,6 +38,17 @@ CTG One is a **modular monolith** built with Next.js/React/TypeScript and Supaba
 
 The repository contains multiple bounded contexts with different maturity levels. Major areas currently include Identity/KYC, Wallet/Saldo CTG, CTG Craft Beer Investment, JP Valderrama education/Campus/Learning Center, CTG Knowledge, Nvet Care federation, VÉRTICE federation, observability, security and shared operational tooling.
 
+## Production parity rule
+
+Repository parity has two independent dimensions:
+
+1. **source parity** — the production deployment SHA must match the intended GitHub release SHA;
+2. **semantic parity** — public pages must describe capabilities according to their authoritative evidence and maturity sources.
+
+A deployment can satisfy source parity while violating semantic parity if a UI component duplicates a maturity label or technical claim manually. Therefore a `live` Render deployment is not, by itself, proof that the public website is semantically coherent.
+
+After every production release, compare Render deployment identity with GitHub `main`, verify runtime/schema health, and inspect the canonical public status surfaces according to `docs/infrastructure/PRODUCTION_REPOSITORY_PARITY.md`.
+
 ## Database versioning rule
 
 Never infer the current database version from prose documentation. Read:
@@ -51,6 +64,10 @@ Do not downgrade these constants on a feature branch to match an older migration
 ## Capability maturity rule
 
 Public maturity is governed only by `src/data/technology-proof.ts`. A feature, dependency, design document, prototype or UI surface does not promote a capability to production. Public stages include controlled states such as `BETA`, `PARTIAL`, `IN DEVELOPMENT` and `ROADMAP` where applicable.
+
+When a service listed in `src/config/dashboard-services.ts` maps to a canonical capability, the service must derive its public maturity through `getCapabilityProof(...)` and `getPublicProofStatus(...)`. The dashboard registry may still own navigation, descriptions and UX-only states such as `ACCOUNT`, but it cannot maintain an independent technical maturity for the same capability.
+
+Claims about production contracts, networks, settlements, provider verification or other consequential evidence must also follow the canonical evidence boundary. UI copy cannot upgrade evidence that the technical registry says is absent or unverified.
 
 ## Financial and entitlement rule
 
@@ -109,6 +126,7 @@ When changing a governed concern:
 2. add or update the relevant invariant/test;
 3. update explanatory documentation only when necessary;
 4. never create a second independent manual registry of the same runtime fact;
-5. if production state differs from Git, fail closed and reconcile before claiming health.
+5. if production state differs from Git, fail closed and reconcile before claiming health;
+6. if production runs the correct SHA but public claims contradict canonical evidence, treat it as semantic drift and correct the presentation source before promotion.
 
 This file is intentionally compact. Its purpose is to tell engineers and coding agents **where to look**, not to mirror data that can be derived from code or production.
