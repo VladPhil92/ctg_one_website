@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0125",
-    "schemaMigrationName": "runtime_schema_requirement_probe",
-    "schemaMigrationCount": 125,
+    "schemaMigration": "0128",
+    "schemaMigrationName": "crowdfunding_fk_index_hardening",
+    "schemaMigrationCount": 128,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
