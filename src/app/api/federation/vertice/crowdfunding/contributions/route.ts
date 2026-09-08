@@ -181,6 +181,7 @@ export async function POST(request: Request) {
     const { error: bindError } = await admin.rpc('bind_vertice_crowdfunding_bold_checkout_server', {
       p_contribution_id: contribution.id,
       p_provider_reference: checkout.paymentLink,
+      p_provider_external_reference: reference,
       p_checkout_url: checkout.checkoutUrl,
     });
     if (bindError) return noStoreJson({ error: 'BOLD_CHECKOUT_BINDING_FAILED' }, 503);
