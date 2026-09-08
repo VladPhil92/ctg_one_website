@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0125",
-  "expectedMigrationName": "runtime_schema_requirement_probe",
-  "expectedMigrationCount": 125,
+  "expectedMigration": "0129",
+  "expectedMigrationName": "crowdfunding_review_hardening",
+  "expectedMigrationCount": 129,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
