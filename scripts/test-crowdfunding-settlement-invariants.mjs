@@ -3,12 +3,13 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [foundation, reconciliation, indexHardening, campaignsApi, contributionsApi, webhookApi, reconcilerApi, bold] = await Promise.all([
+const [foundation, reconciliation, indexHardening, campaignsApi, contributionsApi, handoffApi, webhookApi, reconcilerApi, bold] = await Promise.all([
   read('supabase/migrations/20260908140320_0126_crowdfunding_settlement_foundation.sql'),
   read('supabase/migrations/20260908140427_0127_crowdfunding_provider_reconciliation.sql'),
   read('supabase/migrations/20260908140710_0128_crowdfunding_fk_index_hardening.sql'),
   read('src/app/api/federation/vertice/crowdfunding/campaigns/route.ts'),
   read('src/app/api/federation/vertice/crowdfunding/contributions/route.ts'),
+  read('src/app/api/wallet/intents/[intentId]/route.ts'),
   read('src/app/api/payments/bold/crowdfunding/events/route.ts'),
   read('src/app/api/internal/crowdfunding/reconcile/bold/route.ts'),
   read('src/lib/payments/bold-crowdfunding.ts'),
@@ -41,6 +42,14 @@ for (const route of [campaignsApi, contributionsApi]) {
 assert.doesNotMatch(contributionsApi, /destinationAddress|treasuryAddress/);
 assert.match(contributionsApi, /walletIntentId/);
 assert.match(contributionsApi, /assetSymbol: 'USDC'/);
+
+// CTG Wallet receives only an intent id and reloads authoritative terms from CTG One.
+assert.match(handoffApi, /createAuthenticatedRequestContext/);
+assert.match(handoffApi, /\.eq\('id', intentId\)/);
+assert.match(handoffApi, /\.eq\('user_id', auth\.user\.id\)/);
+assert.match(handoffApi, /WALLET_INTENT_NOT_FOUND/);
+assert.match(handoffApi, /ctg-wallet-intent-v1/);
+assert.doesNotMatch(handoffApi, /insert\(|update\(|delete\(/);
 
 // Bold checkout is closed-amount, server-only and explicitly gated.
 assert.match(bold, /BOLD_CROWDFUNDING_ENABLED/);
