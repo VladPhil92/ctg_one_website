@@ -16,6 +16,15 @@ export type BoldCrowdfundingCheckout = {
   checkoutUrl: string;
 };
 
+export type BoldWebhookEvidence = {
+  eventId: string;
+  paymentId: string;
+  eventType: 'SALE_APPROVED' | 'SALE_REJECTED' | 'VOID_APPROVED' | 'VOID_REJECTED';
+  externalReference: string | null;
+  amountCop: number;
+  currency: 'COP';
+};
+
 export class BoldCrowdfundingUnavailableError extends Error {
   constructor(message = 'BOLD_CROWDFUNDING_UNAVAILABLE') {
     super(message);
@@ -74,6 +83,43 @@ function parseCheckoutPayload(value: unknown): BoldCrowdfundingCheckout {
   return { paymentLink, checkoutUrl: parsedUrl.toString() };
 }
 
+function parseWebhookNotification(value: unknown): BoldWebhookEvidence | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  const data = row.data;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  const body = data as Record<string, unknown>;
+  const amount = body.amount;
+  if (!amount || typeof amount !== 'object' || Array.isArray(amount)) return null;
+  const amountRow = amount as Record<string, unknown>;
+  const metadata = body.metadata;
+  const metadataRow = metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+    ? metadata as Record<string, unknown>
+    : null;
+
+  const eventId = typeof row.id === 'string' ? row.id.trim() : '';
+  const paymentId = typeof body.payment_id === 'string' ? body.payment_id.trim() : '';
+  const eventType = typeof row.type === 'string' ? row.type.trim().toUpperCase() : '';
+  const currency = typeof amountRow.currency === 'string' ? amountRow.currency.trim().toUpperCase() : '';
+  const total = amountRow.total;
+  const externalReference = typeof metadataRow?.reference === 'string' ? metadataRow.reference.trim() : null;
+
+  if (!/^[0-9a-f-]{36}$/i.test(eventId)) return null;
+  if (!paymentId || paymentId.length > 180) return null;
+  if (!['SALE_APPROVED', 'SALE_REJECTED', 'VOID_APPROVED', 'VOID_REJECTED'].includes(eventType)) return null;
+  if (currency !== 'COP' || !Number.isSafeInteger(total) || (total as number) < 0) return null;
+  if (externalReference !== null && !REFERENCE_PATTERN.test(externalReference)) return null;
+
+  return {
+    eventId,
+    paymentId,
+    eventType: eventType as BoldWebhookEvidence['eventType'],
+    externalReference,
+    amountCop: total as number,
+    currency: 'COP',
+  };
+}
+
 export async function createBoldCrowdfundingCheckout(input: {
   reference: string;
   amountCop: number;
@@ -120,4 +166,37 @@ export async function createBoldCrowdfundingCheckout(input: {
   }
 
   return parseCheckoutPayload(await response.json());
+}
+
+export async function verifyBoldWebhookEvidence(expected: BoldWebhookEvidence): Promise<boolean> {
+  const config = getBoldCrowdfundingConfig();
+  if (!config) throw new BoldCrowdfundingUnavailableError();
+
+  const paymentId = encodeURIComponent(expected.paymentId);
+  const response = await fetch(`${config.baseUrl}/payments/webhook/notifications/${paymentId}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `x-api-key ${config.apiKey}`,
+      Accept: 'application/json',
+    },
+    cache: 'no-store',
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) throw new BoldCrowdfundingUnavailableError(`BOLD_VERIFY_HTTP_${response.status}`);
+
+  const payload = await response.json() as unknown;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+  const notifications = (payload as Record<string, unknown>).notifications;
+  if (!Array.isArray(notifications)) return false;
+
+  return notifications.some((candidate) => {
+    const parsed = parseWebhookNotification(candidate);
+    return parsed !== null
+      && parsed.eventId === expected.eventId
+      && parsed.paymentId === expected.paymentId
+      && parsed.eventType === expected.eventType
+      && parsed.externalReference === expected.externalReference
+      && parsed.amountCop === expected.amountCop
+      && parsed.currency === expected.currency;
+  });
 }
