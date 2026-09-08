@@ -15,6 +15,7 @@ const productLinks = [
   { label: 'Nvet Care', href: '/nvetcareapp' },
   { label: 'VÉRTICE OS', href: VERTICE_URL },
   { label: 'CTG Craft Beer', href: '/craft-beer' },
+  { label: 'PISÁO Gastrobar', href: 'https://pisaogastrobar.com' },
   { label: 'CTG Craft Beer Investment', href: '/inversion' },
   { label: 'CTGO Token', href: '/ctgotoken' },
 ];
