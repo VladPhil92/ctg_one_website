@@ -2,7 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-07T14:31:25Z",
+  "capturedAt": "2026-09-08T14:07:10Z",
   "source": "Supabase production migration history",
   "migrations": [
     { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
@@ -35,6 +35,9 @@
     { "logicalVersion": "0122", "remoteVersion": "20260907031457", "remoteName": "0122_jp_education_wompi_provider_boundary" },
     { "logicalVersion": "0123", "remoteVersion": "20260907032218", "remoteName": "0123_jp_education_assessment_answer_count_fix" },
     { "logicalVersion": "0124", "remoteVersion": "20260907032719", "remoteName": "0124_jp_education_service_role_privilege_portability_reconciliation" },
-    { "logicalVersion": "0125", "remoteVersion": "20260907143125", "remoteName": "0125_runtime_schema_requirement_probe" }
+    { "logicalVersion": "0125", "remoteVersion": "20260907143125", "remoteName": "0125_runtime_schema_requirement_probe" },
+    { "logicalVersion": "0126", "remoteVersion": "20260908140320", "remoteName": "0126_crowdfunding_settlement_foundation" },
+    { "logicalVersion": "0127", "remoteVersion": "20260908140427", "remoteName": "0127_crowdfunding_provider_reconciliation" },
+    { "logicalVersion": "0128", "remoteVersion": "20260908140710", "remoteName": "0128_crowdfunding_fk_index_hardening" }
   ]
 }
