@@ -90,6 +90,15 @@ export default function DashboardPage() {
   ];
   const completedSteps = progressSteps.filter((step) => step.complete).length;
   const progressPercent = Math.round((completedSteps / progressSteps.length) * 100);
+  const nextProgressAction = !profile
+    ? { href: '/dashboard/kyc', label: 'Completar perfil' }
+    : profile.kyc_status !== 'verified'
+      ? { href: '/dashboard/kyc', label: 'Verificar identidad' }
+      : !wallet
+        ? { href: '/dashboard/wallet', label: 'Activar wallet' }
+        : summary.allocations.length === 0
+          ? { href: '/inversion/app', label: 'Explorar oportunidades' }
+          : { href: '/products', label: 'Explorar servicios' };
 
   return (
     <div className="ctgDash min-h-screen overflow-hidden text-white">
@@ -238,7 +247,14 @@ export default function DashboardPage() {
                   </div>
                   <strong>{progressPercent}%</strong>
                 </div>
-                <div className="ctgProgressTrack" aria-label={`${progressPercent}% completado`}>
+                <div
+                  className="ctgProgressTrack"
+                  role="progressbar"
+                  aria-label="Progreso de cuenta"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progressPercent}
+                >
                   <span style={{ width: `${progressPercent}%` }} />
                 </div>
                 <p className="ctgProgressCount">{completedSteps} de {progressSteps.length} pasos completados</p>
@@ -250,7 +266,9 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-                <Link href="/dashboard/kyc" className="ctgProgressCta">Continuar <ArrowRight size={14} /></Link>
+                <Link href={nextProgressAction.href} className="ctgProgressCta">
+                  {nextProgressAction.label} <ArrowRight size={14} />
+                </Link>
               </section>
 
               <section className="ctgPanel ctgIdentityCard" aria-labelledby="identity-title">
