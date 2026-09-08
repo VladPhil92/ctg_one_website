@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Valderrama Projects | JP Valderrama',
-  description: 'Investigación aplicada, EdTech, tecnología y proyectos interdisciplinarios desarrollados por JP Valderrama.',
+  description: 'Valderrama Projects reúne investigación aplicada, EdTech y programas como Colombia Bilingüe: inglés online accesible de A1 a B2.',
   alternates: { canonical: 'https://ctgone.com/jpvalderrama/projects' },
   openGraph: {
     title: 'Valderrama Projects | JP Valderrama',
-    description: 'Ideas que pasan de la formulación conceptual a investigación, prototipos y productos.',
+    description: 'Ideas que pasan de la formulación conceptual a investigación, prototipos, productos y programas educativos como Colombia Bilingüe.',
     url: 'https://ctgone.com/jpvalderrama/projects',
     siteName: 'CTG One',
     type: 'website',
