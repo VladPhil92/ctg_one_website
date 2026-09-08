@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 
 import { createAdminClient, isSupabaseConfigured } from '@/lib/supabase/server';
@@ -22,6 +23,12 @@ function noStoreJson(body: unknown, status: number) {
   });
 }
 
+function safeEqual(left: string, right: string): boolean {
+  const leftBytes = Buffer.from(left);
+  const rightBytes = Buffer.from(right);
+  return leftBytes.length === rightBytes.length && timingSafeEqual(leftBytes, rightBytes);
+}
+
 type InboxRow = {
   id: string;
   provider_event_id: string;
@@ -35,7 +42,7 @@ type InboxRow = {
 export async function POST(request: Request) {
   const expected = process.env.CROWDFUNDING_RECONCILIATION_SECRET?.trim() ?? '';
   const supplied = request.headers.get(INTERNAL_SECRET_HEADER)?.trim() ?? '';
-  if (expected.length < 32 || supplied !== expected) {
+  if (expected.length < 32 || !safeEqual(expected, supplied)) {
     return noStoreJson({ error: 'UNAUTHORIZED' }, 401);
   }
   if (!isSupabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
