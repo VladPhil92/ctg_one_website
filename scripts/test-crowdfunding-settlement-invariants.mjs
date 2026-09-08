@@ -3,9 +3,10 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [foundation, reconciliation, campaignsApi, contributionsApi, webhookApi, reconcilerApi, bold] = await Promise.all([
-  read('supabase/migrations/20260908103000_0126_crowdfunding_settlement_foundation.sql'),
-  read('supabase/migrations/20260908104500_0127_crowdfunding_provider_reconciliation.sql'),
+const [foundation, reconciliation, indexHardening, campaignsApi, contributionsApi, webhookApi, reconcilerApi, bold] = await Promise.all([
+  read('supabase/migrations/20260908140320_0126_crowdfunding_settlement_foundation.sql'),
+  read('supabase/migrations/20260908140427_0127_crowdfunding_provider_reconciliation.sql'),
+  read('supabase/migrations/20260908140710_0128_crowdfunding_fk_index_hardening.sql'),
   read('src/app/api/federation/vertice/crowdfunding/campaigns/route.ts'),
   read('src/app/api/federation/vertice/crowdfunding/contributions/route.ts'),
   read('src/app/api/payments/bold/crowdfunding/events/route.ts'),
@@ -69,5 +70,10 @@ assert.match(reconciliation, /chain_reconciliation_digest_sha256/);
 assert.match(reconciliation, /chain_confirmations < 1/);
 assert.match(reconciliation, /valuation_source/);
 assert.match(reconciliation, /valuation_observed_at/);
+
+// Production advisor follow-up: every new crowdfunding FK used by lifecycle joins is indexed.
+assert.match(indexHardening, /federated_crowdfunding_campaigns_subject_idx/);
+assert.match(indexHardening, /federated_crowdfunding_wallet_intent_idx/);
+assert.match(indexHardening, /federated_crowdfunding_settlement_contribution_idx/);
 
 console.log('Federated crowdfunding settlement invariants: PASS');
