@@ -26,10 +26,10 @@ type InboxRow = {
   id: string;
   provider_event_id: string;
   provider_payment_id: string;
-  event_type: string;
+  event_type: BoldWebhookEvidence['eventType'];
   external_reference: string | null;
   amount_cop: number | string;
-  currency: string;
+  currency: BoldWebhookEvidence['currency'];
 };
 
 export async function POST(request: Request) {
@@ -53,6 +53,9 @@ export async function POST(request: Request) {
 
   if (error) return noStoreJson({ error: 'RECONCILIATION_QUEUE_UNAVAILABLE' }, 503);
 
+  // PostgreSQL CHECK constraints on this server-only table restrict event_type
+  // and currency to the exact BoldWebhookEvidence unions. Keep that trusted DB
+  // boundary represented in TypeScript instead of widening the domain contract.
   const rows = (data ?? []) as InboxRow[];
   const results: Array<{ eventId: string; outcome: string }> = [];
 
