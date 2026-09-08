@@ -6,6 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const readme = await read('README.md');
 const docsIndex = await read('docs/README.md');
 const systemState = await read('docs/architecture/SYSTEM_STATE.md');
+const parityRunbook = await read('docs/infrastructure/PRODUCTION_REPOSITORY_PARITY.md');
 
 assert.ok(
   systemState.includes('CURRENT GOVERNANCE MAP')
@@ -23,6 +24,14 @@ assert.ok(
   'docs/README.md must act as the repository documentation entry point and authority map.',
 );
 
+assert.ok(
+  parityRunbook.includes('Production ↔ Repository Parity')
+    && parityRunbook.includes('Commit parity')
+    && parityRunbook.includes('Public capability parity')
+    && parityRunbook.includes('src/data/technology-proof.ts'),
+  'Production parity runbook must cover source, runtime and public semantic coherence.',
+);
+
 await assert.rejects(
   access(new URL('../docs/architecture/REPOSITORY_AUDIT_CURRENT.md', import.meta.url)),
   'The misleading superseded repository audit must stay removed.',
@@ -33,12 +42,16 @@ assert.ok(
   'README must point engineers and agents to the source-of-truth governance map.',
 );
 assert.ok(
+  readme.includes('docs/infrastructure/PRODUCTION_REPOSITORY_PARITY.md'),
+  'README must point release verification to the production/repository parity runbook.',
+);
+assert.ok(
   readme.includes('`BETA`') && !readme.includes('`PILOT` cuando corresponda al producto'),
   'README maturity language must match the canonical public BETA release stage.',
 );
 assert.ok(
-  readme.includes('No se mantiene una lista manual de migraciones en este README.'),
-  'README must explicitly reject a second hand-written migration registry.',
+  readme.includes('La presencia de una migración en Git no prueba que esté aplicada en producción.'),
+  'README must reject using the Git migration directory as proof of production runtime state.',
 );
 
 const migrationFilenamePattern = /\b\d{4}_[a-z0-9_]+\.sql\b/g;
@@ -66,6 +79,14 @@ assert.ok(
 assert.ok(
   systemState.includes('fixed price') || systemState.includes('fixed-price') || systemState.includes('published fixed price'),
   'SYSTEM_STATE must preserve the direct fixed-price education commerce rule.',
+);
+
+assert.ok(
+  systemState.includes('source parity')
+    && systemState.includes('semantic parity')
+    && systemState.includes('getCapabilityProof(...)')
+    && systemState.includes('getPublicProofStatus(...)'),
+  'SYSTEM_STATE must preserve production/source parity and canonical public maturity derivation rules.',
 );
 
 console.log('Documentation governance invariants: PASS');
