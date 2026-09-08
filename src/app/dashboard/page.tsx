@@ -82,14 +82,28 @@ export default function DashboardPage() {
   const kyc = KYC_LABELS[profile?.kyc_status ?? 'not_submitted'];
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] || 'Usuario';
   const admin = profile?.role === 'admin';
+  const onboardingLoading = isWalletLoading || investmentLoading;
   const progressSteps = [
     { label: 'Perfil creado', complete: Boolean(profile) },
     { label: 'Verificación de identidad', complete: profile?.kyc_status === 'verified' },
-    { label: 'Wallet activada', complete: Boolean(wallet) },
-    { label: 'Primera participación', complete: summary.allocations.length > 0 },
+    { label: 'Wallet activada', complete: !isWalletLoading && Boolean(wallet) },
+    { label: 'Primera participación', complete: !investmentLoading && summary.allocations.length > 0 },
   ];
   const completedSteps = progressSteps.filter((step) => step.complete).length;
-  const progressPercent = Math.round((completedSteps / progressSteps.length) * 100);
+  const progressPercent = onboardingLoading
+    ? null
+    : Math.round((completedSteps / progressSteps.length) * 100);
+  const nextProgressAction = onboardingLoading
+    ? null
+    : !profile
+      ? { href: '/dashboard/kyc', label: 'Completar perfil' }
+      : profile.kyc_status !== 'verified'
+        ? { href: '/dashboard/kyc', label: 'Verificar identidad' }
+        : !wallet
+          ? { href: '/dashboard/wallet', label: 'Activar wallet' }
+          : summary.allocations.length === 0
+            ? { href: '/inversion/app', label: 'Explorar oportunidades' }
+            : { href: '/products', label: 'Explorar servicios' };
 
   return (
     <div className="ctgDash min-h-screen overflow-hidden text-white">
@@ -236,12 +250,22 @@ export default function DashboardPage() {
                     <p className="ctgEyebrow">TU PROGRESO</p>
                     <h2 id="progress-title">Avanza en CTG One</h2>
                   </div>
-                  <strong>{progressPercent}%</strong>
+                  <strong>{progressPercent === null ? '—' : `${progressPercent}%`}</strong>
                 </div>
-                <div className="ctgProgressTrack" aria-label={`${progressPercent}% completado`}>
-                  <span style={{ width: `${progressPercent}%` }} />
+                <div
+                  className="ctgProgressTrack"
+                  role="progressbar"
+                  aria-label="Progreso de cuenta"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progressPercent ?? undefined}
+                  aria-busy={onboardingLoading}
+                >
+                  <span style={{ width: `${progressPercent ?? 0}%` }} />
                 </div>
-                <p className="ctgProgressCount">{completedSteps} de {progressSteps.length} pasos completados</p>
+                <p className="ctgProgressCount">
+                  {onboardingLoading ? 'Actualizando tu progreso...' : `${completedSteps} de ${progressSteps.length} pasos completados`}
+                </p>
                 <div className="mt-5 space-y-1">
                   {progressSteps.map((step) => (
                     <div key={step.label} className="ctgProgressRow">
@@ -250,7 +274,13 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-                <Link href="/dashboard/kyc" className="ctgProgressCta">Continuar <ArrowRight size={14} /></Link>
+                {nextProgressAction ? (
+                  <Link href={nextProgressAction.href} className="ctgProgressCta">
+                    {nextProgressAction.label} <ArrowRight size={14} />
+                  </Link>
+                ) : (
+                  <div className="ctgProgressCta ctgProgressCtaLoading" aria-live="polite">Actualizando...</div>
+                )}
               </section>
 
               <section className="ctgPanel ctgIdentityCard" aria-labelledby="identity-title">
@@ -289,7 +319,7 @@ export default function DashboardPage() {
         .ctgSection,.ctgPanel{border:1px solid rgba(255,255,255,.085);background:linear-gradient(145deg,rgba(255,255,255,.042),rgba(255,255,255,.012));box-shadow:inset 0 1px rgba(255,255,255,.03),0 22px 60px rgba(0,0,0,.18);backdrop-filter:blur(18px)}.ctgSection{border-radius:22px;padding:20px}.ctgSectionHead{display:flex;align-items:end;justify-content:space-between;gap:20px}.ctgSectionHead h2,.ctgPanelHead h2,.ctgProgressCard h2,.ctgIdentityCard h2{margin-top:5px;font-family:var(--font-outfit);font-size:21px;font-weight:620;letter-spacing:-.025em}.ctgSectionHead>p{max-width:420px;text-align:right;font-size:11px;color:rgba(255,255,255,.32)}.ctgQuickGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:17px}.ctgQuick{display:flex;min-height:86px;align-items:center;gap:13px;border:1px solid rgba(255,255,255,.075);border-radius:16px;background:rgba(7,7,7,.66);padding:15px;transition:transform .22s,border-color .22s,background .22s}.ctgQuick:hover{transform:translateY(-2px);border-color:rgba(214,174,86,.28);background:rgba(214,174,86,.055)}.ctgQuickIcon,.ctgRoundIcon{display:flex;flex:none;align-items:center;justify-content:center;color:#e8bf58;border:1px solid rgba(214,174,86,.24);background:radial-gradient(circle,rgba(214,174,86,.11),transparent 72%)}.ctgQuickIcon{width:42px;height:42px;border-radius:13px}.ctgRoundIcon{width:39px;height:39px;border-radius:50%}.ctgQuick strong{display:block;font-size:13px}.ctgQuick small{display:block;margin-top:4px;color:rgba(255,255,255,.34);font-size:10px;line-height:1.45}.ctgQuickArrow{margin-left:auto;color:rgba(255,255,255,.22)}
         .ctgMetric{position:relative;display:block;min-height:138px;border:1px solid rgba(255,255,255,.085);border-radius:19px;background:linear-gradient(145deg,rgba(255,255,255,.042),rgba(255,255,255,.012));padding:18px;overflow:hidden;transition:transform .22s,border-color .22s}.ctgMetric:hover{transform:translateY(-2px);border-color:rgba(214,174,86,.25)}.ctgMetric.featured{border-color:rgba(214,174,86,.25);background:linear-gradient(145deg,rgba(214,174,86,.085),rgba(255,255,255,.015))}.ctgMetricTop{display:flex;align-items:center;justify-content:space-between;color:#e8bf58}.ctgMetricArrow{color:rgba(255,255,255,.2)}.ctgMetricLabel{margin-top:16px;font-size:11px;color:rgba(255,255,255,.42)}.ctgMetricValue{margin-top:5px;font-family:var(--font-outfit);font-size:25px;font-weight:650}.ctgMetricHelper{margin-top:7px;font-size:9px;color:rgba(255,255,255,.28)}
         .ctgPanel{border-radius:22px}.ctgPanelHead{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid rgba(255,255,255,.065)}.ctgActivityList{display:flex;flex-direction:column}.ctgActivityRow{display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:12px;padding:14px 5px;border-bottom:1px solid rgba(255,255,255,.055)}.ctgActivityRow:last-child{border-bottom:0}.ctgActivityIcon{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border-radius:50%;background:rgba(214,174,86,.09);color:#e8bf58}.ctgActivityTitle{font-size:12px;font-weight:600;text-transform:capitalize}.ctgActivityMeta{margin-top:4px;color:rgba(255,255,255,.3);font-size:9px;letter-spacing:.06em;text-transform:uppercase}.ctgActivityAmount{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;color:#e8bf58}.ctgEmptyState{text-align:center;padding:38px 10px;color:rgba(255,255,255,.3)}.ctgEmptyState svg{margin:0 auto 10px;color:#e8bf58}.ctgEmptyState p{font-size:13px}.ctgEmptyState a{display:inline-flex;align-items:center;gap:6px;margin-top:14px;color:#e8bf58;font-size:9px;letter-spacing:.1em;text-transform:uppercase}
-        .ctgProgressCard,.ctgIdentityCard{padding:22px}.ctgProgressCard strong{font-family:var(--font-outfit);font-size:20px;color:#e8bf58}.ctgProgressTrack{height:8px;margin-top:21px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.07)}.ctgProgressTrack span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#aa7d2b,#f1c75b);box-shadow:0 0 18px rgba(214,174,86,.18)}.ctgProgressCount{margin-top:8px;color:rgba(255,255,255,.32);font-size:10px}.ctgProgressRow{display:flex;align-items:center;gap:10px;padding:8px 0;color:rgba(255,255,255,.52);font-size:11px}.ctgProgressRow>span{display:flex;width:18px;height:18px;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.2);border-radius:50%}.ctgProgressRow>span.complete{border-color:rgba(214,174,86,.5);background:#d6ae56;color:#080808}.ctgProgressCta{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;margin-top:17px;border-radius:11px;background:#d6ae56;color:#080808;font-size:10px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;transition:transform .2s,background .2s}.ctgProgressCta:hover{transform:translateY(-1px);background:#e8bf58}.ctgIdentityCard{position:relative;overflow:hidden}.ctgIdentityCard:after{content:'';position:absolute;width:170px;height:170px;right:-84px;top:-84px;border:1px solid rgba(214,174,86,.09);border-radius:50%;box-shadow:0 0 0 34px rgba(214,174,86,.018)}.ctgIdentityCard h2{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;color:rgba(255,255,255,.68)}.ctgIdentityRow{position:relative;z-index:1;display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.055);font-size:10px}.ctgIdentityRow span{color:rgba(255,255,255,.3)}.ctgIdentityLink{position:relative;z-index:1;display:flex;align-items:center;gap:8px;margin-top:17px;padding:11px;border-radius:10px;background:rgba(214,174,86,.055);color:#e8bf58;font-size:10px;transition:background .2s}.ctgIdentityLink:hover{background:rgba(214,174,86,.09)}.ctgSupportCard{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;border:1px solid rgba(214,174,86,.15);border-radius:18px;background:linear-gradient(135deg,rgba(214,174,86,.07),rgba(255,255,255,.018));padding:17px}.ctgSupportCard strong{font-size:11px}.ctgSupportCard p{margin-top:3px;color:rgba(255,255,255,.32);font-size:9px}.ctgSupportCard a{display:flex;align-items:center;gap:5px;color:#e8bf58;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+        .ctgProgressCard,.ctgIdentityCard{padding:22px}.ctgProgressCard strong{font-family:var(--font-outfit);font-size:20px;color:#e8bf58}.ctgProgressTrack{height:8px;margin-top:21px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.07)}.ctgProgressTrack span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#aa7d2b,#f1c75b);box-shadow:0 0 18px rgba(214,174,86,.18)}.ctgProgressCount{margin-top:8px;color:rgba(255,255,255,.32);font-size:10px}.ctgProgressRow{display:flex;align-items:center;gap:10px;padding:8px 0;color:rgba(255,255,255,.52);font-size:11px}.ctgProgressRow>span{display:flex;width:18px;height:18px;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.2);border-radius:50%}.ctgProgressRow>span.complete{border-color:rgba(214,174,86,.5);background:#d6ae56;color:#080808}.ctgProgressCta{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;margin-top:17px;border-radius:11px;background:#d6ae56;color:#080808;font-size:10px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;transition:transform .2s,background .2s}.ctgProgressCta:hover{transform:translateY(-1px);background:#e8bf58}.ctgProgressCtaLoading{cursor:progress;opacity:.62}.ctgIdentityCard{position:relative;overflow:hidden}.ctgIdentityCard:after{content:'';position:absolute;width:170px;height:170px;right:-84px;top:-84px;border:1px solid rgba(214,174,86,.09);border-radius:50%;box-shadow:0 0 0 34px rgba(214,174,86,.018)}.ctgIdentityCard h2{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;color:rgba(255,255,255,.68)}.ctgIdentityRow{position:relative;z-index:1;display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.055);font-size:10px}.ctgIdentityRow span{color:rgba(255,255,255,.3)}.ctgIdentityLink{position:relative;z-index:1;display:flex;align-items:center;gap:8px;margin-top:17px;padding:11px;border-radius:10px;background:rgba(214,174,86,.055);color:#e8bf58;font-size:10px;transition:background .2s}.ctgIdentityLink:hover{background:rgba(214,174,86,.09)}.ctgSupportCard{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;border:1px solid rgba(214,174,86,.15);border-radius:18px;background:linear-gradient(135deg,rgba(214,174,86,.07),rgba(255,255,255,.018));padding:17px}.ctgSupportCard strong{font-size:11px}.ctgSupportCard p{margin-top:3px;color:rgba(255,255,255,.32);font-size:9px}.ctgSupportCard a{display:flex;align-items:center;gap:5px;color:#e8bf58;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
         @media(max-width:1024px){.ctgQuickGrid{grid-template-columns:repeat(2,1fr)}.ctgHeroCoin{right:40px}.ctgHeroAside{border-left:0;border-top:1px solid rgba(214,174,86,.14);padding:22px 0 0}.ctgHeroQuote{max-width:620px}.ctgSectionHead>p{display:none}}
         @media(max-width:640px){.ctgHero{padding:27px 20px;min-height:0}.ctgHeroCoin{width:170px;height:170px;right:-35px;bottom:-65px}.ctgHeroRings{width:280px;height:280px;right:-150px;top:-130px}.ctgHeroCopy{font-size:13px}.ctgQuickGrid{grid-template-columns:1fr}.ctgSection{padding:15px}.ctgSectionHead h2,.ctgPanelHead h2,.ctgProgressCard h2{font-size:19px}.ctgActivityAmount{font-size:9px}.ctgSupportCard{grid-template-columns:auto 1fr}.ctgSupportCard a{grid-column:2}.ctgMetric{min-height:128px;padding:15px}.ctgMetricValue{font-size:19px}}
       `}</style>
