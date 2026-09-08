@@ -81,6 +81,16 @@ const nextConfig = {
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
         ],
       },
+      // The authenticated dashboard must never remain pinned to an obsolete
+      // application shell after a production release. Hashed Next.js assets
+      // remain cacheable under /_next; only dashboard documents/RSC payloads
+      // are forced to revalidate against the active Render release.
+      {
+        source: '/dashboard/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store, max-age=0, must-revalidate' },
+        ],
+      },
       // This read-only identity proof binds the canonical CTG user, Privy
       // principal and embedded EVM wallet. Keep its referrer surface stricter
       // than ordinary site navigation. This rule intentionally follows the
