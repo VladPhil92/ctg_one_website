@@ -1,6 +1,6 @@
-export const EXPECTED_DATABASE_MIGRATION = '0128' as const;
-export const EXPECTED_DATABASE_MIGRATION_NAME = 'crowdfunding_fk_index_hardening' as const;
-export const EXPECTED_DATABASE_MIGRATION_COUNT = 128 as const;
+export const EXPECTED_DATABASE_MIGRATION = '0129' as const;
+export const EXPECTED_DATABASE_MIGRATION_NAME = 'crowdfunding_review_hardening' as const;
+export const EXPECTED_DATABASE_MIGRATION_COUNT = 129 as const;
 
 // Wallet Canary V1 depends on migrations through 0091, but it remains compatible
 // with later additive global migrations. These constants express that minimum
