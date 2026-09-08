@@ -10,8 +10,9 @@ The documentation model is intentionally **source-of-truth oriented**: prose exp
 2. `architecture/CTG_ONE_OS.md` — shared architecture and bounded-context model.
 3. `architecture/ECOSYSTEM_CONTRACT_REGISTRY.md` — CTG One / Wallet / Nvet and other cross-product contracts.
 4. `infrastructure/PRODUCTION_READINESS.md` — deployment and production-readiness controls.
-5. `infrastructure/BACKUP_RESTORE.md` — recovery policy and evidence requirements.
-6. `infrastructure/OBSERVABILITY.md` — observability and runtime health.
+5. `infrastructure/PRODUCTION_REPOSITORY_PARITY.md` — GitHub/Render/runtime/public-claim parity verification.
+6. `infrastructure/BACKUP_RESTORE.md` — recovery policy and evidence requirements.
+7. `infrastructure/OBSERVABILITY.md` — observability and runtime health.
 
 ## Runtime authorities
 
@@ -23,9 +24,12 @@ Do not copy these values into prose as permanent facts:
 | Database migration expectation | `src/lib/observability/schema-version.ts` |
 | Migration history in Git | `supabase/migrations/` |
 | Public capability maturity | `src/data/technology-proof.ts` |
+| Public directory navigation/descriptions | `src/config/dashboard-services.ts` |
 | Ecosystem public registry | `src/data/content.ts` |
-| Deployment identity / runtime schema health | `/api/health` + Admin System Health |
+| Deployment identity / runtime schema health | `/api/health` + Admin System Health + Render deployment identity |
 | CI contract | `.github/workflows/ci.yml` + `package.json` |
+
+When a dashboard/public-directory service corresponds to a capability already registered in `src/data/technology-proof.ts`, its maturity must be **derived from that registry**. `dashboard-services.ts` is not a second authority for technical maturity.
 
 ## Domain documentation
 
@@ -43,7 +47,7 @@ Wallet documentation spans `wallet`-related documents retained at the `docs/` ro
 
 ### Investment
 
-`investment/` contains the CTG Craft Beer Investment domain constitution, business rules, testing, operating evidence and architecture decisions. Financial truth remains server/database-side and append-only where required.
+`investment/` contains the CTG Craft Beer Investment domain constitution, business rules, testing, operating evidence and architecture decisions. Financial truth remains server/database-side and append-only where required. Public maturity remains evidence-gated by `src/data/technology-proof.ts`.
 
 ### Education / JP Valderrama
 
@@ -71,7 +75,7 @@ Primary implementation surfaces include:
 
 ### Infrastructure / Operations / Runbooks / Security
 
-- `infrastructure/` — deployment, recovery, E2E and observability.
+- `infrastructure/` — deployment, production/repository parity, recovery, E2E and observability.
 - `operations/` — operational-domain guidance.
 - `runbooks/` — executable incident/operational procedures.
 - `security/` — security boundaries and hardening documentation.
@@ -91,6 +95,8 @@ A historical document should be retained only when it provides useful provenance
 
 - Prefer links to authoritative code/runtime sources over manually copied version numbers.
 - Do not maintain duplicate maturity matrices or migration registries in prose.
+- Public maturity badges and product claims must follow `src/data/technology-proof.ts` where a capability is registered there.
+- Verify GitHub `main` SHA against the actual Render production SHA after release; source parity and semantic parity are separate checks.
 - Update architecture/operational docs when a contract changes materially.
 - Keep historical snapshots clearly labeled as historical.
 - Remove obsolete documents when they no longer add traceability value.

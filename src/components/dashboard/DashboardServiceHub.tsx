@@ -41,10 +41,12 @@ const STATUS_LABELS: Record<DashboardServiceStatus, string> = {
   LIVE: 'Activo',
   ACCOUNT: 'Mi cuenta',
   BETA: 'Beta',
+  PARTIAL: 'Parcial',
+  'IN DEVELOPMENT': 'En desarrollo',
   PILOT: 'Piloto',
   DEVELOPMENT: 'En desarrollo',
   CONSOLIDATION: 'En consolidación',
-  ROADMAP: 'Roadmap',
+  ROADMAP: 'Hoja de ruta',
 };
 
 function ServiceCard({ service }: { service: (typeof DASHBOARD_SERVICES)[number] }) {

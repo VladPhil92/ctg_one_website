@@ -35,16 +35,20 @@ const STATUS_LABELS_ES: Record<DashboardServiceStatus, string> = {
   LIVE: 'Activo',
   ACCOUNT: 'Cuenta',
   BETA: 'Beta',
+  PARTIAL: 'Parcial',
+  'IN DEVELOPMENT': 'En desarrollo',
   PILOT: 'Piloto',
   DEVELOPMENT: 'En desarrollo',
   CONSOLIDATION: 'En consolidación',
-  ROADMAP: 'Roadmap',
+  ROADMAP: 'Hoja de ruta',
 };
 
 const STATUS_LABELS_EN: Record<DashboardServiceStatus, string> = {
   LIVE: 'Live',
   ACCOUNT: 'Account',
   BETA: 'Beta',
+  PARTIAL: 'Partial',
+  'IN DEVELOPMENT': 'In development',
   PILOT: 'Pilot',
   DEVELOPMENT: 'In development',
   CONSOLIDATION: 'Under consolidation',

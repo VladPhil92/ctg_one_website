@@ -1,0 +1,90 @@
+{
+  "version": "ctg-knowledge-public-corpus-v4",
+  "classification": "public-first-party",
+  "scope": "evaluation-only",
+  "description": "Versioned CTG One first-party public documentation selected for controlled CTG Knowledge evaluation. v4 deliberately reviews the production/repository parity governance refresh while preserving the reviewed evidence IDs and semantic coverage.",
+  "allowedPathPrefixes": [
+    "docs/ai/",
+    "docs/architecture/"
+  ],
+  "sources": [
+    {
+      "id": "system-state#classification",
+      "path": "docs/architecture/SYSTEM_STATE.md",
+      "heading": "Current system classification",
+      "gitBlobSha": "c76f73e83e6b6b31c4335d9f1f4787df404ba5f5"
+    },
+    {
+      "id": "system-state#capability-maturity",
+      "path": "docs/architecture/SYSTEM_STATE.md",
+      "heading": "Capability maturity rule",
+      "gitBlobSha": "c76f73e83e6b6b31c4335d9f1f4787df404ba5f5"
+    },
+    {
+      "id": "system-state#recovery-truth",
+      "path": "docs/architecture/SYSTEM_STATE.md",
+      "heading": "Recovery truth",
+      "gitBlobSha": "c76f73e83e6b6b31c4335d9f1f4787df404ba5f5"
+    },
+    {
+      "id": "ctg-knowledge#security-boundaries",
+      "path": "docs/ai/CTG_KNOWLEDGE.md",
+      "heading": "Security boundaries",
+      "gitBlobSha": "a20e564d3251938f862c17e0ae49ccd25ed7d8cd"
+    },
+    {
+      "id": "ctg-knowledge#retrieval-contract",
+      "path": "docs/ai/CTG_KNOWLEDGE.md",
+      "heading": "Retrieval contract",
+      "gitBlobSha": "a20e564d3251938f862c17e0ae49ccd25ed7d8cd"
+    },
+    {
+      "id": "ctg-knowledge#live-gate",
+      "path": "docs/ai/CTG_KNOWLEDGE.md",
+      "heading": "LIVE gate",
+      "gitBlobSha": "a20e564d3251938f862c17e0ae49ccd25ed7d8cd"
+    },
+    {
+      "id": "ai-governance#human-in-the-loop",
+      "path": "docs/ai/AI_GOVERNANCE.md",
+      "heading": "1. Human-in-the-loop",
+      "gitBlobSha": "03ec395f2e9f2a122c65ef583b7e43311844fd68"
+    },
+    {
+      "id": "ai-governance#evaluation",
+      "path": "docs/ai/AI_GOVERNANCE.md",
+      "heading": "4. Evaluation",
+      "gitBlobSha": "03ec395f2e9f2a122c65ef583b7e43311844fd68"
+    },
+    {
+      "id": "ai-governance#release-states",
+      "path": "docs/ai/AI_GOVERNANCE.md",
+      "heading": "11. Release states",
+      "gitBlobSha": "03ec395f2e9f2a122c65ef583b7e43311844fd68"
+    },
+    {
+      "id": "ctg-one-os#maturity-model",
+      "path": "docs/architecture/CTG_ONE_OS.md",
+      "heading": "Maturity model",
+      "gitBlobSha": "defea6b4e0a63cdf53e5212d11b673cc6b74f74b"
+    },
+    {
+      "id": "ctg-one-os#infrastructure-layer",
+      "path": "docs/architecture/CTG_ONE_OS.md",
+      "heading": "Infrastructure Layer — LIVE",
+      "gitBlobSha": "defea6b4e0a63cdf53e5212d11b673cc6b74f74b"
+    },
+    {
+      "id": "ctg-one-os#architectural-rules",
+      "path": "docs/architecture/CTG_ONE_OS.md",
+      "heading": "Architectural rules",
+      "gitBlobSha": "defea6b4e0a63cdf53e5212d11b673cc6b74f74b"
+    },
+    {
+      "id": "observability#current-limitations",
+      "path": "docs/architecture/OBSERVABILITY.md",
+      "heading": "Current limitations",
+      "gitBlobSha": "5010d96e491f012cceccb3346789e7c1a6f99bcb"
+    }
+  ]
+}
