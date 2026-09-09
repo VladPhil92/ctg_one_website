@@ -59,9 +59,7 @@ const STATUS_LABELS_EN: Record<DashboardServiceStatus, string> = {
 
 const AVAILABLE_STATUSES = new Set<DashboardServiceStatus>(['LIVE', 'ACCOUNT', 'BETA', 'PILOT']);
 
-const visibleServices = PUBLIC_ECOSYSTEM_SERVICES.filter((service) => service.status !== 'ROADMAP');
-const availableServices = visibleServices.filter((service) => AVAILABLE_STATUSES.has(service.status));
-const evolvingServices = visibleServices.filter((service) => !AVAILABLE_STATUSES.has(service.status));
+type EcosystemDirectoryMode = 'home' | 'full';
 
 const ServiceCard = ({ service, label }: { service: DashboardService; label: string }) => {
   const Icon = SERVICE_ICONS[service.id] ?? BrainCircuit;
@@ -95,10 +93,16 @@ const ServiceCard = ({ service, label }: { service: DashboardService; label: str
   );
 };
 
-export const EcosystemDirectorySection: React.FC = () => {
+export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode }> = ({ mode = 'home' }) => {
   const { locale } = useLanguage();
   const es = locale === 'es';
   const labels = es ? STATUS_LABELS_ES : STATUS_LABELS_EN;
+  const isFullDirectory = mode === 'full';
+  const visibleServices = isFullDirectory
+    ? PUBLIC_ECOSYSTEM_SERVICES
+    : PUBLIC_ECOSYSTEM_SERVICES.filter((service) => service.status !== 'ROADMAP');
+  const availableServices = visibleServices.filter((service) => AVAILABLE_STATUSES.has(service.status));
+  const evolvingServices = visibleServices.filter((service) => !AVAILABLE_STATUSES.has(service.status));
 
   return (
     <section className="relative overflow-hidden border-y border-white/[0.05] bg-[#050709] py-20 sm:py-24" aria-labelledby="ecosystem-directory-title">
@@ -111,17 +115,25 @@ export const EcosystemDirectorySection: React.FC = () => {
                 {es ? 'Servicios y plataformas' : 'Services and platforms'}
               </span>
               <h2 id="ecosystem-directory-title" className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl md:text-5xl">
-                {es ? 'Entra a lo que ya puedes usar.' : 'Enter what you can use today.'}
+                {isFullDirectory
+                  ? (es ? 'Todo el ecosistema, con su estado real.' : 'The full ecosystem, with its real status.')
+                  : (es ? 'Entra a lo que ya puedes usar.' : 'Enter what you can use today.')}
               </h2>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-text-muted sm:text-base">
-                {es
-                  ? 'Priorizamos aquí las experiencias accesibles hoy. Los productos que todavía están madurando aparecen en una sección separada para no mezclar disponibilidad real con nuestra hoja de ruta.'
-                  : 'This view prioritizes experiences you can access today. Products that are still maturing appear separately so current availability is not mixed with the roadmap.'}
+                {isFullDirectory
+                  ? (es
+                      ? 'Este directorio reúne las experiencias públicas del ecosistema, incluidas las que están en desarrollo o en hoja de ruta, para que su nivel de madurez sea explícito.'
+                      : 'This directory brings together the ecosystem’s public experiences, including those in development or on the roadmap, so their maturity is explicit.')
+                  : (es
+                      ? 'Priorizamos aquí las experiencias accesibles hoy. Los productos que todavía están madurando aparecen en una sección separada para no mezclar disponibilidad real con nuestra hoja de ruta.'
+                      : 'This view prioritizes experiences you can access today. Products that are still maturing appear separately so current availability is not mixed with the roadmap.')}
               </p>
             </div>
-            <a href="/ecosystem" className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1c75b] transition hover:text-white">
-              {es ? 'Ver ecosistema completo' : 'View full ecosystem'} <ArrowUpRight size={14} aria-hidden="true" />
-            </a>
+            {!isFullDirectory && (
+              <a href="/ecosystem" className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1c75b] transition hover:text-white">
+                {es ? 'Ver ecosistema completo' : 'View full ecosystem'} <ArrowUpRight size={14} aria-hidden="true" />
+              </a>
+            )}
           </div>
         </FadeInSection>
 
