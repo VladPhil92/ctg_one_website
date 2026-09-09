@@ -64,7 +64,7 @@ test.describe('CTG One public command-center design system', () => {
     }
   });
 
-  test('home exposes the interactive ecosystem hero and keeps real Craft Beer and Nvet Care media in the product showcases', async ({ page }) => {
+  test('home exposes the interactive ecosystem hero and prioritizes current commercial availability', async ({ page }) => {
     await preferSpanish(page);
     const response = await page.goto('/');
     expect(response?.status()).toBeLessThan(400);
@@ -74,56 +74,22 @@ test.describe('CTG One public command-center design system', () => {
     await expect(ecosystem.getByRole('link')).toHaveCount(8);
     await expect(ecosystem.getByRole('link', { name: 'Abrir proceso de Cerveza' })).toHaveAttribute('href', '/ecosystem/process/beer');
 
-    const beerLink = page.getByRole('link', { name: 'Conocer CTG Craft Beer' });
-    const nvetLink = page.getByRole('link', { name: 'Conocer Nvet Care' });
+    await expect(page.getByRole('heading', { name: 'Disponible ahora' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'En evolución' })).toBeVisible();
+
+    const beerLink = page.getByRole('link', { name: 'Explorar Craft Beer' });
+    const nvetLink = page.getByRole('link', { name: 'Explorar Nvet Care' });
     await expect(beerLink).toBeVisible();
+    await expect(beerLink).toHaveAttribute('href', '/craft-beer');
     await expect(nvetLink).toBeVisible();
+    await expect(nvetLink).toHaveAttribute('href', '/nvetcareapp');
 
-    const irishRedPhoto = page.getByRole('img', { name: 'Botella Irish Red Ale de CTG Craft Beer' });
-    const porterPhoto = page.getByRole('img', { name: 'Botella Porter de CTG Craft Beer' });
-    const nvetMockup = page.getByRole('img', { name: /Campaña de Nvet Care/i });
-    await expect(irishRedPhoto).toBeVisible();
-    await expect(porterPhoto).toBeVisible();
-    await expect(nvetMockup).toBeVisible();
+    const nvetCard = page.getByRole('heading', { name: 'Nvet Care App' }).locator('..');
+    await expect(nvetCard.getByText('En desarrollo', { exact: true })).toBeVisible();
 
-    await irishRedPhoto.scrollIntoViewIfNeeded();
-    await porterPhoto.scrollIntoViewIfNeeded();
-    await nvetMockup.scrollIntoViewIfNeeded();
-    await expect.poll(() => irishRedPhoto.evaluate((node) => node.complete && node.naturalWidth > 0)).toBe(true);
-    await expect.poll(() => porterPhoto.evaluate((node) => node.complete && node.naturalWidth > 0)).toBe(true);
-    await expect.poll(() => nvetMockup.evaluate((node) => node.complete && node.naturalWidth > 0)).toBe(true);
-
-    const irishState = await irishRedPhoto.evaluate((node) => ({
-      naturalWidth: node.naturalWidth,
-      naturalHeight: node.naturalHeight,
-      src: node.currentSrc,
-    }));
-    expect(irishState.naturalWidth).toBeGreaterThan(0);
-    expect(irishState.naturalHeight).toBeGreaterThan(0);
-    expect(irishState.src).toContain('/images/inversion/ctg-craft-beer-irish-red-ale.webp');
-    expect(irishState.src).not.toContain('/_next/image');
-
-    const porterState = await porterPhoto.evaluate((node) => ({
-      naturalWidth: node.naturalWidth,
-      naturalHeight: node.naturalHeight,
-      src: node.currentSrc,
-    }));
-    expect(porterState.naturalWidth).toBeGreaterThan(0);
-    expect(porterState.naturalHeight).toBeGreaterThan(0);
-    expect(porterState.src).toContain('/images/inversion/ctg-craft-beer-porter.webp');
-    expect(porterState.src).not.toContain('/_next/image');
-
-    const nvetState = await nvetMockup.evaluate((node) => ({
-      naturalWidth: node.naturalWidth,
-      naturalHeight: node.naturalHeight,
-      src: node.currentSrc,
-    }));
-    expect(nvetState.naturalWidth).toBeGreaterThan(0);
-    expect(nvetState.naturalHeight).toBeGreaterThan(0);
-    expect(nvetState.src).toContain('data:image/webp;base64,');
-
-    await expect(page.getByText('Cerveza artesanal. Producción real.', { exact: true })).toBeVisible();
-    await expect(page.getByText('Nvet Care · En desarrollo', { exact: true })).toBeVisible();
+    await expect(page.getByText('CTG Rewards', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Ver ecosistema completo' })).toHaveAttribute('href', '/ecosystem');
+    await expect(page.getByRole('link', { name: 'Consultar estado técnico' })).toHaveAttribute('href', '/technology/status');
     await expectNoHorizontalOverflow(page, '/');
   });
 
