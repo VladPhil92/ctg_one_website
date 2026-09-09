@@ -42,20 +42,23 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('en un solo lugar.');
     await expect(page.getByText('Productos, servicios, pagos y beneficios conectados para ti.', { exact: true })).toBeVisible();
     await expect(page.getByText('Crea tu cuenta CTG One y accede con una sola identidad a nuestro portal multiservicios.', { exact: false })).toBeVisible();
-    await expect(page.getByText('Tecnología que puedes ver en acción.', { exact: true })).toBeVisible();
-    await expect(page.getByText('Cerveza artesanal. Producción real.', { exact: true })).toBeVisible();
-    await expect(page.getByText('Nvet Care · En desarrollo', { exact: true })).toBeVisible();
-    await expect(page.getByText('Tu veterinario de confianza, a un toque de distancia.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Empieza por lo que necesitas', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Una cuenta que conecta experiencias distintas.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Entra a lo que ya puedes usar.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Disponible ahora' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'En evolución' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Una cuenta. Una Wallet. Menos fricción.' })).toBeVisible();
 
     for (const englishFallback of [
       'Multi-service portal · One account',
       'Products, services, payments and benefits connected for you.',
       'Create your CTG One account and access our multi-service portal with a single identity.',
-      'A technology company built around real operations.',
-      'Technology you can see in action.',
-      'Craft beer. Real production.',
-      'Nvet Care · In development',
-      'Your trusted veterinarian, one tap away.',
+      'Start with what you need',
+      'One account connecting different experiences.',
+      'Enter what you can use today.',
+      'Available now',
+      'In evolution',
+      'One account. One Wallet. Less friction.',
     ]) {
       await expect(page.getByText(englishFallback, { exact: true })).toHaveCount(0);
     }
@@ -65,15 +68,18 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     for (const label of [
       'Crear mi cuenta',
       'Explorar CTG One',
-      'Conocer CTG Craft Beer',
-      'Invertir en producción',
-      'Conocer Nvet Care',
-      'Conocer nuestra tecnología',
-      'Conocer CTG One',
-      'Contactar a CTG One',
+      'Explorar Wallet',
+      'Ver servicios',
+      'Conocer VÉRTICE',
+      'Explorar educación',
+      'Ver ecosistema completo',
+      'Abrir CTG Wallet',
     ]) {
       await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
     }
+
+    await expect(page.getByText('CTG Rewards', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Hoja de ruta', { exact: true })).toHaveCount(0);
 
     for (const removedOrnamentalLabel of [
       'Núcleo en línea',
@@ -188,7 +194,7 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     expect(undersizedTargets).toEqual([]);
   });
 
-  test('ecosystem-first home and product showcases remain discoverable and overflow-safe across target breakpoints', async ({ page }) => {
+  test('ecosystem-first home remains discoverable and overflow-safe across target breakpoints', async ({ page }) => {
     await preferSpanish(page);
 
     for (const viewport of RESPONSIVE_VIEWPORTS) {
@@ -197,8 +203,9 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
 
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       await expect(page.locator('section#home [data-ecosystem-diagram]')).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Conocer CTG Craft Beer' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Conocer Nvet Care' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Explorar Craft Beer' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Explorar Nvet Care' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Ver ecosistema completo' })).toBeVisible();
 
       const layout = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,

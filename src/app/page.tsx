@@ -7,8 +7,6 @@ import { HeroSection } from '@/components/sections/HeroSection';
 import { HomeIntroSection } from '@/components/sections/HomeIntroSection';
 import { EcosystemDirectorySection } from '@/components/sections/EcosystemDirectorySection';
 import { WalletProductFeature } from '@/components/sections/WalletProductFeature';
-import { HomeProductShowcases } from '@/components/sections/HomeProductShowcases';
-import { HomeOverviewSection } from '@/components/sections/HomeOverviewSection';
 import { AccountCtaSection } from '@/components/sections/AccountCtaSection';
 
 export default function Home() {
@@ -25,8 +23,6 @@ export default function Home() {
         <HomeIntroSection />
         <EcosystemDirectorySection />
         <WalletProductFeature />
-        <HomeProductShowcases />
-        <HomeOverviewSection />
         <AccountCtaSection />
       </main>
       <Footer />

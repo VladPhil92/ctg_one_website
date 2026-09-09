@@ -9,7 +9,7 @@ export default function EcosystemPage() {
   return (
     <PublicPageShell>
       <EcosystemSection />
-      <EcosystemDirectorySection />
+      <EcosystemDirectorySection mode="full" />
     </PublicPageShell>
   );
 }
