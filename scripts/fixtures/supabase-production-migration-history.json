@@ -3,6 +3,7 @@
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
   "capturedAt": "2026-09-08T14:07:10Z",
+  "capturedAt": "2026-09-08T18:34:12Z",
   "source": "Supabase production migration history",
   "migrations": [
     { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
@@ -39,5 +40,7 @@
     { "logicalVersion": "0126", "remoteVersion": "20260908140320", "remoteName": "0126_crowdfunding_settlement_foundation" },
     { "logicalVersion": "0127", "remoteVersion": "20260908140427", "remoteName": "0127_crowdfunding_provider_reconciliation" },
     { "logicalVersion": "0128", "remoteVersion": "20260908140710", "remoteName": "0128_crowdfunding_fk_index_hardening" }
+    { "logicalVersion": "0128", "remoteVersion": "20260908140710", "remoteName": "0128_crowdfunding_fk_index_hardening" },
+    { "logicalVersion": "0129", "remoteVersion": "20260908183412", "remoteName": "0129_crowdfunding_review_hardening" }
   ]
 }

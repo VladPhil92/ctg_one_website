@@ -9,6 +9,9 @@
   "expectedMigration": "0128",
   "expectedMigrationName": "crowdfunding_fk_index_hardening",
   "expectedMigrationCount": 128,
+  "expectedMigration": "0129",
+  "expectedMigrationName": "crowdfunding_review_hardening",
+  "expectedMigrationCount": 129,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

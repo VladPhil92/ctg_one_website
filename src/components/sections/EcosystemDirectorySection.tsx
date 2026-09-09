@@ -10,6 +10,7 @@ import {
   Landmark,
   PawPrint,
   School,
+  UtensilsCrossed,
   WalletCards,
   type LucideIcon,
 } from 'lucide-react';
@@ -23,6 +24,7 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   wallet: WalletCards,
   investment: Beer,
   'craft-beer': Beer,
+  pisao: UtensilsCrossed,
   nvet: PawPrint,
   vertice: Landmark,
   token: Coins,
@@ -90,6 +92,7 @@ export const EcosystemDirectorySection: React.FC = () => {
             const Icon = SERVICE_ICONS[service.id] ?? BrainCircuit;
             const href = service.publicHref ?? service.href;
             const cta = service.publicCta ?? service.cta;
+            const isExternal = href.startsWith('http://') || href.startsWith('https://');
 
             return (
               <FadeInSection key={service.id} delay={Math.min(index * 0.035, 0.2)}>
@@ -107,6 +110,8 @@ export const EcosystemDirectorySection: React.FC = () => {
                   <a
                     href={href}
                     data-service-key={service.serviceKey}
+                    target={isExternal ? '_blank' : undefined}
+                    rel={isExternal ? 'noopener noreferrer' : undefined}
                     className="mt-5 inline-flex min-h-11 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#f1c75b] transition-colors hover:text-white"
                   >
                     {cta}

@@ -12,6 +12,9 @@
     "schemaMigration": "0128",
     "schemaMigrationName": "crowdfunding_fk_index_hardening",
     "schemaMigrationCount": 128,
+    "schemaMigration": "0129",
+    "schemaMigrationName": "crowdfunding_review_hardening",
+    "schemaMigrationCount": 129,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
