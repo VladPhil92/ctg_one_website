@@ -93,6 +93,18 @@ test.describe('CTG One public command-center design system', () => {
     await expectNoHorizontalOverflow(page, '/');
   });
 
+  test('full ecosystem restores public roadmap surfaces and removes the self-referencing CTA', async ({ page }) => {
+    await preferSpanish(page);
+    const response = await page.goto('/ecosystem');
+    expect(response?.status()).toBeLessThan(400);
+
+    await expect(page.getByRole('heading', { name: 'Todo el ecosistema, con su estado real.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'CTG One Token' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Ver ecosistema completo' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Consultar estado técnico' })).toHaveAttribute('href', '/technology/status');
+    await expectNoHorizontalOverflow(page, '/ecosystem');
+  });
+
   test('all ecosystem process routes resolve and beer keeps the investment journey explicit', async ({ page }) => {
     await preferSpanish(page);
 
