@@ -32,5 +32,6 @@ export async function GET(request: Request) {
   }
 
   const destination = new URL(app.federationStartPath, app.origin);
+  destination.searchParams.set('next', app.federationNextPath);
   return harden(NextResponse.redirect(destination, 302));
 }
