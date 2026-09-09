@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DASHBOARD_SERVICE_ROUTES } from '@/config/dashboard-services';
+import { EcosystemSwitcher } from '@/components/dashboard/EcosystemSwitcher';
 import { trackFunnelEvent } from '@/lib/analytics/client';
 import type { FunnelServiceKey } from '@/lib/analytics/funnel';
 
@@ -48,5 +49,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return () => document.removeEventListener('click', handleClick, { capture: true });
   }, [isAuthenticated, isLoading, pathname]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {isAuthenticated ? <EcosystemSwitcher /> : null}
+      {children}
+    </>
+  );
 }
