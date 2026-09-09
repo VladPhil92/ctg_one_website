@@ -2,6 +2,21 @@
 
 import { useState } from 'react';
 
+const FEDERATED_APPS = [
+  {
+    id: 'vertice',
+    name: 'VÉRTICE',
+    description: 'Gestión social y comunitaria basada en evidencia',
+    action: 'Abrir dashboard',
+  },
+  {
+    id: 'pisao',
+    name: 'PISÁO Gastrobar',
+    description: 'Pedidos, reservas e historial con tu identidad CTG One',
+    action: 'Abrir mi cuenta',
+  },
+] as const;
+
 export function EcosystemSwitcher() {
   const [open, setOpen] = useState(false);
 
@@ -35,23 +50,26 @@ export function EcosystemSwitcher() {
               </div>
             </div>
 
-            <a
-              href="/api/ecosystem/launch?app=vertice"
-              className="block rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-slate-300 hover:bg-slate-50"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-extrabold text-slate-900">VÉRTICE</p>
-                  <p className="mt-0.5 text-xs leading-5 text-slate-500">Gestión social y comunitaria basada en evidencia</p>
+            {FEDERATED_APPS.map((app) => (
+              <a
+                key={app.id}
+                href={`/api/ecosystem/launch?app=${app.id}`}
+                className="block rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-extrabold text-slate-900">{app.name}</p>
+                    <p className="mt-0.5 text-xs leading-5 text-slate-500">{app.description}</p>
+                  </div>
+                  <span className="text-lg font-black text-slate-400" aria-hidden="true">→</span>
                 </div>
-                <span className="text-lg font-black text-slate-400" aria-hidden="true">→</span>
-              </div>
-              <p className="mt-2 text-[10px] font-extrabold uppercase tracking-[.12em] text-blue-700">Abrir dashboard</p>
-            </a>
+                <p className="mt-2 text-[10px] font-extrabold uppercase tracking-[.12em] text-blue-700">{app.action}</p>
+              </a>
+            ))}
           </div>
 
           <p className="mt-3 text-[10px] leading-4 text-slate-400">
-            Cada plataforma conserva su propio dashboard y sesión. CTG One sólo coordina identidad y acceso seguro.
+            Cada plataforma conserva su propio dashboard y sesión. CTG One coordina identidad y acceso seguro sin compartir KYC, Wallet ni permisos administrativos.
           </p>
         </div>
       ) : null}
