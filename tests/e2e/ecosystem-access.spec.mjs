@@ -14,6 +14,6 @@ test.describe('CTG One ecosystem access layer', () => {
   test('unknown ecosystem targets fail closed', async ({ request }) => {
     const response = await request.get('/api/ecosystem/launch?app=unknown', { maxRedirects: 0 });
     expect(response.status()).toBe(404);
-    await expect(response.json()).resolves.toEqual({ error: 'ECOSYSTEM_APP_NOT_AVAILABLE' });
+    expect(await response.json()).toEqual({ error: 'ECOSYSTEM_APP_NOT_AVAILABLE' });
   });
 });
