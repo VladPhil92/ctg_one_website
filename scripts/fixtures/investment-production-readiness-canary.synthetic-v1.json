@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0129",
-  "expectedMigrationName": "crowdfunding_review_hardening",
-  "expectedMigrationCount": 129,
+  "expectedMigration": "0130",
+  "expectedMigrationName": "expand_identity_federation_providers",
+  "expectedMigrationCount": 130,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
