@@ -1,0 +1,39 @@
+name: Crowdfunding Settlement Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/app/api/federation/vertice/crowdfunding/**'
+      - 'src/app/api/payments/bold/crowdfunding/**'
+      - 'src/app/api/internal/crowdfunding/**'
+      - 'src/lib/payments/bold-crowdfunding.ts'
+      - 'src/lib/federation/secure-json.ts'
+      - 'supabase/migrations/2026090810*_crowdfunding_*.sql'
+      - 'scripts/test-crowdfunding-settlement-invariants.mjs'
+      - '.github/workflows/crowdfunding-settlement.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/app/api/federation/vertice/crowdfunding/**'
+      - 'src/app/api/payments/bold/crowdfunding/**'
+      - 'src/app/api/internal/crowdfunding/**'
+      - 'src/lib/payments/bold-crowdfunding.ts'
+      - 'supabase/migrations/2026090810*_crowdfunding_*.sql'
+
+permissions:
+  contents: read
+
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+          cache: npm
+      - run: npm ci
+      - run: node scripts/test-crowdfunding-settlement-invariants.mjs
+      - run: npm run lint
+      - run: npm run build
