@@ -1,6 +1,3 @@
-export const EXPECTED_DATABASE_MIGRATION = '0128' as const;
-export const EXPECTED_DATABASE_MIGRATION_NAME = 'crowdfunding_fk_index_hardening' as const;
-export const EXPECTED_DATABASE_MIGRATION_COUNT = 128 as const;
 export const EXPECTED_DATABASE_MIGRATION = '0129' as const;
 export const EXPECTED_DATABASE_MIGRATION_NAME = 'crowdfunding_review_hardening' as const;
 export const EXPECTED_DATABASE_MIGRATION_COUNT = 129 as const;

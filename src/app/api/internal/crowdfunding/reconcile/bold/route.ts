@@ -1,15 +1,4 @@
 import { timingSafeEqual } from 'node:crypto';
-
-import { noStoreJson } from '@/lib/federation/secure-json';
-import {
-  BoldCrowdfundingUnavailableError,
-  verifyBoldWebhookEvidence,
-  type BoldWebhookEvidence,
-} from '@/lib/payments/bold-crowdfunding';
-import { createAdminClient, isSupabaseConfigured } from '@/lib/supabase/server';
-
-export const dynamic = 'force-dynamic';
-
 import { NextResponse } from 'next/server';
 
 import { createAdminClient, isSupabaseConfigured } from '@/lib/supabase/server';
@@ -46,27 +35,6 @@ type InboxRow = {
   provider_payment_id: string;
   event_type: BoldWebhookEvidence['eventType'];
   external_reference: string | null;
-  amount_cop: number;
-  currency: 'COP';
-};
-
-function reconciliationSecretState(request: Request): 'unconfigured' | 'authorized' | 'unauthorized' {
-  const expected = process.env.CROWDFUNDING_RECONCILIATION_SECRET?.trim() ?? '';
-  if (expected.length < 32) return 'unconfigured';
-  const supplied = request.headers.get('x-ctg-reconciliation-secret')?.trim() ?? '';
-  const expectedBytes = Buffer.from(expected);
-  const suppliedBytes = Buffer.from(supplied);
-  if (expectedBytes.length !== suppliedBytes.length) return 'unauthorized';
-  return timingSafeEqual(expectedBytes, suppliedBytes) ? 'authorized' : 'unauthorized';
-}
-
-export async function POST(request: Request) {
-  if (!isSupabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return noStoreJson({ error: 'RECONCILIATION_UNAVAILABLE' }, 503);
-  }
-  const secret = reconciliationSecretState(request);
-  if (secret === 'unconfigured') return noStoreJson({ error: 'RECONCILIATION_SECRET_NOT_CONFIGURED' }, 503);
-  if (secret !== 'authorized') return noStoreJson({ error: 'UNAUTHORIZED' }, 401);
   amount_cop: number | string;
   currency: BoldWebhookEvidence['currency'];
 };
@@ -115,8 +83,6 @@ export async function POST(request: Request) {
         p_verified: verified,
         p_rejection_code: verified ? null : 'BOLD_PROVIDER_EVIDENCE_MISMATCH',
       });
-      if (rpcError) {
-        results.push({ eventId: row.id, outcome: 'settlement_failed_closed' });
 
       if (rpcError) {
         // A provider-verified event can still be permanently invalid for our
@@ -138,12 +104,6 @@ export async function POST(request: Request) {
       }
     } catch (verifyError) {
       if (verifyError instanceof BoldCrowdfundingUnavailableError) {
-        // Transient provider/configuration failure must not reject or settle the
-        // event. Leave it queued for a later deterministic retry.
-        results.push({ eventId: row.id, outcome: 'provider_unavailable' });
-        continue;
-      }
-      results.push({ eventId: row.id, outcome: 'verification_failed_closed' });
         results.push({ eventId: row.id, outcome: 'provider_unavailable' });
         continue;
       }
