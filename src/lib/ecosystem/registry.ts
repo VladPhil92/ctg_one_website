@@ -1,6 +1,6 @@
 import 'server-only';
 
-export type EcosystemAppId = 'vertice';
+export type EcosystemAppId = 'vertice' | 'pisao';
 
 export type EcosystemApp = {
   id: EcosystemAppId;
@@ -9,6 +9,7 @@ export type EcosystemApp = {
   origin: string;
   dashboardPath: string;
   federationStartPath: string;
+  federationNextPath: string;
   status: 'active' | 'maintenance' | 'disabled';
 };
 
@@ -20,6 +21,17 @@ const APPS: Record<EcosystemAppId, EcosystemApp> = {
     origin: 'https://vertice.ctgone.com',
     dashboardPath: '/dashboard',
     federationStartPath: '/auth/ctgone/start',
+    federationNextPath: '/dashboard',
+    status: 'active',
+  },
+  pisao: {
+    id: 'pisao',
+    name: 'PISÁO Gastrobar',
+    description: 'Pedidos, reservas e historial del cliente con identidad CTG One.',
+    origin: 'https://pisaogastrobar.com',
+    dashboardPath: '/micuenta',
+    federationStartPath: '/auth/ctgone/start',
+    federationNextPath: '/micuenta',
     status: 'active',
   },
 };
