@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0129",
-    "schemaMigrationName": "crowdfunding_review_hardening",
-    "schemaMigrationCount": 129,
+    "schemaMigration": "0130",
+    "schemaMigrationName": "expand_identity_federation_providers",
+    "schemaMigrationCount": 130,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
