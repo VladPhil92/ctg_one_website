@@ -51,7 +51,6 @@ export async function GET(request: Request) {
     ...requestContext,
     status,
     checks,
-    walletCanary,
     schema: {
       probeAvailable: schema.probeAvailable,
       errorCode: schema.errorCode,
@@ -63,6 +62,7 @@ export async function GET(request: Request) {
       observedMigrationCount: schema.observedMigrationCount,
       observedLatestMigrationName: schema.observedLatestMigrationName,
     },
+    walletCanary,
   });
 
   return NextResponse.json(
@@ -72,7 +72,6 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
       checks,
       deployment,
-      walletCanary,
       schema: {
         compatible: schema.compatible,
         exact: schema.exact,
@@ -82,6 +81,7 @@ export async function GET(request: Request) {
         observedLatestMigrationName: schema.observedLatestMigrationName,
         probeAvailable: schema.probeAvailable,
       },
+      walletCanary,
     },
     {
       status: status === 'unhealthy' ? 503 : 200,
