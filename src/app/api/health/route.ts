@@ -10,12 +10,14 @@ import {
   EXPECTED_DATABASE_MIGRATION_NAME,
 } from '@/lib/observability/schema-version';
 import { probeRuntimeSchemaCompatibility } from '@/lib/observability/runtime-schema';
+import { getWalletCanaryRuntimeContract } from '@/lib/wallet/canary-runtime-contract';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   const requestContext = getRequestObservabilityContext(request);
   const deployment = getDeploymentMetadata();
+  const walletCanary = getWalletCanaryRuntimeContract();
   const supabasePublicConfig = Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
@@ -60,6 +62,7 @@ export async function GET(request: Request) {
       observedMigrationCount: schema.observedMigrationCount,
       observedLatestMigrationName: schema.observedLatestMigrationName,
     },
+    walletCanary,
   });
 
   return NextResponse.json(
@@ -78,6 +81,7 @@ export async function GET(request: Request) {
         observedLatestMigrationName: schema.observedLatestMigrationName,
         probeAvailable: schema.probeAvailable,
       },
+      walletCanary,
     },
     {
       status: status === 'unhealthy' ? 503 : 200,
