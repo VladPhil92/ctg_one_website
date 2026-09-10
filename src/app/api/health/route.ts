@@ -10,12 +10,14 @@ import {
   EXPECTED_DATABASE_MIGRATION_NAME,
 } from '@/lib/observability/schema-version';
 import { probeRuntimeSchemaCompatibility } from '@/lib/observability/runtime-schema';
+import { getWalletCanaryRuntimeContract } from '@/lib/wallet/canary-runtime-contract';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   const requestContext = getRequestObservabilityContext(request);
   const deployment = getDeploymentMetadata();
+  const walletCanary = getWalletCanaryRuntimeContract();
   const supabasePublicConfig = Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
@@ -49,6 +51,7 @@ export async function GET(request: Request) {
     ...requestContext,
     status,
     checks,
+    walletCanary,
     schema: {
       probeAvailable: schema.probeAvailable,
       errorCode: schema.errorCode,
@@ -69,6 +72,7 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
       checks,
       deployment,
+      walletCanary,
       schema: {
         compatible: schema.compatible,
         exact: schema.exact,
