@@ -1,0 +1,38 @@
+name: Wallet Canary Runtime Contract
+
+on:
+  pull_request:
+    paths:
+      - 'src/app/api/health/route.ts'
+      - 'src/app/api/wallet/intents/**'
+      - 'src/lib/wallet/**'
+      - 'src/lib/observability/schema-version.ts'
+      - 'scripts/test-wallet-canary-runtime-contract-invariants.mjs'
+      - '.github/workflows/wallet-canary-runtime-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/app/api/health/route.ts'
+      - 'src/app/api/wallet/intents/**'
+      - 'src/lib/wallet/**'
+      - 'src/lib/observability/schema-version.ts'
+      - 'scripts/test-wallet-canary-runtime-contract-invariants.mjs'
+      - '.github/workflows/wallet-canary-runtime-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Runtime contract invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+      - name: Verify Wallet Canary runtime contract
+        run: node scripts/test-wallet-canary-runtime-contract-invariants.mjs
