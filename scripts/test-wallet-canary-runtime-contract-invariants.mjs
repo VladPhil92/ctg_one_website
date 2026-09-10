@@ -35,6 +35,10 @@ assert(evidence.includes("WALLET_CANARY_EVIDENCE_VERSION = 'ctg-wallet-canary-ev
 assert(schema.includes("WALLET_CANARY_MINIMUM_EXPECTED_DATABASE_MIGRATION = '0091'"), 'wallet minimum schema migration drifted');
 assert(schema.includes("WALLET_CANARY_MINIMUM_EXPECTED_DATABASE_MIGRATION_COUNT = 91"), 'wallet minimum schema count drifted');
 
+// Normalize identifier casing and separators before scanning so normal TypeScript
+// camelCase names such as destinationAddress, rpcUrl or privateKey cannot bypass
+// the public-health sensitive-field invariant.
+const normalizeIdentifier = (value) => value.replace(/[^a-z0-9]/gi, '').toLowerCase();
 const forbiddenPublicRuntimeTokens = [
   'CANARY_USER',
   'DESTINATION_ADDRESS',
@@ -47,8 +51,13 @@ const forbiddenPublicRuntimeTokens = [
   'BALANCE',
 ];
 const runtimeReturn = runtime.slice(runtime.indexOf('return {'));
+const normalizedRuntimeReturn = normalizeIdentifier(runtimeReturn);
 for (const token of forbiddenPublicRuntimeTokens) {
-  assert(!runtimeReturn.includes(token), `runtime contract must not expose sensitive/dynamic field ${token}`);
+  const normalizedToken = normalizeIdentifier(token);
+  assert(
+    !normalizedRuntimeReturn.includes(normalizedToken),
+    `runtime contract must not expose sensitive/dynamic field ${token}`,
+  );
 }
 
 console.log('wallet canary runtime contract invariants: ok');
