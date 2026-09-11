@@ -10,6 +10,8 @@ services:
     startCommand: npm run start
     healthCheckPath: /api/health
     autoDeployTrigger: checksPass
+    domains:
+      - worldmakers.ctgone.com
     envVars:
       - key: NODE_VERSION
         value: "22.22.0"
