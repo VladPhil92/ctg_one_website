@@ -22,6 +22,7 @@ import styles from './worldmakers.module.css';
 import extra from './worldmakers-extra.module.css';
 import phase2 from './worldmakers-phase2.module.css';
 import WorldExplorer from './WorldExplorer';
+import VisualShowcase from './VisualShowcase';
 
 const learningStreams = [
   'Matemáticas', 'Geometría', 'Inglés', 'Español', 'Literatura', 'Biología',
@@ -129,6 +130,7 @@ export default function WorldMakersPage() {
           </Link>
           <nav className={styles.nav} aria-label="Navegación principal de World Makers">
             <Link href="#universo">Universo</Link>
+            <Link href="#visuales">Visuales</Link>
             <Link href="#aventuras">Aventuras</Link>
             <Link href="#aprendizaje">Aprendizaje</Link>
             <Link href="#desarrollo">Desarrollo</Link>
@@ -144,8 +146,9 @@ export default function WorldMakersPage() {
           src="/images/worldmakers/hero-first-person.webp"
           alt="Visualización conceptual de World Makers en primera persona frente a un centro de investigación integrado con la naturaleza"
           fill priority sizes="100vw" className={styles.heroImage}
+          style={{ filter: 'brightness(1.22) saturate(1.08) contrast(1.03)' }}
         />
-        <div className={styles.heroVeil} />
+        <div className={styles.heroVeil} style={{ opacity: 0.56 }} />
         <div className={styles.heroGrid} aria-hidden="true" />
         <div className={styles.heroContent}>
           <div className={styles.heroCopy}>
@@ -155,7 +158,8 @@ export default function WorldMakersPage() {
               Un sandbox 3D de mundo abierto donde construir, explorar y experimentar no son premios después de aprender: <strong>son la forma de aprender.</strong>
             </p>
             <div className={styles.heroActions}>
-              <Link className={styles.primaryButton} href="#aventuras">Explora el universo <ArrowRight size={18} aria-hidden="true" /></Link>
+              <Link className={styles.primaryButton} href="#visuales">Ver el mundo <ArrowRight size={18} aria-hidden="true" /></Link>
+              <Link className={styles.secondaryButton} href="#aventuras">Explorar aventuras</Link>
               <a className={styles.secondaryButton} href="https://github.com/VladPhil92/World-Makers-Game" target="_blank" rel="noreferrer">Ver el desarrollo</a>
             </div>
             <div className={styles.heroMeta}>
@@ -168,6 +172,8 @@ export default function WorldMakersPage() {
           </div>
         </div>
       </section>
+
+      <VisualShowcase />
 
       <section id="universo" className={styles.section}>
         <div className={styles.sectionHeader}>
