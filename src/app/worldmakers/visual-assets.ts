@@ -1,4 +1,5 @@
 const VISUAL_REFERENCE_BASE = '/images/worldmakers/reference';
+const LIVE_VISUAL_BASE = '/api/worldmakers/visuals';
 
 export const worldMakersVisuals = {
   logo: {
@@ -8,9 +9,9 @@ export const worldMakersVisuals = {
     alt: 'World Makers',
   },
   gameplayOverview: {
-    src: `${VISUAL_REFERENCE_BASE}/gameplay-overview.avif`,
-    width: 1080,
-    height: 720,
+    src: `${LIVE_VISUAL_BASE}/gameplay-overview`,
+    width: 1536,
+    height: 1024,
     alt: 'Visualización aprobada de World Makers con gameplay en primera persona, construcción, ciencia y misión integrada',
   },
   visualIdentity: {
@@ -28,31 +29,31 @@ export const worldMakersVisuals = {
   characters: [
     {
       key: 'curious-explorer',
-      src: `${VISUAL_REFERENCE_BASE}/character-01.avif`,
-      width: 720,
-      height: 900,
-      alt: 'Hoja de diseño aprobada del Explorador curioso de World Makers',
+      src: `${LIVE_VISUAL_BASE}/character-01`,
+      width: 1152,
+      height: 1536,
+      alt: 'Explorador de World Makers con chaqueta amarilla y equipo de aventura',
     },
     {
       key: 'scientist-inventor',
-      src: `${VISUAL_REFERENCE_BASE}/character-02.avif`,
-      width: 720,
-      height: 900,
-      alt: 'Hoja de diseño aprobada de la Inventora científica de World Makers',
+      src: `${LIVE_VISUAL_BASE}/character-02`,
+      width: 1024,
+      height: 1536,
+      alt: 'Exploradora científica de World Makers con tableta y gafas',
     },
     {
       key: 'nature-guardian',
-      src: `${VISUAL_REFERENCE_BASE}/character-03.avif`,
-      width: 720,
-      height: 900,
-      alt: 'Hoja de diseño aprobada del Guardián de la naturaleza de World Makers',
+      src: `${LIVE_VISUAL_BASE}/character-03`,
+      width: 1152,
+      height: 1536,
+      alt: 'Explorador de naturaleza de World Makers con insignias ecológicas',
     },
     {
       key: 'luna-explorer',
-      src: `${VISUAL_REFERENCE_BASE}/character-04.avif`,
-      width: 720,
-      height: 865,
-      alt: 'Hoja de diseño aprobada de Luna, exploradora del conocimiento de World Makers',
+      src: `${LIVE_VISUAL_BASE}/character-04`,
+      width: 1152,
+      height: 1536,
+      alt: 'Exploradora de World Makers con chaqueta morada y mochila',
     },
   ],
 } as const;
