@@ -17,5 +17,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteUrl}/media`, changeFrequency: 'weekly', priority: 0.74 },
     { url: `${siteUrl}/families`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${siteUrl}/educators`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${siteUrl}/community`, changeFrequency: 'weekly', priority: 0.88 },
   ];
 }
