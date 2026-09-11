@@ -21,6 +21,7 @@ export function PortalNav() {
           <Link href="/worldmakers/media">Media</Link>
           <Link href="/worldmakers/families">Familias</Link>
           <Link href="/worldmakers/educators">Educadores</Link>
+          <Link href="/worldmakers/community">Comunidad</Link>
           <a className={styles.navCta} href="https://github.com/VladPhil92/World-Makers-Game" target="_blank" rel="noreferrer">
             GitHub <ArrowUpRight size={14} aria-hidden="true" />
           </a>
@@ -40,6 +41,8 @@ export function PortalFooter() {
         </div>
         <div className={styles.footerLinks}>
           <Link href="/worldmakers">Inicio</Link>
+          <Link href="/worldmakers/community">Comunidad</Link>
+          <Link href="/worldmakers/privacy">Privacidad</Link>
           <Link href="/worldmakers/development">Build in public</Link>
           <a href="https://ctgone.com" target="_blank" rel="noreferrer">CTG One</a>
           <a href="mailto:direccion@ctgone.com?subject=World%20Makers">Contacto</a>

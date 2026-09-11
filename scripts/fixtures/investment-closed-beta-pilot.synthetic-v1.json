@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0130",
-    "schemaMigrationName": "expand_identity_federation_providers",
-    "schemaMigrationCount": 130,
+    "schemaMigration": "0131",
+    "schemaMigrationName": "worldmakers_community_early_access",
+    "schemaMigrationCount": 131,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0130",
-  "expectedMigrationName": "expand_identity_federation_providers",
-  "expectedMigrationCount": 130,
+  "expectedMigration": "0131",
+  "expectedMigrationName": "worldmakers_community_early_access",
+  "expectedMigrationCount": 131,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

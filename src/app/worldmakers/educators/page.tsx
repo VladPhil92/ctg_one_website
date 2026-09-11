@@ -79,13 +79,13 @@ export default function EducatorsPage() {
         <div className={`${styles.shell} ${styles.audienceHero}`}>
           <div className={styles.sectionHeading}>
             <p className={styles.kicker}>EDUCATOR COLLABORATION</p>
-            <h2>Revisión pedagógica antes de convertir candidatos en aventuras de producción.</h2>
-            <p className={styles.sectionLead}>El diseño contempla revisión pedagógica, cultural y de seguridad según el contenido. Todavía no publicamos una convocatoria formal de beta educativa; el canal actual es contacto directo para instituciones o docentes interesados.</p>
+            <h2>La comunidad educativa ya puede registrar interés estructurado.</h2>
+            <p className={styles.sectionLead}>Docentes e instituciones pueden registrar su área de interés para revisión pedagógica, pruebas futuras y pilotos. El sistema distingue registro, revisión y eventual preparación de invitación; no presenta una beta como disponible antes de que exista evidencia técnica para hacerlo.</p>
           </div>
           <div className={styles.callout}>
             <h3>Docentes e instituciones</h3>
-            <p>Indica área de conocimiento, edades con las que trabajas y el tipo de colaboración que te interesa: revisión, pruebas futuras, diseño de misión o implementación institucional.</p>
-            <a className={styles.primaryButton} style={{ marginTop: 20, background: 'white', color: '#123b7a' }} href="mailto:direccion@ctgone.com?subject=Educadores%20%C2%B7%20World%20Makers">Contactar al equipo <ArrowRight size={16} /></a>
+            <p>Registra un correo adulto o institucional y selecciona si te interesa seguimiento de producto, playtesting, piloto educativo o investigación con familias.</p>
+            <Link className={styles.primaryButton} style={{ marginTop: 20, background: 'white', color: '#123b7a' }} href="/worldmakers/community?audience=educator">Registrar interés <ArrowRight size={16} /></Link>
           </div>
         </div>
       </section>
