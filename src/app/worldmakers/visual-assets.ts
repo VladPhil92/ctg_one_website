@@ -77,10 +77,10 @@ export const worldMakersVisuals = {
     'Gameplay científico de World Makers con química, física, biología y botánica integradas en primera persona',
   ),
   gameplayBuild: optionalNativeAsset(
-    process.env.WORLDMK_ASSET_GAMEPLAY_BUILD_URL,
+    process.env.WORLDMK_ASSET_GAMEPLAY_EXPLORATION_URL || process.env.WORLDMK_ASSET_GAMEPLAY_BUILD_URL,
     1536,
     864,
-    'Gameplay de construcción de World Makers con módulo eco-científico, materiales y sistemas de energía y agua',
+    'Gameplay en primera persona de World Makers frente al Research Dome dentro de un ecosistema vivo',
   ),
   universeOverview: optionalNativeAsset(
     process.env.WORLDMK_ASSET_UNIVERSE_URL,
