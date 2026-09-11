@@ -29,11 +29,13 @@ function handleWorldMakersSubdomain(request: NextRequest) {
     return null;
   }
 
-  // `/worldmakers/*` remains a valid direct preview path on ctgone.com. On the
-  // dedicated hostname we additionally support clean public routes such as
-  // `/adventures`, `/development`, `/families` and `/educators`.
+  // `/worldmakers/*` remains a valid direct preview namespace on ctgone.com.
+  // If such a URL is opened on the dedicated hostname, canonicalize it back to
+  // the clean branded path before applying the internal rewrite.
   if (pathname === '/worldmakers' || pathname.startsWith('/worldmakers/')) {
-    return null;
+    const canonical = request.nextUrl.clone();
+    canonical.pathname = pathname === '/worldmakers' ? '/' : pathname.slice('/worldmakers'.length);
+    return NextResponse.redirect(canonical, 308);
   }
 
   const url = request.nextUrl.clone();
