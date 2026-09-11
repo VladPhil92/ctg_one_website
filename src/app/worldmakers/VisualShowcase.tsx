@@ -1,31 +1,47 @@
-import Image from 'next/image';
-import { Eye, Gamepad2, Palette, Shapes } from 'lucide-react';
+import { Eye, FlaskConical, Gamepad2, Leaf, Wrench } from 'lucide-react';
 import { worldMakersVisuals } from './visual-assets';
 import styles from './worldmakers-visuals.module.css';
 
 const directionCards = [
   {
     key: 'gameplay',
-    title: 'Dirección de gameplay',
+    title: 'Gameplay · visión general',
     copy: 'Primera persona, construcción, ciencia y misiones integradas en una sola referencia de experiencia.',
     icon: Gamepad2,
     asset: worldMakersVisuals.gameplayOverview,
+    featured: true,
   },
-  {
-    key: 'identity',
-    title: 'Identidad visual',
-    copy: 'Paleta, contraste, superficies y vocabulario visual presentados completos, sin recortes destructivos.',
-    icon: Palette,
-    asset: worldMakersVisuals.visualIdentity,
-  },
-  {
-    key: 'forms',
-    title: 'Formas y animación',
-    copy: 'Política anti-voxel, siluetas orgánicas, entornos, objetos y dirección de movimiento.',
-    icon: Shapes,
-    asset: worldMakersVisuals.formsAndAnimation,
-  },
-] as const;
+  ...(worldMakersVisuals.gameplayScience
+    ? [{
+        key: 'science',
+        title: 'Gameplay científico',
+        copy: 'Química, física, biología y botánica aparecen como sistemas manipulables dentro del mundo, no como ejercicios separados del juego.',
+        icon: FlaskConical,
+        asset: worldMakersVisuals.gameplayScience,
+        featured: false,
+      }]
+    : []),
+  ...(worldMakersVisuals.gameplayBuild
+    ? [{
+        key: 'build',
+        title: 'Gameplay de construcción',
+        copy: 'Construcción modular, energía, agua, materiales y naturaleza se conectan dentro de una interfaz de primera persona legible.',
+        icon: Wrench,
+        asset: worldMakersVisuals.gameplayBuild,
+        featured: false,
+      }]
+    : []),
+  ...(worldMakersVisuals.universeOverview
+    ? [{
+        key: 'universe',
+        title: 'Universo World Makers',
+        copy: 'Una vista editorial del lenguaje visual completo: explorar, crear, aprender, experimentar y cuidar dentro de un mismo mundo vivo.',
+        icon: Leaf,
+        asset: worldMakersVisuals.universeOverview,
+        featured: false,
+      }]
+    : []),
+];
 
 const characterNames: Record<(typeof worldMakersVisuals.characters)[number]['key'], string> = {
   'curious-explorer': 'Explorador curioso',
@@ -39,35 +55,37 @@ export default function VisualShowcase() {
     <section id="visuales" className={styles.section} aria-labelledby="visual-showcase-title">
       <div className={styles.heading}>
         <div>
-          <p className={styles.kicker}>DIRECCIÓN VISUAL APROBADA</p>
-          <h2 id="visual-showcase-title">World Makers debe verse, no solo explicarse.</h2>
+          <p className={styles.kicker}>ARTE ORIGINAL · FIDELIDAD NATIVA</p>
+          <h2 id="visual-showcase-title">World Makers debe verse con el detalle con el que fue creado.</h2>
         </div>
         <div className={styles.headingCopy}>
           <Eye size={22} aria-hidden="true" />
           <p>
-            Las referencias se renderizan sin una segunda compresión de Next.js y respetando su relación de aspecto.
-            No se estiran miniaturas, no se recortan fichas y las referencias verticales conservan su composición.
+            Los masters configurados se sirven directamente, sin pasar por el optimizador de imágenes de Next.js,
+            sin conversión WebP/AVIF, sin filtros de color y respetando la relación de aspecto original.
           </p>
         </div>
       </div>
 
       <div className={styles.directionGrid}>
-        {directionCards.map(({ key, title, copy, icon: Icon, asset }, index) => (
+        {directionCards.map(({ key, title, copy, icon: Icon, asset, featured }, index) => (
           <article
-            className={`${styles.directionCard} ${index === 0 ? styles.featuredCard : ''} ${styles[`card_${key}`]}`}
+            className={`${styles.directionCard} ${featured ? styles.featuredCard : ''} ${styles[`card_${key}`] ?? ''}`}
             key={key}
           >
             <div className={styles.imageStage}>
-              <Image
+              <img
                 src={asset.src}
                 alt={asset.alt}
                 width={asset.width}
                 height={asset.height}
-                sizes={index === 0 ? '(max-width: 1280px) 92vw, 1180px' : '(max-width: 760px) 92vw, 570px'}
-                unoptimized
+                loading={index === 0 ? 'eager' : 'lazy'}
+                decoding="async"
                 className={styles.referenceImage}
               />
-              <span className={styles.referenceBadge}>Referencia conceptual</span>
+              <span className={styles.referenceBadge}>
+                {asset.isOriginal ? 'Original master · sin compresión' : 'Referencia temporal'}
+              </span>
             </div>
             <div className={styles.cardBody}>
               <div className={styles.cardTitle}>
@@ -81,23 +99,26 @@ export default function VisualShowcase() {
       </div>
 
       <div className={styles.characterIntro}>
-        <p className={styles.kicker}>PERSONAJES · REFERENCIA VISUAL</p>
-        <h3>Los Makers ya tienen un lenguaje visual definido.</h3>
-        <p>Las fichas se muestran completas y con espacio suficiente para leer poses, expresiones, accesorios y paleta.</p>
+        <p className={styles.kicker}>PERSONAJES · MASTER VISUAL</p>
+        <h3>Los Makers se presentan completos, no como miniaturas recortadas.</h3>
+        <p>Dos columnas en escritorio preservan expresiones, accesorios, silueta, calzado y paleta; cada imagen mantiene su proporción nativa.</p>
       </div>
       <div className={styles.characterStrip}>
         {worldMakersVisuals.characters.map((character) => (
           <figure className={styles.characterReference} key={character.key}>
             <div className={styles.characterImageStage}>
-              <Image
+              <img
                 src={character.src}
                 alt={character.alt}
                 width={character.width}
                 height={character.height}
-                sizes="(max-width: 760px) 92vw, (max-width: 1220px) 46vw, 570px"
-                unoptimized
+                loading="lazy"
+                decoding="async"
                 className={styles.characterImage}
               />
+              <span className={styles.characterQualityBadge}>
+                {character.isOriginal ? 'Master original' : 'Referencia temporal'}
+              </span>
             </div>
             <figcaption>{characterNames[character.key]}</figcaption>
           </figure>
