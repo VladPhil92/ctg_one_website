@@ -54,7 +54,7 @@ assert.ok(publicApi.includes('normalizedOriginHost === requestHost'), 'same-orig
 assert.ok(publicForm.includes('adultConfirmed'), 'form must require adult attestation');
 assert.ok(publicForm.includes('privacyConsent'), 'form must require explicit privacy consent');
 assert.ok(publicForm.includes('No solicites ni ingreses datos personales de niños'), 'form must warn against child data submission');
-assert.ok(publicPage.includes('Todavía no tiene una beta pública'), 'community page must not imply public beta availability');
+assert.ok(publicPage.includes('todavía no tiene una beta pública'), 'community page must not imply public beta availability');
 assert.ok(privacyPage.includes('No solicitamos datos de niños'), 'privacy notice must disclose child-data exclusion');
 
 assert.ok(adminApi.includes("profile?.role !== 'admin'"), 'admin API must require global admin');
