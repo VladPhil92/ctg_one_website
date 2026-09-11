@@ -4,9 +4,11 @@ import {
   ArrowRight,
   Atom,
   BookOpen,
+  Check,
   Compass,
   FlaskConical,
   Leaf,
+  ScanLine,
   ShieldCheck,
   Sparkles,
   Sprout,
@@ -33,26 +35,26 @@ const makers = [
   {
     name: 'Explorador curioso',
     note: 'Pregunta, observa y se atreve a descubrir lo desconocido.',
-    image: '/images/worldmakers/character-explorer.webp',
     accent: 'Naranja + azul',
+    icon: Compass,
   },
   {
     name: 'Inventora científica',
     note: 'Analiza, experimenta y convierte ideas en soluciones.',
-    image: '/images/worldmakers/character-inventor.webp',
     accent: 'Cian + tecnología',
+    icon: FlaskConical,
   },
   {
     name: 'Guardián de la naturaleza',
     note: 'Comprende ecosistemas y aprende a restaurar lo que está vivo.',
-    image: '/images/worldmakers/character-guardian.webp',
     accent: 'Verde + tierra',
+    icon: Leaf,
   },
   {
     name: 'Luna · exploradora del conocimiento',
     note: 'Conecta preguntas, personas y posibilidades para aprender mejor.',
-    image: '/images/worldmakers/character-luna.webp',
     accent: 'Violeta + aventura',
+    icon: BookOpen,
   },
 ];
 
@@ -227,16 +229,36 @@ export default function WorldMakersPage() {
       </section>
 
       <section id="aprendizaje" className={`${styles.section} ${styles.learningSection}`}>
-        <div className={styles.learningVisual}>
-          <div className={styles.imageFrame}>
-            <Image
-              src="/images/worldmakers/gameplay-overview.webp"
-              alt="Guía conceptual del mundo de World Makers con exploración, construcción, ciencia y cuidado ambiental"
-              fill
-              sizes="(max-width: 900px) 100vw, 45vw"
-              className={styles.portraitImage}
-            />
-            <div className={styles.conceptLabel}>Dirección visual · concepto</div>
+        <div className={styles.learningVisual} aria-label="Concepto de interfaz de misión científica">
+          <div className={styles.learningConsole}>
+            <div className={styles.consoleTopline}>
+              <span className={styles.consoleBadge}><Leaf size={15} /> River Renewal Project</span>
+              <span>28 m</span>
+            </div>
+
+            <div className={styles.scannerStage}>
+              <div className={styles.scannerOrbit}>
+                <ScanLine size={48} aria-hidden="true" />
+              </div>
+              <div>
+                <span>FIELD SCANNER</span>
+                <strong>Analiza el agua</strong>
+                <p>Observa, registra y compara evidencia antes de intervenir el ecosistema.</p>
+              </div>
+            </div>
+
+            <div className={styles.missionChecklist}>
+              <div><Check size={16} /><span>Medir calidad del agua</span></div>
+              <div><span className={styles.emptyCheck} /><span>Identificar 3 especies vegetales</span></div>
+              <div><span className={styles.emptyCheck} /><span>Buscar señales de vida animal</span></div>
+            </div>
+
+            <div className={styles.consoleFooter}>
+              <span>Explora</span>
+              <span>Aprende</span>
+              <span>Crea</span>
+              <span>Cuida</span>
+            </div>
           </div>
         </div>
 
@@ -270,30 +292,29 @@ export default function WorldMakersPage() {
           <p className={styles.kicker}>CONOCE A LOS MAKERS</p>
           <h2>Personajes que representan formas distintas de mirar el mundo.</h2>
           <p>
-            Los arquetipos visuales comparten una misma filosofía: curiosidad, colaboración, creatividad,
-            ciencia y cuidado de la vida. Las hojas mostradas son referencias conceptuales, no modelos finales de runtime.
+            Los arquetipos comparten una misma filosofía: curiosidad, colaboración, creatividad,
+            ciencia y cuidado de la vida. La identidad final se construirá sobre un sistema de personalización diverso y expresivo.
           </p>
         </div>
 
         <div className={styles.characterGrid}>
-          {makers.map((maker) => (
-            <article className={styles.characterCard} key={maker.name}>
-              <div className={styles.characterImageWrap}>
-                <Image
-                  src={maker.image}
-                  alt={`Hoja conceptual de ${maker.name}`}
-                  fill
-                  sizes="(max-width: 720px) 92vw, (max-width: 1180px) 45vw, 23vw"
-                  className={styles.characterImage}
-                />
-              </div>
-              <div className={styles.characterBody}>
-                <span>{maker.accent}</span>
-                <h3>{maker.name}</h3>
-                <p>{maker.note}</p>
-              </div>
-            </article>
-          ))}
+          {makers.map((maker) => {
+            const Icon = maker.icon;
+            return (
+              <article className={styles.characterCard} key={maker.name}>
+                <div className={styles.characterVisual} aria-hidden="true">
+                  <div className={styles.characterHalo} />
+                  <div className={styles.characterAvatar}><Icon size={54} strokeWidth={1.65} /></div>
+                  <div className={styles.characterPatch}>WM</div>
+                </div>
+                <div className={styles.characterBody}>
+                  <span>{maker.accent}</span>
+                  <h3>{maker.name}</h3>
+                  <p>{maker.note}</p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
