@@ -55,6 +55,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
+  align-items: start;
 }
 
 .directionCard {
@@ -78,14 +79,17 @@
   background: #eef6fb;
 }
 
-.card_gameplay .imageStage {
+.card_gameplay .imageStage,
+.card_science .imageStage,
+.card_build .imageStage {
   padding: 0;
   background: #081e31;
 }
 
-.card_identity .imageStage,
-.card_forms .imageStage {
-  min-height: 680px;
+.card_universe .imageStage {
+  min-height: 720px;
+  padding: 22px;
+  background: linear-gradient(160deg, #eef8ff, #f7fbf5);
 }
 
 .referenceImage {
@@ -98,20 +102,23 @@
   image-rendering: auto;
 }
 
-.card_gameplay .referenceImage {
+.card_gameplay .referenceImage,
+.card_science .referenceImage,
+.card_build .referenceImage {
   width: 100%;
-  max-height: 760px;
+  max-height: 820px;
 }
 
-.card_identity .referenceImage,
-.card_forms .referenceImage {
-  max-height: 720px;
+.card_universe .referenceImage {
+  width: min(100%, 620px);
+  max-height: 920px;
 }
 
 .referenceBadge {
   position: absolute;
   left: 18px;
   bottom: 18px;
+  z-index: 2;
   padding: 7px 10px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 999px;
@@ -206,6 +213,22 @@
   image-rendering: auto;
 }
 
+.characterQualityBadge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 6px 9px;
+  border: 1px solid rgba(18, 59, 122, 0.11);
+  border-radius: 999px;
+  color: #214d70;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .characterReference figcaption {
   min-height: 68px;
   padding: 16px 18px 18px;
@@ -223,9 +246,8 @@
     gap: 24px;
   }
 
-  .card_identity .imageStage,
-  .card_forms .imageStage {
-    min-height: 560px;
+  .card_universe .imageStage {
+    min-height: 620px;
   }
 }
 
@@ -245,13 +267,14 @@
   }
 
   .imageStage,
-  .card_identity .imageStage,
-  .card_forms .imageStage {
+  .card_universe .imageStage {
     min-height: 0;
     padding: 10px;
   }
 
-  .card_gameplay .imageStage {
+  .card_gameplay .imageStage,
+  .card_science .imageStage,
+  .card_build .imageStage {
     padding: 0;
   }
 
@@ -267,6 +290,12 @@
 
   .characterImageStage {
     padding: 8px;
+  }
+
+  .characterQualityBadge {
+    top: 10px;
+    right: 10px;
+    font-size: 0.58rem;
   }
 
   .characterReference figcaption {
