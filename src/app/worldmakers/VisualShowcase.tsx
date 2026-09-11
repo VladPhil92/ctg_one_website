@@ -45,9 +45,8 @@ export default function VisualShowcase() {
         <div className={styles.headingCopy}>
           <Eye size={22} aria-hidden="true" />
           <p>
-            Estas piezas usan derivados web de alta calidad obtenidos de los originales aprobados. Se conserva la
-            composición completa: sin estirar miniaturas, sin recortar fichas y sin convertir referencias verticales
-            en banners horizontales.
+            Las referencias se renderizan sin una segunda compresión de Next.js y respetando su relación de aspecto.
+            No se estiran miniaturas, no se recortan fichas y las referencias verticales conservan su composición.
           </p>
         </div>
       </div>
@@ -65,7 +64,7 @@ export default function VisualShowcase() {
                 width={asset.width}
                 height={asset.height}
                 sizes={index === 0 ? '(max-width: 1280px) 92vw, 1180px' : '(max-width: 760px) 92vw, 570px'}
-                quality={90}
+                unoptimized
                 className={styles.referenceImage}
               />
               <span className={styles.referenceBadge}>Referencia conceptual</span>
@@ -96,7 +95,7 @@ export default function VisualShowcase() {
                 width={character.width}
                 height={character.height}
                 sizes="(max-width: 760px) 92vw, (max-width: 1220px) 46vw, 570px"
-                quality={90}
+                unoptimized
                 className={styles.characterImage}
               />
             </div>
