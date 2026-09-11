@@ -80,13 +80,13 @@ export default function FamiliesPage() {
         <div className={`${styles.shell} ${styles.audienceHero}`}>
           <div className={styles.sectionHeading}>
             <p className={styles.kicker}>INTERÉS FAMILIAR</p>
-            <h2>¿Quieres seguir el desarrollo desde la perspectiva de familia?</h2>
-            <p className={styles.sectionLead}>Mientras no exista un sistema de lista de espera productivo y verificado, evitamos fingir un registro automático. Puedes contactar directamente al equipo para recibir información cuando existan hitos de acceso relevantes.</p>
+            <h2>Ya existe un registro adulto y persistente de interés.</h2>
+            <p className={styles.sectionLead}>Las familias pueden registrar su correo y preferencias sin entregar datos de niños. El sistema separa claramente el interés en seguridad, Parent Portal o pruebas futuras de cualquier identidad infantil del videojuego.</p>
           </div>
           <div className={styles.callout}>
-            <h3>Contacto directo</h3>
-            <p>Escribe indicando “Familias · World Makers” y el tipo de información que te interesa: seguridad, aprendizaje, pruebas futuras o Parent Portal.</p>
-            <a className={styles.primaryButton} style={{ marginTop: 20, background: 'white', color: '#123b7a' }} href="mailto:direccion@ctgone.com?subject=Familias%20%C2%B7%20World%20Makers">Contactar al equipo <ArrowRight size={16} /></a>
+            <h3>Comunidad para familias</h3>
+            <p>Registra únicamente datos de una persona adulta responsable y selecciona qué temas te interesan. El registro no garantiza acceso inmediato.</p>
+            <Link className={styles.primaryButton} style={{ marginTop: 20, background: 'white', color: '#123b7a' }} href="/worldmakers/community?audience=family">Registrar interés <ArrowRight size={16} /></Link>
           </div>
         </div>
       </section>
