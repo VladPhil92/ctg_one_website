@@ -95,6 +95,52 @@ function isRateLimited(request: NextRequest) {
   return false;
 }
 
+async function readJsonWithByteLimit(request: NextRequest): Promise<
+  | { ok: true; value: unknown }
+  | { ok: false; tooLarge: boolean }
+> {
+  const contentLengthHeader = request.headers.get('content-length');
+  if (contentLengthHeader) {
+    const contentLength = Number(contentLengthHeader);
+    if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+      return { ok: false, tooLarge: true };
+    }
+  }
+
+  const reader = request.body?.getReader();
+  if (!reader) return { ok: false, tooLarge: false };
+
+  const decoder = new TextDecoder();
+  let totalBytes = 0;
+  let text = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_BODY_BYTES) {
+        await reader.cancel();
+        return { ok: false, tooLarge: true };
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    return { ok: true, value: JSON.parse(text) };
+  } catch {
+    return { ok: false, tooLarge: false };
+  }
+}
+
+function acceptedResponse() {
+  // Keep first-time and duplicate submissions indistinguishable so the endpoint
+  // cannot be used to enumerate registered email addresses.
+  return NextResponse.json({ accepted: true, state: 'received' }, {
+    status: 202,
+    headers: { 'Cache-Control': 'no-store' },
+  });
+}
+
 export async function POST(request: NextRequest) {
   if (!isAllowedOrigin(request)) {
     return NextResponse.json({ accepted: false, error: 'Origen no permitido.' }, { status: 403 });
@@ -104,34 +150,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ accepted: false, error: 'Registro temporalmente no disponible.' }, { status: 503 });
   }
 
-  const contentLength = Number(request.headers.get('content-length') ?? '0');
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    return NextResponse.json({ accepted: false, error: 'Solicitud demasiado grande.' }, { status: 413 });
-  }
-
   if (isRateLimited(request)) {
     return NextResponse.json({ accepted: false, error: 'Demasiados intentos. Intenta nuevamente más tarde.' }, { status: 429 });
   }
 
-  let rawBody: unknown;
-  try {
-    rawBody = await request.json();
-  } catch {
-    return NextResponse.json({ accepted: false, error: 'Solicitud inválida.' }, { status: 400 });
+  const rawBody = await readJsonWithByteLimit(request);
+  if (!rawBody.ok) {
+    return NextResponse.json(
+      { accepted: false, error: rawBody.tooLarge ? 'Solicitud demasiado grande.' : 'Solicitud inválida.' },
+      { status: rawBody.tooLarge ? 413 : 400 },
+    );
   }
 
-  const parsed = intakeSchema.safeParse(rawBody);
+  const parsed = intakeSchema.safeParse(rawBody.value);
   if (!parsed.success) {
     return NextResponse.json({ accepted: false, error: 'Revisa los datos del formulario.' }, { status: 400 });
   }
 
   const body = parsed.data;
 
-  // Honeypot: bots commonly fill hidden website fields. Return a neutral success
-  // without persisting anything so the endpoint does not become an oracle.
-  if (body.website?.trim()) {
-    return NextResponse.json({ accepted: true, state: 'registered' }, { status: 202 });
-  }
+  // Honeypot: bots commonly fill hidden website fields. Return the same neutral
+  // success as a legitimate submission without persisting anything.
+  if (body.website?.trim()) return acceptedResponse();
 
   if (!isWorldMakersSourcePath(body.sourcePath)) {
     return NextResponse.json({ accepted: false, error: 'Fuente inválida.' }, { status: 400 });
@@ -141,17 +181,7 @@ export async function POST(request: NextRequest) {
   const now = new Date().toISOString();
   const admin = createAdminClient();
 
-  const { data: existing, error: lookupError } = await admin
-    .from('worldmakers_interest_profiles')
-    .select('id,status,submission_count')
-    .eq('email', email)
-    .maybeSingle();
-
-  if (lookupError) {
-    return NextResponse.json({ accepted: false, error: 'No fue posible procesar el registro.' }, { status: 503 });
-  }
-
-  const common = {
+  const { error } = await admin.from('worldmakers_interest_profiles').insert({
     email,
     display_name: body.displayName?.trim() || null,
     audience: body.audience,
@@ -163,46 +193,18 @@ export async function POST(request: NextRequest) {
     consent_version: WORLDMAKERS_CONSENT_VERSION,
     privacy_consent_at: now,
     adult_attested_at: now,
-    last_registered_at: now,
-  };
-
-  if (existing) {
-    const status = existing.status === 'withdrawn' ? 'registered' : existing.status;
-    const update: Record<string, unknown> = {
-      ...common,
-      status,
-      submission_count: Math.max(1, Number(existing.submission_count) || 1) + 1,
-    };
-    if (existing.status === 'withdrawn') update.withdrawn_at = null;
-
-    const { error } = await admin
-      .from('worldmakers_interest_profiles')
-      .update(update)
-      .eq('id', existing.id);
-
-    if (error) {
-      return NextResponse.json({ accepted: false, error: 'No fue posible actualizar el registro.' }, { status: 503 });
-    }
-
-    return NextResponse.json({ accepted: true, state: 'updated' }, {
-      status: 202,
-      headers: { 'Cache-Control': 'no-store' },
-    });
-  }
-
-  const { error } = await admin.from('worldmakers_interest_profiles').insert({
-    ...common,
     first_registered_at: now,
+    last_registered_at: now,
     status: 'registered',
     submission_count: 1,
   });
 
-  if (error) {
+  if (error && error.code !== '23505') {
     return NextResponse.json({ accepted: false, error: 'No fue posible completar el registro.' }, { status: 503 });
   }
 
-  return NextResponse.json({ accepted: true, state: 'registered' }, {
-    status: 201,
-    headers: { 'Cache-Control': 'no-store' },
-  });
+  // A duplicate email is intentionally a no-op. Updating an existing or withdrawn
+  // profile requires a future ownership-verification flow; knowing an address is
+  // not sufficient authority to alter its preferences or revive its status.
+  return acceptedResponse();
 }
