@@ -1,0 +1,232 @@
+.learningConsole {
+  position: relative;
+  width: min(100%, 560px);
+  min-height: 560px;
+  margin: 0 auto;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 78% 16%, rgba(86, 204, 242, 0.2), transparent 15rem),
+    radial-gradient(circle at 10% 90%, rgba(111, 207, 151, 0.12), transparent 16rem),
+    rgba(5, 30, 50, 0.74);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(18px);
+}
+
+.learningConsole::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.14;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(86, 204, 242, 0.38) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(86, 204, 242, 0.38) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at center, black, transparent 78%);
+}
+
+.consoleTopline,
+.consoleFooter {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.consoleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #d9ffe8;
+}
+
+.scannerStage {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  padding: 34px 24px;
+  display: grid;
+  grid-template-columns: 138px 1fr;
+  gap: 24px;
+  align-items: center;
+  border-radius: 25px;
+  border: 1px solid rgba(86, 204, 242, 0.19);
+  background: linear-gradient(135deg, rgba(86, 204, 242, 0.08), rgba(47, 128, 237, 0.04));
+}
+
+.scannerOrbit {
+  width: 130px;
+  height: 130px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #77ddff;
+  border: 1px solid rgba(86, 204, 242, 0.38);
+  box-shadow:
+    inset 0 0 35px rgba(86, 204, 242, 0.12),
+    0 0 0 14px rgba(86, 204, 242, 0.035),
+    0 0 0 28px rgba(86, 204, 242, 0.02);
+}
+
+.scannerStage > div:last-child > span {
+  display: block;
+  margin-bottom: 7px;
+  color: #56ccf2;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.scannerStage strong {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  font-size: 1.55rem;
+}
+
+.scannerStage p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.missionChecklist {
+  position: relative;
+  z-index: 2;
+  padding: 16px 18px;
+  display: grid;
+  gap: 12px;
+  border-radius: 20px;
+  background: rgba(248, 251, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.missionChecklist > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.82rem;
+}
+
+.missionChecklist svg {
+  flex: 0 0 auto;
+  color: #6fcf97;
+}
+
+.emptyCheck {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 50%;
+}
+
+.consoleFooter {
+  justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.consoleFooter span {
+  padding: 7px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.characterVisual {
+  position: relative;
+  min-height: 250px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #123b7a;
+  background: linear-gradient(150deg, #f4fbff, #e8f5ff 55%, #edf9f0);
+}
+
+.characterVisual::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background-image: radial-gradient(circle, rgba(18, 59, 122, 0.19) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.characterHalo {
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(86, 204, 242, 0.3), rgba(86, 204, 242, 0));
+}
+
+.characterAvatar {
+  position: relative;
+  z-index: 2;
+  width: 116px;
+  height: 116px;
+  display: grid;
+  place-items: center;
+  border-radius: 34px 34px 45px 45px;
+  border: 1px solid rgba(18, 59, 122, 0.13);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 24px 55px rgba(18, 59, 122, 0.12);
+}
+
+.characterPatch {
+  position: absolute;
+  z-index: 3;
+  right: 18px;
+  bottom: 18px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #fff;
+  background: #2f80ed;
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+@media (max-width: 560px) {
+  .learningConsole {
+    min-height: 500px;
+    padding: 16px;
+  }
+
+  .scannerStage {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .scannerOrbit {
+    width: 105px;
+    height: 105px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .learningConsole *,
+  .characterVisual * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
