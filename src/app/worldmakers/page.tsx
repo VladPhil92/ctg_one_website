@@ -7,6 +7,9 @@ import {
   Check,
   Compass,
   FlaskConical,
+  Gamepad2,
+  GitBranch,
+  GraduationCap,
   Leaf,
   ScanLine,
   ShieldCheck,
@@ -17,6 +20,8 @@ import {
 } from 'lucide-react';
 import styles from './worldmakers.module.css';
 import extra from './worldmakers-extra.module.css';
+import phase2 from './worldmakers-phase2.module.css';
+import WorldExplorer from './WorldExplorer';
 
 const learningStreams = [
   'Matemáticas', 'Geometría', 'Inglés', 'Español', 'Literatura', 'Biología',
@@ -55,6 +60,51 @@ const safetyPrinciples = [
   },
 ];
 
+const depthLayers = [
+  {
+    number: 'A',
+    title: 'Experiencia',
+    copy: 'Primero manipulas el fenómeno: equilibras, mezclas, construyes, observas, comparas, exploras o decides.',
+    example: 'La idea aparece como algo que haces.',
+  },
+  {
+    number: 'B',
+    title: 'Concepto',
+    copy: 'Después el mundo nombra el patrón que ya experimentaste: simetría, impulso, ecosistema, metáfora, identidad o proporción.',
+    example: 'La experiencia adquiere lenguaje.',
+  },
+  {
+    number: 'C',
+    title: 'Formalización',
+    copy: 'Cuando corresponde, aparecen ecuaciones, diagramas, vocabulario técnico, notación o estructuras explícitas de razonamiento.',
+    example: 'La abstracción extiende el juego; no lo bloquea.',
+  },
+];
+
+const developmentTracks = [
+  {
+    code: 'M3',
+    title: 'Caribbean Rainforest vertical slice',
+    badge: 'Source complete',
+    badgeClass: phase2.statusBadgeDone,
+    copy: 'Exploración, observación, ecosistema reactivo, construcción ecológica, UX infantil y perfiles de rendimiento están implementados a nivel fuente; la certificación nativa y de dispositivo sigue separada.',
+  },
+  {
+    code: 'M5',
+    title: 'Fantastic Learning Universe',
+    badge: 'M5.5 next',
+    badgeClass: phase2.statusBadgeNext,
+    copy: 'Currículo, Mission Runtime composable, Science Simulation Core y Language/Literature/Thought Runtime están source-complete. El siguiente frente es el primer Adventure Pack jugable.',
+  },
+  {
+    code: 'M6',
+    title: 'Private multiplayer',
+    badge: 'Planned',
+    badgeClass: phase2.statusBadgePlanned,
+    copy: 'La dirección prevista es multijugador cerrado con relaciones e invitaciones aprobadas por padres, sin descubrimiento público de desconocidos ni chat abierto con extraños.',
+  },
+];
+
 export default function WorldMakersPage() {
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -79,9 +129,9 @@ export default function WorldMakersPage() {
           </Link>
           <nav className={styles.nav} aria-label="Navegación principal de World Makers">
             <Link href="#universo">Universo</Link>
+            <Link href="#aventuras">Aventuras</Link>
             <Link href="#aprendizaje">Aprendizaje</Link>
-            <Link href="#personajes">Personajes</Link>
-            <Link href="#principios">Principios</Link>
+            <Link href="#desarrollo">Desarrollo</Link>
           </nav>
           <a className={styles.ctgLink} href="https://ctgone.com" target="_blank" rel="noreferrer">
             CTG One <ArrowRight size={15} aria-hidden="true" />
@@ -105,7 +155,7 @@ export default function WorldMakersPage() {
               Un sandbox 3D de mundo abierto donde construir, explorar y experimentar no son premios después de aprender: <strong>son la forma de aprender.</strong>
             </p>
             <div className={styles.heroActions}>
-              <Link className={styles.primaryButton} href="#universo">Explora el universo <ArrowRight size={18} aria-hidden="true" /></Link>
+              <Link className={styles.primaryButton} href="#aventuras">Explora el universo <ArrowRight size={18} aria-hidden="true" /></Link>
               <a className={styles.secondaryButton} href="https://github.com/VladPhil92/World-Makers-Game" target="_blank" rel="noreferrer">Ver el desarrollo</a>
             </div>
             <div className={styles.heroMeta}>
@@ -135,6 +185,17 @@ export default function WorldMakersPage() {
         </div>
       </section>
 
+      <section id="aventuras" className={phase2.atlasSection}>
+        <div className={phase2.atlasIntro}>
+          <div>
+            <p className={styles.kicker}>WORLD ATLAS · FANTASTIC LEARNING UNIVERSE</p>
+            <h2>No son niveles escolares. Son lugares que existen porque hay algo interesante que resolver.</h2>
+          </div>
+          <p>Explora el vertical slice del Caribbean Rainforest y algunos de los mundos candidatos del primer Adventure Pack. Cada región convierte una disciplina en una mecánica de mundo, no en una pantalla de preguntas.</p>
+        </div>
+        <WorldExplorer />
+      </section>
+
       <section id="aprendizaje" className={`${styles.section} ${styles.learningSection}`}>
         <div className={styles.learningVisual} aria-label="Concepto de interfaz de misión científica">
           <div className={extra.learningConsole}>
@@ -159,6 +220,26 @@ export default function WorldMakersPage() {
           <p>Las experiencias de aprendizaje se integran dentro de las reglas del juego. Una misión puede pedirte observar un ecosistema, medir una estructura, modelar un sistema, interpretar un texto, comunicar una idea o revisar un argumento después de nueva evidencia.</p>
           <div className={styles.learningCallout}><Atom size={28} aria-hidden="true" /><div><strong>Alto techo conceptual, baja fricción de interacción.</strong><span>Ideas complejas pueden aparecer primero como experiencia y después como notación.</span></div></div>
           <div className={styles.subjects} aria-label="Áreas de aprendizaje previstas">{learningStreams.map((stream) => <span key={stream}>{stream}</span>)}</div>
+        </div>
+      </section>
+
+      <section className={phase2.depthSection} aria-labelledby="depth-title">
+        <div className={phase2.depthIntro}>
+          <div>
+            <p className={styles.kicker}>EXPERIENCE → CONCEPT → FORMALIZATION</p>
+            <h2 id="depth-title">La dificultad conceptual puede crecer sin convertir la interfaz en una barrera.</h2>
+          </div>
+          <p>World Makers separa la profundidad de una idea de la fricción necesaria para interactuar con ella. Los apoyos cambian según edad y contexto; las grandes ideas no tienen que desaparecer.</p>
+        </div>
+        <div className={phase2.depthGrid}>
+          {depthLayers.map((layer) => (
+            <article className={phase2.depthCard} key={layer.number}>
+              <div className={phase2.depthNumber}>{layer.number}</div>
+              <h3>{layer.title}</h3>
+              <p>{layer.copy}</p>
+              <strong>{layer.example}</strong>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -197,6 +278,62 @@ export default function WorldMakersPage() {
         </div>
         <div className={styles.principleGrid}>
           {safetyPrinciples.map(({ title, copy, icon: Icon }) => <article className={styles.principleCard} key={title}><Icon size={28} aria-hidden="true" /><h3>{title}</h3><p>{copy}</p></article>)}
+        </div>
+      </section>
+
+      <section id="desarrollo" className={phase2.statusSection}>
+        <div className={phase2.statusIntro}>
+          <div>
+            <p className={styles.kicker}>BUILD IN PUBLIC · CON RIGOR</p>
+            <h2>Mostramos progreso sin confundir código fuente con un juego ya certificado.</h2>
+          </div>
+          <p>World Makers separa explícitamente integridad de fuente, ejecución nativa en Unreal y evidencia de dispositivo. Esta web seguirá la misma disciplina: aspirar alto sin fabricar estados de producción.</p>
+        </div>
+        <div className={phase2.statusGrid}>
+          {developmentTracks.map((track) => (
+            <article className={phase2.statusCard} key={track.code}>
+              <div className={phase2.statusTopline}>
+                <span className={phase2.statusCode}>{track.code}</span>
+                <span className={track.badgeClass}>{track.badge}</span>
+              </div>
+              <h3>{track.title}</h3>
+              <p>{track.copy}</p>
+            </article>
+          ))}
+        </div>
+        <div className={phase2.truthNote}>
+          <GitBranch size={20} aria-hidden="true" />
+          <span><strong>Estado público responsable:</strong> un check verde de CI demuestra integridad del repositorio; no sustituye compilación nativa de Unreal, pruebas manuales ni certificación en tablets representativas.</span>
+        </div>
+      </section>
+
+      <section className={phase2.interestSection} aria-labelledby="interest-title">
+        <div className={phase2.interestIntro}>
+          <div>
+            <p className={styles.kicker}>FORMA PARTE DEL CAMINO</p>
+            <h2 id="interest-title">Todavía no hay una beta pública. Sí hay una comunidad que podemos empezar a construir.</h2>
+          </div>
+          <p>El registro actual es de interés y conversación, no una promesa de acceso inmediato. Queremos escuchar especialmente a familias, educadores y personas interesadas en desarrollo de juegos y aprendizaje.</p>
+        </div>
+        <div className={phase2.interestCards}>
+          <article className={phase2.interestCard}>
+            <span><Users size={15} /> Familias</span>
+            <h3>Quiero saber cuándo pueda probarse.</h3>
+            <p>Recibe el contexto correcto sobre seguridad, privacidad, experiencias de juego y futuras pruebas controladas.</p>
+            <a href="mailto:direccion@ctgone.com?subject=World%20Makers%20-%20Familias">Registrar interés <ArrowRight size={16} /></a>
+          </article>
+          <article className={phase2.interestCard}>
+            <span><GraduationCap size={15} /> Educadores</span>
+            <h3>Quiero explorar su potencial pedagógico.</h3>
+            <p>Conversemos sobre misiones, disciplinas, evidencia de aprendizaje, revisión pedagógica y escenarios escolares futuros.</p>
+            <a href="mailto:direccion@ctgone.com?subject=World%20Makers%20-%20Educadores">Hablar con el equipo <ArrowRight size={16} /></a>
+          </article>
+          <article className={phase2.interestCard}>
+            <span><Gamepad2 size={15} /> Comunidad de desarrollo</span>
+            <h3>Quiero seguir cómo se construye.</h3>
+            <p>El repositorio público muestra arquitectura, contratos de contenido, decisiones de diseño y el estado verificable de cada fase.</p>
+            <a href="https://github.com/VladPhil92/World-Makers-Game" target="_blank" rel="noreferrer">Explorar GitHub <ArrowRight size={16} /></a>
+          </article>
         </div>
       </section>
 
