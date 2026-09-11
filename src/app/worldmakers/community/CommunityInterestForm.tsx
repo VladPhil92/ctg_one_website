@@ -33,8 +33,8 @@ const initialPreferences: Pick<FormState, 'wantsProductUpdates' | 'wantsPlaytest
   wantsFamilyResearch: false,
 };
 
-export default function CommunityInterestForm({ initialAudience }: Props) {
-  const [form, setForm] = useState<FormState>({
+function emptyForm(initialAudience: WorldMakersAudience): FormState {
+  return {
     displayName: '',
     email: '',
     audience: initialAudience,
@@ -42,7 +42,11 @@ export default function CommunityInterestForm({ initialAudience }: Props) {
     adultConfirmed: false,
     privacyConsent: false,
     website: '',
-  });
+  };
+}
+
+export default function CommunityInterestForm({ initialAudience }: Props) {
+  const [form, setForm] = useState<FormState>(() => emptyForm(initialAudience));
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -79,22 +83,26 @@ export default function CommunityInterestForm({ initialAudience }: Props) {
       }
 
       setStatus('success');
-      setMessage(payload.state === 'updated'
-        ? 'Actualizamos tus preferencias. Seguiremos usando este registro únicamente para los intereses que seleccionaste.'
-        : 'Registro recibido. Quedaste en la comunidad de interés de World Makers; esto no implica acceso inmediato a una beta.');
+      setMessage('Solicitud recibida. Por seguridad no confirmamos si este correo ya existía. Un envío repetido no modifica ni reactiva un perfil previo; cualquier cambio futuro requerirá verificación de control del correo.');
     } catch (error) {
       setStatus('error');
       setMessage(error instanceof Error ? error.message : 'No fue posible completar el registro.');
     }
   }
 
+  function resetForAnotherRegistration() {
+    setForm(emptyForm(initialAudience));
+    setMessage('');
+    setStatus('idle');
+  }
+
   if (status === 'success') {
     return (
       <div className={styles.successCard} role="status">
         <CheckCircle2 size={34} aria-hidden="true" />
-        <h3>Tu interés quedó registrado.</h3>
+        <h3>Solicitud recibida.</h3>
         <p>{message}</p>
-        <button type="button" onClick={() => setStatus('idle')}>Actualizar preferencias</button>
+        <button type="button" onClick={resetForAnotherRegistration}>Registrar otro correo</button>
       </div>
     );
   }
