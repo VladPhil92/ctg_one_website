@@ -33,13 +33,26 @@ const intakeSchema = z.object({
   { message: 'Selecciona al menos un tipo de interés.' },
 );
 
+function normalizeHostname(value: string | null) {
+  return value?.split(':')[0]?.trim().toLowerCase() ?? '';
+}
+
 function isAllowedOrigin(request: NextRequest) {
   const origin = request.headers.get('origin');
   if (!origin) return true;
 
   try {
     const { hostname, protocol } = new URL(origin);
-    if (protocol !== 'https:' && hostname !== 'localhost' && hostname !== '127.0.0.1') return false;
+    const normalizedOriginHost = hostname.toLowerCase();
+    const requestHost = normalizeHostname(request.headers.get('host'));
+    const isLocalhost = normalizedOriginHost === 'localhost' || normalizedOriginHost === '127.0.0.1';
+
+    if (protocol !== 'https:' && !isLocalhost) return false;
+
+    // Allow any same-origin deployment host (including ephemeral Render previews)
+    // while keeping cross-origin submissions constrained to canonical CTG hosts.
+    if (requestHost && normalizedOriginHost === requestHost) return true;
+
     return [
       'worldmakers.ctgone.com',
       'www.worldmakers.ctgone.com',
@@ -47,7 +60,7 @@ function isAllowedOrigin(request: NextRequest) {
       'www.ctgone.com',
       'localhost',
       '127.0.0.1',
-    ].includes(hostname);
+    ].includes(normalizedOriginHost);
   } catch {
     return false;
   }
@@ -155,14 +168,16 @@ export async function POST(request: NextRequest) {
 
   if (existing) {
     const status = existing.status === 'withdrawn' ? 'registered' : existing.status;
+    const update: Record<string, unknown> = {
+      ...common,
+      status,
+      submission_count: Math.max(1, Number(existing.submission_count) || 1) + 1,
+    };
+    if (existing.status === 'withdrawn') update.withdrawn_at = null;
+
     const { error } = await admin
       .from('worldmakers_interest_profiles')
-      .update({
-        ...common,
-        status,
-        withdrawn_at: status === 'registered' ? null : undefined,
-        submission_count: Math.max(1, Number(existing.submission_count) || 1) + 1,
-      })
+      .update(update)
       .eq('id', existing.id);
 
     if (error) {
