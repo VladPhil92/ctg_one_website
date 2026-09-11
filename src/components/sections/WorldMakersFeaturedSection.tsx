@@ -8,7 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 const WORLD_MAKERS_URL = 'https://worldmakers.ctgone.com';
 const WORLD_MAKERS_IMAGE =
-  'https://raw.githubusercontent.com/VladPhil92/World-Makers-Game/main/docs/visual-reference/world-makers-v2/hero-banner.png';
+  'https://raw.githubusercontent.com/VladPhil92/World-Makers-Game/main/docs/visual-reference/world-makers-v2/gameplay-build.png';
 
 export const WorldMakersFeaturedSection: React.FC = () => {
   const { locale } = useLanguage();
@@ -94,8 +94,8 @@ export const WorldMakersFeaturedSection: React.FC = () => {
                   src={WORLD_MAKERS_IMAGE}
                   alt={
                     es
-                      ? 'World Makers, videojuego de CTG One Technology: explora, crea y aprende en un mundo vivo'
-                      : 'World Makers, a CTG One Technology game: explore, create and learn in a living world'
+                      ? 'Captura de gameplay de World Makers: construcción en primera persona de un módulo eco-científico'
+                      : 'World Makers gameplay screenshot: first-person building of an eco-research module'
                   }
                   loading="lazy"
                   decoding="async"
@@ -107,7 +107,7 @@ export const WorldMakersFeaturedSection: React.FC = () => {
                     <span className="block text-[9px] font-semibold uppercase tracking-[0.16em] text-[#f1c75b]">
                       {es ? 'Visual oficial del proyecto' : 'Official project visual'}
                     </span>
-                    <span className="mt-1 block text-xs text-white/70">World Makers · Hero art oficial</span>
+                    <span className="mt-1 block text-xs text-white/70">World Makers · Gameplay de construcción</span>
                   </div>
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur-md transition group-hover:border-[#d6ae56]/50 group-hover:text-[#f1c75b]">
                     <ArrowUpRight size={17} aria-hidden="true" />
