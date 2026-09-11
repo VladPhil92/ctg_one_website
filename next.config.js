@@ -49,6 +49,16 @@ const nextConfig = {
     deviceSizes: [360, 430, 640, 768, 1024, 1280, 1536, 1920],
     imageSizes: [32, 48, 64, 96, 128, 256],
     minimumCacheTTL: 2592000,
+    // World Makers keeps its approved visual-direction source of truth in the
+    // game repository. Limit remote image optimization to that exact repository
+    // path rather than allowing arbitrary GitHub-hosted imagery.
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
+        pathname: '/VladPhil92/World-Makers-Game/**',
+      },
+    ],
   },
 
   // Canonical route policy: public corporate pages use stable English slugs.
