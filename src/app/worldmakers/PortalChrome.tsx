@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { ArrowUpRight, Compass } from 'lucide-react';
 import styles from './portal.module.css';
+import mobile from './portal-mobile.module.css';
 
 export function PortalNav() {
   return (
     <header className={styles.navbar}>
-      <div className={`${styles.shell} ${styles.navInner}`}>
+      <div className={`${styles.shell} ${styles.navInner} ${mobile.mobileNavInner}`}>
         <Link className={styles.brand} href="/worldmakers">
           <span className={styles.brandMark}><Compass size={24} aria-hidden="true" /></span>
           <span className={styles.brandText}>
@@ -13,7 +14,7 @@ export function PortalNav() {
             <small>Imagina · Crea · Aprende · Transforma</small>
           </span>
         </Link>
-        <nav className={styles.navLinks} aria-label="World Makers portal">
+        <nav className={`${styles.navLinks} ${mobile.mobileNavLinks}`} aria-label="World Makers portal">
           <Link href="/worldmakers/how-to-play">Cómo se juega</Link>
           <Link href="/worldmakers/adventures">Aventuras</Link>
           <Link href="/worldmakers/development">Desarrollo</Link>
