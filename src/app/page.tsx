@@ -4,6 +4,7 @@ import React from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { HeroSection } from '@/components/sections/HeroSection';
+import { WorldMakersFeaturedSection } from '@/components/sections/WorldMakersFeaturedSection';
 import { HomeIntroSection } from '@/components/sections/HomeIntroSection';
 import { EcosystemDirectorySection } from '@/components/sections/EcosystemDirectorySection';
 import { WalletProductFeature } from '@/components/sections/WalletProductFeature';
@@ -20,6 +21,7 @@ export default function Home() {
         style={{ backgroundColor: 'var(--bg-primary)' }}
       >
         <HeroSection />
+        <WorldMakersFeaturedSection />
         <HomeIntroSection />
         <EcosystemDirectorySection />
         <WalletProductFeature />

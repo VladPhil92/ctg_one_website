@@ -9,6 +9,7 @@ export type DashboardService = {
   code: string;
   title: string;
   description: string;
+  descriptionEn?: string;
   href: string;
   cta: string;
   group: DashboardServiceGroup;
@@ -17,6 +18,7 @@ export type DashboardService = {
   aliases?: readonly string[];
   publicHref?: string;
   publicCta?: string;
+  publicCtaEn?: string;
   secondaryAction?: {
     label: string;
     href: string;
@@ -39,6 +41,7 @@ const tokenStatus = getPublicProofStatus(getCapabilityProof('web3'));
 const knowledgeStatus = getPublicProofStatus(getCapabilityProof('ctg-knowledge-v01'));
 
 export const DASHBOARD_SERVICES: readonly DashboardService[] = [
+  { id: 'world-makers', code: 'GAM-13', title: 'World Makers', description: 'Videojuego de aventura ecofuturista que integra exploración, construcción, ciencia y aprendizaje en una experiencia interactiva.', descriptionEn: 'An eco-futurist adventure game combining exploration, building, science and learning in an interactive experience.', href: 'https://worldmakers.ctgone.com', cta: 'Explorar World Makers', group: 'education', status: 'DEVELOPMENT', publicHref: 'https://worldmakers.ctgone.com', publicCta: 'Explorar World Makers', publicCtaEn: 'Explore World Makers' },
   { id: 'wallet', code: 'FIN-01', title: 'CTG One Wallet', description: 'Consulta saldo COP, actividad canónica, activos Polygon y vínculos de wallet verificados.', href: '/dashboard/wallet', cta: 'Abrir Wallet', group: 'finance', status: 'ACCOUNT', serviceKey: 'wallet', aliases: ['/dashboard/depositos'], publicHref: 'https://wallet.ctgone.com', publicCta: 'Abrir Wallet', secondaryAction: { label: 'Añadir fondos', href: '/dashboard/depositos' } },
   { id: 'investment', code: 'INV-02', title: 'CTG Craft Beer Inversión', description: 'Participa en lotes productivos y sigue capital, producción, comercialización y liquidaciones.', href: '/inversion/app', cta: 'Abrir inversión', group: 'finance', status: investmentStatus, serviceKey: 'investment', aliases: ['/dashboard/inversion'], publicHref: '/inversion', publicCta: 'Conocer inversión' },
   { id: 'identity', code: 'ID-03', title: 'Identidad CTG One', description: 'Gestiona KYC, permisos financieros y los vínculos de identidad que protegen el ecosistema.', href: '/dashboard/kyc', cta: 'Gestionar identidad', group: 'finance', status: 'ACCOUNT', serviceKey: 'identity' },
