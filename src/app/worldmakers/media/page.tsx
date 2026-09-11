@@ -4,6 +4,7 @@ import { ExternalLink, ImageIcon } from 'lucide-react';
 import { PortalFooter, PortalNav } from '../PortalChrome';
 import { worldMakersVisuals } from '../visual-assets';
 import styles from '../portal.module.css';
+import hd from './media-hd.module.css';
 
 export const metadata: Metadata = {
   title: 'Media & Visual Direction | World Makers',
@@ -20,7 +21,7 @@ export default function MediaPage() {
           <div>
             <p className={styles.kicker}>MEDIA · VISUAL DIRECTION</p>
             <h1>Un mundo orgánico, modular y vivo.</h1>
-            <p className={styles.heroLead}>La dirección visual combina naturaleza, ciencia, construcción y optimismo. Las imágenes públicas se etiquetan según su función para evitar confundir un mockup conceptual con una captura del runtime final.</p>
+            <p className={styles.heroLead}>La dirección visual combina naturaleza, ciencia, construcción y optimismo. Las referencias se muestran respetando su formato original y con calidad web suficiente para revisar detalles.</p>
           </div>
           <aside className={styles.heroCard}>
             <div className={styles.heroCardIcon}><ImageIcon size={30} /></div>
@@ -37,33 +38,51 @@ export default function MediaPage() {
         <div className={styles.shell}>
           <div className={styles.sectionHeading}>
             <p className={styles.kicker}>FEATURED MEDIA</p>
-            <h2>Las referencias aprobadas, visibles en la web.</h2>
+            <h2>Las referencias aprobadas, visibles con su composición completa.</h2>
           </div>
-          <div className={styles.mediaGrid}>
-            <article className={styles.mediaCard}>
-              <Image className={styles.mediaImage} src="/images/worldmakers/hero-first-person.webp" alt="World Makers first-person concept at the Research Dome" fill sizes="(max-width: 920px) 100vw, 50vw" priority style={{ filter: 'brightness(1.18) saturate(1.06)' }} />
-              <div className={styles.mediaOverlay}><strong>Research Dome · First-person concept</strong><span>Camera + HUD + exploration direction · concept visualization</span></div>
+
+          <div className={hd.grid}>
+            <article className={`${styles.mediaCard} ${hd.referenceCard} ${hd.wide}`}>
+              <div className={hd.heroFrame}>
+                <Image className={hd.heroImage} src="/images/worldmakers/hero-first-person.webp" alt="World Makers first-person concept at the Research Dome" fill sizes="100vw" priority quality={90} />
+                <div className={hd.overlay}><strong>Research Dome · First-person concept</strong><span>Camera + HUD + exploration direction · concept visualization</span></div>
+              </div>
             </article>
-            <article className={styles.mediaCard} style={{ background: 'linear-gradient(145deg,#0e356f,#2f80ed)' }}>
-              <Image src="/images/worldmakers/logo.webp" alt="World Makers logo" fill sizes="(max-width: 920px) 50vw, 25vw" style={{ objectFit: 'contain', padding: 34 }} />
-              <div className={styles.mediaOverlay}><strong>World Makers identity</strong><span>Primary public logo</span></div>
+
+            <article className={`${styles.mediaCard} ${hd.referenceCard}`}>
+              <div className={hd.logoFrame}>
+                <Image className={hd.logoImage} src="/images/worldmakers/logo.webp" alt="World Makers logo" width={360} height={180} quality={90} />
+                <div className={hd.overlay}><strong>World Makers identity</strong><span>Primary public logo</span></div>
+              </div>
             </article>
-            <article className={styles.mediaCard}>
-              <Image src={worldMakersVisuals.gameplayOverview.src} alt={worldMakersVisuals.gameplayOverview.alt} fill sizes="(max-width: 920px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
-              <div className={styles.mediaOverlay}><strong>Gameplay visual direction</strong><span>World depth · mission HUD · build categories · approved concept reference</span></div>
+
+            <article className={`${styles.mediaCard} ${hd.referenceCard}`}>
+              <div className={hd.imageFrame}>
+                <Image className={hd.referenceImage} src={worldMakersVisuals.visualIdentity.src} alt={worldMakersVisuals.visualIdentity.alt} width={worldMakersVisuals.visualIdentity.width} height={worldMakersVisuals.visualIdentity.height} sizes="(max-width: 760px) 92vw, 570px" quality={90} />
+                <div className={hd.overlay}><strong>Visual identity base guide</strong><span>Palette · surfaces · visual language · approved concept reference</span></div>
+              </div>
             </article>
-            <article className={styles.mediaCard}>
-              <Image src={worldMakersVisuals.visualIdentity.src} alt={worldMakersVisuals.visualIdentity.alt} fill sizes="(max-width: 920px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
-              <div className={styles.mediaOverlay}><strong>Visual identity base guide</strong><span>Palette · surfaces · visual language · approved concept reference</span></div>
+
+            <article className={`${styles.mediaCard} ${hd.referenceCard} ${hd.wide}`}>
+              <div className={hd.imageFrame}>
+                <Image className={hd.referenceImage} src={worldMakersVisuals.gameplayOverview.src} alt={worldMakersVisuals.gameplayOverview.alt} width={worldMakersVisuals.gameplayOverview.width} height={worldMakersVisuals.gameplayOverview.height} sizes="(max-width: 1280px) 92vw, 1180px" quality={90} />
+                <div className={hd.overlay}><strong>Gameplay visual direction</strong><span>First person · building · scientific gameplay · mission UI</span></div>
+              </div>
             </article>
-            <article className={styles.mediaCard}>
-              <Image src={worldMakersVisuals.formsAndAnimation.src} alt={worldMakersVisuals.formsAndAnimation.alt} fill sizes="(max-width: 920px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
-              <div className={styles.mediaOverlay}><strong>Forms, design & animation</strong><span>Organic modular language · anti-voxel boundary · motion direction</span></div>
+
+            <article className={`${styles.mediaCard} ${hd.referenceCard} ${hd.wide}`}>
+              <div className={hd.imageFrame}>
+                <Image className={hd.referenceImage} src={worldMakersVisuals.formsAndAnimation.src} alt={worldMakersVisuals.formsAndAnimation.alt} width={worldMakersVisuals.formsAndAnimation.width} height={worldMakersVisuals.formsAndAnimation.height} sizes="(max-width: 1280px) 92vw, 1180px" quality={90} />
+                <div className={hd.overlay}><strong>Forms, design & animation</strong><span>Organic modular language · anti-voxel boundary · motion direction</span></div>
+              </div>
             </article>
+
             {worldMakersVisuals.characters.map((character, index) => (
-              <article className={styles.mediaCard} key={character.key} style={{ background: 'linear-gradient(180deg,#eaf6ff,#c7e1f4)' }}>
-                <Image src={character.src} alt={character.alt} fill sizes="(max-width: 920px) 50vw, 25vw" style={{ objectFit: 'cover' }} />
-                <div className={styles.mediaOverlay}><strong>Maker reference {index + 1}</strong><span>{character.alt}</span></div>
+              <article className={`${styles.mediaCard} ${hd.referenceCard} ${hd.characterCard}`} key={character.key}>
+                <div className={hd.imageFrame}>
+                  <Image className={hd.referenceImage} src={character.src} alt={character.alt} width={character.width} height={character.height} sizes="(max-width: 760px) 92vw, 570px" quality={90} />
+                  <div className={hd.overlay}><strong>Maker reference {index + 1}</strong><span>{character.alt}</span></div>
+                </div>
               </article>
             ))}
           </div>
