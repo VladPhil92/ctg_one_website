@@ -15,6 +15,15 @@ function handleWorldMakersSubdomain(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // Search-engine infrastructure is host-scoped. Keep CTG One's root sitemap
+  // and robots policy separate by routing the branded host to the metadata
+  // routes that live inside the World Makers application namespace.
+  if (pathname === '/sitemap.xml' || pathname === '/robots.txt') {
+    const metadataUrl = request.nextUrl.clone();
+    metadataUrl.pathname = `/worldmakers${pathname}`;
+    return NextResponse.rewrite(metadataUrl);
+  }
+
   // Keep shared/static infrastructure at its canonical path. The proxy matcher
   // already excludes most image/static extensions; these explicit guards keep
   // API and framework traffic out of the branded route namespace as well.
@@ -22,9 +31,7 @@ function handleWorldMakersSubdomain(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/images/') ||
     pathname.startsWith('/api/') ||
-    pathname === '/favicon.ico' ||
-    pathname === '/robots.txt' ||
-    pathname === '/sitemap.xml'
+    pathname === '/favicon.ico'
   ) {
     return null;
   }
