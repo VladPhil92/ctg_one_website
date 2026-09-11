@@ -7,6 +7,7 @@ import {
   BookOpen,
   BrainCircuit,
   Coins,
+  Gamepad2,
   Landmark,
   PawPrint,
   School,
@@ -21,6 +22,7 @@ import { PUBLIC_ECOSYSTEM_SERVICES, type DashboardService, type DashboardService
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const SERVICE_ICONS: Record<string, LucideIcon> = {
+  'world-makers': Gamepad2,
   wallet: WalletCards,
   investment: Beer,
   'craft-beer': Beer,
