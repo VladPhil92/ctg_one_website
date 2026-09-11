@@ -7,25 +7,32 @@ const directionCards = [
   {
     key: 'gameplay',
     title: 'Dirección de gameplay',
-    copy: 'Mundo eco-fantástico, profundidad de paisaje, HUD de misión y lenguaje de construcción.',
+    copy: 'Primera persona, construcción, ciencia y misiones integradas en una sola referencia de experiencia.',
     icon: Gamepad2,
     asset: worldMakersVisuals.gameplayOverview,
   },
   {
     key: 'identity',
     title: 'Identidad visual',
-    copy: 'Paleta, contraste, superficies y vocabulario visual que sostienen una identidad propia.',
+    copy: 'Paleta, contraste, superficies y vocabulario visual presentados completos, sin recortes destructivos.',
     icon: Palette,
     asset: worldMakersVisuals.visualIdentity,
   },
   {
     key: 'forms',
     title: 'Formas y animación',
-    copy: 'Política anti-voxel, siluetas orgánicas y una dirección de movimiento expresiva y legible.',
+    copy: 'Política anti-voxel, siluetas orgánicas, entornos, objetos y dirección de movimiento.',
     icon: Shapes,
     asset: worldMakersVisuals.formsAndAnimation,
   },
-];
+] as const;
+
+const characterNames: Record<(typeof worldMakersVisuals.characters)[number]['key'], string> = {
+  'curious-explorer': 'Explorador curioso',
+  'scientist-inventor': 'Inventora científica',
+  'nature-guardian': 'Guardián de la naturaleza',
+  'luna-explorer': 'Luna · exploradora del conocimiento',
+};
 
 export default function VisualShowcase() {
   return (
@@ -38,28 +45,36 @@ export default function VisualShowcase() {
         <div className={styles.headingCopy}>
           <Eye size={22} aria-hidden="true" />
           <p>
-            Estas piezas pertenecen al set de referencias visuales aprobado y versionado en el repositorio.
-            Son visualizaciones conceptuales: comunican la dirección artística y de experiencia, no capturas de una build final.
+            Estas piezas usan derivados web de alta calidad obtenidos de los originales aprobados. Se conserva la
+            composición completa: sin estirar miniaturas, sin recortar fichas y sin convertir referencias verticales
+            en banners horizontales.
           </p>
         </div>
       </div>
 
       <div className={styles.directionGrid}>
         {directionCards.map(({ key, title, copy, icon: Icon, asset }, index) => (
-          <article className={`${styles.directionCard} ${index === 0 ? styles.featuredCard : ''}`} key={key}>
+          <article
+            className={`${styles.directionCard} ${index === 0 ? styles.featuredCard : ''} ${styles[`card_${key}`]}`}
+            key={key}
+          >
             <div className={styles.imageStage}>
               <Image
                 src={asset.src}
                 alt={asset.alt}
                 width={asset.width}
                 height={asset.height}
-                sizes={index === 0 ? '(max-width: 900px) 92vw, 48vw' : '(max-width: 900px) 92vw, 24vw'}
+                sizes={index === 0 ? '(max-width: 1280px) 92vw, 1180px' : '(max-width: 760px) 92vw, 570px'}
+                quality={90}
                 className={styles.referenceImage}
               />
               <span className={styles.referenceBadge}>Referencia conceptual</span>
             </div>
             <div className={styles.cardBody}>
-              <div className={styles.cardTitle}><Icon size={19} aria-hidden="true" /><h3>{title}</h3></div>
+              <div className={styles.cardTitle}>
+                <Icon size={19} aria-hidden="true" />
+                <h3>{title}</h3>
+              </div>
               <p>{copy}</p>
             </div>
           </article>
@@ -69,6 +84,7 @@ export default function VisualShowcase() {
       <div className={styles.characterIntro}>
         <p className={styles.kicker}>PERSONAJES · REFERENCIA VISUAL</p>
         <h3>Los Makers ya tienen un lenguaje visual definido.</h3>
+        <p>Las fichas se muestran completas y con espacio suficiente para leer poses, expresiones, accesorios y paleta.</p>
       </div>
       <div className={styles.characterStrip}>
         {worldMakersVisuals.characters.map((character) => (
@@ -79,11 +95,12 @@ export default function VisualShowcase() {
                 alt={character.alt}
                 width={character.width}
                 height={character.height}
-                sizes="(max-width: 640px) 44vw, (max-width: 1000px) 22vw, 240px"
+                sizes="(max-width: 760px) 92vw, (max-width: 1220px) 46vw, 570px"
+                quality={90}
                 className={styles.characterImage}
               />
             </div>
-            <figcaption>{character.alt.replace('Referencia visual del personaje ', '').replace('Referencia visual de ', '')}</figcaption>
+            <figcaption>{characterNames[character.key]}</figcaption>
           </figure>
         ))}
       </div>
