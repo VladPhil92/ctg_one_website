@@ -107,19 +107,42 @@ export async function PATCH(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
 
   const { id, status, adminNotes } = parsed.data;
-  const now = new Date().toISOString();
-  const update: Record<string, unknown> = {
-    status,
-    last_status_changed_at: now,
-    last_status_changed_by: user.id,
-  };
-  if (adminNotes !== undefined) update.admin_notes = adminNotes || null;
-  if (status === 'shortlisted') update.shortlisted_at = now;
-  if (status === 'ready_to_invite') update.ready_to_invite_at = now;
-  if (status === 'contacted') update.contacted_at = now;
-  if (status === 'withdrawn') update.withdrawn_at = now;
-
   const admin = createAdminClient();
+  const { data: existing, error: lookupError } = await admin
+    .from('worldmakers_interest_profiles')
+    .select('id,status,admin_notes,updated_at')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (lookupError) {
+    return NextResponse.json({ error: 'No fue posible consultar el perfil.' }, { status: 500 });
+  }
+  if (!existing) {
+    return NextResponse.json({ error: 'Perfil no encontrado.' }, { status: 404 });
+  }
+
+  const now = new Date().toISOString();
+  const statusChanged = existing.status !== status;
+  const update: Record<string, unknown> = {};
+
+  if (statusChanged) {
+    update.status = status;
+    update.last_status_changed_at = now;
+    update.last_status_changed_by = user.id;
+    if (status === 'shortlisted') update.shortlisted_at = now;
+    if (status === 'ready_to_invite') update.ready_to_invite_at = now;
+    if (status === 'contacted') update.contacted_at = now;
+    if (status === 'withdrawn') update.withdrawn_at = now;
+  }
+
+  if (adminNotes !== undefined) {
+    update.admin_notes = adminNotes || null;
+  }
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ updated: existing }, { headers: { 'Cache-Control': 'no-store' } });
+  }
+
   const { data, error } = await admin
     .from('worldmakers_interest_profiles')
     .update(update)
