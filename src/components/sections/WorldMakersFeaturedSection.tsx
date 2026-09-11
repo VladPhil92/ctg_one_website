@@ -97,7 +97,8 @@ export const WorldMakersFeaturedSection: React.FC = () => {
                       ? 'Dirección visual de gameplay de World Makers, videojuego de CTG One Technology'
                       : 'World Makers gameplay visual direction, a CTG One Technology game'
                   }
-                  loading="eager"
+                  loading="lazy"
+                  decoding="async"
                   className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.025]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#05080d]/85 via-transparent to-black/10 lg:bg-gradient-to-r lg:from-[#05080d]/35 lg:via-transparent lg:to-transparent" aria-hidden="true" />
