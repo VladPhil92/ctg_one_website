@@ -1,0 +1,310 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(420px, 1.12fr);
+  gap: 36px;
+  align-items: start;
+}
+
+.context {
+  position: sticky;
+  top: 106px;
+}
+
+.context h2 {
+  margin: 10px 0 16px;
+  color: #123b7a;
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+}
+
+.context > p {
+  color: #61728b;
+  line-height: 1.7;
+  font-size: 1.05rem;
+}
+
+.promiseGrid {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.promise {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dce8f4;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.promise svg {
+  color: #2f80ed;
+  margin-top: 2px;
+}
+
+.promise strong {
+  display: block;
+  color: #123b7a;
+  margin-bottom: 3px;
+}
+
+.promise span {
+  color: #61728b;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.form,
+.successCard {
+  border: 1px solid #dce8f4;
+  border-radius: 30px;
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 20px 56px rgba(18, 59, 122, 0.11);
+}
+
+.formHeader {
+  border-radius: 20px;
+  padding: 16px 18px;
+  background: #eef8ff;
+  border: 1px solid rgba(47, 128, 237, 0.13);
+  margin-bottom: 22px;
+}
+
+.formHeader > span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #123b7a;
+  font-weight: 900;
+}
+
+.formHeader p {
+  margin: 8px 0 0;
+  color: #61728b;
+  line-height: 1.5;
+  font-size: 0.88rem;
+}
+
+.form label > span,
+.preferences legend {
+  display: block;
+  color: #123b7a;
+  font-size: 0.88rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.form label > span small {
+  color: #7b8da3;
+  font-weight: 700;
+}
+
+.form input[type='text'],
+.form input[type='email'],
+.form select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #cfdeed;
+  border-radius: 14px;
+  background: #fbfdff;
+  color: #12233f;
+  padding: 0 14px;
+  outline: none;
+  font: inherit;
+}
+
+.form input[type='text']:focus,
+.form input[type='email']:focus,
+.form select:focus {
+  border-color: #2f80ed;
+  box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.11);
+}
+
+.twoColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.form > label {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.preferences {
+  display: grid;
+  gap: 10px;
+  border: 0;
+  margin: 22px 0 0;
+  padding: 0;
+}
+
+.preferences label,
+.consentBox label {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  cursor: pointer;
+}
+
+.preferences label {
+  border: 1px solid #dce8f4;
+  border-radius: 16px;
+  padding: 13px 14px;
+  background: #fbfdff;
+}
+
+.preferences input,
+.consentBox input {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  accent-color: #2f80ed;
+}
+
+.preferences label > span,
+.consentBox label > span {
+  margin: 0;
+}
+
+.preferences strong {
+  display: block;
+  color: #123b7a;
+  font-size: 0.88rem;
+}
+
+.preferences small {
+  display: block;
+  margin-top: 3px;
+  color: #61728b;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.consentBox {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #f7fafc;
+}
+
+.consentBox label > span {
+  color: #48627d;
+  font-weight: 650;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.submit,
+.successCard button {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 20px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2f80ed, #1768d1);
+  color: white;
+  font-weight: 950;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 12px 28px rgba(47, 128, 237, 0.22);
+}
+
+.submit:disabled {
+  opacity: 0.66;
+  cursor: wait;
+}
+
+.error {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff0f0;
+  color: #9d2b2b;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.finePrint {
+  margin: 12px 0 0;
+  text-align: center;
+  color: #7b8da3;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.honeypot {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+}
+
+.successCard {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  color: #16723f;
+}
+
+.successCard h3 {
+  color: #123b7a;
+  font-size: 1.5rem;
+  margin: 16px 0 8px;
+}
+
+.successCard p {
+  color: #61728b;
+  line-height: 1.6;
+}
+
+.successCard button {
+  width: auto;
+  padding: 0 18px;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .context {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .twoColumns {
+    grid-template-columns: 1fr;
+  }
+
+  .form,
+  .successCard {
+    padding: 20px;
+    border-radius: 22px;
+  }
+}
