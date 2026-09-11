@@ -9,19 +9,50 @@ function handleWorldMakersSubdomain(request: NextRequest) {
   const host = normalizeHost(request);
   const isWorldMakersHost = host === 'worldmakers.ctgone.com' || host === 'www.worldmakers.ctgone.com';
 
-  if (!isWorldMakersHost || request.nextUrl.pathname !== '/') {
+  if (!isWorldMakersHost) {
     return null;
   }
 
+  const pathname = request.nextUrl.pathname;
+
+  // Search-engine infrastructure is host-scoped. Keep CTG One's root sitemap
+  // and robots policy separate by routing the branded host to the metadata
+  // routes that live inside the World Makers application namespace.
+  if (pathname === '/sitemap.xml' || pathname === '/robots.txt') {
+    const metadataUrl = request.nextUrl.clone();
+    metadataUrl.pathname = `/worldmakers${pathname}`;
+    return NextResponse.rewrite(metadataUrl);
+  }
+
+  // Keep shared/static infrastructure at its canonical path. The proxy matcher
+  // already excludes most image/static extensions; these explicit guards keep
+  // API and framework traffic out of the branded route namespace as well.
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/images/') ||
+    pathname.startsWith('/api/') ||
+    pathname === '/favicon.ico'
+  ) {
+    return null;
+  }
+
+  // `/worldmakers/*` remains a valid direct preview namespace on ctgone.com.
+  // If such a URL is opened on the dedicated hostname, canonicalize it back to
+  // the clean branded path before applying the internal rewrite.
+  if (pathname === '/worldmakers' || pathname.startsWith('/worldmakers/')) {
+    const canonical = request.nextUrl.clone();
+    canonical.pathname = pathname === '/worldmakers' ? '/' : pathname.slice('/worldmakers'.length);
+    return NextResponse.redirect(canonical, 308);
+  }
+
   const url = request.nextUrl.clone();
-  url.pathname = '/worldmakers';
+  url.pathname = pathname === '/' ? '/worldmakers' : `/worldmakers${pathname}`;
   return NextResponse.rewrite(url);
 }
 
 export async function proxy(request: NextRequest) {
-  // The World Makers marketing site lives in this Next.js deployment but is
-  // served as its own branded property at worldmakers.ctgone.com. Keep the
-  // canonical root URL clean while retaining /worldmakers as a direct preview.
+  // The World Makers public portal lives inside this Next.js deployment but is
+  // served as its own branded property at worldmakers.ctgone.com.
   const worldMakersResponse = handleWorldMakersSubdomain(request);
   if (worldMakersResponse) {
     return worldMakersResponse;

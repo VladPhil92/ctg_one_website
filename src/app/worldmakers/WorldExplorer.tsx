@@ -1,10 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import {
+  ArrowRight,
   Atom,
   Beaker,
-  BookOpen,
   BrainCircuit,
   Compass,
   Leaf,
@@ -14,10 +15,12 @@ import {
   Trees,
 } from 'lucide-react';
 import phase2 from './worldmakers-phase2.module.css';
+import portal from './portal.module.css';
 
 const destinations = [
   {
     id: 'rainforest',
+    slug: 'caribbean-rainforest',
     name: 'Caribbean Rainforest',
     short: 'Rainforest',
     status: 'Vertical slice',
@@ -30,6 +33,7 @@ const destinations = [
   },
   {
     id: 'infinite-staircase',
+    slug: 'vault-infinite-staircase',
     name: 'The Vault of the Infinite Staircase',
     short: 'Infinite Staircase',
     status: 'Adventure candidate',
@@ -42,6 +46,7 @@ const destinations = [
   },
   {
     id: 'impossible-city',
+    slug: 'architects-impossible-city',
     name: 'Architects of the Impossible City',
     short: 'Impossible City',
     status: 'Adventure candidate',
@@ -54,6 +59,7 @@ const destinations = [
   },
   {
     id: 'alchemist',
+    slug: 'alchemists-archipelago',
     name: "The Alchemist's Archipelago",
     short: 'Alchemist Archipelago',
     status: 'Adventure candidate',
@@ -66,6 +72,7 @@ const destinations = [
   },
   {
     id: 'moonforge',
+    slug: 'moonforge',
     name: 'The Moonforge',
     short: 'Moonforge',
     status: 'Adventure candidate',
@@ -78,6 +85,7 @@ const destinations = [
   },
   {
     id: 'living-forest',
+    slug: 'forest-thousand-voices',
     name: 'The Forest of a Thousand Voices',
     short: 'Thousand Voices',
     status: 'Adventure candidate',
@@ -90,6 +98,7 @@ const destinations = [
   },
   {
     id: 'living-cell',
+    slug: 'city-inside-cell',
     name: 'The City Inside a Cell',
     short: 'City Inside a Cell',
     status: 'Adventure candidate',
@@ -102,6 +111,7 @@ const destinations = [
   },
   {
     id: 'ship',
+    slug: 'ship-never-same',
     name: 'The Ship That Was Never the Same',
     short: 'The Changing Ship',
     status: 'Adventure candidate',
@@ -165,6 +175,9 @@ export default function WorldExplorer() {
           <span>Loop de aprendizaje</span>
           <strong>{selected.mechanic}</strong>
         </div>
+        <Link className={portal.cardLink} href={`/worldmakers/adventures/${selected.slug}`}>
+          Abrir ficha de aventura <ArrowRight size={16} />
+        </Link>
         <div className={phase2.destinationList}>
           {destinations.map((destination) => (
             <button
