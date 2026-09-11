@@ -1,4 +1,4 @@
-import { Eye, FlaskConical, Gamepad2, Leaf, Wrench } from 'lucide-react';
+import { Compass, Eye, FlaskConical, Gamepad2, Leaf, Palette, Shapes, Wrench } from 'lucide-react';
 import { worldMakersVisuals } from './visual-assets';
 import styles from './worldmakers-visuals.module.css';
 
@@ -11,43 +11,77 @@ const directionCards = [
     asset: worldMakersVisuals.gameplayOverview,
     featured: true,
   },
-  ...(worldMakersVisuals.gameplayScience
-    ? [{
-        key: 'science',
-        title: 'Gameplay científico',
-        copy: 'Química, física, biología y botánica aparecen como sistemas manipulables dentro del mundo, no como ejercicios separados del juego.',
-        icon: FlaskConical,
-        asset: worldMakersVisuals.gameplayScience,
-        featured: false,
-      }]
-    : []),
-  ...(worldMakersVisuals.gameplayBuild
-    ? [{
-        key: 'build',
-        title: 'Gameplay de construcción',
-        copy: 'Construcción modular, energía, agua, materiales y naturaleza se conectan dentro de una interfaz de primera persona legible.',
-        icon: Wrench,
-        asset: worldMakersVisuals.gameplayBuild,
-        featured: false,
-      }]
-    : []),
-  ...(worldMakersVisuals.universeOverview
-    ? [{
-        key: 'universe',
-        title: 'Universo World Makers',
-        copy: 'Una vista editorial del lenguaje visual completo: explorar, crear, aprender, experimentar y cuidar dentro de un mismo mundo vivo.',
-        icon: Leaf,
-        asset: worldMakersVisuals.universeOverview,
-        featured: false,
-      }]
-    : []),
+  {
+    key: 'science',
+    title: 'Gameplay científico',
+    copy: 'La misión River Renewal Project muestra química, física, biología y botánica como sistemas manipulables dentro del mundo, no como ejercicios separados del juego.',
+    icon: FlaskConical,
+    asset: worldMakersVisuals.gameplayScience,
+    featured: false,
+  },
+  {
+    key: 'build',
+    title: 'Gameplay de construcción',
+    copy: 'Construcción modular, energía, agua, materiales y naturaleza se conectan dentro de una interfaz de primera persona legible.',
+    icon: Wrench,
+    asset: worldMakersVisuals.gameplayBuild,
+    featured: false,
+  },
+  {
+    key: 'universe',
+    title: 'Universo World Makers',
+    copy: 'Una vista editorial del lenguaje visual completo: explorar, crear, aprender, experimentar y cuidar dentro de un mismo mundo vivo.',
+    icon: Leaf,
+    asset: worldMakersVisuals.universeOverview,
+    featured: false,
+  },
 ];
 
-const characterNames: Record<(typeof worldMakersVisuals.characters)[number]['key'], string> = {
-  'curious-explorer': 'Explorador curioso',
-  'scientist-inventor': 'Inventora científica',
-  'nature-guardian': 'Guardián de la naturaleza',
-  'luna-explorer': 'Luna · exploradora del conocimiento',
+const identityCards = [
+  {
+    key: 'visual-identity',
+    title: 'Guía visual base',
+    copy: 'La paleta oficial, el lenguaje de formas y el resumen de estilo que gobiernan cada pantalla, personaje y entorno de World Makers.',
+    icon: Palette,
+    asset: worldMakersVisuals.visualIdentity,
+  },
+  {
+    key: 'forms-style',
+    title: 'Política de formas y estilo',
+    copy: 'El límite explícito frente a estéticas de bloques voxel: formas orgánicas y modulares, personajes expresivos y siluetas reconocibles.',
+    icon: Shapes,
+    asset: worldMakersVisuals.formsAndAnimation,
+  },
+];
+
+const characterInfo: Record<
+  (typeof worldMakersVisuals.characters)[number]['key'],
+  { name: string; note: string; accent: string; icon: typeof Compass }
+> = {
+  'curious-explorer': {
+    name: 'Explorador curioso',
+    note: 'Pregunta, observa y se atreve a descubrir lo desconocido.',
+    accent: 'Naranja + azul',
+    icon: Compass,
+  },
+  'scientist-inventor': {
+    name: 'Inventora científica',
+    note: 'Analiza, experimenta y convierte ideas en soluciones.',
+    accent: 'Cian + tecnología',
+    icon: FlaskConical,
+  },
+  'nature-guardian': {
+    name: 'Guardián de la naturaleza',
+    note: 'Comprende ecosistemas y aprende a restaurar lo que está vivo.',
+    accent: 'Verde + tierra',
+    icon: Leaf,
+  },
+  'luna-explorer': {
+    name: 'Luna · exploradora del conocimiento',
+    note: 'Conecta preguntas, personas y posibilidades para aprender mejor.',
+    accent: 'Violeta + aventura',
+    icon: Palette,
+  },
 };
 
 export default function VisualShowcase() {
@@ -120,8 +154,51 @@ export default function VisualShowcase() {
                 {character.isOriginal ? 'Master original' : 'Referencia temporal'}
               </span>
             </div>
-            <figcaption>{characterNames[character.key]}</figcaption>
+            <figcaption>
+              <div className={styles.characterCaptionTitle}>
+                {(() => {
+                  const Icon = characterInfo[character.key].icon;
+                  return <Icon size={16} aria-hidden="true" />;
+                })()}
+                <strong>{characterInfo[character.key].name}</strong>
+              </div>
+              <span>{characterInfo[character.key].accent}</span>
+              <p>{characterInfo[character.key].note}</p>
+            </figcaption>
           </figure>
+        ))}
+      </div>
+
+      <div className={styles.characterIntro}>
+        <p className={styles.kicker}>IDENTIDAD DE MARCA</p>
+        <h3>La misma guía visual que gobierna cada pantalla del juego.</h3>
+        <p>Paleta, formas y política de estilo aprobadas, publicadas junto al arte de personajes y gameplay.</p>
+      </div>
+      <div className={styles.directionGrid}>
+        {identityCards.map(({ key, title, copy, icon: Icon, asset }) => (
+          <article className={`${styles.directionCard} ${styles[`card_${key}`] ?? ''}`} key={key}>
+            <div className={styles.imageStage}>
+              <img
+                src={asset.src}
+                alt={asset.alt}
+                width={asset.width}
+                height={asset.height}
+                loading="lazy"
+                decoding="async"
+                className={styles.referenceImage}
+              />
+              <span className={styles.referenceBadge}>
+                {asset.isOriginal ? 'Original master · sin compresión' : 'Referencia temporal'}
+              </span>
+            </div>
+            <div className={styles.cardBody}>
+              <div className={styles.cardTitle}>
+                <Icon size={19} aria-hidden="true" />
+                <h3>{title}</h3>
+              </div>
+              <p>{copy}</p>
+            </div>
+          </article>
         ))}
       </div>
     </section>

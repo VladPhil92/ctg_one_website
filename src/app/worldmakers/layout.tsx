@@ -30,10 +30,10 @@ export const metadata: Metadata = {
     description,
     images: [
       {
-        url: '/images/worldmakers/hero-first-person.webp',
-        width: 1536,
-        height: 864,
-        alt: 'Visualización conceptual en primera persona de World Makers',
+        url: '/api/worldmakers/visuals/hero',
+        width: 1672,
+        height: 941,
+        alt: 'World Makers: crea, explora y aprende en un mundo vivo',
       },
     ],
   },
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title,
     description,
-    images: ['/images/worldmakers/hero-first-person.webp'],
+    images: ['/api/worldmakers/visuals/hero'],
   },
   robots: {
     index: true,

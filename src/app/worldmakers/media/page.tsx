@@ -44,35 +44,56 @@ export default function MediaPage() {
           <div className={hd.grid}>
             <article className={`${styles.mediaCard} ${hd.referenceCard} ${hd.wide}`}>
               <div className={hd.heroFrame}>
-                <Image className={hd.heroImage} src="/images/worldmakers/hero-first-person.webp" alt="World Makers first-person concept at the Research Dome" fill sizes="100vw" priority quality={90} />
-                <div className={hd.overlay}><strong>Research Dome · First-person concept</strong><span>Camera + HUD + exploration direction · concept visualization</span></div>
+                <Image className={hd.heroImage} src={worldMakersVisuals.hero.src} alt={worldMakersVisuals.hero.alt} fill sizes="100vw" priority unoptimized />
+                <div className={hd.overlay}><strong>Hero banner · marketing oficial</strong><span>Logo + CTA + explorador principal · master sin compresión</span></div>
               </div>
             </article>
 
             <article className={`${styles.mediaCard} ${hd.referenceCard}`}>
               <div className={hd.logoFrame}>
-                <Image className={hd.logoImage} src="/images/worldmakers/logo.webp" alt="World Makers logo" width={360} height={180} quality={90} />
+                <Image className={hd.logoImage} src={worldMakersVisuals.logo.src} alt={worldMakersVisuals.logo.alt} width={worldMakersVisuals.logo.width} height={worldMakersVisuals.logo.height} unoptimized />
                 <div className={hd.overlay}><strong>World Makers identity</strong><span>Primary public logo</span></div>
               </div>
             </article>
 
             <article className={`${styles.mediaCard} ${hd.referenceCard}`}>
               <div className={hd.imageFrame}>
-                <Image className={hd.referenceImage} src={worldMakersVisuals.visualIdentity.src} alt={worldMakersVisuals.visualIdentity.alt} width={worldMakersVisuals.visualIdentity.width} height={worldMakersVisuals.visualIdentity.height} sizes="(max-width: 760px) 92vw, 570px" quality={90} />
+                <Image className={hd.referenceImage} src={worldMakersVisuals.visualIdentity.src} alt={worldMakersVisuals.visualIdentity.alt} width={worldMakersVisuals.visualIdentity.width} height={worldMakersVisuals.visualIdentity.height} sizes="(max-width: 760px) 92vw, 570px" unoptimized />
                 <div className={hd.overlay}><strong>Visual identity base guide</strong><span>Palette · surfaces · visual language · approved concept reference</span></div>
               </div>
             </article>
 
             <article className={`${styles.mediaCard} ${hd.referenceCard} ${hd.wide}`}>
               <div className={hd.imageFrame}>
-                <Image className={hd.referenceImage} src={worldMakersVisuals.gameplayOverview.src} alt={worldMakersVisuals.gameplayOverview.alt} width={worldMakersVisuals.gameplayOverview.width} height={worldMakersVisuals.gameplayOverview.height} sizes="(max-width: 1280px) 92vw, 1180px" quality={90} />
+                <Image className={hd.referenceImage} src={worldMakersVisuals.gameplayOverview.src} alt={worldMakersVisuals.gameplayOverview.alt} width={worldMakersVisuals.gameplayOverview.width} height={worldMakersVisuals.gameplayOverview.height} sizes="(max-width: 1280px) 92vw, 1180px" unoptimized />
                 <div className={hd.overlay}><strong>Gameplay visual direction</strong><span>First person · building · scientific gameplay · mission UI</span></div>
               </div>
             </article>
 
             <article className={`${styles.mediaCard} ${hd.referenceCard} ${hd.wide}`}>
               <div className={hd.imageFrame}>
-                <Image className={hd.referenceImage} src={worldMakersVisuals.formsAndAnimation.src} alt={worldMakersVisuals.formsAndAnimation.alt} width={worldMakersVisuals.formsAndAnimation.width} height={worldMakersVisuals.formsAndAnimation.height} sizes="(max-width: 1280px) 92vw, 1180px" quality={90} />
+                <Image className={hd.referenceImage} src={worldMakersVisuals.gameplayScience.src} alt={worldMakersVisuals.gameplayScience.alt} width={worldMakersVisuals.gameplayScience.width} height={worldMakersVisuals.gameplayScience.height} sizes="(max-width: 1280px) 92vw, 1180px" unoptimized />
+                <div className={hd.overlay}><strong>Gameplay científico</strong><span>River Renewal Project · química, física, biología y botánica</span></div>
+              </div>
+            </article>
+
+            <article className={`${styles.mediaCard} ${hd.referenceCard} ${hd.wide}`}>
+              <div className={hd.imageFrame}>
+                <Image className={hd.referenceImage} src={worldMakersVisuals.gameplayBuild.src} alt={worldMakersVisuals.gameplayBuild.alt} width={worldMakersVisuals.gameplayBuild.width} height={worldMakersVisuals.gameplayBuild.height} sizes="(max-width: 1280px) 92vw, 1180px" unoptimized />
+                <div className={hd.overlay}><strong>Gameplay de construcción</strong><span>Módulo eco-científico · materiales · snap-to-connector</span></div>
+              </div>
+            </article>
+
+            <article className={`${styles.mediaCard} ${hd.referenceCard}`}>
+              <div className={hd.imageFrame}>
+                <Image className={hd.referenceImage} src={worldMakersVisuals.universeOverview.src} alt={worldMakersVisuals.universeOverview.alt} width={worldMakersVisuals.universeOverview.width} height={worldMakersVisuals.universeOverview.height} sizes="(max-width: 760px) 92vw, 570px" unoptimized />
+                <div className={hd.overlay}><strong>Universe overview poster</strong><span>Explorador + compañero · HUD y categorías de construcción</span></div>
+              </div>
+            </article>
+
+            <article className={`${styles.mediaCard} ${hd.referenceCard} ${hd.wide}`}>
+              <div className={hd.imageFrame}>
+                <Image className={hd.referenceImage} src={worldMakersVisuals.formsAndAnimation.src} alt={worldMakersVisuals.formsAndAnimation.alt} width={worldMakersVisuals.formsAndAnimation.width} height={worldMakersVisuals.formsAndAnimation.height} sizes="(max-width: 1280px) 92vw, 1180px" unoptimized />
                 <div className={hd.overlay}><strong>Forms, design & animation</strong><span>Organic modular language · anti-voxel boundary · motion direction</span></div>
               </div>
             </article>
@@ -80,7 +101,7 @@ export default function MediaPage() {
             {worldMakersVisuals.characters.map((character, index) => (
               <article className={`${styles.mediaCard} ${hd.referenceCard} ${hd.characterCard}`} key={character.key}>
                 <div className={hd.imageFrame}>
-                  <Image className={hd.referenceImage} src={character.src} alt={character.alt} width={character.width} height={character.height} sizes="(max-width: 760px) 92vw, 570px" quality={90} />
+                  <Image className={hd.referenceImage} src={character.src} alt={character.alt} width={character.width} height={character.height} sizes="(max-width: 760px) 92vw, 570px" unoptimized />
                   <div className={hd.overlay}><strong>Maker reference {index + 1}</strong><span>{character.alt}</span></div>
                 </div>
               </article>
@@ -103,7 +124,7 @@ export default function MediaPage() {
           </article>
         </div>
         <div className={`${styles.shell} ${styles.inlineActions}`}>
-          <a className={styles.secondaryButton} href="https://github.com/VladPhil92/World-Makers-Game/tree/main/docs/visual-reference/world-makers-v1" target="_blank" rel="noreferrer">Ver referencias versionadas <ExternalLink size={15} /></a>
+          <a className={styles.secondaryButton} href="https://github.com/VladPhil92/World-Makers-Game/tree/main/docs/visual-reference/world-makers-v2" target="_blank" rel="noreferrer">Ver referencias versionadas <ExternalLink size={15} /></a>
           <a className={styles.secondaryButton} href="https://github.com/VladPhil92/World-Makers-Game/blob/main/docs/visual-identity-animation-policy.md" target="_blank" rel="noreferrer">Política de imagen y animación <ExternalLink size={15} /></a>
         </div>
       </section>

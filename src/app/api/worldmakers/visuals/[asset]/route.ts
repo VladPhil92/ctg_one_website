@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const ASSETS: Record<string, string> = {
-  'gameplay-overview': 'gameplay-visual-direction-overview.webp',
-  'character-01': 'character-01-curious-explorer.webp',
-  'character-02': 'character-02-scientist-inventor.webp',
-  'character-03': 'character-03-nature-guardian.webp',
-  'character-04': 'character-04-luna-explorer.webp',
+  logo: 'logo-primary.png',
+  hero: 'hero-banner.png',
+  'gameplay-overview': 'gameplay-overview.png',
+  'gameplay-science': 'gameplay-science.png',
+  'gameplay-build': 'gameplay-build.png',
+  universe: 'universe-overview.png',
+  'visual-identity': 'visual-identity-guide.png',
+  'forms-style': 'forms-style-policy.png',
+  'character-01': 'character-01-curious-explorer.png',
+  'character-02': 'character-02-scientist-inventor.png',
+  'character-03': 'character-03-nature-guardian.png',
+  'character-04': 'character-04-luna-explorer.png',
+};
+
+const CONTENT_TYPES: Record<string, string> = {
+  png: 'image/png',
+  webp: 'image/webp',
 };
 
 const RAW_BASE =
-  'https://raw.githubusercontent.com/VladPhil92/World-Makers-Game/main/docs/visual-reference/world-makers-v1';
+  'https://raw.githubusercontent.com/VladPhil92/World-Makers-Game/main/docs/visual-reference/world-makers-v2';
 
 export async function GET(
   _request: NextRequest,
@@ -33,10 +45,13 @@ export async function GET(
     );
   }
 
+  const extension = filename.split('.').pop() ?? '';
+  const contentType = upstream.headers.get('content-type') ?? CONTENT_TYPES[extension] ?? 'application/octet-stream';
+
   return new NextResponse(upstream.body, {
     status: 200,
     headers: {
-      'Content-Type': upstream.headers.get('content-type') ?? 'image/webp',
+      'Content-Type': contentType,
       'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
     },
   });

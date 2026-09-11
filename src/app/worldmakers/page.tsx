@@ -29,13 +29,6 @@ const learningStreams = [
   'Química', 'Física', 'Ecología', 'Ética', 'Filosofía',
 ];
 
-const makers = [
-  { name: 'Explorador curioso', note: 'Pregunta, observa y se atreve a descubrir lo desconocido.', accent: 'Naranja + azul', icon: Compass },
-  { name: 'Inventora científica', note: 'Analiza, experimenta y convierte ideas en soluciones.', accent: 'Cian + tecnología', icon: FlaskConical },
-  { name: 'Guardián de la naturaleza', note: 'Comprende ecosistemas y aprende a restaurar lo que está vivo.', accent: 'Verde + tierra', icon: Leaf },
-  { name: 'Luna · exploradora del conocimiento', note: 'Conecta preguntas, personas y posibilidades para aprender mejor.', accent: 'Violeta + aventura', icon: BookOpen },
-];
-
 const gamePillars = [
   { title: 'Explora', copy: 'Recorre ecosistemas, observa patrones y encuentra preguntas antes que respuestas.', icon: Compass },
   { title: 'Experimenta', copy: 'La ciencia ocurre dentro del mundo: mide, combina, prueba, interpreta y vuelve a intentar.', icon: FlaskConical },
@@ -258,25 +251,6 @@ export default function WorldMakersPage() {
               <strong>{layer.example}</strong>
             </article>
           ))}
-        </div>
-      </section>
-
-      <section id="personajes" className={`${styles.section} ${styles.charactersSection}`}>
-        <div className={styles.centerHeading}>
-          <p className={styles.kicker}>CONOCE A LOS MAKERS</p>
-          <h2>Personajes que representan formas distintas de mirar el mundo.</h2>
-          <p>Los arquetipos comparten una misma filosofía: curiosidad, colaboración, creatividad, ciencia y cuidado de la vida. La identidad final se construirá sobre un sistema de personalización diverso y expresivo.</p>
-        </div>
-        <div className={styles.characterGrid}>
-          {makers.map((maker) => {
-            const Icon = maker.icon;
-            return (
-              <article className={styles.characterCard} key={maker.name}>
-                <div className={extra.characterVisual} aria-hidden="true"><div className={extra.characterHalo} /><div className={extra.characterAvatar}><Icon size={54} strokeWidth={1.65} /></div><div className={extra.characterPatch}>WM</div></div>
-                <div className={styles.characterBody}><span>{maker.accent}</span><h3>{maker.name}</h3><p>{maker.note}</p></div>
-              </article>
-            );
-          })}
         </div>
       </section>
 
