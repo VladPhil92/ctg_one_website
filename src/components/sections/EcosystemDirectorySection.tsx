@@ -63,10 +63,11 @@ const AVAILABLE_STATUSES = new Set<DashboardServiceStatus>(['LIVE', 'ACCOUNT', '
 
 type EcosystemDirectoryMode = 'home' | 'full';
 
-const ServiceCard = ({ service, label }: { service: DashboardService; label: string }) => {
+const ServiceCard = ({ service, label, es }: { service: DashboardService; label: string; es: boolean }) => {
   const Icon = SERVICE_ICONS[service.id] ?? BrainCircuit;
   const href = service.publicHref ?? service.href;
-  const cta = service.publicCta ?? service.cta;
+  const description = !es && service.descriptionEn ? service.descriptionEn : service.description;
+  const cta = !es && service.publicCtaEn ? service.publicCtaEn : (service.publicCta ?? service.cta);
   const isExternal = href.startsWith('http://') || href.startsWith('https://');
 
   return (
@@ -80,7 +81,7 @@ const ServiceCard = ({ service, label }: { service: DashboardService; label: str
         </span>
       </div>
       <h3 className="mt-5 font-outfit text-xl font-semibold tracking-[-0.025em] text-white">{service.title}</h3>
-      <p className="mt-2 flex-1 text-sm leading-6 text-white/50">{service.description}</p>
+      <p className="mt-2 flex-1 text-sm leading-6 text-white/50">{description}</p>
       <a
         href={href}
         data-service-key={service.serviceKey}
@@ -147,7 +148,7 @@ export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {availableServices.map((service, index) => (
               <FadeInSection key={service.id} delay={Math.min(index * 0.035, 0.18)}>
-                <ServiceCard service={service} label={labels[service.status]} />
+                <ServiceCard service={service} label={labels[service.status]} es={es} />
               </FadeInSection>
             ))}
           </div>
@@ -171,7 +172,7 @@ export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {evolvingServices.map((service, index) => (
                 <FadeInSection key={service.id} delay={Math.min(index * 0.035, 0.14)}>
-                  <ServiceCard service={service} label={labels[service.status]} />
+                  <ServiceCard service={service} label={labels[service.status]} es={es} />
                 </FadeInSection>
               ))}
             </div>
