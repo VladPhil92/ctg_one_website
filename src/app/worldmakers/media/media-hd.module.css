@@ -1,0 +1,133 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.referenceCard {
+  position: relative;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #f3f8fc;
+}
+
+.imageFrame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 14px;
+  background: #f3f8fc;
+}
+
+.wide .imageFrame {
+  padding: 0;
+  background: #071b2d;
+}
+
+.referenceImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: 760px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.wide .referenceImage {
+  max-height: 780px;
+}
+
+.characterCard .referenceImage {
+  max-height: 720px;
+}
+
+.logoFrame {
+  position: relative;
+  min-height: 300px;
+  display: grid;
+  place-items: center;
+  padding: 44px;
+  background: linear-gradient(145deg, #0e356f, #2f80ed);
+}
+
+.logoImage {
+  width: min(420px, 84%);
+  height: auto;
+  object-fit: contain;
+}
+
+.heroFrame {
+  position: relative;
+  min-height: 440px;
+  overflow: hidden;
+  background: #071b2d;
+}
+
+.heroImage {
+  object-fit: cover;
+  object-position: center;
+  filter: brightness(1.16) saturate(1.05);
+}
+
+.overlay {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 2;
+  padding: 24px;
+  color: white;
+  background: linear-gradient(180deg, transparent, rgba(5, 24, 52, 0.9));
+  pointer-events: none;
+}
+
+.overlay strong {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.overlay span {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  opacity: 0.86;
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+
+  .imageFrame {
+    padding: 8px;
+  }
+
+  .wide .imageFrame {
+    padding: 0;
+  }
+
+  .heroFrame {
+    min-height: 330px;
+  }
+
+  .logoFrame {
+    min-height: 240px;
+    padding: 28px;
+  }
+
+  .overlay {
+    padding: 18px;
+  }
+}
