@@ -43,6 +43,8 @@ for (const forbidden of ['child_name', 'child_email', 'date_of_birth', 'ip_addre
 }
 
 assert.ok(publicApi.includes('MAX_BODY_BYTES = 6 * 1024'), 'public intake payload must be bounded');
+assert.ok(publicApi.includes('request.body?.getReader()'), 'public intake must enforce the body bound on streamed bytes, not only Content-Length');
+assert.ok(publicApi.includes('totalBytes > MAX_BODY_BYTES'), 'streamed body bytes must be rejected above the configured limit');
 assert.ok(publicApi.includes('RATE_LIMIT_MAX_REQUESTS = 8'), 'public intake must include an abuse guard');
 assert.ok(publicApi.includes("website: z.string().max(200).optional()"), 'public intake must include a honeypot');
 assert.ok(publicApi.includes('createHash'), 'IP material must be one-way transformed before ephemeral rate-limit use');
@@ -50,15 +52,21 @@ assert.ok(!publicApi.includes(".insert({\n    ip"), 'public intake must not pers
 assert.ok(publicApi.includes('isWorldMakersSourcePath'), 'source paths must be allow-listed');
 assert.ok(publicApi.includes('SUPABASE_SERVICE_ROLE_KEY'), 'persistence must cross the server trust boundary');
 assert.ok(publicApi.includes('normalizedOriginHost === requestHost'), 'same-origin deployment previews must be allowed safely');
+assert.ok(publicApi.includes("error.code !== '23505'"), 'duplicate email submissions must collapse to a neutral success');
+assert.ok(!publicApi.includes(".from('worldmakers_interest_profiles')\n      .update"), 'unauthenticated duplicate submissions must never mutate an existing profile');
+assert.ok(publicApi.includes("state: 'received'"), 'first-time and duplicate public responses must be privacy-neutral');
 
 assert.ok(publicForm.includes('adultConfirmed'), 'form must require adult attestation');
 assert.ok(publicForm.includes('privacyConsent'), 'form must require explicit privacy consent');
 assert.ok(publicForm.includes('No solicites ni ingreses datos personales de niños'), 'form must warn against child data submission');
+assert.ok(publicForm.includes('Un envío repetido no modifica ni reactiva un perfil previo'), 'duplicate ownership boundary must be explained to the user');
 assert.ok(publicPage.includes('todavía no tiene una beta pública'), 'community page must not imply public beta availability');
 assert.ok(privacyPage.includes('No solicitamos datos de niños'), 'privacy notice must disclose child-data exclusion');
 
 assert.ok(adminApi.includes("profile?.role !== 'admin'"), 'admin API must require global admin');
 assert.ok(adminApi.includes("investmentProfile?.investment_role !== 'SUPER_ADMIN'"), 'admin API must require SUPER_ADMIN');
+assert.ok(adminApi.includes('const statusChanged = existing.status !== status'), 'admin patch must distinguish note edits from real status transitions');
+assert.ok(adminApi.includes('if (statusChanged)'), 'status-change metadata must be conditional on a real status transition');
 assert.ok(adminPage.includes("investmentProfile?.investment_role !== 'SUPER_ADMIN'"), 'admin page must require SUPER_ADMIN');
 assert.ok(adminNav.includes("href: '/admin/worldmakers'"), 'admin nav must expose World Makers operations');
 assert.ok(adminNav.includes("label: 'World Makers', roles: ['SUPER_ADMIN']"), 'World Makers admin navigation must remain SUPER_ADMIN-only');
