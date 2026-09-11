@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -23,6 +22,7 @@ import extra from './worldmakers-extra.module.css';
 import phase2 from './worldmakers-phase2.module.css';
 import WorldExplorer from './WorldExplorer';
 import VisualShowcase from './VisualShowcase';
+import { worldMakersVisuals } from './visual-assets';
 
 const learningStreams = [
   'Matemáticas', 'Geometría', 'Inglés', 'Español', 'Literatura', 'Biología',
@@ -126,7 +126,14 @@ export default function WorldMakersPage() {
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link href="#inicio" className={styles.brand} aria-label="World Makers - Inicio">
-            <Image src="/images/worldmakers/logo.webp" alt="World Makers" width={180} height={90} className={styles.brandLogo} priority />
+            <img
+              src={worldMakersVisuals.logo.src}
+              alt={worldMakersVisuals.logo.alt}
+              width={worldMakersVisuals.logo.width}
+              height={worldMakersVisuals.logo.height}
+              className={styles.brandLogo}
+              decoding="async"
+            />
           </Link>
           <nav className={styles.nav} aria-label="Navegación principal de World Makers">
             <Link href="#universo">Universo</Link>
@@ -142,11 +149,16 @@ export default function WorldMakersPage() {
       </header>
 
       <section id="inicio" className={styles.hero} aria-labelledby="hero-title">
-        <Image
-          src="/images/worldmakers/hero-first-person.webp"
-          alt="Visualización conceptual de World Makers en primera persona frente a un centro de investigación integrado con la naturaleza"
-          fill priority sizes="100vw" className={styles.heroImage}
-          style={{ filter: 'brightness(1.22) saturate(1.08) contrast(1.03)' }}
+        <img
+          src={worldMakersVisuals.hero.src}
+          alt={worldMakersVisuals.hero.alt}
+          width={worldMakersVisuals.hero.width}
+          height={worldMakersVisuals.hero.height}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          className={styles.heroImage}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
         />
         <div className={styles.heroVeil} style={{ opacity: 0.56 }} />
         <div className={styles.heroGrid} aria-hidden="true" />
@@ -357,7 +369,18 @@ export default function WorldMakersPage() {
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <div><Image src="/images/worldmakers/logo.webp" alt="World Makers" width={150} height={75} className={styles.footerLogo} /><p>Un proyecto de CTG One Technology.</p></div>
+          <div>
+            <img
+              src={worldMakersVisuals.logo.src}
+              alt={worldMakersVisuals.logo.alt}
+              width={worldMakersVisuals.logo.width}
+              height={worldMakersVisuals.logo.height}
+              className={styles.footerLogo}
+              loading="lazy"
+              decoding="async"
+            />
+            <p>Un proyecto de CTG One Technology.</p>
+          </div>
           <div className={styles.footerLinks}><a href="https://ctgone.com" target="_blank" rel="noreferrer">CTG One</a><a href="https://github.com/VladPhil92/World-Makers-Game" target="_blank" rel="noreferrer">GitHub</a><a href="mailto:direccion@ctgone.com?subject=World%20Makers">Contacto</a></div>
           <p className={styles.footerNote}>Las imágenes mostradas son visualizaciones conceptuales y referencias de dirección artística; no representan necesariamente el estado final del juego.</p>
         </div>
