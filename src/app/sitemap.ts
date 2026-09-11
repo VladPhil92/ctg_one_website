@@ -1,9 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { ECOSYSTEM_PROCESSES } from '@/data/ecosystem-processes';
-import { adventures } from '@/app/worldmakers/portal-data';
 
 const siteUrl = 'https://ctgone.com';
-const worldMakersUrl = 'https://worldmakers.ctgone.com';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
@@ -44,27 +42,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/inversion/legal', changeFrequency: 'monthly' as const, priority: 0.7 },
   ];
 
-  const worldMakersRoutes: MetadataRoute.Sitemap = [
-    { url: worldMakersUrl, changeFrequency: 'weekly', priority: 0.95 },
-    { url: `${worldMakersUrl}/how-to-play`, changeFrequency: 'monthly', priority: 0.86 },
-    { url: `${worldMakersUrl}/adventures`, changeFrequency: 'weekly', priority: 0.92 },
-    ...adventures.map((adventure) => ({
-      url: `${worldMakersUrl}/adventures/${adventure.slug}`,
-      changeFrequency: 'monthly' as const,
-      priority: 0.78,
-    })),
-    { url: `${worldMakersUrl}/development`, changeFrequency: 'daily', priority: 0.84 },
-    { url: `${worldMakersUrl}/media`, changeFrequency: 'weekly', priority: 0.74 },
-    { url: `${worldMakersUrl}/families`, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${worldMakersUrl}/educators`, changeFrequency: 'monthly', priority: 0.8 },
-  ];
-
-  return [
-    ...routes.map(({ path, changeFrequency, priority }) => ({
-      url: `${siteUrl}${path}`,
-      changeFrequency,
-      priority,
-    })),
-    ...worldMakersRoutes,
-  ];
+  return routes.map(({ path, changeFrequency, priority }) => ({
+    url: `${siteUrl}${path}`,
+    changeFrequency,
+    priority,
+  }));
 }
