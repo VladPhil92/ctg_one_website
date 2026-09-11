@@ -66,7 +66,7 @@ export const worldMakersVisuals = {
     'Gameplay científico de World Makers: misión River Renewal Project con paneles de química, física, biología y botánica integrados en primera persona',
   ),
   gameplayBuild: nativeAsset(
-    process.env.WORLDMK_ASSET_GAMEPLAY_BUILD_URL,
+    process.env.WORLDMK_ASSET_GAMEPLAY_EXPLORATION_URL || process.env.WORLDMK_ASSET_GAMEPLAY_BUILD_URL,
     `${LIVE_VISUAL_BASE}/gameplay-build`,
     1672,
     941,
