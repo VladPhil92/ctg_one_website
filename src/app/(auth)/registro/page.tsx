@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { z } from 'zod';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { getAnalyticsAnonymousId, trackFunnelEvent } from '@/lib/analytics/client';
@@ -15,6 +16,7 @@ import {
   normalizeEmail,
   strongPasswordError,
 } from '@/lib/auth/client-policy';
+import { safeRedirectPath } from '@/lib/security/safe-redirect';
 
 const registerSchema = z.object({
   fullName: z.string().trim().min(2),
@@ -23,8 +25,19 @@ const registerSchema = z.object({
 });
 
 export default function RegistroPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegistroForm />
+    </Suspense>
+  );
+}
+
+function RegistroForm() {
+  const searchParams = useSearchParams();
   const { locale } = useLanguage();
   const es = locale === 'es';
+  const redirectTo = safeRedirectPath(searchParams.get('next'), '/dashboard');
+  const isWorldMakersFlow = redirectTo.startsWith('/worldmakers');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -35,15 +48,25 @@ export default function RegistroPage() {
 
   const copy = es
     ? {
-        title: 'Crear cuenta',
-        subtitle: 'Crea tu identidad CTG One y reúne en una sola cuenta las funciones que ya están habilitadas para ti.',
-        valueTitle: 'Con tu cuenta puedes',
-        valueItems: [
-          'Entrar a tu dashboard personal y gestionar tu identidad.',
-          'Consultar Wallet, saldo y actividad cuando estén habilitados para tu perfil.',
-          'Conservar accesos de inversión y educación vinculados a la misma cuenta.',
-        ],
-        truthNote: 'CTG Rewards está en Foundation v1: la infraestructura de cuenta existe, pero crear tu cuenta no activa acumulación ni redención de puntos.',
+        title: isWorldMakersFlow ? 'Crear cuenta para World Makers' : 'Crear cuenta',
+        subtitle: isWorldMakersFlow
+          ? 'Crea tu identidad CTG One y úsala como tu cuenta de jugador de World Makers.'
+          : 'Crea tu identidad CTG One y reúne en una sola cuenta las funciones que ya están habilitadas para ti.',
+        valueTitle: isWorldMakersFlow ? 'Tu cuenta de jugador' : 'Con tu cuenta puedes',
+        valueItems: isWorldMakersFlow
+          ? [
+              'Entrar a tu espacio personal de World Makers.',
+              'Conservar una sola identidad para World Makers y CTG One.',
+              'Quedar preparado para futuras funciones de progreso, mundos y comunidad cuando estén disponibles.',
+            ]
+          : [
+              'Entrar a tu dashboard personal y gestionar tu identidad.',
+              'Consultar Wallet, saldo y actividad cuando estén habilitados para tu perfil.',
+              'Conservar accesos de inversión y educación vinculados a la misma cuenta.',
+            ],
+        truthNote: isWorldMakersFlow
+          ? 'Crear tu cuenta prepara tu identidad de jugador, pero no implica acceso inmediato a una beta jugable.'
+          : 'CTG Rewards está en Foundation v1: la infraestructura de cuenta existe, pero crear tu cuenta no activa acumulación ni redención de puntos.',
         fullName: 'Nombre completo',
         phone: 'Teléfono',
         email: 'Correo electrónico',
@@ -52,23 +75,35 @@ export default function RegistroPage() {
         invalidPhone: 'Ingresa un teléfono válido.',
         invalidEmail: 'Ingresa un correo electrónico válido.',
         unavailable: 'El registro no está disponible en este momento. Inténtalo más tarde.',
-        submit: 'Crear mi cuenta CTG One',
+        submit: isWorldMakersFlow ? 'Crear mi cuenta de World Makers' : 'Crear mi cuenta CTG One',
         existing: '¿Ya tienes cuenta?',
         signIn: 'Inicia sesión',
         checkTitle: 'Revisa tu correo',
         checkPrefix: 'Enviamos un enlace de confirmación a',
-        checkSuffix: 'Confírmalo para activar tu cuenta y entrar a tu centro de control CTG One.',
+        checkSuffix: isWorldMakersFlow
+          ? 'Confírmalo para activar tu identidad y continuar a tu espacio de World Makers.'
+          : 'Confírmalo para activar tu cuenta y entrar a tu centro de control CTG One.',
       }
     : {
-        title: 'Create account',
-        subtitle: 'Create your CTG One identity and bring the capabilities already enabled for you into one account.',
-        valueTitle: 'With your account you can',
-        valueItems: [
-          'Enter your personal dashboard and manage your identity.',
-          'Review Wallet balance and activity when enabled for your profile.',
-          'Keep investment and education access linked to the same account.',
-        ],
-        truthNote: 'CTG Rewards is in Foundation v1: the account infrastructure exists, but creating your account does not activate point earning or redemption.',
+        title: isWorldMakersFlow ? 'Create your World Makers account' : 'Create account',
+        subtitle: isWorldMakersFlow
+          ? 'Create your CTG One identity and use it as your World Makers player account.'
+          : 'Create your CTG One identity and bring the capabilities already enabled for you into one account.',
+        valueTitle: isWorldMakersFlow ? 'Your player account' : 'With your account you can',
+        valueItems: isWorldMakersFlow
+          ? [
+              'Enter your personal World Makers space.',
+              'Keep one identity across World Makers and CTG One.',
+              'Be ready for future progress, worlds and community features when they become available.',
+            ]
+          : [
+              'Enter your personal dashboard and manage your identity.',
+              'Review Wallet balance and activity when enabled for your profile.',
+              'Keep investment and education access linked to the same account.',
+            ],
+        truthNote: isWorldMakersFlow
+          ? 'Creating an account prepares your player identity but does not grant immediate access to a playable beta.'
+          : 'CTG Rewards is in Foundation v1: the account infrastructure exists, but creating your account does not activate point earning or redemption.',
         fullName: 'Full name',
         phone: 'Phone',
         email: 'Email',
@@ -77,12 +112,14 @@ export default function RegistroPage() {
         invalidPhone: 'Enter a valid phone number.',
         invalidEmail: 'Enter a valid email address.',
         unavailable: 'Registration is not available right now. Try again later.',
-        submit: 'Create my CTG One account',
+        submit: isWorldMakersFlow ? 'Create my World Makers account' : 'Create my CTG One account',
         existing: 'Already have an account?',
         signIn: 'Sign in',
         checkTitle: 'Check your email',
         checkPrefix: 'We sent a confirmation link to',
-        checkSuffix: 'Confirm it to activate your account and enter your CTG One control center.',
+        checkSuffix: isWorldMakersFlow
+          ? 'Confirm it to activate your identity and continue to your World Makers space.'
+          : 'Confirm it to activate your account and enter your CTG One control center.',
       };
 
   const handleSubmit = async () => {
@@ -118,7 +155,7 @@ export default function RegistroPage() {
       const supabase = createClient();
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
       const analyticsAnonymousId = getAnalyticsAnonymousId();
-      void trackFunnelEvent('signup_started', { sourcePath: '/registro' });
+      void trackFunnelEvent('signup_started', { sourcePath: isWorldMakersFlow ? '/worldmakers' : '/registro' });
       const { error: signUpError } = await supabase.auth.signUp({
         email: parsed.data.email,
         password,
@@ -128,7 +165,7 @@ export default function RegistroPage() {
             phone: parsed.data.phone,
             analytics_anonymous_id: analyticsAnonymousId,
           },
-          emailRedirectTo: `${siteUrl}/auth/callback?next=/dashboard`,
+          emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
         },
       });
       if (signUpError) throw signUpError;
@@ -195,7 +232,12 @@ export default function RegistroPage() {
 
       <p className="mt-6 text-center text-xs text-text-dim">
         {copy.existing}{' '}
-        <Link href="/iniciar-sesion" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.signIn}</Link>
+        <Link
+          href={`/iniciar-sesion?next=${encodeURIComponent(redirectTo)}`}
+          className="inline-flex min-h-11 items-center text-accent hover:underline"
+        >
+          {copy.signIn}
+        </Link>
       </p>
     </form>
   );
