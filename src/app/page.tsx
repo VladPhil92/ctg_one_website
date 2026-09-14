@@ -4,11 +4,9 @@ import React from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { HeroSection } from '@/components/sections/HeroSection';
-import { AccountValueSection } from '@/components/sections/AccountValueSection';
 import { WorldMakersFeaturedSection } from '@/components/sections/WorldMakersFeaturedSection';
-import { HomeIntroSection } from '@/components/sections/HomeIntroSection';
+import { HomeProductShowcases } from '@/components/sections/HomeProductShowcases';
 import { EcosystemDirectorySection } from '@/components/sections/EcosystemDirectorySection';
-import { WalletProductFeature } from '@/components/sections/WalletProductFeature';
 import { AccountCtaSection } from '@/components/sections/AccountCtaSection';
 
 export default function Home() {
@@ -22,11 +20,9 @@ export default function Home() {
         style={{ backgroundColor: 'var(--bg-primary)' }}
       >
         <HeroSection />
-        <AccountValueSection />
         <WorldMakersFeaturedSection />
-        <HomeIntroSection />
+        <HomeProductShowcases />
         <EcosystemDirectorySection />
-        <WalletProductFeature />
         <AccountCtaSection />
       </main>
       <Footer />
