@@ -3,11 +3,12 @@
 import React from 'react';
 import Image from 'next/image';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, Beer, PawPrint, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, Beer, Coins, PawPrint, TrendingUp } from 'lucide-react';
 
 import { Container } from '@/components/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
 import nvetHomeBannerSrc from '@/data/nvet-home-banner';
+import { getCapabilityProof, getPublicProofStatus, type PublicProofStatus } from '@/data/technology-proof';
 
 const LinkButton = ({
   href,
@@ -39,10 +40,21 @@ const LinkButton = ({
   );
 };
 
+const PUBLIC_STATUS_LABELS: Record<PublicProofStatus, { es: string; en: string }> = {
+  LIVE: { es: 'Activo', en: 'Live' },
+  BETA: { es: 'Beta', en: 'Beta' },
+  PARTIAL: { es: 'Parcial', en: 'Partial' },
+  'IN DEVELOPMENT': { es: 'En desarrollo', en: 'In development' },
+  ROADMAP: { es: 'Hoja de ruta', en: 'Roadmap' },
+};
+
 export const HomeProductShowcases: React.FC = () => {
   const { locale } = useLanguage();
   const es = locale === 'es';
   const nvetStatusLabel = es ? 'Nvet Care · En desarrollo' : 'Nvet Care · In development';
+  const ctgoProof = getCapabilityProof('web3');
+  const ctgoStatus = getPublicProofStatus(ctgoProof);
+  const ctgoStatusLabel = PUBLIC_STATUS_LABELS[ctgoStatus][es ? 'es' : 'en'];
   const reduceMotion = useReducedMotion();
   const reveal = reduceMotion
     ? {}
@@ -197,6 +209,29 @@ export const HomeProductShowcases: React.FC = () => {
             </div>
           </motion.article>
         </div>
+
+        <motion.aside
+          {...reveal}
+          className="mt-5 flex flex-col gap-5 rounded-[22px] border border-white/[0.07] bg-white/[0.025] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+          aria-label={es ? 'Estado público de CTGO' : 'CTGO public status'}
+        >
+          <div className="flex max-w-4xl items-start gap-4">
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#d6ae56]/20 bg-[#d6ae56]/[0.06] text-[#f1c75b]">
+              <Coins size={17} aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#f1c75b]">CTGO · {ctgoStatusLabel}</p>
+              <p className="mt-2 text-sm leading-6 text-white/50">
+                {es
+                  ? 'CTGO permanece como capacidad Web3 en hoja de ruta: no publicamos un contrato o red de producción como verificados hasta contar con evidencia técnica trazable.'
+                  : 'CTGO remains a Web3 roadmap capability: we do not publish a production contract or network as verified until traceable technical evidence is available.'}
+              </p>
+            </div>
+          </div>
+          <div className="shrink-0">
+            <LinkButton href="/ctgotoken" accent="outline">{es ? 'Ver CTGO' : 'View CTGO'}</LinkButton>
+          </div>
+        </motion.aside>
       </Container>
     </section>
   );
