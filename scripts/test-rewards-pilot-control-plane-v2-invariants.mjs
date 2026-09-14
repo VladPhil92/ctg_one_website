@@ -29,7 +29,6 @@ assert.match(migration, /grant select, insert on table public\.reward_rule_simul
 assert.doesNotMatch(migration, /grant[^;]*delete[^;]*to service_role/i, 'Pilot control plane must not grant direct DELETE.');
 assert.doesNotMatch(migration, /grant[^;]*(insert|update|delete)[^;]*to authenticated/i, 'Signed-in browser users must not mutate control-plane tables directly.');
 assert.doesNotMatch(migration, /grant[^;]*(insert|update|delete)[^;]*reward_(accounts|ledger_entries)/i, '0134 must not introduce Rewards balance or ledger privileges.');
-assert.doesNotMatch(migration, /grant[^;]*(insert|update|delete)[^;]*reward_(accounts|ledger_entries)/i, '0134 must not introduce Rewards balance or ledger privileges.');
 assert.doesNotMatch(migration, /apply_reward_ledger_entry|points_balance\s*=|insert into public\.reward_ledger_entries/i, '0134 must not contain any Rewards balance/ledger mutation path.');
 assert.match(migration, /Pilot Control Plane v2 is intentionally simulation-only/, 'Migration must carry the simulation-only product boundary.');
 
@@ -62,13 +61,15 @@ assert.match(panel, /Validado significa listo para análisis interno; nunca sign
 assert.doesNotMatch(panel, /activar rewards|publicar regla|ganar puntos ahora|redimir ahora/i, 'Control-plane UI must not expose activation or commercial CTAs.');
 assert.match(nav, /href: '\/admin\/rewards', label: 'Rewards Lab', roles: \['SUPER_ADMIN'\]/, 'Rewards Lab navigation must remain SUPER_ADMIN-only.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0134'/, 'Repository schema authority must advance to 0134.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_pilot_control_plane_v2'/, 'Schema authority must name the pilot control plane.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 134/, 'Schema migration count must advance to 134.');
-assert.match(history, /"logicalVersion": "0134", "remoteVersion": "20260914111247", "remoteName": "0134_rewards_pilot_control_plane_v2"/, 'Production provenance must contain the real 0134 Supabase migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0135'/, 'Repository schema authority must reflect the current additive schema.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_shadow_earning_engine_v3'/, 'Schema authority must name the shadow engine migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 135/, 'Schema migration count must advance to 135.');
+assert.match(history, /"logicalVersion": "0134", "remoteVersion": "20260914111247", "remoteName": "0134_rewards_pilot_control_plane_v2"/, 'Production provenance must retain the real 0134 Supabase migration.');
+assert.match(history, /"logicalVersion": "0135", "remoteVersion": "20260914123941", "remoteName": "0135_rewards_shadow_earning_engine_v3"/, 'Production provenance must contain the real 0135 Supabase migration.');
 
 for (const truth of ['**simulation only**', 'There is intentionally no `active`', 'separate decision before any CTGO interoperability']) {
   assert.ok(docs.includes(truth), `Rewards v2 governance must retain: ${truth}`);
 }
 
 console.log('CTG Rewards Pilot Control Plane v2 invariants: PASS');
+await import('./test-rewards-shadow-earning-engine-v3-invariants.mjs');
