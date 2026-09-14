@@ -84,10 +84,13 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
       await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
     }
 
-    await expect(page.getByText('CTG Rewards', { exact: true })).toHaveCount(1);
-    await expect(page.getByText('La fidelización transversal entre negocios sigue en roadmap.', { exact: false })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Ver roadmap' })).toHaveAttribute('href', '/rewards');
+    await expect(page.getByText('CTG Rewards ya tiene Foundation v1 en desarrollo:', { exact: false })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Ver desarrollo' }).first()).toHaveAttribute('href', '/rewards');
+    await expect(page.getByText('La fidelización transversal entre negocios sigue en roadmap.', { exact: false })).toHaveCount(0);
     await expect(page.getByText('Hoja de ruta', { exact: true })).toHaveCount(0);
+
+    const rewardsCard = page.getByRole('heading', { name: 'CTG Rewards' }).locator('..');
+    await expect(rewardsCard.getByText('En desarrollo', { exact: true })).toBeVisible();
 
     for (const removedOrnamentalLabel of [
       'Núcleo en línea',
@@ -122,11 +125,15 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     await expect(page.getByText('Negocios operativos', { exact: true })).toBeVisible();
 
     await page.goto('/rewards');
-    await expect(page.getByText('CTG Rewards · Hoja de ruta', { exact: true })).toBeVisible();
-    await expect(page.getByText('Reconocimiento por participación', { exact: true })).toBeVisible();
+    await expect(page.getByText('CTG Rewards · Foundation v1 · En desarrollo', { exact: true })).toBeVisible();
+    await expect(page.getByText('Cuenta Rewards', { exact: true })).toBeVisible();
+    await expect(page.getByText('Ledger auditable', { exact: true })).toBeVisible();
+    await expect(page.getByText('Acumulación y referidos', { exact: true })).toBeVisible();
     await expect(page.getByText('Redención entre unidades', { exact: true })).toBeVisible();
-    await expect(page.getByText('Engagement Recognition', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('El programa comercial todavía no está activo:', { exact: false })).toBeVisible();
+    await expect(page.getByText('Rewards account', { exact: true })).toHaveCount(0);
     await expect(page.getByText(/Gana al participar|Gana al referir/i)).toHaveCount(0);
+    await expect(page.getByText('CTG Rewards · Hoja de ruta', { exact: true })).toHaveCount(0);
   });
 
   test('skip link is first keyboard target and bypasses public navigation on multiple routes', async ({ page }) => {

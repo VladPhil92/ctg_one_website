@@ -27,8 +27,13 @@ for (const required of [
 
 assert.match(
   valueSection,
-  /Crear una cuenta hoy no significa que ya estés acumulando puntos o recompensas/,
-  'Rewards must remain explicitly non-live in the account value proposition.',
+  /Foundation v1 en desarrollo[\s\S]*todavía no hay acumulación ni redención comercial activas/,
+  'Rewards Foundation must remain explicitly non-live in the account value proposition.',
+);
+assert.doesNotMatch(
+  valueSection,
+  /La fidelización transversal entre negocios sigue en roadmap|Cross-business loyalty remains on the roadmap/,
+  'Account value copy must not regress Foundation v1 to a roadmap-only claim.',
 );
 assert.match(
   valueSection,
@@ -46,8 +51,8 @@ assert.ok(
 );
 assert.match(
   registration,
-  /CTG Rewards continúa en roadmap/,
-  'Registration must not imply that Rewards activate at signup.',
+  /CTG Rewards está en Foundation v1[\s\S]*crear tu cuenta no activa acumulación ni redención de puntos/,
+  'Registration must disclose Foundation v1 without implying Rewards activate at signup.',
 );
 assert.match(registration, /Crear mi cuenta CTG One/);
 assert.match(accountCta, /Identidad y verificación/);

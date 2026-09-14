@@ -157,16 +157,20 @@ assert.match(
   'The ecosystem map must disclose that CTG Craft Beer Investment remains a controlled beta.',
 );
 
-assert.match(content, /badge: 'CTG Rewards · Roadmap'/, 'CTG Rewards must be visibly classified as roadmap.');
+assert.match(content, /badge: 'CTG Rewards · Foundation v1 · In development'/, 'Shared CTG Rewards content must reflect Foundation v1 development maturity.');
+assert.match(content, /status: 'DEVELOPMENT'/, 'Shared CTG Rewards content must remain DEVELOPMENT, not LIVE.');
 assert.match(
   content,
-  /CTG Rewards is a planned loyalty and referral program[\s\S]*?isn't live yet/i,
-  'CTG Rewards must not imply that a shared cross-ecosystem loyalty program is already active.',
+  /The commercial loyalty program is not active yet[\s\S]*?no published earning, redemption, referral, transfer, cashback, or CTGO-conversion rules/i,
+  'Shared CTG Rewards content must explicitly keep commercial earning and redemption inactive.',
 );
-assert.doesNotMatch(content, /title: 'Earn by (?:Engaging|Referring)'/, 'Roadmap Rewards copy must not use active earning language without a verified program.');
+assert.doesNotMatch(content, /title: 'Earn by (?:Engaging|Referring)'/, 'Foundation Rewards copy must not use active earning language without a verified program.');
 assert.ok(rewards.includes('useLanguage'), 'Rewards must respect the selected public locale.');
-assert.match(rewards, /CTG Rewards · Hoja de ruta/, 'Spanish Rewards must visibly disclose roadmap status.');
-assert.doesNotMatch(rewards, /Gana al participar|Gana al referir/, 'Roadmap Rewards must not use active earning language in Spanish.');
+assert.match(rewards, /CTG Rewards · Foundation v1 · En desarrollo/, 'Spanish Rewards must visibly disclose Foundation v1 development status.');
+assert.match(rewards, /CTG Rewards · Foundation v1 · In development/, 'English Rewards must visibly disclose Foundation v1 development status.');
+assert.match(rewards, /El programa comercial todavía no está activo/i, 'Spanish Rewards must keep the commercial program explicitly inactive.');
+assert.match(rewards, /The commercial program is not active yet/i, 'English Rewards must keep the commercial program explicitly inactive.');
+assert.doesNotMatch(rewards, /Gana al participar|Gana al referir|Earn by engaging|Earn by referring/i, 'Foundation Rewards must not use active earning language before commercial activation.');
 
 // Public positioning must remain affirmative and technology-first. Historical
 // positioning language is forbidden even when used as a negation or disclaimer.

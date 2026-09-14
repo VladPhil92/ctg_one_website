@@ -92,3 +92,7 @@ assert.ok(analyticsFunnel.includes("'education_library'"), 'Education library mu
 assert.ok(analyticsFunnel.includes("'education_learning_center'"), 'Learning continuation must remain an approved funnel service key.');
 
 console.log('Account Activation & Personal OS v2 invariants: PASS');
+
+// Rewards Foundation v1 extends the account platform contract and therefore
+// runs inside the standard account activation invariant suite used by npm test.
+await import('./test-rewards-foundation-v1-invariants.mjs');
