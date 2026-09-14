@@ -14,6 +14,7 @@ import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CTG_WALLET_URL } from '@/lib/constants';
 
 export const AccountValueSection: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -72,6 +73,22 @@ export const AccountValueSection: React.FC = () => {
           text: 'Bring identity, Wallet, investment, education and enabled service access together in one personal dashboard.',
           status: 'Available',
         },
+      ];
+
+  const quickLinks = es
+    ? [
+        { href: '/wallet', label: 'Explorar Wallet' },
+        { href: CTG_WALLET_URL, label: 'Abrir CTG Wallet' },
+        { href: '/ecosystem', label: 'Ver servicios' },
+        { href: 'https://vertice.ctgone.com', label: 'Conocer VÉRTICE', external: true },
+        { href: '/jpvalderrama/learningcenter', label: 'Explorar educación' },
+      ]
+    : [
+        { href: '/wallet', label: 'Explore Wallet' },
+        { href: CTG_WALLET_URL, label: 'Open CTG Wallet' },
+        { href: '/ecosystem', label: 'View services' },
+        { href: 'https://vertice.ctgone.com', label: 'Explore VÉRTICE', external: true },
+        { href: '/jpvalderrama/learningcenter', label: 'Explore education' },
       ];
 
   return (
@@ -156,6 +173,33 @@ export const AccountValueSection: React.FC = () => {
             </FadeInSection>
           ))}
         </div>
+
+        <FadeInSection delay={0.16}>
+          <nav
+            aria-label={es ? 'Accesos rápidos de CTG One' : 'CTG One quick access'}
+            className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5"
+          >
+            {quickLinks.map(({ href, label, external }) => {
+              const classes = 'group inline-flex min-h-11 items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.018] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/68 transition hover:-translate-y-0.5 hover:border-[#d6ae56]/28 hover:bg-white/[0.035] hover:text-white';
+              const content = (
+                <>
+                  <span>{label}</span>
+                  <ArrowUpRight size={13} className="shrink-0 text-[#f1c75b] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+                </>
+              );
+
+              return external ? (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" className={classes}>
+                  {content}
+                </a>
+              ) : (
+                <Link key={label} href={href} className={classes}>
+                  {content}
+                </Link>
+              );
+            })}
+          </nav>
+        </FadeInSection>
 
         <FadeInSection delay={0.18}>
           <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-[#248cff]/15 bg-[#248cff]/[0.035] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
