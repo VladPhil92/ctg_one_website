@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import type { AccountReadState } from '@/hooks/useWallet';
 import type { InvestmentFundingAllocation, InvestmentWithdrawalRequest } from '@/types/investment';
 
 interface InvestmentSummary {
@@ -26,18 +27,19 @@ const EMPTY: InvestmentSummary = {
 export function useInvestmentSummary() {
   const { userId } = useAuth();
   const [summary, setSummary] = useState<InvestmentSummary>(EMPTY);
-  const [isLoading, setIsLoading] = useState(true);
+  const [state, setState] = useState<AccountReadState>('loading');
 
   const load = useCallback(async () => {
     if (!userId || !isSupabaseConfigured) {
       setSummary(EMPTY);
-      setIsLoading(false);
+      setState('ready');
       return;
     }
-    setIsLoading(true);
+
+    setState('loading');
     const supabase = createClient();
 
-    const [{ data: balance }, { data: allocations }, { data: withdrawals }] = await Promise.all([
+    const [balanceResult, allocationResult, withdrawalResult] = await Promise.all([
       supabase.rpc('get_investment_spendable_balance', { p_user: userId }),
       supabase.from('investment_funding_allocations').select('*').eq('participant_user_id', userId),
       supabase
@@ -47,20 +49,25 @@ export function useInvestmentSummary() {
         .order('created_at', { ascending: false }),
     ]);
 
-    const allocationRows = (allocations as InvestmentFundingAllocation[]) ?? [];
+    if (balanceResult.error || allocationResult.error || withdrawalResult.error) {
+      setState('error');
+      return;
+    }
+
+    const allocationRows = (allocationResult.data as InvestmentFundingAllocation[]) ?? [];
 
     setSummary({
-      availableBalanceCents: (balance as number) ?? 0,
+      availableBalanceCents: (balanceResult.data as number) ?? 0,
       activeCapitalCents: allocationRows.reduce((sum, allocation) => sum + allocation.capital_committed_cents, 0),
       allocations: allocationRows,
-      withdrawalRequests: (withdrawals as InvestmentWithdrawalRequest[]) ?? [],
+      withdrawalRequests: (withdrawalResult.data as InvestmentWithdrawalRequest[]) ?? [],
     });
-    setIsLoading(false);
+    setState('ready');
   }, [userId]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  return { summary, isLoading, refresh: load };
+  return { summary, isLoading: state === 'loading', state, refresh: load };
 }
