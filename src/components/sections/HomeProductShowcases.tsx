@@ -51,6 +51,7 @@ const PUBLIC_STATUS_LABELS: Record<PublicProofStatus, { es: string; en: string }
 export const HomeProductShowcases: React.FC = () => {
   const { locale } = useLanguage();
   const es = locale === 'es';
+  const nvetStatusLabel = es ? 'Nvet Care · En desarrollo' : 'Nvet Care · In development';
   const ctgoProof = getCapabilityProof('web3');
   const ctgoStatus = getPublicProofStatus(ctgoProof);
   const ctgoStatusLabel = PUBLIC_STATUS_LABELS[ctgoStatus][es ? 'es' : 'en'];
@@ -193,7 +194,7 @@ export const HomeProductShowcases: React.FC = () => {
               </motion.div>
             </div>
             <div className="p-7 sm:p-9">
-              <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#23885e]">
+              <div aria-label={nvetStatusLabel} className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#23885e]">
                 <PawPrint size={14} aria-hidden="true" />
                 <span>Nvet Care</span>
                 <span aria-hidden="true">·</span>
