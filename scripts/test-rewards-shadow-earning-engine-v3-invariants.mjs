@@ -42,7 +42,7 @@ const adminClientIndex = api.indexOf('createAdminClient()');
 assert.ok(authIndex >= 0 && profileIndex > authIndex && superAdminIndex > authIndex && adminClientIndex > superAdminIndex, 'Shadow service-role authority must be created only after SUPER_ADMIN authorization.');
 assert.match(api, /commercialStatus:\s*'inactive'/, 'Shadow engine must keep commercial Rewards inactive.');
 assert.match(api, /ledgerEffects:\s*false/, 'Shadow engine must explicitly deny ledger effects.');
-assert.match(api, /ingestionMode:\s*'admin_replay_only'/, 'v3 must not expose automatic/public source ingestion.');
+assert.match(api, /ingestionMode:\s*'admin_replay_only'/, 'v3 must retain manual replay even after signed-source v4 is added.');
 for (const action of ['configure_runtime', 'ingest_event', 'reverse_event']) {
   assert.ok(api.includes(`body.action === '${action}'`), `Shadow API must implement ${action}.`);
 }
@@ -68,17 +68,19 @@ assert.doesNotMatch(evaluator, /fetch\(|\.from\(|createAdminClient|reward_ledger
 assert.match(adminPage, /investment_role !== 'SUPER_ADMIN'/, 'Shadow admin page must require SUPER_ADMIN.');
 assert.match(panel, /SHADOW ONLY — cero efectos de ledger/, 'Shadow UI must visibly disclose zero ledger effects.');
 assert.match(panel, /habilita únicamente evaluación hipotética/i, 'Runtime enablement must be explained as hypothetical-only.');
-assert.match(panel, /Replay manual de evento/, 'v3 UI must expose controlled admin replay, not a public webhook.');
+assert.match(panel, /Replay manual de evento/, 'v3 UI must retain controlled admin replay.');
 assert.doesNotMatch(panel, /activar rewards|earning comercial activo|acreditar puntos ahora|redimir ahora/i, 'Shadow UI must not expose commercial activation claims.');
 assert.match(nav, /href: '\/admin\/rewards\/shadow', label: 'Rewards Shadow', roles: \['SUPER_ADMIN'\]/, 'Shadow navigation must remain SUPER_ADMIN-only.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0135'/, 'Repository schema authority must advance to 0135.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_shadow_earning_engine_v3'/, 'Schema authority must name Shadow Earning Engine v3.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 135/, 'Schema migration count must advance to 135.');
-assert.match(history, /"logicalVersion": "0135", "remoteVersion": "20260914123941", "remoteName": "0135_rewards_shadow_earning_engine_v3"/, 'Production provenance must contain the real 0135 Supabase migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0136'/, 'Repository schema authority must reflect signed-source v4.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_signed_source_connectors_v4'/, 'Schema authority must name Signed Source Connectors v4.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 136/, 'Schema migration count must advance to 136.');
+assert.match(history, /"logicalVersion": "0135", "remoteVersion": "20260914123941", "remoteName": "0135_rewards_shadow_earning_engine_v3"/, 'Production provenance must retain the real 0135 Supabase migration.');
+assert.match(history, /"logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4"/, 'Production provenance must contain the real 0136 Supabase migration.');
 
 for (const truth of ['Every result remains **shadow-only**', '`admin_replay_only`', 'Signed Source Connectors & Reconciliation v4']) {
   assert.ok(docs.includes(truth), `Rewards v3 governance must retain: ${truth}`);
 }
 
 console.log('CTG Rewards Shadow Earning Engine v3 invariants: PASS');
+await import('./test-rewards-signed-source-connectors-v4-invariants.mjs');
