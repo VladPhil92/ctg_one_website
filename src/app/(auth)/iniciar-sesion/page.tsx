@@ -31,6 +31,7 @@ function IniciarSesionForm() {
   const { locale } = useLanguage();
   const es = locale === 'es';
   const redirectTo = safeRedirectPath(searchParams.get('next'), '/dashboard');
+  const isWorldMakersFlow = redirectTo.startsWith('/worldmakers');
   const authError = searchParams.get('error');
   const resetComplete = searchParams.get('password_reset') === 'success';
   const [email, setEmail] = useState('');
@@ -46,31 +47,35 @@ function IniciarSesionForm() {
 
   const copy = es
     ? {
-        title: 'Iniciar sesión',
-        subtitle: 'Accede a tu cuenta de CTG One.',
+        title: isWorldMakersFlow ? 'Entrar a World Makers' : 'Iniciar sesión',
+        subtitle: isWorldMakersFlow
+          ? 'Usa tu identidad CTG One para acceder a tu cuenta de jugador.'
+          : 'Accede a tu cuenta de CTG One.',
         email: 'Correo electrónico',
         password: 'Contraseña',
         invalidEmail: 'Correo inválido',
         passwordRequired: 'Ingresa tu contraseña',
         unavailable: 'El inicio de sesión no está disponible en este momento. Inténtalo más tarde.',
         forgot: '¿Olvidaste tu contraseña?',
-        submit: 'Iniciar sesión',
+        submit: isWorldMakersFlow ? 'Entrar a mi cuenta de World Makers' : 'Iniciar sesión',
         noAccount: '¿No tienes cuenta?',
-        create: 'Crea una',
+        create: isWorldMakersFlow ? 'Crea tu cuenta de jugador' : 'Crea una',
         resetComplete: 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.',
       }
     : {
-        title: 'Sign in',
-        subtitle: 'Access your CTG One account.',
+        title: isWorldMakersFlow ? 'Enter World Makers' : 'Sign in',
+        subtitle: isWorldMakersFlow
+          ? 'Use your CTG One identity to access your player account.'
+          : 'Access your CTG One account.',
         email: 'Email',
         password: 'Password',
         invalidEmail: 'Invalid email',
         passwordRequired: 'Enter your password',
         unavailable: 'Sign-in is not available right now. Try again later.',
         forgot: 'Forgot your password?',
-        submit: 'Sign in',
+        submit: isWorldMakersFlow ? 'Enter my World Makers account' : 'Sign in',
         noAccount: 'No account yet?',
-        create: 'Create one',
+        create: isWorldMakersFlow ? 'Create your player account' : 'Create one',
         resetComplete: 'Your password was updated. You can now sign in.',
       };
 
@@ -103,7 +108,7 @@ function IniciarSesionForm() {
         await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       if (assuranceError || !assurance) throw assuranceError ?? new Error('MFA_ASSURANCE_UNAVAILABLE');
 
-      void trackFunnelEvent('first_login', { sourcePath: '/iniciar-sesion' });
+      void trackFunnelEvent('first_login', { sourcePath: isWorldMakersFlow ? '/worldmakers' : '/iniciar-sesion' });
       if (assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2') {
         router.push(`/dashboard/seguridad/mfa?next=${encodeURIComponent(redirectTo)}`);
       } else {
@@ -152,7 +157,12 @@ function IniciarSesionForm() {
 
       <p className="mt-6 text-center text-xs text-text-dim">
         {copy.noAccount}{' '}
-        <Link href="/registro" className="inline-flex min-h-11 items-center text-accent hover:underline">{copy.create}</Link>
+        <Link
+          href={`/registro?next=${encodeURIComponent(redirectTo)}`}
+          className="inline-flex min-h-11 items-center text-accent hover:underline"
+        >
+          {copy.create}
+        </Link>
       </p>
     </form>
   );
