@@ -11,6 +11,11 @@ const privacyPage = fs.readFileSync('src/app/worldmakers/privacy/page.tsx', 'utf
 const adminPage = fs.readFileSync('src/app/admin/worldmakers/page.tsx', 'utf8');
 const adminNav = fs.readFileSync('src/components/admin/AdminNav.tsx', 'utf8');
 const sitemap = fs.readFileSync('src/app/worldmakers/sitemap.ts', 'utf8');
+const worldMakersLayout = fs.readFileSync('src/app/worldmakers/layout.tsx', 'utf8');
+const playerAccessDock = fs.readFileSync('src/app/worldmakers/PlayerAccessDock.tsx', 'utf8');
+const playerAccountPage = fs.readFileSync('src/app/worldmakers/account/page.tsx', 'utf8');
+const loginPage = fs.readFileSync('src/app/(auth)/iniciar-sesion/page.tsx', 'utf8');
+const registrationPage = fs.readFileSync('src/app/(auth)/registro/page.tsx', 'utf8');
 
 for (const status of [
   'registered',
@@ -74,4 +79,17 @@ assert.ok(adminNav.includes("label: 'World Makers', roles: ['SUPER_ADMIN']"), 'W
 assert.ok(sitemap.includes("`${siteUrl}/community`"), 'World Makers sitemap must publish community route');
 assert.ok(sitemap.includes("`${siteUrl}/privacy`"), 'World Makers sitemap must publish privacy route');
 
-console.log('World Makers community and early-access invariants passed.');
+assert.ok(worldMakersLayout.includes('<PlayerAccessDock />'), 'World Makers layout must keep player auth visibly available');
+assert.ok(playerAccessDock.includes('Iniciar sesión'), 'player access dock must expose sign in');
+assert.ok(playerAccessDock.includes('Crear cuenta'), 'player access dock must expose account creation');
+assert.ok(playerAccessDock.includes('https://ctgone.com/iniciar-sesion?next=%2Fworldmakers%2Faccount'), 'World Makers sign in must use the canonical CTG One auth origin and return to the player hub');
+assert.ok(playerAccessDock.includes('https://ctgone.com/registro?next=%2Fworldmakers%2Faccount'), 'World Makers registration must use the canonical CTG One auth origin and return to the player hub');
+assert.ok(playerAccountPage.includes('supabase.auth.getUser()'), 'player account hub must validate the authenticated user server-side');
+assert.ok(playerAccountPage.includes('Crear una cuenta no implica acceso inmediato a una beta jugable'), 'player account hub must preserve public availability truth');
+assert.ok(loginPage.includes("safeRedirectPath(searchParams.get('next'), '/dashboard')"), 'login must validate its post-auth destination');
+assert.ok(loginPage.includes('isWorldMakersFlow'), 'login must expose World Makers context when returning to the player hub');
+assert.ok(registrationPage.includes("safeRedirectPath(searchParams.get('next'), '/dashboard')"), 'registration must validate its post-auth destination');
+assert.ok(registrationPage.includes('emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(redirectTo)}`'), 'registration confirmation must preserve the validated World Makers destination');
+assert.ok(registrationPage.includes('no implica acceso inmediato a una beta jugable'), 'registration must not imply immediate game availability');
+
+console.log('World Makers community, early-access and player-account invariants passed.');
