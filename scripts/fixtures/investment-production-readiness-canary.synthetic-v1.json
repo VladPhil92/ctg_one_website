@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0135",
-  "expectedMigrationName": "rewards_shadow_earning_engine_v3",
-  "expectedMigrationCount": 135,
+  "expectedMigration": "0136",
+  "expectedMigrationName": "rewards_signed_source_connectors_v4",
+  "expectedMigrationCount": 136,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
