@@ -42,6 +42,11 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('en un solo lugar.');
     await expect(page.getByText('Productos, servicios, pagos y beneficios conectados para ti.', { exact: true })).toBeVisible();
     await expect(page.getByText('Crea tu cuenta CTG One y accede con una sola identidad a nuestro portal multiservicios.', { exact: false })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '¿Para qué crear una cuenta CTG One?' })).toBeVisible();
+    await expect(page.getByText('Una identidad CTG One', { exact: true })).toBeVisible();
+    await expect(page.getByText('Wallet y actividad', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Tu educación', { exact: true })).toBeVisible();
+    await expect(page.getByText('Un centro de control', { exact: true })).toBeVisible();
     await expect(page.getByText('Empieza por lo que necesitas', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Una cuenta que conecta experiencias distintas.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Entra a lo que ya puedes usar.' })).toBeVisible();
@@ -53,6 +58,7 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
       'Multi-service portal · One account',
       'Products, services, payments and benefits connected for you.',
       'Create your CTG One account and access our multi-service portal with a single identity.',
+      'Why create a CTG One account?',
       'Start with what you need',
       'One account connecting different experiences.',
       'Enter what you can use today.',
@@ -78,7 +84,9 @@ test.describe('CTG One home UI/UX accessibility contract', () => {
       await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
     }
 
-    await expect(page.getByText('CTG Rewards', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('CTG Rewards', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('La fidelización transversal entre negocios sigue en roadmap.', { exact: false })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Ver roadmap' })).toHaveAttribute('href', '/rewards');
     await expect(page.getByText('Hoja de ruta', { exact: true })).toHaveCount(0);
 
     for (const removedOrnamentalLabel of [
