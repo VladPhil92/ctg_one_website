@@ -31,23 +31,27 @@ The default account status is `foundation`, deliberately different from `active`
 
 ### `reward_ledger_entries`
 
-Append-only audit history. Entries can be positive `earn` records, operator `adjustment` records, or negative `reversal` records. Existing rows cannot be updated or deleted; corrections are represented by new compensating entries.
+Append-only audit history reserved for future approved commercial rules. The schema can represent positive `earn` records, operator `adjustment` records, or negative `reversal` records, but Foundation v1 exposes no mutation path that can create them.
 
 No `redeem`, `transfer`, `cashback`, `token`, or fiat transaction type exists in Foundation v1.
+
+`created_by` is retained as an immutable UUID snapshot rather than a foreign key to `profiles`; deleting an identity therefore cannot rewrite historical ledger rows.
 
 ## Security boundary
 
 Authenticated users receive `SELECT` only and RLS restricts reads to `(select auth.uid()) = user_id`.
 
-Authenticated/anonymous roles receive no mutation privileges. The canonical atomic ledger RPC is `SECURITY INVOKER`, executable only by `service_role`, and Foundation v1 exposes no HTTP route that calls it.
+`anon`, `authenticated`, and `service_role` receive no direct INSERT, UPDATE, or DELETE privilege on Rewards tables in Foundation v1. There is deliberately no public Rewards mutation RPC in this phase.
+
+Automatic creation of an empty Rewards account is performed only by the profile-insert trigger `private.rewards_create_account_for_profile()`. That trigger function lives in the non-exposed `private` schema, uses narrowly scoped `SECURITY DEFINER` authority, and has EXECUTE revoked from application roles.
 
 The authenticated account read endpoint uses the normal CTG One user JWT through `createAuthenticatedRequestContext`; it does not use the admin/service-role client.
 
-## Idempotency and accounting
+## Accounting and future mutation policy
 
-`apply_reward_ledger_entry` serializes on the user's account row, rechecks its unique idempotency key under the lock, prevents negative balances, updates account aggregates, and appends the immutable ledger entry in one database transaction.
+Foundation v1 creates account and ledger structures but no commercial mutation boundary. This is intentional: no server process should be able to award points before earning economics, eligibility, anti-abuse rules, reversals, and redemption accounting have been approved.
 
-This write boundary exists for future approved integrations. It is not an active earning rule.
+A future activation migration must introduce the canonical atomic write boundary together with idempotency, reconciliation, and end-to-end tests. That future boundary must not depend on direct table mutation privileges from application code.
 
 ## UX contract
 
@@ -66,9 +70,10 @@ Moving CTG Rewards from `DEVELOPMENT` to a stronger public maturity requires, at
 1. approved earning economics for at least one real operating business;
 2. published eligibility and anti-abuse rules;
 3. approved redemption economics and accounting treatment;
-4. end-to-end tests for earn, reversal, redemption and idempotency;
-5. production evidence that balances reconcile to the immutable ledger;
-6. updated user-facing terms and privacy disclosures;
-7. explicit decision on whether cross-business utility remains off-chain or interoperates with CTGO.
+4. an approved atomic server-side mutation boundary with idempotency and reconciliation;
+5. end-to-end tests for earn, reversal, redemption and idempotency;
+6. production evidence that balances reconcile to the immutable ledger;
+7. updated user-facing terms and privacy disclosures;
+8. explicit decision on whether cross-business utility remains off-chain or interoperates with CTGO.
 
 Until those gates are met, Foundation v1 remains infrastructure, not an active Rewards program.

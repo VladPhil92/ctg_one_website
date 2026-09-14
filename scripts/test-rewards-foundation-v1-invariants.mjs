@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 const [migration, api, hook, dashboard, publicSection, services, funnel, schemaVersion, docs] = await Promise.all([
-  read('supabase/migrations/20260914030000_0132_rewards_foundation_v1.sql'),
+  read('supabase/migrations/20260914035147_0133_rewards_foundation_v1.sql'),
   read('src/app/api/rewards/account/route.ts'),
   read('src/hooks/useRewardsSummary.ts'),
   read('src/app/dashboard/rewards/page.tsx'),
@@ -23,14 +23,19 @@ for (const table of ['reward_accounts', 'reward_ledger_entries']) {
 assert.match(migration, /grant select on table public\.reward_accounts to authenticated/, 'Authenticated users may only read Rewards accounts.');
 assert.match(migration, /grant select on table public\.reward_ledger_entries to authenticated/, 'Authenticated users may only read their own Rewards ledger.');
 assert.doesNotMatch(migration, /grant[^;]*(insert|update|delete)[^;]*authenticated/i, 'Authenticated users must never mutate Rewards state directly.');
-assert.doesNotMatch(migration, /grant[^;]*delete[^;]*reward_ledger_entries[^;]*service_role/i, 'Even service_role must not receive direct ledger DELETE.');
+assert.doesNotMatch(migration, /grant[^;]*(insert|update|delete)[^;]*service_role/i, 'Foundation v1 must not grant service_role direct Rewards mutation privileges.');
+assert.match(migration, /revoke all on table public\.reward_accounts from public, anon, authenticated, service_role/, 'Reward account privileges must fail closed before explicit authenticated SELECT grants.');
+assert.match(migration, /revoke all on table public\.reward_ledger_entries from public, anon, authenticated, service_role/, 'Reward ledger privileges must fail closed before explicit authenticated SELECT grants.');
 assert.match(migration, /using \(\(select auth\.uid\(\)\) = user_id\)/, 'Rewards reads must be owner-scoped by auth.uid().');
 assert.match(migration, /reward_ledger_immutable_update_trg/, 'Ledger updates must be blocked.');
 assert.doesNotMatch(migration, /reward_ledger_immutable_delete_trg/, 'Ledger immutability must not break identity ON DELETE CASCADE cleanup.');
-assert.match(migration, /security invoker/, 'Canonical Rewards mutation boundary must not bypass RLS with SECURITY DEFINER.');
-assert.match(migration, /grant execute on function public\.apply_reward_ledger_entry[\s\S]*to service_role/, 'Only service_role may execute the canonical ledger write boundary.');
+assert.match(migration, /created_by uuid,/, 'Ledger actor identity must be retained as an immutable UUID snapshot.');
+assert.doesNotMatch(migration, /created_by uuid references public\.profiles/, 'Ledger actor snapshot must not use an ON DELETE mutation-producing profile FK.');
+assert.match(migration, /create or replace function private\.rewards_create_account_for_profile\(\)/, 'Automatic account creation must live in the private schema.');
+assert.match(migration, /private\.rewards_create_account_for_profile\(\)[\s\S]*security definer/, 'The private profile trigger may use tightly scoped SECURITY DEFINER authority.');
+assert.match(migration, /revoke all on function private\.rewards_create_account_for_profile\(\) from public, anon, authenticated, service_role/, 'Private trigger execution must not be exposed as an application RPC.');
+assert.doesNotMatch(migration, /apply_reward_ledger_entry/, 'Foundation v1 must not expose a Rewards mutation RPC before commercial rules exist.');
 assert.match(migration, /default 'foundation'/, 'New Rewards accounts must default to foundation, not active.');
-assert.match(migration, /p_points_delta > 0 and v_account\.status <> 'active'/, 'Foundation/frozen accounts must reject positive reward credits at the database boundary.');
 assert.match(migration, /No points are seeded/, 'Migration must explicitly reject retroactive point seeding.');
 
 for (const forbidden of ['redeem', 'transfer', 'cashback', 'ctgo_conversion']) {
@@ -60,11 +65,11 @@ assert.match(services, /id: 'rewards'[\s\S]*href: '\/dashboard\/rewards'/, 'Rewa
 assert.match(services, /id: 'rewards'[\s\S]*status: 'DEVELOPMENT'/, 'Rewards must remain DEVELOPMENT, not LIVE.');
 assert.match(services, /id: 'rewards'[\s\S]*publicHref: '\/rewards'/, 'Rewards must retain a public maturity surface.');
 assert.ok(funnel.includes("'rewards'"), 'Rewards must be an approved funnel service key.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0132'/, 'Repository schema authority must advance to migration 0132.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0133'/, 'Repository schema authority must advance to migration 0133.');
 assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_foundation_v1'/, 'Schema authority must name Rewards Foundation v1.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 132/, 'Schema migration count must advance to 132.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 133/, 'Schema migration count must advance to 133.');
 
-for (const truth of ['does **not activate**', 'No `redeem`', 'Moving CTG Rewards from `DEVELOPMENT`']) {
+for (const truth of ['**does not activate**', 'No `redeem`', 'Moving CTG Rewards from `DEVELOPMENT`']) {
   assert.ok(docs.includes(truth), `Rewards governance document must retain: ${truth}`);
 }
 
