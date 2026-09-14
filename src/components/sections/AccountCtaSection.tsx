@@ -6,7 +6,7 @@ import { FadeInSection } from '@/components/ui/FadeInSection';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Fingerprint, ShieldCheck, Activity } from 'lucide-react';
+import { BookOpenCheck, Fingerprint, WalletCards } from 'lucide-react';
 import styles from '@/styles/CommandCenter.module.css';
 
 export const AccountCtaSection: React.FC = () => {
@@ -17,36 +17,36 @@ export const AccountCtaSection: React.FC = () => {
 
   const copy = locale === 'es'
     ? {
-        eyebrow: 'Acceso al ecosistema',
+        eyebrow: 'Tu cuenta CTG One',
         returningTitle: 'Tu punto de control digital.',
-        returningDescription: 'Consulta tu saldo, estado de verificación y funciones habilitadas desde una sola interfaz conectada al ecosistema CTG One.',
+        returningDescription: 'Consulta tu identidad, Wallet, actividad y accesos habilitados desde una sola interfaz conectada al ecosistema CTG One.',
         guestTitle: 'Una identidad. Un ecosistema.',
-        guestDescription: 'Crea tu cuenta para verificar tu identidad, acceder a tu panel y utilizar las plataformas habilitadas de CTG One.',
+        guestDescription: 'Crea tu cuenta para entrar a tu dashboard, gestionar identidad y Wallet, y conservar en un mismo perfil tus accesos financieros y educativos habilitados.',
         accountButton: 'Ir a mi cuenta',
-        createButton: 'Crear cuenta',
+        createButton: 'Crear mi cuenta',
         signInButton: 'Iniciar sesión',
-        identity: 'Identidad verificada',
-        security: 'Acceso seguro',
-        activity: 'Operación conectada',
+        identity: 'Identidad y verificación',
+        wallet: 'Wallet y actividad',
+        education: 'Accesos educativos',
       }
     : {
-        eyebrow: 'Ecosystem access',
+        eyebrow: 'Your CTG One account',
         returningTitle: 'Your digital control point.',
-        returningDescription: 'Review your balance, verification status, and enabled features from one interface connected to the CTG One ecosystem.',
+        returningDescription: 'Review your identity, Wallet, activity, and enabled access from one interface connected to the CTG One ecosystem.',
         guestTitle: 'One identity. One ecosystem.',
-        guestDescription: 'Create your account to verify your identity, access your dashboard, and use the enabled CTG One platforms.',
+        guestDescription: 'Create your account to enter your dashboard, manage identity and Wallet, and keep enabled financial and educational access under one profile.',
         accountButton: 'Go to my account',
-        createButton: 'Create account',
+        createButton: 'Create my account',
         signInButton: 'Sign in',
-        identity: 'Verified identity',
-        security: 'Secure access',
-        activity: 'Connected operation',
+        identity: 'Identity and verification',
+        wallet: 'Wallet and activity',
+        education: 'Education access',
       };
 
   const signals = [
     { icon: Fingerprint, label: copy.identity },
-    { icon: ShieldCheck, label: copy.security },
-    { icon: Activity, label: copy.activity },
+    { icon: WalletCards, label: copy.wallet },
+    { icon: BookOpenCheck, label: copy.education },
   ];
 
   return (

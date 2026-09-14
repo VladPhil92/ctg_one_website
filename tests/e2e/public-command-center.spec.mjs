@@ -87,7 +87,9 @@ test.describe('CTG One public command-center design system', () => {
     const nvetCard = page.getByRole('heading', { name: 'Nvet Care App' }).locator('..');
     await expect(nvetCard.getByText('En desarrollo', { exact: true })).toBeVisible();
 
-    await expect(page.getByText('CTG Rewards', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('CTG Rewards', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('La fidelización transversal entre negocios sigue en roadmap.', { exact: false })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Ver roadmap' })).toHaveAttribute('href', '/rewards');
     await expect(page.getByRole('link', { name: 'Ver ecosistema completo' })).toHaveAttribute('href', '/ecosystem');
     await expect(page.getByRole('link', { name: 'Consultar estado técnico' })).toHaveAttribute('href', '/technology/status');
     await expectNoHorizontalOverflow(page, '/');

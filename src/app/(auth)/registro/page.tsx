@@ -36,7 +36,14 @@ export default function RegistroPage() {
   const copy = es
     ? {
         title: 'Crear cuenta',
-        subtitle: 'Crea una sola cuenta para acceder a tus servicios, beneficios y operaciones dentro de CTG One.',
+        subtitle: 'Crea tu identidad CTG One y reúne en una sola cuenta las funciones que ya están habilitadas para ti.',
+        valueTitle: 'Con tu cuenta puedes',
+        valueItems: [
+          'Entrar a tu dashboard personal y gestionar tu identidad.',
+          'Consultar Wallet, saldo y actividad cuando estén habilitados para tu perfil.',
+          'Conservar accesos de inversión y educación vinculados a la misma cuenta.',
+        ],
+        truthNote: 'CTG Rewards continúa en roadmap: crear tu cuenta no activa puntos ni recompensas automáticamente.',
         fullName: 'Nombre completo',
         phone: 'Teléfono',
         email: 'Correo electrónico',
@@ -45,7 +52,7 @@ export default function RegistroPage() {
         invalidPhone: 'Ingresa un teléfono válido.',
         invalidEmail: 'Ingresa un correo electrónico válido.',
         unavailable: 'El registro no está disponible en este momento. Inténtalo más tarde.',
-        submit: 'Crear cuenta',
+        submit: 'Crear mi cuenta CTG One',
         existing: '¿Ya tienes cuenta?',
         signIn: 'Inicia sesión',
         checkTitle: 'Revisa tu correo',
@@ -54,7 +61,14 @@ export default function RegistroPage() {
       }
     : {
         title: 'Create account',
-        subtitle: 'Create one account to access your services, benefits, and activity across CTG One.',
+        subtitle: 'Create your CTG One identity and bring the capabilities already enabled for you into one account.',
+        valueTitle: 'With your account you can',
+        valueItems: [
+          'Enter your personal dashboard and manage your identity.',
+          'Review Wallet balance and activity when enabled for your profile.',
+          'Keep investment and education access linked to the same account.',
+        ],
+        truthNote: 'CTG Rewards remains on the roadmap: creating an account does not automatically activate points or rewards.',
         fullName: 'Full name',
         phone: 'Phone',
         email: 'Email',
@@ -63,7 +77,7 @@ export default function RegistroPage() {
         invalidPhone: 'Enter a valid phone number.',
         invalidEmail: 'Enter a valid email address.',
         unavailable: 'Registration is not available right now. Try again later.',
-        submit: 'Create account',
+        submit: 'Create my CTG One account',
         existing: 'Already have an account?',
         signIn: 'Sign in',
         checkTitle: 'Check your email',
@@ -142,7 +156,20 @@ export default function RegistroPage() {
   return (
     <form noValidate onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }}>
       <h1 className="mb-1 font-outfit text-2xl font-semibold tracking-tight text-white">{copy.title}</h1>
-      <p className="mb-8 text-sm leading-relaxed text-text-muted">{copy.subtitle}</p>
+      <p className="text-sm leading-relaxed text-text-muted">{copy.subtitle}</p>
+
+      <div className="mb-7 mt-5 rounded-2xl border border-accent/15 bg-accent/[0.035] p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">{copy.valueTitle}</p>
+        <ul className="mt-3 space-y-2">
+          {copy.valueItems.map((item) => (
+            <li key={item} className="flex gap-2 text-xs leading-relaxed text-text-muted">
+              <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 border-t border-white/[0.07] pt-3 text-[11px] leading-relaxed text-text-dim">{copy.truthNote}</p>
+      </div>
 
       <AuthInput label={copy.fullName} value={fullName} onChange={setFullName} autoComplete="name" required />
       <AuthInput label={copy.phone} type="tel" value={phone} onChange={setPhone} autoComplete="tel" inputMode="tel" required />
