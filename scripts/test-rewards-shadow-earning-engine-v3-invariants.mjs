@@ -48,6 +48,10 @@ for (const action of ['configure_runtime', 'ingest_event', 'reverse_event']) {
 }
 assert.match(api, /IDEMPOTENCY_CONFLICT/, 'Mismatched replays must fail as idempotency conflicts.');
 assert.match(api, /originalMatches/, 'Replay identity must compare canonical event facts.');
+assert.match(api, /SHADOW_EVENT_WRITE_FAILED/, 'Unexpected source-event write failures must remain distinguishable from idempotency conflicts.');
+assert.match(api, /async function ensureReversalEvaluation/, 'Concurrent reversal requests must converge on exactly one reversal evaluation.');
+assert.match(api, /function reversalMatches/, 'Reversal replays must compare canonical reversal facts.');
+assert.match(api, /idempotentReplay = true/, 'Concurrent inserts must surface as idempotent replay after canonical re-read.');
 assert.match(api, /subjectDailyOriginalCount/, 'Shadow evaluation must enforce subject-day event limits.');
 assert.match(api, /reversalBypassesKillSwitch:\s*true/, 'Safety reversals must remain representable when shadow processing is disabled.');
 assert.match(api, /ORIGINAL_ALREADY_REVERSED/, 'Second reversals must fail explicitly.');
