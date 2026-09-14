@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import {
   ArrowUpRight,
   Beer,
@@ -34,6 +35,8 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   'education-jp': BookOpen,
   'learning-center': School,
 };
+
+const HOME_FEATURED_SERVICE_IDS = new Set(['world-makers', 'craft-beer', 'nvet', 'vertice']);
 
 const STATUS_LABELS_ES: Record<DashboardServiceStatus, string> = {
   LIVE: 'Disponible',
@@ -69,13 +72,20 @@ const ServiceCard = ({ service, label, es }: { service: DashboardService; label:
   const description = !es && service.descriptionEn ? service.descriptionEn : service.description;
   const cta = !es && service.publicCtaEn ? service.publicCtaEn : (service.publicCta ?? service.cta);
   const isExternal = href.startsWith('http://') || href.startsWith('https://');
+  const isVertice = service.id === 'vertice';
 
   return (
     <article className="group flex h-full min-h-[220px] flex-col rounded-[22px] border border-white/[0.07] bg-white/[0.02] p-6 transition duration-300 hover:-translate-y-1 hover:border-[#d6ae56]/25 hover:bg-white/[0.03]">
       <div className="flex items-start justify-between gap-4">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d6ae56]/20 bg-[#d6ae56]/[0.05] text-[#f1c75b]">
-          <Icon size={18} aria-hidden="true" />
-        </span>
+        {isVertice ? (
+          <span className="flex h-10 min-w-[96px] items-center justify-center rounded-full border border-[#d6ae56]/20 bg-[#07101d] px-2.5">
+            <Image src="/images/vertice/logo.svg" alt="VÉRTICE" width={82} height={33} unoptimized className="h-auto w-[82px]" />
+          </span>
+        ) : (
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d6ae56]/20 bg-[#d6ae56]/[0.05] text-[#f1c75b]">
+            <Icon size={18} aria-hidden="true" />
+          </span>
+        )}
         <span className="rounded-full border border-white/[0.08] bg-white/[0.025] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white/55">
           {label}
         </span>
@@ -103,7 +113,9 @@ export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode
   const isFullDirectory = mode === 'full';
   const visibleServices = isFullDirectory
     ? PUBLIC_ECOSYSTEM_SERVICES
-    : PUBLIC_ECOSYSTEM_SERVICES.filter((service) => service.status !== 'ROADMAP');
+    : PUBLIC_ECOSYSTEM_SERVICES.filter(
+        (service) => service.status !== 'ROADMAP' && !HOME_FEATURED_SERVICE_IDS.has(service.id),
+      );
   const availableServices = visibleServices.filter((service) => AVAILABLE_STATUSES.has(service.status));
   const evolvingServices = visibleServices.filter((service) => !AVAILABLE_STATUSES.has(service.status));
 
@@ -115,12 +127,14 @@ export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="max-w-3xl">
               <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d6ae56]">
-                {es ? 'Servicios y plataformas' : 'Services and platforms'}
+                {isFullDirectory
+                  ? (es ? 'Servicios y plataformas' : 'Services and platforms')
+                  : (es ? 'Más de CTG One' : 'More from CTG One')}
               </span>
               <h2 id="ecosystem-directory-title" className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl md:text-5xl">
                 {isFullDirectory
                   ? (es ? 'Todo el ecosistema, con su estado real.' : 'The full ecosystem, with its real status.')
-                  : (es ? 'Entra a lo que ya puedes usar.' : 'Enter what you can use today.')}
+                  : (es ? 'Más herramientas. Menos ruido.' : 'More tools. Less noise.')}
               </h2>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-text-muted sm:text-base">
                 {isFullDirectory
@@ -128,8 +142,8 @@ export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode
                       ? 'Este directorio reúne las experiencias públicas del ecosistema, incluidas las que están en desarrollo o en hoja de ruta, para que su nivel de madurez sea explícito.'
                       : 'This directory brings together the ecosystem’s public experiences, including those in development or on the roadmap, so their maturity is explicit.')
                   : (es
-                      ? 'Priorizamos aquí las experiencias accesibles hoy. Los productos que todavía están madurando aparecen en una sección separada para no mezclar disponibilidad real con nuestra hoja de ruta.'
-                      : 'This view prioritizes experiences you can access today. Products that are still maturing appear separately so current availability is not mixed with the roadmap.')}
+                      ? 'Wallet, inversión, gastronomía, conocimiento y educación: accesos directos al resto del ecosistema.'
+                      : 'Wallet, investment, food, knowledge and education: direct access to the rest of the ecosystem.')}
               </p>
             </div>
             {!isFullDirectory && (
@@ -140,30 +154,34 @@ export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode
           </div>
         </FadeInSection>
 
-        <div className="mt-10">
-          <div className="mb-5 flex items-center gap-3">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" />
-            <h3 className="font-outfit text-xl font-semibold text-white">{es ? 'Disponible ahora' : 'Available now'}</h3>
+        {availableServices.length > 0 && (
+          <div className="mt-10">
+            <div className="mb-5 flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" />
+              <h3 className="font-outfit text-xl font-semibold text-white">{es ? 'Disponible ahora' : 'Available now'}</h3>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {availableServices.map((service, index) => (
+                <FadeInSection key={service.id} delay={Math.min(index * 0.035, 0.18)}>
+                  <ServiceCard service={service} label={labels[service.status]} es={es} />
+                </FadeInSection>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {availableServices.map((service, index) => (
-              <FadeInSection key={service.id} delay={Math.min(index * 0.035, 0.18)}>
-                <ServiceCard service={service} label={labels[service.status]} es={es} />
-              </FadeInSection>
-            ))}
-          </div>
-        </div>
+        )}
 
         {evolvingServices.length > 0 && (
           <div className="mt-14 border-t border-white/[0.06] pt-10">
             <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h3 className="font-outfit text-xl font-semibold text-white">{es ? 'En evolución' : 'In evolution'}</h3>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
-                  {es
-                    ? 'Puedes conocer estos productos, pero su estado indica que todavía no deben entenderse como una experiencia completamente disponible.'
-                    : 'You can explore these products, but their status indicates they should not yet be treated as fully available experiences.'}
-                </p>
+                {isFullDirectory && (
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
+                    {es
+                      ? 'Estos productos son visibles, pero su estado indica que todavía no deben entenderse como una experiencia completamente disponible.'
+                      : 'These products are visible, but their status indicates they should not yet be treated as fully available experiences.'}
+                  </p>
+                )}
               </div>
               <a href="/technology/status" className="inline-flex min-h-11 items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55 transition hover:text-[#f1c75b]">
                 {es ? 'Consultar estado técnico' : 'View technical status'} <ArrowUpRight size={13} aria-hidden="true" />
