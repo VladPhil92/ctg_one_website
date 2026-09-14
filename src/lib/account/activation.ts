@@ -2,6 +2,7 @@ import type { KycStatus } from '@/types/domain';
 import type { FunnelServiceKey } from '@/lib/analytics/funnel';
 
 export type EducationActivationState = 'loading' | 'ready' | 'error';
+export type ActivationReadState = 'loading' | 'ready' | 'error';
 
 export type EducationActivationSummary = {
   state: EducationActivationState;
@@ -19,14 +20,17 @@ export type AccountActivationInput = {
   hasProfile: boolean;
   hasCompleteProfile: boolean;
   kycStatus: KycStatus;
+  walletState: ActivationReadState;
   walletReady: boolean;
+  transactionState: ActivationReadState;
   transactionCount: number;
+  investmentState: ActivationReadState;
   investmentAllocationCount: number;
   education: EducationActivationSummary;
 };
 
 export type AccountActivationAction = {
-  key: 'profile' | 'identity' | 'wallet' | 'education' | 'investment' | 'activity' | 'discover';
+  key: 'profile' | 'identity' | 'wallet' | 'education' | 'investment' | 'activity' | 'discover' | 'sync';
   eyebrow: string;
   title: string;
   description: string;
@@ -36,7 +40,7 @@ export type AccountActivationAction = {
 };
 
 export type AccountActivationPlan = {
-  phase: 'setup' | 'activate' | 'engage' | 'return';
+  phase: 'setup' | 'activate' | 'engage' | 'return' | 'sync';
   headline: string;
   summary: string;
   primary: AccountActivationAction;
@@ -146,8 +150,18 @@ const DISCOVER_ACTION = action(
   null,
 );
 
+const SYNC_ACTION = action(
+  'sync',
+  'Estado no confirmado',
+  'Sincroniza tu cuenta antes de continuar',
+  'Uno o más contextos de tu cuenta no pudieron verificarse. Personal OS no asumirá que están vacíos ni recomendará una nueva acción hasta recuperar su estado.',
+  '/dashboard',
+  'Reintentar sincronización',
+  null,
+);
+
 function continueLearningAction(education: EducationActivationSummary): AccountActivationAction | null {
-  if (!education.topLearning) return null;
+  if (!education.topLearning || education.topLearning.progressPercent <= 0) return null;
   return action(
     'education',
     'Continúa donde quedaste',
@@ -160,16 +174,24 @@ function continueLearningAction(education: EducationActivationSummary): AccountA
 }
 
 export function buildAccountActivationPlan(input: AccountActivationInput): AccountActivationPlan {
+  const walletReadyState = input.walletState === 'ready';
+  const transactionsReady = input.transactionState === 'ready';
+  const investmentsReady = input.investmentState === 'ready';
   const educationReady = input.education.state === 'ready';
+  const hasReadError = input.walletState === 'error'
+    || input.transactionState === 'error'
+    || input.investmentState === 'error'
+    || input.education.state === 'error';
+
   const hasEducationValue = educationReady && (input.education.activeEntitlements > 0 || input.education.activeLearning > 0);
-  const hasInvestmentValue = input.investmentAllocationCount > 0;
-  const hasTransactionValue = input.transactionCount > 0;
+  const hasInvestmentValue = investmentsReady && input.investmentAllocationCount > 0;
+  const hasTransactionValue = transactionsReady && input.transactionCount > 0;
 
   const milestones = [
     input.hasProfile,
     input.hasCompleteProfile,
     input.kycStatus === 'verified',
-    input.walletReady,
+    walletReadyState && input.walletReady,
     hasEducationValue || hasInvestmentValue || hasTransactionValue,
   ];
   const completedMilestones = milestones.filter(Boolean).length;
@@ -193,7 +215,12 @@ export function buildAccountActivationPlan(input: AccountActivationInput): Accou
   } else if (input.kycStatus !== 'verified') {
     phase = 'setup';
     primary = IDENTITY_ACTION;
-  } else if (!input.walletReady) {
+  } else if (hasReadError) {
+    phase = 'sync';
+    headline = 'Necesitamos confirmar el estado de tu cuenta.';
+    summary = 'Un fallo de lectura no se interpreta como ausencia de actividad. Reintentaremos antes de recomendarte una acción.';
+    primary = SYNC_ACTION;
+  } else if (walletReadyState && !input.walletReady) {
     phase = 'activate';
     primary = WALLET_ACTION;
   } else {
@@ -228,27 +255,46 @@ export function buildAccountActivationPlan(input: AccountActivationInput): Accou
       phase = 'engage';
       primary = EDUCATION_DISCOVERY_ACTION;
     } else {
-      phase = 'engage';
-      primary = DISCOVER_ACTION;
+      phase = 'sync';
+      primary = SYNC_ACTION;
     }
+  }
+
+  if (primary.key === 'sync') {
+    return {
+      phase,
+      headline,
+      summary,
+      primary,
+      secondary: [],
+      completedMilestones,
+      totalMilestones,
+      progressPercent,
+    };
   }
 
   const candidates = [
     input.kycStatus === 'verified' ? null : IDENTITY_ACTION,
-    input.walletReady ? null : WALLET_ACTION,
-    hasEducationValue ? action('education', 'Tu aprendizaje', 'Mi Education OS', 'Consulta cursos, accesos y progreso vinculados a tu cuenta.', '/dashboard/educacion', 'Abrir educación', 'education_library') : EDUCATION_DISCOVERY_ACTION,
-    hasInvestmentValue ? INVESTMENT_ACTION : action('investment', 'Opcional', 'Explorar inversión', 'Consulta oportunidades publicadas sin asumir que invertir sea un requisito para activar tu cuenta.', '/inversion/app', 'Explorar inversión', 'investment'),
-    DISCOVER_ACTION,
+    walletReadyState && !input.walletReady ? WALLET_ACTION : null,
+    educationReady
+      ? hasEducationValue
+        ? action('education', 'Tu aprendizaje', 'Mi Education OS', 'Consulta cursos, accesos y progreso vinculados a tu cuenta.', '/dashboard/educacion', 'Abrir educación', 'education_library')
+        : EDUCATION_DISCOVERY_ACTION
+      : null,
+    investmentsReady
+      ? hasInvestmentValue
+        ? INVESTMENT_ACTION
+        : action('investment', 'Opcional', 'Explorar inversión', 'Consulta oportunidades publicadas sin asumir que invertir sea un requisito para activar tu cuenta.', '/inversion/app', 'Explorar inversión', 'investment')
+      : null,
+    transactionsReady && educationReady && investmentsReady ? DISCOVER_ACTION : null,
   ].filter((item): item is AccountActivationAction => Boolean(item) && item?.key !== primary.key);
-
-  const secondary = candidates.slice(0, 3);
 
   return {
     phase,
     headline,
     summary,
     primary,
-    secondary,
+    secondary: candidates.slice(0, 3),
     completedMilestones,
     totalMilestones,
     progressPercent,
