@@ -30,18 +30,27 @@ async function readBetaEndpoint<T>(accessToken: string, path: string): Promise<R
 }
 
 export async function fetchNvetBetaOperations(accessToken: string): Promise<NvetBetaOperationsResult> {
-  const [readiness, cohort, activation, evidenceSummary, evidenceHistory] = await Promise.all([
+  const [readiness, cohort, activation, evidenceSummary, observationSummary, evidenceHistory] = await Promise.all([
     readBetaEndpoint<NvetBetaOperationsSnapshot['readiness']>(accessToken, 'readiness'),
     readBetaEndpoint<NvetBetaOperationsSnapshot['cohort']>(accessToken, 'cohort'),
     readBetaEndpoint<NvetBetaOperationsSnapshot['activation']>(accessToken, 'activation'),
     readBetaEndpoint<NvetBetaOperationsSnapshot['evidenceSummary']>(accessToken, 'evidence/summary'),
+    readBetaEndpoint<NvetBetaOperationsSnapshot['observationSummary']>(accessToken, 'evidence/observation-summary'),
     readBetaEndpoint<NvetBetaOperationsSnapshot['evidenceHistory']>(accessToken, 'evidence/history'),
   ]);
 
-  const failed = [readiness, cohort, activation, evidenceSummary, evidenceHistory].find((result) => !result.ok);
+  const failed = [readiness, cohort, activation, evidenceSummary, observationSummary, evidenceHistory]
+    .find((result) => !result.ok);
   if (failed && !failed.ok) return { ok: false, status: failed.status };
 
-  if (!readiness.ok || !cohort.ok || !activation.ok || !evidenceSummary.ok || !evidenceHistory.ok) {
+  if (
+    !readiness.ok ||
+    !cohort.ok ||
+    !activation.ok ||
+    !evidenceSummary.ok ||
+    !observationSummary.ok ||
+    !evidenceHistory.ok
+  ) {
     return { ok: false, status: 502 };
   }
 
@@ -52,6 +61,7 @@ export async function fetchNvetBetaOperations(accessToken: string): Promise<Nvet
       cohort: cohort.data,
       activation: activation.data,
       evidenceSummary: evidenceSummary.data,
+      observationSummary: observationSummary.data,
       evidenceHistory: evidenceHistory.data,
     },
   };
