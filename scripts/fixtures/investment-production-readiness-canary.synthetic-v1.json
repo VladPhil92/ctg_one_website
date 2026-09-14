@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0135",
-  "expectedMigrationName": "rewards_shadow_earning_engine_v3",
-  "expectedMigrationCount": 135,
+  "expectedMigration": "0137",
+  "expectedMigrationName": "rewards_signed_source_atomicity_hardening",
+  "expectedMigrationCount": 137,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

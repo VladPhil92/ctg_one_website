@@ -15,6 +15,7 @@ const ITEMS: Item[] = [
   { href: '/admin/analytics', label: 'Analytics', roles: ['SUPER_ADMIN'] },
   { href: '/admin/rewards', label: 'Rewards Lab', roles: ['SUPER_ADMIN'] },
   { href: '/admin/rewards/shadow', label: 'Rewards Shadow', roles: ['SUPER_ADMIN'] },
+  { href: '/admin/rewards/connectors', label: 'Rewards Sources', roles: ['SUPER_ADMIN'] },
   { href: '/admin/worldmakers', label: 'World Makers', roles: ['SUPER_ADMIN'] },
   { href: '/admin/operations', label: 'Producción OS', roles: ['SUPER_ADMIN','PRODUCTION_MANAGER'] },
   { href: '/admin/operations/overview', label: 'Ops Intelligence', roles: ['SUPER_ADMIN','FINANCE_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER','AUDITOR'] },
