@@ -2,10 +2,6 @@ import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import './nvetcareapp.css';
 
-// Nvet Care's own type system (per its brand kit) is Poppins end to end
-// (H1-H3 and body copy). Scoped to this route only via a CSS variable on a
-// wrapper div — the root layout's Outfit/DM Sans tokens on <html>/<body>
-// are untouched.
 const poppins = Poppins({
   subsets: ['latin'],
   display: 'swap',
@@ -15,8 +11,8 @@ const poppins = Poppins({
   weight: ['400', '500', '600', '700', '800'],
 });
 
-const title = 'Nvet Care App | Marketplace veterinario a domicilio';
-const description = 'Nvet Care App: marketplace veterinario a domicilio en Cartagena, en desarrollo. Conecta a dueños de mascotas con veterinarios verificados para visitas a domicilio.';
+const title = 'Nvet Care | Atención veterinaria conectada en Cartagena';
+const description = 'Nvet Care está en desarrollo en Cartagena y construye una experiencia para conectar familias y profesionales veterinarios, coordinar atención a domicilio y mantener el contexto de cada mascota.';
 
 export const metadata: Metadata = {
   title,
@@ -27,11 +23,18 @@ export const metadata: Metadata = {
     description,
     url: 'https://ctgone.com/nvetcareapp',
     type: 'website',
+    images: [
+      {
+        url: '/images/nvetcareapp/mission-banner.jpg',
+        alt: 'Nvet Care',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Nvet Care App',
-    description: 'Marketplace veterinario a domicilio en Cartagena, en desarrollo.',
+    title: 'Nvet Care',
+    description: 'Atención veterinaria conectada para familias y profesionales. En desarrollo en Cartagena.',
+    images: ['/images/nvetcareapp/mission-banner.jpg'],
   },
 };
 
