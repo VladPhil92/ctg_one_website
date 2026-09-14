@@ -160,7 +160,7 @@ export const HomeProductShowcases: React.FC = () => {
                 <Beer size={14} aria-hidden="true" /> CTG Craft Beer
               </div>
               <h3 className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.035em] text-white sm:text-4xl">
-                {es ? 'Cartagena hecha cerveza.' : 'Cartagena, brewed.'}
+                {es ? 'Cerveza artesanal. Producción real.' : 'Craft beer. Real production.'}
               </h3>
               <p className="mt-4 text-sm leading-6 text-white/52">
                 {es ? 'Portafolio artesanal nacido en Cartagena y conectado a la infraestructura digital de CTG One.' : 'A Cartagena-born craft portfolio connected to CTG One’s digital infrastructure.'}
