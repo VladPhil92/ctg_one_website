@@ -51,7 +51,6 @@ const PUBLIC_STATUS_LABELS: Record<PublicProofStatus, { es: string; en: string }
 export const HomeProductShowcases: React.FC = () => {
   const { locale } = useLanguage();
   const es = locale === 'es';
-  const nvetStatusLabel = es ? 'Nvet Care · En desarrollo' : 'Nvet Care · In development';
   const ctgoProof = getCapabilityProof('web3');
   const ctgoStatus = getPublicProofStatus(ctgoProof);
   const ctgoStatusLabel = PUBLIC_STATUS_LABELS[ctgoStatus][es ? 'es' : 'en'];
@@ -72,7 +71,7 @@ export const HomeProductShowcases: React.FC = () => {
         <motion.div {...reveal} className="mb-10 flex flex-col gap-4 sm:mb-12 md:flex-row md:items-end md:justify-between">
           <div className="max-w-3xl">
             <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d6ae56]">
-              {es ? 'Creaciones destacadas' : 'Featured creations'}
+              {es ? 'Empieza por lo que necesitas' : 'Start with what you need'}
             </span>
             <h2 id="featured-products-title" className="mt-4 font-outfit text-3xl font-semibold leading-[1.02] tracking-[-0.04em] text-white sm:text-4xl md:text-5xl">
               {es ? 'Productos reales. Experiencias distintas.' : 'Real products. Distinct experiences.'}
@@ -166,7 +165,7 @@ export const HomeProductShowcases: React.FC = () => {
                 {es ? 'Portafolio artesanal nacido en Cartagena y conectado a la infraestructura digital de CTG One.' : 'A Cartagena-born craft portfolio connected to CTG One’s digital infrastructure.'}
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <LinkButton href="/craft-beer" accent="outline">{es ? 'Conocer la cervecería' : 'Explore the brewery'}</LinkButton>
+                <LinkButton href="/craft-beer" accent="outline">{es ? 'Explorar Craft Beer' : 'Explore Craft Beer'}</LinkButton>
                 <LinkButton href="/inversion" accent="outline"><TrendingUp size={14} aria-hidden="true" />{es ? 'Ver inversión' : 'View investment'}</LinkButton>
               </div>
             </div>
@@ -195,13 +194,14 @@ export const HomeProductShowcases: React.FC = () => {
             </div>
             <div className="p-7 sm:p-9">
               <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#23885e]">
-                <PawPrint size={14} aria-hidden="true" /> {nvetStatusLabel}
+                <PawPrint size={14} aria-hidden="true" />
+                <span>Nvet Care</span>
+                <span aria-hidden="true">·</span>
+                <span>{es ? 'En desarrollo' : 'In development'}</span>
               </div>
-              <h3 className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
-                {es ? 'Cuidado veterinario, más cerca.' : 'Veterinary care, closer.'}
-              </h3>
+              <h3 className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Nvet Care App</h3>
               <p className="mt-4 text-sm leading-6 text-[#4A5A68]">
-                {es ? 'Mascotas, citas, seguimiento y atención veterinaria dentro de una sola experiencia digital.' : 'Pets, appointments, follow-up and veterinary care in one digital experience.'}
+                {es ? 'Cuidado veterinario, más cerca. Mascotas, citas, seguimiento y atención dentro de una sola experiencia digital.' : 'Veterinary care, closer. Pets, appointments, follow-up and care in one digital experience.'}
               </p>
               <div className="mt-7">
                 <LinkButton href="/nvetcareapp" accent="green">{es ? 'Explorar Nvet Care' : 'Explore Nvet Care'}</LinkButton>
