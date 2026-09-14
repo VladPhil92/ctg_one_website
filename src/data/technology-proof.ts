@@ -115,6 +115,24 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
     publicPath: '/ai',
   },
   {
+    id: 'vertice-federation',
+    area: 'Ecosystem Federation',
+    capability: 'CTG One ⇄ VÉRTICE OS identity federation ("Entrar con CTG One")',
+    status: 'PARTIAL',
+    publicStatus: 'BETA',
+    evidence: [
+      'Authorization-code + PKCE (S256) federation flow with timing-safe shared-secret verification (src/lib/federation/vertice.ts)',
+      'GET /api/federation/vertice/authorize issues a one-time code only for an authenticated, email-verified CTG One session',
+      'POST /api/federation/vertice/exchange is a service-secret-authenticated, rate-limited (federation.vertice.exchange scope) server-to-server code exchange',
+      'Optional minimal KYC assurance claim sourced strictly from verified profiles.kyc_status/kyc_submissions, never inferred from login, email, wallet or reputation',
+      'Authority grants lookup via identity_federation_authorities for VÉRTICE-issued roles',
+      '"Entrar con CTG One" is a live production entry point in the dashboard service hub, not a placeholder',
+      'VÉRTICE OS mobile reuses this same server-to-server exchange through its own backend BFF, which generates and custodies its own PKCE transaction; no separate CTG One-side mobile provider, scheme or migration exists or is required',
+      'No end-to-end production operating evidence (confirmed session/citizen_id parity across ctgone.com and vertice.ctgone.com) has been captured or reviewed yet; LIVE promotion is not claimed',
+    ],
+    publicPath: '/products',
+  },
+  {
     id: 'web3',
     area: 'Web3',
     capability: 'CTGO on-chain production utility',
@@ -158,4 +176,5 @@ export const TECHNICAL_CHANGELOG = [
   { phase: '21', title: 'Production readiness evidence capture', detail: 'Extended the existing post-deploy canary with versioned, SHA-bound, public-safe PASS/FAIL artifacts and a shared validation contract reused by release governance; artifact generation never auto-accepts release evidence or changes PARTIAL/BETA maturity.' },
   { phase: '22', title: 'AI model gateway hardening', detail: 'Introduced a shared server-only model gateway for CTG Knowledge with explicit provider allowlisting, versioned runtime configuration, bounded timeout/retry policy, request correlation and structured provider/model/token telemetry while keeping the AI layer IN DEVELOPMENT and CTG Knowledge BETA.' },
   { phase: '23', title: 'Observability trace and error intelligence', detail: 'Added W3C trace-context propagation, a versioned structured telemetry schema and safe classified error fingerprints on critical health and knowledge paths while keeping centralized metrics, alerting and full distributed tracing explicitly PARTIAL.' },
+  { phase: '24', title: 'VÉRTICE federation registration', detail: 'Registered the existing "Entrar con CTG One" authorization-code + PKCE federation with VÉRTICE OS in public technology proof and the ecosystem contract registry, documenting the server-to-server exchange, KYC assurance claim boundary and mobile BFF reuse while keeping the entry PARTIAL/BETA pending end-to-end production operating evidence.' },
 ] as const;
