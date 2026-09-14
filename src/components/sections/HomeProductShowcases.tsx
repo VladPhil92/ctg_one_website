@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, Beer, PawPrint } from 'lucide-react';
+import { ArrowUpRight, Beer, PawPrint, TrendingUp } from 'lucide-react';
 
 import { Container } from '@/components/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -42,6 +42,7 @@ const LinkButton = ({
 export const HomeProductShowcases: React.FC = () => {
   const { locale } = useLanguage();
   const es = locale === 'es';
+  const nvetStatusLabel = es ? 'Nvet Care · En desarrollo' : 'Nvet Care · In development';
   const reduceMotion = useReducedMotion();
   const reveal = reduceMotion
     ? {}
@@ -152,8 +153,9 @@ export const HomeProductShowcases: React.FC = () => {
               <p className="mt-4 text-sm leading-6 text-white/52">
                 {es ? 'Portafolio artesanal nacido en Cartagena y conectado a la infraestructura digital de CTG One.' : 'A Cartagena-born craft portfolio connected to CTG One’s digital infrastructure.'}
               </p>
-              <div className="mt-7">
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <LinkButton href="/craft-beer" accent="outline">{es ? 'Conocer la cervecería' : 'Explore the brewery'}</LinkButton>
+                <LinkButton href="/inversion" accent="outline"><TrendingUp size={14} aria-hidden="true" />{es ? 'Ver inversión' : 'View investment'}</LinkButton>
               </div>
             </div>
           </motion.article>
@@ -181,7 +183,7 @@ export const HomeProductShowcases: React.FC = () => {
             </div>
             <div className="p-7 sm:p-9">
               <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#23885e]">
-                <PawPrint size={14} aria-hidden="true" /> Nvet Care · {es ? 'En desarrollo' : 'In development'}
+                <PawPrint size={14} aria-hidden="true" /> {nvetStatusLabel}
               </div>
               <h3 className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
                 {es ? 'Cuidado veterinario, más cerca.' : 'Veterinary care, closer.'}
