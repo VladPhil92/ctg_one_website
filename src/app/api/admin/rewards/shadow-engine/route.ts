@@ -255,6 +255,47 @@ async function ensureOriginalEvaluation(context: AdminContext, event: ShadowEven
   return { evaluation: null, error: 'SHADOW_EVALUATION_WRITE_FAILED' };
 }
 
+async function ensureReversalEvaluation(
+  context: AdminContext,
+  original: ShadowEventRow,
+  originalEvaluation: EvaluationRow,
+  reversal: ShadowEventRow,
+) {
+  const existing = await loadEvaluation(context.admin, reversal.id);
+  if (existing.error) return { evaluation: null, error: 'REVERSAL_EVALUATION_READ_FAILED' };
+  if (existing.evaluation) return { evaluation: existing.evaluation, error: null };
+
+  const reversalPoints = originalEvaluation.direction === 'credit' ? originalEvaluation.calculated_points : 0;
+  const { data, error } = await context.admin.from('reward_shadow_evaluations').insert({
+    source_event_id: reversal.id,
+    pilot_unit_id: originalEvaluation.pilot_unit_id,
+    rule_id: originalEvaluation.rule_id,
+    decision: 'reversal',
+    direction: 'debit',
+    calculated_points: reversalPoints,
+    reason_code: 'source_event_reversed',
+    rule_snapshot: {
+      originalEventId: original.id,
+      originalEvaluationId: originalEvaluation.id,
+      originalDecision: originalEvaluation.decision,
+      originalDirection: originalEvaluation.direction,
+      originalCalculatedPoints: originalEvaluation.calculated_points,
+    },
+    runtime_snapshot: {
+      phase: 'shadow_earning_engine_v3',
+      nonBinding: true,
+      ledgerEffects: false,
+      reversalBypassesKillSwitch: true,
+    },
+    created_by: context.userId,
+  }).select('id,source_event_id,pilot_unit_id,rule_id,decision,direction,calculated_points,reason_code,rule_snapshot,runtime_snapshot,created_at').single();
+
+  if (!error && data) return { evaluation: data as EvaluationRow, error: null };
+  const raced = await loadEvaluation(context.admin, reversal.id);
+  if (!raced.error && raced.evaluation) return { evaluation: raced.evaluation, error: null };
+  return { evaluation: null, error: 'REVERSAL_EVALUATION_WRITE_FAILED' };
+}
+
 function originalMatches(existing: ShadowEventRow, input: { eventCode: string; subjectUserId: string; amountCents: number; payloadDigest: string; occurredAt: string }) {
   return existing.event_kind === 'original'
     && existing.event_code === input.eventCode
@@ -262,6 +303,13 @@ function originalMatches(existing: ShadowEventRow, input: { eventCode: string; s
     && existing.amount_cents === input.amountCents
     && existing.payload_digest.toLowerCase() === input.payloadDigest.toLowerCase()
     && new Date(existing.occurred_at).getTime() === new Date(input.occurredAt).getTime();
+}
+
+function reversalMatches(existing: ShadowEventRow, externalEventId: string, payloadDigest: string, occurredAt: string) {
+  return existing.event_kind === 'reversal'
+    && existing.external_event_id === externalEventId
+    && existing.payload_digest.toLowerCase() === payloadDigest.toLowerCase()
+    && new Date(existing.occurred_at).getTime() === new Date(occurredAt).getTime();
 }
 
 export async function GET() {
@@ -359,17 +407,20 @@ export async function POST(request: NextRequest) {
     }).select('id,source_domain,external_event_id,event_code,subject_user_id,amount_cents,event_kind,reversal_of_event_id,payload_digest,occurred_at,created_at').single();
 
     let event = inserted as ShadowEventRow | null;
+    let idempotentReplay = false;
     if (insertError || !event) {
-      const { data: raced } = await context.admin.from('reward_shadow_events')
+      const { data: raced, error: racedError } = await context.admin.from('reward_shadow_events')
         .select('id,source_domain,external_event_id,event_code,subject_user_id,amount_cents,event_kind,reversal_of_event_id,payload_digest,occurred_at,created_at')
         .eq('source_domain', sourceDomain).eq('external_event_id', externalEventId).maybeSingle();
-      if (!raced || !originalMatches(raced as ShadowEventRow, canonical)) return json({ error: 'IDEMPOTENCY_CONFLICT' }, 409);
+      if (racedError || !raced) return json({ error: 'SHADOW_EVENT_WRITE_FAILED' }, 503);
+      if (!originalMatches(raced as ShadowEventRow, canonical)) return json({ error: 'IDEMPOTENCY_CONFLICT' }, 409);
       event = raced as ShadowEventRow;
+      idempotentReplay = true;
     }
 
     const evaluated = await ensureOriginalEvaluation(context, event);
     if (evaluated.error || !evaluated.evaluation) return json({ error: evaluated.error ?? 'SHADOW_EVALUATION_FAILED' }, 503);
-    return json({ ok: true, idempotentReplay: false, event, evaluation: evaluated.evaluation, ledgerEffects: false }, 201);
+    return json({ ok: true, idempotentReplay, event, evaluation: evaluated.evaluation, ledgerEffects: false }, idempotentReplay ? 200 : 201);
   }
 
   if (body.action === 'reverse_event') {
@@ -397,12 +448,12 @@ export async function POST(request: NextRequest) {
     if (priorError) return json({ error: 'REVERSAL_READ_FAILED' }, 503);
     if (priorReversal) {
       const prior = priorReversal as ShadowEventRow;
-      if (prior.external_event_id !== externalEventId || prior.payload_digest.toLowerCase() !== payloadDigest) {
+      if (!reversalMatches(prior, externalEventId, payloadDigest, occurredAt)) {
         return json({ error: 'ORIGINAL_ALREADY_REVERSED' }, 409);
       }
-      const evaluation = await loadEvaluation(context.admin, prior.id);
-      if (evaluation.error || !evaluation.evaluation) return json({ error: 'REVERSAL_EVALUATION_READ_FAILED' }, 503);
-      return json({ ok: true, idempotentReplay: true, event: prior, evaluation: evaluation.evaluation, ledgerEffects: false });
+      const evaluated = await ensureReversalEvaluation(context, original, originalEvaluation, prior);
+      if (evaluated.error || !evaluated.evaluation) return json({ error: evaluated.error ?? 'REVERSAL_EVALUATION_FAILED' }, 503);
+      return json({ ok: true, idempotentReplay: true, event: prior, evaluation: evaluated.evaluation, ledgerEffects: false });
     }
 
     const { data: reversalData, error: reversalError } = await context.admin.from('reward_shadow_events').insert({
@@ -417,36 +468,24 @@ export async function POST(request: NextRequest) {
       occurred_at: occurredAt,
       created_by: context.userId,
     }).select('id,source_domain,external_event_id,event_code,subject_user_id,amount_cents,event_kind,reversal_of_event_id,payload_digest,occurred_at,created_at').single();
-    if (reversalError || !reversalData) return json({ error: 'REVERSAL_CREATE_FAILED' }, 409);
-    const reversal = reversalData as ShadowEventRow;
 
-    const reversalPoints = originalEvaluation.direction === 'credit' ? originalEvaluation.calculated_points : 0;
-    const { data: evaluationData, error: evaluationError } = await context.admin.from('reward_shadow_evaluations').insert({
-      source_event_id: reversal.id,
-      pilot_unit_id: originalEvaluation.pilot_unit_id,
-      rule_id: originalEvaluation.rule_id,
-      decision: 'reversal',
-      direction: 'debit',
-      calculated_points: reversalPoints,
-      reason_code: 'source_event_reversed',
-      rule_snapshot: {
-        originalEventId: original.id,
-        originalEvaluationId: originalEvaluation.id,
-        originalDecision: originalEvaluation.decision,
-        originalDirection: originalEvaluation.direction,
-        originalCalculatedPoints: originalEvaluation.calculated_points,
-      },
-      runtime_snapshot: {
-        phase: 'shadow_earning_engine_v3',
-        nonBinding: true,
-        ledgerEffects: false,
-        reversalBypassesKillSwitch: true,
-      },
-      created_by: context.userId,
-    }).select('id,source_event_id,pilot_unit_id,rule_id,decision,direction,calculated_points,reason_code,rule_snapshot,runtime_snapshot,created_at').single();
-    if (evaluationError || !evaluationData) return json({ error: 'REVERSAL_EVALUATION_WRITE_FAILED' }, 503);
+    let reversal = reversalData as ShadowEventRow | null;
+    let idempotentReplay = false;
+    if (reversalError || !reversal) {
+      const { data: raced, error: racedError } = await context.admin.from('reward_shadow_events')
+        .select('id,source_domain,external_event_id,event_code,subject_user_id,amount_cents,event_kind,reversal_of_event_id,payload_digest,occurred_at,created_at')
+        .eq('reversal_of_event_id', original.id).maybeSingle();
+      if (racedError || !raced) return json({ error: 'REVERSAL_CREATE_FAILED' }, 503);
+      if (!reversalMatches(raced as ShadowEventRow, externalEventId, payloadDigest, occurredAt)) {
+        return json({ error: 'ORIGINAL_ALREADY_REVERSED' }, 409);
+      }
+      reversal = raced as ShadowEventRow;
+      idempotentReplay = true;
+    }
 
-    return json({ ok: true, idempotentReplay: false, event: reversal, evaluation: evaluationData, ledgerEffects: false }, 201);
+    const evaluated = await ensureReversalEvaluation(context, original, originalEvaluation, reversal);
+    if (evaluated.error || !evaluated.evaluation) return json({ error: evaluated.error ?? 'REVERSAL_EVALUATION_FAILED' }, 503);
+    return json({ ok: true, idempotentReplay, event: reversal, evaluation: evaluated.evaluation, ledgerEffects: false }, idempotentReplay ? 200 : 201);
   }
 
   return json({ error: 'UNSUPPORTED_ACTION' }, 400);
