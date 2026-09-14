@@ -2,7 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-14T13:09:44Z",
+  "capturedAt": "2026-09-14T13:28:42Z",
   "source": "Supabase production migration history",
   "migrations": [
     { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
@@ -46,6 +46,7 @@
     { "logicalVersion": "0133", "remoteVersion": "20260914035147", "remoteName": "0133_rewards_foundation_v1" },
     { "logicalVersion": "0134", "remoteVersion": "20260914111247", "remoteName": "0134_rewards_pilot_control_plane_v2" },
     { "logicalVersion": "0135", "remoteVersion": "20260914123941", "remoteName": "0135_rewards_shadow_earning_engine_v3" },
-    { "logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4" }
+    { "logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4" },
+    { "logicalVersion": "0137", "remoteVersion": "20260914132842", "remoteName": "0137_rewards_signed_source_atomicity_hardening" }
   ]
 }
