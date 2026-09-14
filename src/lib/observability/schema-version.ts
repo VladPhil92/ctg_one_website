@@ -1,5 +1,6 @@
 export const EXPECTED_DATABASE_MIGRATION = '0132' as const;
 export const EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_foundation_v1' as const;
+export const EXPECTED_DATABASE_MIGRATION_NAME = 'nvet_mobile_federation' as const;
 export const EXPECTED_DATABASE_MIGRATION_COUNT = 132 as const;
 
 // Wallet Canary V1 depends on migrations through 0091, but it remains compatible
