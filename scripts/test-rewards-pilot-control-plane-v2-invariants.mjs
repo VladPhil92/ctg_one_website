@@ -29,6 +29,7 @@ assert.match(migration, /grant select, insert on table public\.reward_rule_simul
 assert.doesNotMatch(migration, /grant[^;]*delete[^;]*to service_role/i, 'Pilot control plane must not grant direct DELETE.');
 assert.doesNotMatch(migration, /grant[^;]*(insert|update|delete)[^;]*to authenticated/i, 'Signed-in browser users must not mutate control-plane tables directly.');
 assert.doesNotMatch(migration, /grant[^;]*(insert|update|delete)[^;]*reward_(accounts|ledger_entries)/i, '0134 must not introduce Rewards balance or ledger privileges.');
+assert.doesNotMatch(migration, /grant[^;]*(insert|update|delete)[^;]*reward_(accounts|ledger_entries)/i, '0134 must not introduce Rewards balance or ledger privileges.');
 assert.doesNotMatch(migration, /apply_reward_ledger_entry|points_balance\s*=|insert into public\.reward_ledger_entries/i, '0134 must not contain any Rewards balance/ledger mutation path.');
 assert.match(migration, /Pilot Control Plane v2 is intentionally simulation-only/, 'Migration must carry the simulation-only product boundary.');
 
@@ -44,6 +45,11 @@ for (const action of ['create_unit', 'create_rule', 'set_stage', 'simulate_rule'
 }
 assert.doesNotMatch(api, /\.from\('reward_accounts'\)|\.from\('reward_ledger_entries'\)/, 'Control-plane API must not touch user Rewards balances or ledger rows.');
 assert.match(api, /nonBinding:\s*true/, 'Simulation snapshots must identify themselves as non-binding.');
+assert.match(api, /async function loadAllPilotUnits/, 'Candidate units must be read through an explicit paginated loader.');
+assert.match(api, /\.range\(offset, offset \+ READ_PAGE_SIZE - 1\)/, 'Control-plane reads must paginate instead of silently truncating candidate units.');
+assert.match(api, /MAX_CONTROL_PLANE_ROWS/, 'Paginated control-plane reads must retain a bounded fail-closed ceiling.');
+assert.match(api, /parentUnit\.stage === 'archived'/, 'Rules under archived pilot units must be rejected by the server boundary.');
+assert.match(api, /PILOT_UNIT_NOT_SIMULATABLE/, 'Simulation attempts for archived parent units must fail explicitly.');
 
 assert.match(simulation, /export function calculateRewardPreview/, 'Pilot formula must be implemented as a pure reusable function.');
 assert.match(simulation, /Math\.floor\(input\.inputAmountCents \/ input\.copBlockCents\)/, 'COP-block simulations must use whole blocks.');
