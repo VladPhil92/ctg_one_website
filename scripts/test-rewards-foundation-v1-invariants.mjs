@@ -23,12 +23,14 @@ for (const table of ['reward_accounts', 'reward_ledger_entries']) {
 assert.match(migration, /grant select on table public\.reward_accounts to authenticated/, 'Authenticated users may only read Rewards accounts.');
 assert.match(migration, /grant select on table public\.reward_ledger_entries to authenticated/, 'Authenticated users may only read their own Rewards ledger.');
 assert.doesNotMatch(migration, /grant[^;]*(insert|update|delete)[^;]*authenticated/i, 'Authenticated users must never mutate Rewards state directly.');
+assert.doesNotMatch(migration, /grant[^;]*delete[^;]*reward_ledger_entries[^;]*service_role/i, 'Even service_role must not receive direct ledger DELETE.');
 assert.match(migration, /using \(\(select auth\.uid\(\)\) = user_id\)/, 'Rewards reads must be owner-scoped by auth.uid().');
 assert.match(migration, /reward_ledger_immutable_update_trg/, 'Ledger updates must be blocked.');
-assert.match(migration, /reward_ledger_immutable_delete_trg/, 'Ledger deletes must be blocked.');
+assert.doesNotMatch(migration, /reward_ledger_immutable_delete_trg/, 'Ledger immutability must not break identity ON DELETE CASCADE cleanup.');
 assert.match(migration, /security invoker/, 'Canonical Rewards mutation boundary must not bypass RLS with SECURITY DEFINER.');
 assert.match(migration, /grant execute on function public\.apply_reward_ledger_entry[\s\S]*to service_role/, 'Only service_role may execute the canonical ledger write boundary.');
 assert.match(migration, /default 'foundation'/, 'New Rewards accounts must default to foundation, not active.');
+assert.match(migration, /p_points_delta > 0 and v_account\.status <> 'active'/, 'Foundation/frozen accounts must reject positive reward credits at the database boundary.');
 assert.match(migration, /No points are seeded/, 'Migration must explicitly reject retroactive point seeding.');
 
 for (const forbidden of ['redeem', 'transfer', 'cashback', 'ctgo_conversion']) {
