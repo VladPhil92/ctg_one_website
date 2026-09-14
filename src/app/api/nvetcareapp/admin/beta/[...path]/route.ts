@@ -9,6 +9,7 @@ const GET_PATHS = new Set([
   'cohort',
   'activation',
   'evidence/summary',
+  'evidence/observation-summary',
   'evidence/history',
 ]);
 
