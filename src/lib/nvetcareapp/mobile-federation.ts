@@ -8,7 +8,10 @@ import {
   timingSafeEqual,
 } from 'node:crypto';
 
-const CODE_TTL_SECONDS = 90;
+export const NVET_MOBILE_FEDERATION_PROVIDER = 'nvet';
+export const NVET_MOBILE_FEDERATION_CODE_TTL_SECONDS = 90;
+export const NVET_MOBILE_FEDERATION_CODE_TTL_MS =
+  NVET_MOBILE_FEDERATION_CODE_TTL_SECONDS * 1000;
 export const NVET_MOBILE_REDIRECT_URI = 'nvetcare://auth/ctgone/callback';
 
 export type NvetMobileFederationCode = {
@@ -25,7 +28,9 @@ export type NvetMobileFederationCode = {
 function federationKey(): Buffer {
   const secret = process.env.CTG_NVET_MOBILE_FEDERATION_SECRET;
   if (!secret || Buffer.byteLength(secret, 'utf8') < 32) {
-    throw new Error('CTG_NVET_MOBILE_FEDERATION_SECRET must be configured with at least 32 bytes');
+    throw new Error(
+      'CTG_NVET_MOBILE_FEDERATION_SECRET must be configured with at least 32 bytes',
+    );
   }
   return createHash('sha256').update(secret, 'utf8').digest();
 }
@@ -36,6 +41,10 @@ function toBase64Url(value: Buffer): string {
 
 function fromBase64Url(value: string): Buffer {
   return Buffer.from(value, 'base64url');
+}
+
+export function sha256Hex(value: string): string {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
 export function isValidPkceChallenge(value: string | null): value is string {
@@ -50,7 +59,9 @@ export function isValidFederationState(value: string | null): value is string {
   return Boolean(value && /^[A-Za-z0-9._~-]{32,160}$/.test(value));
 }
 
-export function isAllowedMobileRedirect(value: string | null): value is typeof NVET_MOBILE_REDIRECT_URI {
+export function isAllowedMobileRedirect(
+  value: string | null,
+): value is typeof NVET_MOBILE_REDIRECT_URI {
   return value === NVET_MOBILE_REDIRECT_URI;
 }
 
@@ -68,7 +79,7 @@ export function createMobileFederationCode(input: {
     codeChallenge: input.codeChallenge,
     redirectUri: input.redirectUri,
     issuedAt: now,
-    expiresAt: now + CODE_TTL_SECONDS,
+    expiresAt: now + NVET_MOBILE_FEDERATION_CODE_TTL_SECONDS,
     nonce: randomBytes(18).toString('base64url'),
   };
 
@@ -89,7 +100,11 @@ export function readMobileFederationCode(code: string): NvetMobileFederationCode
     throw new Error('INVALID_FEDERATION_CODE');
   }
 
-  const decipher = createDecipheriv('aes-256-gcm', federationKey(), fromBase64Url(ivValue));
+  const decipher = createDecipheriv(
+    'aes-256-gcm',
+    federationKey(),
+    fromBase64Url(ivValue),
+  );
   decipher.setAAD(Buffer.from('ctgone:nvet-mobile-federation:v1', 'utf8'));
   decipher.setAuthTag(fromBase64Url(tagValue));
   const plaintext = Buffer.concat([
@@ -108,7 +123,8 @@ export function readMobileFederationCode(code: string): NvetMobileFederationCode
     !Number.isFinite(payload.issuedAt) ||
     !Number.isFinite(payload.expiresAt) ||
     payload.expiresAt <= now ||
-    payload.expiresAt - payload.issuedAt !== CODE_TTL_SECONDS
+    payload.expiresAt - payload.issuedAt !==
+      NVET_MOBILE_FEDERATION_CODE_TTL_SECONDS
   ) {
     throw new Error('EXPIRED_OR_INVALID_FEDERATION_CODE');
   }
@@ -116,7 +132,10 @@ export function readMobileFederationCode(code: string): NvetMobileFederationCode
   return payload;
 }
 
-export function verifyPkce(payload: NvetMobileFederationCode, verifier: string): boolean {
+export function verifyPkce(
+  payload: NvetMobileFederationCode,
+  verifier: string,
+): boolean {
   if (!isValidPkceVerifier(verifier)) return false;
   const actual = createHash('sha256').update(verifier, 'ascii').digest();
   const expected = Buffer.from(payload.codeChallenge, 'base64url');
