@@ -43,6 +43,25 @@ export interface NvetBetaEvidenceSummary {
   pendingGates: number;
   conflictedGates: number;
   eligibleForOperatorActivation: boolean;
+  observationEvidenceExcludedFromActivation?: true;
+  commercialLaunchAuthorized: false;
+  gates: NvetBetaEvidenceGate[];
+  generatedAt: string;
+}
+
+export interface NvetBetaObservationSummary {
+  phase: 36;
+  program: 'production-observability-real-beta-validation';
+  ledger: 'audit_logs';
+  appendOnly: true;
+  requiredEnvironment: 'production';
+  totalGates: number;
+  verifiedGates: number;
+  pendingGates: number;
+  conflictedGates: number;
+  eligibleForPostBetaReview: boolean;
+  requiredForInitialBetaActivation: false;
+  automaticTelemetryDoesNotApproveEvidence: true;
   commercialLaunchAuthorized: false;
   gates: NvetBetaEvidenceGate[];
   generatedAt: string;
@@ -197,5 +216,6 @@ export interface NvetBetaOperationsSnapshot {
   cohort: NvetBetaCohortSnapshot;
   activation: NvetBetaActivationSnapshot;
   evidenceSummary: NvetBetaEvidenceSummary;
+  observationSummary: NvetBetaObservationSummary;
   evidenceHistory: NvetBetaEvidenceHistory;
 }
