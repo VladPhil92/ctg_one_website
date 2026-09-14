@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0135",
-    "schemaMigrationName": "rewards_shadow_earning_engine_v3",
-    "schemaMigrationCount": 135,
+    "schemaMigration": "0136",
+    "schemaMigrationName": "rewards_signed_source_connectors_v4",
+    "schemaMigrationCount": 136,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
