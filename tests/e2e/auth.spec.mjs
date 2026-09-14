@@ -61,7 +61,7 @@ test.describe('CTG One authentication shell', () => {
     await page.goto('/registro');
 
     await expect(page.getByRole('heading', { name: 'Crear cuenta' })).toBeVisible();
-    const submit = page.getByRole('button', { name: 'Crear cuenta' });
+    const submit = page.getByRole('button', { name: 'Crear mi cuenta CTG One' });
     const password = page.getByLabel('Contraseña');
     await expect(submit).toHaveAttribute('type', 'submit');
     await expect(password).toHaveAttribute('minlength', '12');
