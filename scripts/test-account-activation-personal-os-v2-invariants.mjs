@@ -37,6 +37,7 @@ assert.match(educationHook, /credentials:\s*'same-origin'/, 'Education activatio
 assert.doesNotMatch(educationHook, /\.from\(/, 'Personal OS must not query education tables directly from the browser.');
 assert.match(educationHook, /state:\s*'error'/, 'Education read failures must remain distinguishable from an empty library.');
 
+const activationPlanSource = activation.slice(activation.indexOf('export function buildAccountActivationPlan'));
 const precedence = [
   "!input.hasProfile || !input.hasCompleteProfile",
   "input.kycStatus === 'rejected'",
@@ -51,12 +52,12 @@ const precedence = [
 ];
 let cursor = -1;
 for (const rule of precedence) {
-  const next = activation.indexOf(rule);
+  const next = activationPlanSource.indexOf(rule);
   assert.ok(next > cursor, `Activation precedence must retain rule ordering: ${rule}`);
   cursor = next;
 }
 
-assert.match(activation, /Investment is never presented|Opcional|Opcional/, 'Investment must remain optional in the activation model.');
+assert.match(activation, /Opcional/, 'Investment must remain optional in the activation model.');
 assert.match(activation, /education\.state === 'ready'/, 'Education recommendations must only use successfully loaded read state.');
 assert.ok(analyticsFunnel.includes("'education_library'"), 'Education library must remain an approved funnel service key.');
 assert.ok(analyticsFunnel.includes("'education_learning_center'"), 'Learning continuation must remain an approved funnel service key.');
