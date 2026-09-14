@@ -2,7 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-11T11:37:27Z",
+  "capturedAt": "2026-09-14T02:53:26Z",
   "source": "Supabase production migration history",
   "migrations": [
     { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
@@ -41,6 +41,7 @@
     { "logicalVersion": "0128", "remoteVersion": "20260908140710", "remoteName": "0128_crowdfunding_fk_index_hardening" },
     { "logicalVersion": "0129", "remoteVersion": "20260908183412", "remoteName": "0129_crowdfunding_review_hardening" },
     { "logicalVersion": "0130", "remoteVersion": "20260908231145", "remoteName": "0130_expand_identity_federation_providers" },
-    { "logicalVersion": "0131", "remoteVersion": "20260911113727", "remoteName": "0131_worldmakers_community_early_access" }
+    { "logicalVersion": "0131", "remoteVersion": "20260911113727", "remoteName": "0131_worldmakers_community_early_access" },
+    { "logicalVersion": "0132", "remoteVersion": "20260914025326", "remoteName": "0132_nvet_mobile_federation" }
   ]
 }
