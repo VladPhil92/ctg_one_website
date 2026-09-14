@@ -111,13 +111,22 @@ export const AccountValueSection: React.FC = () => {
                   : 'Because your account is more than a sign-in: it is the identity that connects the CTG One capabilities you can already use and keeps your activity together as the ecosystem grows.'}
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href={isLoading || !isAuthenticated ? '/registro' : '/dashboard'}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#d6ae56] px-5 text-sm font-semibold text-[#080b10] transition hover:-translate-y-0.5 hover:bg-[#f1c75b]"
-                >
-                  {isAuthenticated ? (es ? 'Ir a mi cuenta' : 'Go to my account') : (es ? 'Crear mi cuenta' : 'Create my account')}
-                  <ArrowUpRight size={16} aria-hidden="true" />
-                </Link>
+                {isLoading ? (
+                  <span
+                    aria-live="polite"
+                    className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#d6ae56]/20 bg-[#d6ae56]/[0.04] px-5 text-sm font-semibold text-[#d6ae56]/70"
+                  >
+                    {es ? 'Comprobando tu cuenta…' : 'Checking your account…'}
+                  </span>
+                ) : (
+                  <Link
+                    href={isAuthenticated ? '/dashboard' : '/registro'}
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#d6ae56] px-5 text-sm font-semibold text-[#080b10] transition hover:-translate-y-0.5 hover:bg-[#f1c75b]"
+                  >
+                    {isAuthenticated ? (es ? 'Ir a mi cuenta' : 'Go to my account') : (es ? 'Crear mi cuenta' : 'Create my account')}
+                    <ArrowUpRight size={16} aria-hidden="true" />
+                  </Link>
+                )}
                 <Link
                   href="/ecosystem"
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.025] px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-[#d6ae56]/35 hover:bg-white/[0.05]"
