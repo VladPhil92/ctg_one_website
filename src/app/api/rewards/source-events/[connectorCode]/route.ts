@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { sha256Hex, verifyRewardsSourceSignature } from '@/lib/rewards/source-signature';
-import { processSignedSourcePayload, type SignedSourceConnector, type SignedSourcePayload } from '@/lib/rewards/source-shadow-processing';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,14 +16,34 @@ const MAX_FUTURE_EVENT_SKEW_MS = 5 * 60 * 1000;
 
 type SourceAdmin = ReturnType<typeof createAdminClient>;
 type JsonRecord = Record<string, unknown>;
-type ConnectorRow = SignedSourceConnector & {
+type ConnectorRow = {
+  id: string;
+  pilot_unit_id: string;
+  connector_code: string;
+  source_domain: string;
+  key_fingerprint_sha256: string;
   auth_scheme: 'ed25519_v1';
   public_key_pem: string;
   stage: 'draft' | 'validated' | 'archived';
   ingestion_enabled: boolean;
   max_clock_skew_seconds: number;
 };
-
+type SignedSourcePayload =
+  | {
+      eventKind: 'original';
+      externalEventId: string;
+      eventCode: string;
+      subjectUserId: string;
+      amountCents: number;
+      occurredAt: string;
+    }
+  | {
+      eventKind: 'reversal';
+      externalEventId: string;
+      eventCode: string;
+      reversalOfExternalEventId: string;
+      occurredAt: string;
+    };
 type DeliveryOutcome =
   | 'accepted'
   | 'idempotent_retry'
@@ -36,6 +55,15 @@ type DeliveryOutcome =
   | 'nonce_payload_conflict'
   | 'idempotency_conflict'
   | 'processing_failed';
+type RateLimitRow = { allowed: boolean; remaining: number; retry_after_seconds: number };
+type AtomicProcessingResult = {
+  idempotentRetry: boolean;
+  shadowEventId: string;
+  decision: string;
+  direction: string;
+  hypotheticalPoints: number;
+  reasonCode: string;
+};
 
 function json(body: unknown, status = 200) {
   const response = NextResponse.json(body, { status });
@@ -81,6 +109,27 @@ function parsePayload(raw: string): SignedSourcePayload | null {
     && body.amountCents >= 0 && body.amountCents <= MAX_DOMAIN_VALUE ? body.amountCents : null;
   if (!subjectUserId || amountCents === null) return null;
   return { eventKind, externalEventId, eventCode, subjectUserId, amountCents, occurredAt };
+}
+
+function requesterIdentity(request: NextRequest) {
+  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  return forwarded || request.headers.get('x-real-ip')?.trim() || 'unknown';
+}
+
+async function consumeRateLimit(admin: SourceAdmin, scope: string, actorKey: string) {
+  const { data, error } = await admin.rpc('consume_service_api_rate_limit', {
+    p_scope: scope,
+    p_actor_key: actorKey,
+  });
+  if (error) return { row: null as RateLimitRow | null, error: true };
+  const rows = (data ?? []) as RateLimitRow[];
+  return { row: rows[0] ?? null, error: false };
+}
+
+function rateLimited(retryAfterSeconds: number) {
+  const response = json({ error: 'SOURCE_RATE_LIMITED' }, 429);
+  response.headers.set('Retry-After', String(Math.max(1, retryAfterSeconds)));
+  return response;
 }
 
 async function recordAttempt(admin: SourceAdmin, args: {
@@ -133,6 +182,21 @@ async function reserveNonce(admin: SourceAdmin, connector: ConnectorRow, nonce: 
   return { state: same ? 'retry' as const : 'conflict' as const };
 }
 
+function mapAtomicError(message: string) {
+  const known: Array<[string, number, DeliveryOutcome]> = [
+    ['IDEMPOTENCY_CONFLICT', 409, 'idempotency_conflict'],
+    ['SOURCE_ORIGINAL_ALREADY_REVERSED', 409, 'idempotency_conflict'],
+    ['SOURCE_REVERSAL_EVENT_CODE_MISMATCH', 409, 'idempotency_conflict'],
+    ['SOURCE_ORIGINAL_NOT_DELIVERED_BY_CONNECTOR', 409, 'processing_failed'],
+    ['SOURCE_KEY_CHANGED', 409, 'processing_failed'],
+    ['SOURCE_ORIGINAL_NOT_FOUND', 404, 'processing_failed'],
+    ['SOURCE_EVENT_NOT_ALLOWED', 403, 'event_not_allowed'],
+    ['SOURCE_CONNECTOR_DISABLED', 403, 'connector_disabled'],
+  ];
+  const match = known.find(([code]) => message.includes(code));
+  return match ? { code: match[0], status: match[1], outcome: match[2] } : { code: 'SOURCE_PROCESSING_FAILED', status: 503, outcome: 'processing_failed' as DeliveryOutcome };
+}
+
 export async function POST(request: NextRequest, context: { params: Promise<{ connectorCode: string }> }) {
   if (!isSupabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return json({ error: 'REWARDS_SOURCE_INGESTION_UNAVAILABLE' }, 503);
@@ -141,6 +205,20 @@ export async function POST(request: NextRequest, context: { params: Promise<{ co
   const { connectorCode: rawConnectorCode } = await context.params;
   const connectorCode = rawConnectorCode.toLowerCase();
   if (!CONNECTOR_CODE.test(connectorCode)) return json({ error: 'SOURCE_CONNECTOR_NOT_FOUND' }, 404);
+
+  const admin = createAdminClient();
+  const requesterKey = `r_${sha256Hex(`${connectorCode}|${requesterIdentity(request)}`).slice(0, 40)}`;
+  const connectorKey = `c_${connectorCode}`;
+  const [requesterLimit, connectorLimit] = await Promise.all([
+    consumeRateLimit(admin, 'rewards.source.preverify', requesterKey),
+    consumeRateLimit(admin, 'rewards.source.connector', connectorKey),
+  ]);
+  if (requesterLimit.error || connectorLimit.error || !requesterLimit.row || !connectorLimit.row) {
+    return json({ error: 'SOURCE_RATE_LIMIT_UNAVAILABLE' }, 503);
+  }
+  if (!requesterLimit.row.allowed || !connectorLimit.row.allowed) {
+    return rateLimited(Math.max(requesterLimit.row.retry_after_seconds, connectorLimit.row.retry_after_seconds));
+  }
 
   const declaredLength = Number(request.headers.get('content-length') ?? 0);
   if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
@@ -151,7 +229,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ co
     return json({ error: 'SOURCE_PAYLOAD_TOO_LARGE' }, 413);
   }
 
-  const admin = createAdminClient();
   const { data: connectorData, error: connectorError } = await admin.from('reward_source_connectors')
     .select('id,pilot_unit_id,connector_code,source_domain,key_fingerprint_sha256,auth_scheme,public_key_pem,stage,ingestion_enabled,max_clock_skew_seconds')
     .eq('connector_code', connectorCode)
@@ -220,30 +297,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ co
     return json({ error: 'SOURCE_EVENT_PAYLOAD_INVALID' }, 400);
   }
 
-  if (connector.stage !== 'validated' || !connector.ingestion_enabled) {
-    await recordAttempt(admin, {
-      connector, nonce, signedAt, payloadDigest, signatureDigest,
-      externalEventId: payload.externalEventId, eventCode: payload.eventCode,
-      outcome: 'connector_disabled', httpStatus: 403, detailCode: 'CONNECTOR_DISABLED',
-    });
-    return json({ error: 'SOURCE_CONNECTOR_DISABLED' }, 403);
-  }
-
-  const { data: allowlisted, error: allowlistError } = await admin.from('reward_source_connector_event_allowlist')
-    .select('event_code')
-    .eq('connector_id', connector.id)
-    .eq('event_code', payload.eventCode)
-    .maybeSingle();
-  if (allowlistError) return json({ error: 'SOURCE_ALLOWLIST_READ_FAILED' }, 503);
-  if (!allowlisted) {
-    await recordAttempt(admin, {
-      connector, nonce, signedAt, payloadDigest, signatureDigest,
-      externalEventId: payload.externalEventId, eventCode: payload.eventCode,
-      outcome: 'event_not_allowed', httpStatus: 403, detailCode: 'EVENT_NOT_ALLOWLISTED',
-    });
-    return json({ error: 'SOURCE_EVENT_NOT_ALLOWED' }, 403);
-  }
-
   if (payload.eventKind === 'original') {
     const { data: profile, error: profileError } = await admin.from('profiles')
       .select('id').eq('id', payload.subjectUserId).maybeSingle();
@@ -258,42 +311,47 @@ export async function POST(request: NextRequest, context: { params: Promise<{ co
     }
   }
 
-  const processing = await processSignedSourcePayload(admin, connector, payload, payloadDigest);
-  if (!processing.ok) {
-    const outcome: DeliveryOutcome = processing.status === 409 ? 'idempotency_conflict' : 'processing_failed';
-    const audited = await recordAttempt(admin, {
+  const { data: atomicData, error: atomicError } = await admin.rpc('process_signed_reward_source_event_atomic', {
+    p_connector_id: connector.id,
+    p_external_event_id: payload.externalEventId,
+    p_event_code: payload.eventCode,
+    p_event_kind: payload.eventKind,
+    p_subject_user_id: payload.eventKind === 'original' ? payload.subjectUserId : null,
+    p_amount_cents: payload.eventKind === 'original' ? payload.amountCents : null,
+    p_reversal_of_external_event_id: payload.eventKind === 'reversal' ? payload.reversalOfExternalEventId : null,
+    p_payload_digest: payloadDigest,
+    p_occurred_at: payload.occurredAt,
+    p_request_nonce: nonce,
+    p_signed_at: signedAt,
+    p_signature_digest: signatureDigest,
+    p_key_fingerprint_sha256: connector.key_fingerprint_sha256,
+    p_nonce_retry: nonceRetry,
+  });
+
+  if (atomicError || !atomicData) {
+    const mapped = mapAtomicError(atomicError?.message ?? 'SOURCE_PROCESSING_FAILED');
+    await recordAttempt(admin, {
       connector, nonce, signedAt, payloadDigest, signatureDigest,
       externalEventId: payload.externalEventId, eventCode: payload.eventCode,
-      outcome, httpStatus: processing.status, detailCode: processing.error,
+      outcome: mapped.outcome, httpStatus: mapped.status, detailCode: mapped.code,
     });
-    if (!audited) return json({ error: 'SOURCE_DELIVERY_AUDIT_FAILED' }, 503);
-    return json({ error: processing.error, ledgerEffects: false }, processing.status);
+    return json({ error: mapped.code, ledgerEffects: false }, mapped.status);
   }
 
-  const idempotentRetry = nonceRetry || processing.idempotentReplay;
-  const audited = await recordAttempt(admin, {
-    connector, nonce, signedAt, payloadDigest, signatureDigest,
-    externalEventId: payload.externalEventId, eventCode: payload.eventCode,
-    outcome: idempotentRetry ? 'idempotent_retry' : 'accepted',
-    shadowEventId: processing.event.id,
-    httpStatus: idempotentRetry ? 200 : 201,
-    detailCode: idempotentRetry ? 'IDEMPOTENT_RETRY' : 'SHADOW_EVENT_ACCEPTED',
-  });
-  if (!audited) return json({ error: 'SOURCE_DELIVERY_AUDIT_FAILED' }, 503);
-
+  const processing = atomicData as AtomicProcessingResult;
   return json({
     ok: true,
     phase: 'signed_source_connectors_v4',
     commercialStatus: 'inactive',
     ledgerEffects: false,
     acceptedToShadow: true,
-    idempotentRetry,
-    shadowEventId: processing.event.id,
+    idempotentRetry: processing.idempotentRetry,
+    shadowEventId: processing.shadowEventId,
     evaluation: {
-      decision: processing.evaluation.decision,
-      direction: processing.evaluation.direction,
-      hypotheticalPoints: processing.evaluation.calculated_points,
-      reasonCode: processing.evaluation.reason_code,
+      decision: processing.decision,
+      direction: processing.direction,
+      hypotheticalPoints: processing.hypotheticalPoints,
+      reasonCode: processing.reasonCode,
     },
-  }, idempotentRetry ? 200 : 201);
+  }, processing.idempotentRetry ? 200 : 201);
 }
