@@ -154,9 +154,9 @@ function RegistroForm() {
     try {
       const supabase = createClient();
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-      const emailRedirectTo = redirectTo === '/dashboard'
-        ? `${siteUrl}/auth/callback?next=/dashboard`
-        : `${siteUrl}/auth/callback?next=${encodeURIComponent(redirectTo)}`;
+      const emailRedirectOptions = redirectTo === '/dashboard'
+        ? { emailRedirectTo: `${siteUrl}/auth/callback?next=/dashboard` }
+        : { emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(redirectTo)}` };
       const analyticsAnonymousId = getAnalyticsAnonymousId();
       void trackFunnelEvent('signup_started', { sourcePath: isWorldMakersFlow ? '/worldmakers' : '/registro' });
       const { error: signUpError } = await supabase.auth.signUp({
@@ -168,7 +168,7 @@ function RegistroForm() {
             phone: parsed.data.phone,
             analytics_anonymous_id: analyticsAnonymousId,
           },
-          emailRedirectTo,
+          ...emailRedirectOptions,
         },
       });
       if (signUpError) throw signUpError;
