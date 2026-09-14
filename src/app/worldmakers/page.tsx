@@ -313,13 +313,13 @@ export default function WorldMakersPage() {
                 decoding="async"
               />
               <div className={styles.featureWorldContent}>
-                <span className={styles.worldTag}>Caribbean Rainforest</span>
+                <span className={styles.worldTag}>Próxima aventura · Caribbean Rainforest</span>
                 <h3>Un ecosistema vivo necesita algo más que buenas intenciones.</h3>
                 <p>
                   Investiga el agua, observa especies, construye soluciones y descubre cómo una intervención puede alterar todo un sistema.
                 </p>
                 <span className={styles.inlineLink}>
-                  Entrar a la aventura <ArrowRight size={17} aria-hidden="true" />
+                  Conocer la aventura <ArrowRight size={17} aria-hidden="true" />
                 </span>
               </div>
             </Link>
