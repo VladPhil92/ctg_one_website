@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0131",
-    "schemaMigrationName": "worldmakers_community_early_access",
-    "schemaMigrationCount": 131,
+    "schemaMigration": "0132",
+    "schemaMigrationName": "nvet_mobile_federation",
+    "schemaMigrationCount": 132,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
