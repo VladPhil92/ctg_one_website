@@ -61,6 +61,7 @@ assert.match(evaluator, /export function evaluateShadowReward/, 'Shadow decision
 assert.match(evaluator, /kill_switch_disabled/, 'Pure evaluator must fail closed when processing is disabled.');
 assert.match(evaluator, /amount_limit_exceeded/, 'Pure evaluator must enforce runtime amount limits.');
 assert.match(evaluator, /subject_daily_event_limit_exceeded/, 'Pure evaluator must enforce daily subject limits.');
+assert.match(evaluator, /no_complete_block/, 'Zero complete-block outcomes must not be mislabeled as minimum-amount failures.');
 assert.match(evaluator, /Math\.min\(preview\.points, input\.runtime\.maxPointsPerEvent\)/, 'Runtime points cap must bound the rule result.');
 assert.doesNotMatch(evaluator, /fetch\(|\.from\(|createAdminClient|reward_ledger/i, 'Shadow evaluator must remain side-effect free.');
 
