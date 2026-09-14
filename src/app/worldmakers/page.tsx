@@ -298,7 +298,7 @@ export default function WorldMakersPage() {
               <h2 id="worlds-title">Cada lugar empieza con un misterio.</h2>
             </div>
             <p className={styles.sectionIntro}>
-              No hay un mapa decorativo que fingir: cada destino existe para ofrecer una aventura distinta, con problemas, reglas y descubrimientos propios.
+              Cada destino nace de una pregunta distinta y la convierte en una aventura con sus propias reglas, retos y descubrimientos.
             </p>
           </div>
 
@@ -351,7 +351,7 @@ export default function WorldMakersPage() {
             <h2 id="makers-title">La curiosidad también tiene personalidad.</h2>
           </div>
           <p className={styles.sectionIntro}>
-            Exploradores, inventores y guardianes llegan al mundo con maneras distintas de observarlo. No son una paleta de diseño: son compañeros de aventura.
+            Cada Maker observa el mundo de una forma distinta y aporta una manera propia de explorar, inventar, cuidar y descubrir.
           </p>
         </div>
 
