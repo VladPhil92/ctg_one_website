@@ -2,170 +2,199 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { ArrowUpRight, Beer, Coins, PawPrint, TrendingUp } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowUpRight, Beer, PawPrint } from 'lucide-react';
+
 import { Container } from '@/components/ui';
-import { FadeInSection } from '@/components/ui/FadeInSection';
 import { useLanguage } from '@/contexts/LanguageContext';
 import nvetHomeBannerSrc from '@/data/nvet-home-banner';
-import { getCapabilityProof, getPublicProofStatus, type PublicProofStatus } from '@/data/technology-proof';
 
-const LinkButton = ({ href, children, accent = 'gold' }: { href: string; children: React.ReactNode; accent?: 'gold' | 'green' | 'outline' }) => {
+const LinkButton = ({
+  href,
+  children,
+  accent = 'gold',
+  external = false,
+}: {
+  href: string;
+  children: React.ReactNode;
+  accent?: 'gold' | 'green' | 'outline';
+  external?: boolean;
+}) => {
   const classes = accent === 'green'
     ? 'bg-[#34B27A] text-white hover:bg-[#289463]'
     : accent === 'outline'
-      ? 'border border-white/[0.12] bg-white/[0.02] text-white hover:border-[#d6ae56]/35 hover:bg-white/[0.04]'
+      ? 'border border-white/[0.14] bg-white/[0.03] text-white hover:border-[#d6ae56]/40 hover:bg-white/[0.06]'
       : 'bg-[#d6ae56] text-black hover:bg-[#f1c75b]';
 
   return (
-    <a href={href} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-xs font-semibold uppercase tracking-[0.1em] transition-all hover:-translate-y-0.5 ${classes}`}>
-      {children}<ArrowUpRight size={14} aria-hidden="true" />
+    <a
+      href={href}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noopener noreferrer' : undefined}
+      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-xs font-semibold uppercase tracking-[0.1em] transition-all hover:-translate-y-0.5 ${classes}`}
+    >
+      {children}
+      <ArrowUpRight size={14} aria-hidden="true" />
     </a>
   );
-};
-
-const PUBLIC_STATUS_LABELS: Record<PublicProofStatus, { es: string; en: string }> = {
-  LIVE: { es: 'Activo', en: 'Live' },
-  BETA: { es: 'Beta', en: 'Beta' },
-  PARTIAL: { es: 'Parcial', en: 'Partial' },
-  'IN DEVELOPMENT': { es: 'En desarrollo', en: 'In development' },
-  ROADMAP: { es: 'Hoja de ruta', en: 'Roadmap' },
 };
 
 export const HomeProductShowcases: React.FC = () => {
   const { locale } = useLanguage();
   const es = locale === 'es';
-  const ctgoProof = getCapabilityProof('web3');
-  const ctgoStatus = getPublicProofStatus(ctgoProof);
-  const ctgoStatusLabel = PUBLIC_STATUS_LABELS[ctgoStatus][es ? 'es' : 'en'];
+  const reduceMotion = useReducedMotion();
+  const reveal = reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 34 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, amount: 0.16 },
+        transition: { duration: 0.62, ease: [0.22, 1, 0.36, 1] as const },
+      };
 
   return (
-    <section className="relative overflow-hidden bg-[#030507] py-20 sm:py-28 md:py-32">
-      <Container size="large">
-        <FadeInSection>
-          <div className="mb-12 max-w-3xl sm:mb-16">
-            <span className="mb-5 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d6ae56]">{es ? 'Productos CTG One' : 'CTG One products'}</span>
-            <h2 className="font-outfit text-3xl font-semibold leading-[1.03] tracking-[-0.04em] text-white sm:text-4xl md:text-5xl">
-              {es ? 'Tecnología que puedes ver en acción.' : 'Technology you can see in action.'}
+    <section className="relative overflow-hidden bg-[#030507] py-20 sm:py-24 md:py-28" aria-labelledby="featured-products-title">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_12%,rgba(214,174,86,.09),transparent_28%),radial-gradient(circle_at_88%_64%,rgba(74,144,226,.08),transparent_30%)]" aria-hidden="true" />
+      <Container size="large" className="relative z-10">
+        <motion.div {...reveal} className="mb-10 flex flex-col gap-4 sm:mb-12 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-3xl">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d6ae56]">
+              {es ? 'Creaciones destacadas' : 'Featured creations'}
+            </span>
+            <h2 id="featured-products-title" className="mt-4 font-outfit text-3xl font-semibold leading-[1.02] tracking-[-0.04em] text-white sm:text-4xl md:text-5xl">
+              {es ? 'Productos reales. Experiencias distintas.' : 'Real products. Distinct experiences.'}
             </h2>
-            <p className="mt-5 max-w-2xl text-sm leading-relaxed text-text-muted sm:text-base">
-              {es ? 'Conoce algunos de los productos y plataformas que estamos desarrollando dentro del ecosistema CTG One.' : 'Explore some of the products and platforms we are building across the CTG One ecosystem.'}
-            </p>
           </div>
-        </FadeInSection>
+          <p className="max-w-lg text-sm leading-6 text-white/52 sm:text-base">
+            {es
+              ? 'Cerveza artesanal, tecnología cívica y salud veterinaria conectadas por un mismo ecosistema digital.'
+              : 'Craft beer, civic technology and veterinary care connected by one digital ecosystem.'}
+          </p>
+        </motion.div>
 
-        <FadeInSection>
-          <article className="relative mb-6 overflow-hidden rounded-[30px] border border-[#d6ae56]/20 bg-[#090805]">
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,rgba(214,174,86,.11),transparent_36%),radial-gradient(circle_at_80%_60%,rgba(36,140,255,.05),transparent_34%)]" aria-hidden="true" />
-            <div className="relative grid min-h-[600px] lg:grid-cols-[0.92fr_1.08fr]">
-              <div className="flex flex-col justify-center p-7 sm:p-10 md:p-12 lg:p-14">
-                <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#d6ae56]/20 bg-[#d6ae56]/[0.04] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#f1c75b]">
-                  <Beer size={14} /> CTG Craft Beer · Cartagena
-                </div>
-                <h3 className="max-w-xl font-outfit text-4xl font-semibold leading-[1.02] tracking-[-0.04em] text-white sm:text-5xl">
-                  {es ? 'Cerveza artesanal. Producción real.' : 'Craft beer. Real production.'}
+        <div className="grid gap-5 lg:grid-cols-12">
+          <motion.article
+            {...reveal}
+            whileHover={reduceMotion ? undefined : { y: -5 }}
+            className="group relative overflow-hidden rounded-[30px] border border-[#d6ae56]/20 bg-[#08111f] lg:col-span-12"
+          >
+            <div className="grid min-h-[560px] lg:grid-cols-[0.88fr_1.12fr]">
+              <div className="relative z-10 flex flex-col justify-center p-7 sm:p-10 md:p-12 lg:p-14">
+                <Image
+                  src="/images/vertice/logo.svg"
+                  alt="VÉRTICE Sistema Operativo Cívico"
+                  width={240}
+                  height={96}
+                  unoptimized
+                  className="mb-7 h-auto w-[210px] sm:w-[240px]"
+                />
+                <h3 className="max-w-xl font-outfit text-4xl font-semibold leading-[1.01] tracking-[-0.045em] text-white sm:text-5xl">
+                  {es ? 'La ciudad también puede tener un sistema operativo.' : 'A city can have an operating system too.'}
                 </h3>
-                <p className="mt-6 max-w-xl text-sm leading-relaxed text-text-muted sm:text-base">
-                  {es ? 'CTG Craft Beer combina producción artesanal, identidad de marca y herramientas digitales desarrolladas por CTG One. Puedes conocer nuestras cervezas o explorar una modalidad separada para participar en lotes de producción.' : 'CTG Craft Beer combines craft production, brand identity and digital tools built by CTG One. Explore our beer or, separately, learn how participation in production batches works.'}
+                <p className="mt-5 max-w-xl text-sm leading-7 text-white/58 sm:text-base">
+                  {es
+                    ? 'VÉRTICE convierte reportes, propuestas, deliberación y seguimiento ciudadano en evidencia pública y trazable.'
+                    : 'VÉRTICE turns reports, proposals, deliberation and civic follow-up into public, traceable evidence.'}
                 </p>
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <LinkButton href="/craft-beer">{es ? 'Conocer CTG Craft Beer' : 'Explore CTG Craft Beer'}</LinkButton>
-                  <LinkButton href="/inversion" accent="outline"><TrendingUp size={14} />{es ? 'Invertir en producción' : 'Invest in production'}</LinkButton>
+                <div className="mt-8">
+                  <LinkButton href="https://vertice.ctgone.com" external>
+                    {es ? 'Explorar VÉRTICE' : 'Explore VÉRTICE'}
+                  </LinkButton>
                 </div>
               </div>
-              <div className="relative min-h-[430px] lg:min-h-full">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#090805] via-transparent to-transparent z-10 hidden lg:block" />
-                <div className="absolute inset-0 grid grid-cols-2 gap-4 p-6 sm:gap-5 sm:p-8">
-                  <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-white/[0.06] bg-[#050403]">
-                    <Image
-                      src="/images/inversion/ctg-craft-beer-irish-red-ale.webp"
-                      alt={es ? 'Botella Irish Red Ale de CTG Craft Beer' : 'CTG Craft Beer Irish Red Ale bottle'}
-                      fill
-                      unoptimized
-                      sizes="(min-width: 1024px) 25vw, 45vw"
-                      className="object-contain object-center p-2 sm:p-3 md:p-4"
-                    />
-                  </div>
-                  <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-white/[0.06] bg-[#050403]">
-                    <Image
-                      src="/images/inversion/ctg-craft-beer-porter.webp"
-                      alt={es ? 'Botella Porter de CTG Craft Beer' : 'CTG Craft Beer Porter bottle'}
-                      fill
-                      unoptimized
-                      sizes="(min-width: 1024px) 25vw, 45vw"
-                      className="object-contain object-center p-2 sm:p-3 md:p-4"
-                    />
-                  </div>
-                </div>
+
+              <div className="relative min-h-[360px] overflow-hidden lg:min-h-full">
+                <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#08111f] via-[#08111f]/25 to-transparent lg:block" aria-hidden="true" />
+                <motion.div
+                  className="absolute inset-0"
+                  whileHover={reduceMotion ? undefined : { scale: 1.025 }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                >
+                  <Image
+                    src="/images/vertice/cartagena-civic-panorama.svg"
+                    alt={es ? 'Visual oficial de VÉRTICE sobre participación ciudadana en Cartagena' : 'Official VÉRTICE civic participation visual for Cartagena'}
+                    fill
+                    unoptimized
+                    sizes="(min-width: 1024px) 56vw, 100vw"
+                    className="object-cover object-center"
+                  />
+                </motion.div>
               </div>
             </div>
-          </article>
-        </FadeInSection>
+          </motion.article>
 
-        <FadeInSection delay={0.08}>
-          <article className="overflow-hidden rounded-[30px] border border-[#0D1B2A]/10 bg-white text-[#0D1B2A]">
-            <div className="grid min-h-[590px] lg:grid-cols-[1.02fr_0.98fr]">
-              <div className="relative order-2 aspect-[3/2] overflow-hidden bg-[#061a2a] lg:order-1 lg:aspect-auto lg:min-h-full">
+          <motion.article
+            {...reveal}
+            whileHover={reduceMotion ? undefined : { y: -5 }}
+            className="group overflow-hidden rounded-[30px] border border-[#d6ae56]/18 bg-[#090805] lg:col-span-6"
+          >
+            <div className="relative aspect-[16/10] overflow-hidden border-b border-white/[0.06] bg-[#050403]">
+              <motion.div
+                className="absolute inset-0 grid grid-cols-2 gap-3 p-5 sm:p-7"
+                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                transition={{ duration: 0.55, ease: 'easeOut' }}
+              >
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20">
+                  <Image src="/images/inversion/ctg-craft-beer-irish-red-ale.webp" alt="CTG Craft Beer Irish Red Ale" fill unoptimized sizes="(min-width: 1024px) 25vw, 45vw" className="object-contain p-3" />
+                </div>
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20">
+                  <Image src="/images/inversion/ctg-craft-beer-porter.webp" alt="CTG Craft Beer Porter" fill unoptimized sizes="(min-width: 1024px) 25vw, 45vw" className="object-contain p-3" />
+                </div>
+              </motion.div>
+            </div>
+            <div className="p-7 sm:p-9">
+              <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#f1c75b]">
+                <Beer size={14} aria-hidden="true" /> CTG Craft Beer
+              </div>
+              <h3 className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.035em] text-white sm:text-4xl">
+                {es ? 'Cartagena hecha cerveza.' : 'Cartagena, brewed.'}
+              </h3>
+              <p className="mt-4 text-sm leading-6 text-white/52">
+                {es ? 'Portafolio artesanal nacido en Cartagena y conectado a la infraestructura digital de CTG One.' : 'A Cartagena-born craft portfolio connected to CTG One’s digital infrastructure.'}
+              </p>
+              <div className="mt-7">
+                <LinkButton href="/craft-beer" accent="outline">{es ? 'Conocer la cervecería' : 'Explore the brewery'}</LinkButton>
+              </div>
+            </div>
+          </motion.article>
+
+          <motion.article
+            {...reveal}
+            whileHover={reduceMotion ? undefined : { y: -5 }}
+            className="group overflow-hidden rounded-[30px] border border-[#34B27A]/18 bg-white text-[#0D1B2A] lg:col-span-6"
+          >
+            <div className="relative aspect-[16/10] overflow-hidden bg-[#061a2a]">
+              <motion.div
+                className="absolute inset-0"
+                whileHover={reduceMotion ? undefined : { scale: 1.025 }}
+                transition={{ duration: 0.55, ease: 'easeOut' }}
+              >
                 <Image
                   src={nvetHomeBannerSrc}
-                  alt={es ? 'Campaña de Nvet Care: cuidamos hoy para un mañana mejor juntos' : 'Nvet Care campaign: caring today for a better tomorrow together'}
+                  alt={es ? 'Visual oficial de Nvet Care' : 'Official Nvet Care visual'}
                   fill
                   unoptimized
-                  sizes="(min-width: 1024px) 51vw, 100vw"
-                  className="object-contain object-center p-3 sm:p-5 lg:p-7"
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="object-contain object-center p-3 sm:p-5"
                 />
+              </motion.div>
+            </div>
+            <div className="p-7 sm:p-9">
+              <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#23885e]">
+                <PawPrint size={14} aria-hidden="true" /> Nvet Care · {es ? 'En desarrollo' : 'In development'}
               </div>
-              <div className="order-1 flex flex-col justify-center p-7 sm:p-10 md:p-12 lg:order-2 lg:p-14">
-                <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#34B27A]/20 bg-[#34B27A]/[0.06] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#34B27A]">
-                  <PawPrint size={14} /> {es ? 'Nvet Care · En desarrollo' : 'Nvet Care · In development'}
-                </div>
-                <h3 className="max-w-xl font-outfit text-4xl font-semibold leading-[1.02] tracking-[-0.04em] text-[#0D1B2A] sm:text-5xl">
-                  {es ? 'Tu veterinario de confianza, a un toque de distancia.' : 'Your trusted veterinarian, one tap away.'}
-                </h3>
-                <p className="mt-6 max-w-xl text-sm leading-relaxed text-[#4A5A68] sm:text-base">
-                  {es ? 'Estamos desarrollando una aplicación para conectar dueños de mascotas con veterinarios verificados y facilitar la atención a domicilio en Cartagena.' : 'We are building an app that connects pet owners with verified veterinarians and makes at-home veterinary care easier in Cartagena.'}
-                </p>
-                <div className="mt-8">
-                  <LinkButton href="/nvetcareapp" accent="green">{es ? 'Conocer Nvet Care' : 'Explore Nvet Care'}</LinkButton>
-                </div>
+              <h3 className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
+                {es ? 'Cuidado veterinario, más cerca.' : 'Veterinary care, closer.'}
+              </h3>
+              <p className="mt-4 text-sm leading-6 text-[#4A5A68]">
+                {es ? 'Mascotas, citas, seguimiento y atención veterinaria dentro de una sola experiencia digital.' : 'Pets, appointments, follow-up and veterinary care in one digital experience.'}
+              </p>
+              <div className="mt-7">
+                <LinkButton href="/nvetcareapp" accent="green">{es ? 'Explorar Nvet Care' : 'Explore Nvet Care'}</LinkButton>
               </div>
             </div>
-          </article>
-        </FadeInSection>
-
-        <FadeInSection delay={0.14}>
-          <article className="relative mt-6 overflow-hidden rounded-[30px] border border-[#d6ae56]/20 bg-[#090805]">
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_80%_20%,rgba(214,174,86,.09),transparent_38%)]" aria-hidden="true" />
-            <div className="relative grid min-h-[520px] lg:grid-cols-[0.92fr_1.08fr]">
-              <div className="flex flex-col justify-center p-7 sm:p-10 md:p-12 lg:p-14">
-                <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#d6ae56]/20 bg-[#d6ae56]/[0.04] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#f1c75b]">
-                  <Coins size={14} /> CTGO · {ctgoStatusLabel}
-                </div>
-                <h3 className="max-w-xl font-outfit text-4xl font-semibold leading-[1.02] tracking-[-0.04em] text-white sm:text-5xl">
-                  {es ? 'CTGO está en hoja de ruta.' : 'CTGO is on the roadmap.'}
-                </h3>
-                <p className="mt-6 max-w-xl text-sm leading-relaxed text-text-muted sm:text-base">
-                  {es
-                    ? 'CTG One mantiene CTGO como una capacidad Web3 en hoja de ruta. Existen librerías Web3 en el proyecto, pero no publicamos un contrato o red de producción como verificados hasta contar con evidencia técnica trazable.'
-                    : 'CTG One keeps CTGO as a Web3 roadmap capability. Web3 libraries exist in the project, but we do not publish a production contract or network as verified until traceable technical evidence is available.'}
-                </p>
-                <div className="mt-8">
-                  <LinkButton href="/ctgotoken" accent="outline">{es ? 'Conocer CTGO' : 'Explore CTGO'}</LinkButton>
-                </div>
-              </div>
-              <div className="relative min-h-[360px] lg:min-h-full">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#090805] via-transparent to-transparent z-10 hidden lg:block" />
-                <div className="absolute inset-0 grid grid-cols-2 gap-2 p-6 sm:p-8">
-                  <div className="relative overflow-hidden rounded-2xl border border-white/[0.06]">
-                    <Image src="/images/token/file_000000009950720ea0fa3d0139de0cdb.png" alt={es ? 'Concepto visual de CTGO' : 'CTGO concept visual'} fill unoptimized sizes="(min-width: 1024px) 25vw, 45vw" className="object-cover" />
-                  </div>
-                  <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] translate-y-8">
-                    <Image src="/images/token/file_00000000818471f58dcdf9a124fb690f.png" alt={es ? 'Concepto visual de CTGO' : 'CTGO concept visual'} fill unoptimized sizes="(min-width: 1024px) 25vw, 45vw" className="object-cover" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-        </FadeInSection>
+          </motion.article>
+        </div>
       </Container>
     </section>
   );
