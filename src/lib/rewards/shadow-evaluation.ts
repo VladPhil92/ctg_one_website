@@ -60,8 +60,11 @@ export function evaluateShadowReward(input: RewardShadowEvaluationInput): Reward
     inputAmountCents: input.inputAmountCents,
   });
 
-  if (preview.reason === 'below_minimum' || preview.points <= 0) {
+  if (preview.reason === 'below_minimum') {
     return { ...zero('ineligible', 'below_minimum', preview.reason), blocks: preview.blocks };
+  }
+  if (preview.points <= 0) {
+    return { ...zero('ineligible', 'no_complete_block', preview.reason), blocks: preview.blocks };
   }
 
   const calculatedPoints = Math.min(preview.points, input.runtime.maxPointsPerEvent);
