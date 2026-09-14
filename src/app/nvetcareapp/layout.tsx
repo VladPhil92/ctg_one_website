@@ -12,7 +12,7 @@ const poppins = Poppins({
 });
 
 const title = 'Nvet Care | Atención veterinaria conectada en Cartagena';
-const description = 'Nvet Care conecta familias y profesionales veterinarios para coordinar atención a domicilio, seguimiento e historial de mascotas desde una experiencia digital unificada.';
+const description = 'Nvet Care está en desarrollo en Cartagena y construye una experiencia para conectar familias y profesionales veterinarios, coordinar atención a domicilio y mantener el contexto de cada mascota.';
 
 export const metadata: Metadata = {
   title,
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Nvet Care',
-    description: 'Atención veterinaria conectada para familias y profesionales. Beta en Cartagena.',
+    description: 'Atención veterinaria conectada para familias y profesionales. En desarrollo en Cartagena.',
     images: ['/images/nvetcareapp/mission-banner.jpg'],
   },
 };
