@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { PlayerAccessDock } from './PlayerAccessDock';
+import './worldmakers-contrast.css';
 
 const title = 'World Makers | Imagina. Crea. Aprende. Transforma.';
 const description =
