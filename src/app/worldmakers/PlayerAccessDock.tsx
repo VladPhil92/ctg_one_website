@@ -1,10 +1,19 @@
+'use client';
+
 import { LogIn, UserPlus } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import styles from './player-access.module.css';
 
 const SIGN_IN_URL = 'https://ctgone.com/iniciar-sesion?next=%2Fworldmakers%2Faccount';
 const CREATE_ACCOUNT_URL = 'https://ctgone.com/registro?next=%2Fworldmakers%2Faccount';
 
 export function PlayerAccessDock() {
+  const pathname = usePathname();
+
+  if (pathname === '/worldmakers/account' || pathname === '/account') {
+    return null;
+  }
+
   return (
     <aside className={styles.dock} aria-label="Acceso de jugador">
       <a className={styles.signIn} href={SIGN_IN_URL}>
