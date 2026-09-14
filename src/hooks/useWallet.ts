@@ -5,27 +5,36 @@ import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Wallet } from '@/types/domain';
 
+export type AccountReadState = 'loading' | 'ready' | 'error';
+
 export function useWallet() {
   const { userId } = useAuth();
   const [wallet, setWallet] = useState<Wallet | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [state, setState] = useState<AccountReadState>('loading');
 
   const load = useCallback(async () => {
     if (!userId || !isSupabaseConfigured) {
       setWallet(null);
-      setIsLoading(false);
+      setState('ready');
       return;
     }
-    setIsLoading(true);
+
+    setState('loading');
     const supabase = createClient();
-    const { data } = await supabase.from('wallets').select('*').eq('user_id', userId).single();
-    setWallet((data as Wallet) ?? null);
-    setIsLoading(false);
+    const { data, error } = await supabase.from('wallets').select('*').eq('user_id', userId).maybeSingle();
+
+    if (error) {
+      setState('error');
+      return;
+    }
+
+    setWallet((data as Wallet | null) ?? null);
+    setState('ready');
   }, [userId]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
-  return { wallet, isLoading, refresh: load };
+  return { wallet, isLoading: state === 'loading', state, refresh: load };
 }
