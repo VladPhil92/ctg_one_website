@@ -10,7 +10,6 @@ import {
   BarChart3,
   Bell,
   BookOpenCheck,
-  Check,
   ChevronRight,
   CircleHelp,
   Compass,
@@ -18,7 +17,6 @@ import {
   Home,
   LogOut,
   Menu,
-  Package,
   Search,
   Settings,
   ShieldCheck,
@@ -91,13 +89,14 @@ function resolveDashboardSearch(query: string) {
 
 export default function PersonalOSDashboardV2() {
   const { profile, email, isAuthenticated, isLoading, signOut } = useAuth();
-  const { wallet, isLoading: walletLoading } = useWallet();
-  const { summary: investment, isLoading: investmentLoading } = useInvestmentSummary();
-  const { transactions, isLoading: transactionsLoading } = useAccountTransactions(5);
-  const { summary: education } = useEducationActivationSummary();
+  const { wallet, isLoading: walletLoading, state: walletState, refresh: refreshWallet } = useWallet();
+  const { summary: investment, isLoading: investmentLoading, state: investmentState, refresh: refreshInvestment } = useInvestmentSummary();
+  const { transactions, isLoading: transactionsLoading, state: transactionState, refresh: refreshTransactions } = useAccountTransactions(5);
+  const { summary: education, refresh: refreshEducation } = useEducationActivationSummary();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const trackedDashboardView = useRef(false);
 
   useEffect(() => {
@@ -123,8 +122,11 @@ export default function PersonalOSDashboardV2() {
     hasProfile: Boolean(profile),
     hasCompleteProfile: Boolean(profile?.full_name && accountEmail),
     kycStatus,
+    walletState,
     walletReady: Boolean(wallet),
+    transactionState,
     transactionCount: transactions.length,
+    investmentState,
     investmentAllocationCount: investment.allocations.length,
     education,
   });
@@ -137,16 +139,14 @@ export default function PersonalOSDashboardV2() {
       detail: kyc.detail,
       href: '/dashboard/kyc',
       tone: kyc.tone,
-      ready: kycStatus === 'verified',
     },
     {
       icon: WalletCards,
       label: 'Wallet',
-      value: walletLoading ? 'Sincronizando' : wallet ? 'Activa' : 'Pendiente',
-      detail: wallet ? formatCents(wallet.balance_cents, wallet.currency) : 'Aún sin Wallet vinculada',
+      value: walletState === 'loading' ? 'Sincronizando' : walletState === 'error' ? 'No disponible' : wallet ? 'Activa' : 'Pendiente',
+      detail: walletState === 'error' ? 'No fue posible confirmar el estado' : wallet ? formatCents(wallet.balance_cents, wallet.currency) : 'Aún sin Wallet vinculada',
       href: '/dashboard/wallet',
-      tone: wallet ? 'text-emerald-300' : 'text-white/55',
-      ready: Boolean(wallet),
+      tone: walletState === 'error' ? 'text-rose-300' : wallet ? 'text-emerald-300' : 'text-white/55',
     },
     {
       icon: GraduationCap,
@@ -155,22 +155,22 @@ export default function PersonalOSDashboardV2() {
       detail: education.state === 'error'
         ? 'No fue posible leer Education OS'
         : education.activeLearning > 0
-          ? `${education.activeLearning} curso${education.activeLearning === 1 ? '' : 's'} en progreso`
+          ? `${education.activeLearning} curso${education.activeLearning === 1 ? '' : 's'} activo${education.activeLearning === 1 ? '' : 's'}`
           : `${education.activeEntitlements} acceso${education.activeEntitlements === 1 ? '' : 's'} activo${education.activeEntitlements === 1 ? '' : 's'}`,
       href: '/dashboard/educacion',
       tone: education.state === 'error' ? 'text-rose-300' : education.activeLearning > 0 || education.activeEntitlements > 0 ? 'text-emerald-300' : 'text-white/55',
-      ready: education.state === 'ready' && (education.activeEntitlements > 0 || education.activeLearning > 0),
     },
     {
       icon: BarChart3,
       label: 'Inversión',
-      value: investmentLoading ? 'Sincronizando' : investment.allocations.length > 0 ? 'Activa' : 'Opcional',
-      detail: investment.allocations.length > 0
-        ? `${investment.allocations.length} participación${investment.allocations.length === 1 ? '' : 'es'}`
-        : 'Sin participaciones activas',
+      value: investmentState === 'loading' ? 'Sincronizando' : investmentState === 'error' ? 'No disponible' : investment.allocations.length > 0 ? 'Activa' : 'Opcional',
+      detail: investmentState === 'error'
+        ? 'No fue posible confirmar participaciones'
+        : investment.allocations.length > 0
+          ? `${investment.allocations.length} participación${investment.allocations.length === 1 ? '' : 'es'}`
+          : 'Sin participaciones activas',
       href: '/inversion/app',
-      tone: investment.allocations.length > 0 ? 'text-emerald-300' : 'text-white/55',
-      ready: investment.allocations.length > 0,
+      tone: investmentState === 'error' ? 'text-rose-300' : investment.allocations.length > 0 ? 'text-emerald-300' : 'text-white/55',
     },
   ];
 
@@ -178,11 +178,14 @@ export default function PersonalOSDashboardV2() {
     kycStatus !== 'verified'
       ? { title: 'Identidad pendiente', body: kyc.detail, href: '/dashboard/kyc' }
       : null,
-    education.pendingOrders > 0
+    education.state === 'ready' && education.pendingOrders > 0
       ? { title: 'Educación requiere atención', body: `${education.pendingOrders} orden${education.pendingOrders === 1 ? '' : 'es'} pendiente${education.pendingOrders === 1 ? '' : 's'}.`, href: '/dashboard/educacion' }
       : null,
-    investment.allocations.length > 0
+    investmentState === 'ready' && investment.allocations.length > 0
       ? { title: 'Participaciones activas', body: 'Consulta el seguimiento operativo de tus lotes.', href: '/inversion/app' }
+      : null,
+    walletState === 'error' || transactionState === 'error' || investmentState === 'error' || education.state === 'error'
+      ? { title: 'Sincronización incompleta', body: 'Uno o más contextos no pudieron verificarse. Reintenta antes de tomar una nueva acción.', href: '/dashboard' }
       : null,
   ].filter((item): item is { title: string; body: string; href: string } => Boolean(item));
 
@@ -193,6 +196,21 @@ export default function PersonalOSDashboardV2() {
       serviceKey: item.serviceKey,
     });
   };
+
+  async function refreshAccountContexts() {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.allSettled([
+        refreshWallet(),
+        refreshInvestment(),
+        refreshTransactions(),
+        refreshEducation(),
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -302,6 +320,15 @@ export default function PersonalOSDashboardV2() {
                     </div>
                     {activationLoading ? (
                       <span className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035] px-5 text-xs text-white/45">Sincronizando estado…</span>
+                    ) : activation.primary.key === 'sync' ? (
+                      <button
+                        type="button"
+                        onClick={() => void refreshAccountContexts()}
+                        disabled={isRefreshing}
+                        className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#e3b653]/30 bg-[#e3b653]/[0.06] px-5 text-xs font-bold text-[#e3b653] transition hover:bg-[#e3b653]/[0.1] disabled:cursor-wait disabled:opacity-60"
+                      >
+                        {isRefreshing ? 'Sincronizando…' : activation.primary.cta} <ArrowRight size={15} />
+                      </button>
                     ) : (
                       <Link
                         href={activation.primary.href}
@@ -336,7 +363,7 @@ export default function PersonalOSDashboardV2() {
                   <span className="block h-full rounded-full bg-[linear-gradient(90deg,#e1b24d,#f0c76a)] transition-[width]" style={{ width: `${activationLoading ? 0 : activation.progressPercent}%` }} />
                 </div>
                 <p className="mt-3 text-[10px] leading-5 text-white/40">
-                  {activationLoading ? 'Sincronizando tus contextos…' : `${activation.completedMilestones} de ${activation.totalMilestones} hitos de activación detectados.`}
+                  {activationLoading ? 'Sincronizando tus contextos…' : `${activation.completedMilestones} de ${activation.totalMilestones} hitos de activación confirmados.`}
                 </p>
                 <div className="mt-5 space-y-2">
                   {ecosystemStates.map((state) => (
@@ -356,9 +383,9 @@ export default function PersonalOSDashboardV2() {
                 <Link href="/products" className="inline-flex min-h-10 items-center gap-2 text-[10px] font-semibold text-white/55 hover:text-[#e3b653]">Explorar todo <ArrowRight size={13} /></Link>
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <WorkspaceCard href="/dashboard/wallet" icon={<WalletCards size={21} />} title="Wallet" eyebrow="Cuenta" description={wallet ? `Saldo: ${formatCents(wallet.balance_cents, wallet.currency)}` : 'Activa y administra tu Wallet.'} />
-                <WorkspaceCard href="/dashboard/educacion" icon={<BookOpenCheck size={21} />} title="Education OS" eyebrow="Aprendizaje" description={education.activeLearning > 0 ? `${education.activeLearning} curso${education.activeLearning === 1 ? '' : 's'} en progreso.` : 'Cursos, accesos, biblioteca y progreso.'} />
-                <WorkspaceCard href="/inversion/app" icon={<BarChart3 size={21} />} title="Inversión" eyebrow="Capital" description={investment.allocations.length > 0 ? `${investment.allocations.length} participación${investment.allocations.length === 1 ? '' : 'es'} activa${investment.allocations.length === 1 ? '' : 's'}.` : 'Explora oportunidades publicadas.'} />
+                <WorkspaceCard href="/dashboard/wallet" icon={<WalletCards size={21} />} title="Wallet" eyebrow="Cuenta" description={walletState === 'error' ? 'Estado no confirmado. Reintenta la sincronización.' : wallet ? `Saldo: ${formatCents(wallet.balance_cents, wallet.currency)}` : walletState === 'loading' ? 'Sincronizando Wallet…' : 'Activa y administra tu Wallet.'} />
+                <WorkspaceCard href="/dashboard/educacion" icon={<BookOpenCheck size={21} />} title="Education OS" eyebrow="Aprendizaje" description={education.state === 'error' ? 'Estado no confirmado. Reintenta la sincronización.' : education.activeLearning > 0 ? `${education.activeLearning} curso${education.activeLearning === 1 ? '' : 's'} activo${education.activeLearning === 1 ? '' : 's'}.` : education.state === 'loading' ? 'Sincronizando Education OS…' : 'Cursos, accesos, biblioteca y progreso.'} />
+                <WorkspaceCard href="/inversion/app" icon={<BarChart3 size={21} />} title="Inversión" eyebrow="Capital" description={investmentState === 'error' ? 'Estado no confirmado. Reintenta la sincronización.' : investment.allocations.length > 0 ? `${investment.allocations.length} participación${investment.allocations.length === 1 ? '' : 'es'} activa${investment.allocations.length === 1 ? '' : 's'}.` : investmentState === 'loading' ? 'Sincronizando participaciones…' : 'Explora oportunidades publicadas.'} />
                 <WorkspaceCard href="/dashboard/kyc" icon={<UserRoundCheck size={21} />} title="Identidad" eyebrow="Confianza" description={`${kyc.label}. ${kyc.detail}.`} />
               </div>
             </section>
@@ -369,8 +396,10 @@ export default function PersonalOSDashboardV2() {
                   <div><p className="text-[9px] font-semibold uppercase tracking-[.18em] text-white/30">Memoria operativa</p><h2 className="mt-2 font-outfit text-xl font-semibold">Actividad reciente</h2></div>
                   <Link href="/dashboard/wallet" className="inline-flex items-center gap-1.5 text-[9px] text-white/50 hover:text-[#e3b653]">Ver movimientos <ArrowRight size={12} /></Link>
                 </div>
-                {transactionsLoading ? (
+                {transactionState === 'loading' ? (
                   <div className="px-6 py-12 text-center text-xs text-white/35">Sincronizando actividad…</div>
+                ) : transactionState === 'error' ? (
+                  <div className="px-6 py-12 text-center"><ShieldCheck size={22} className="mx-auto text-rose-300" /><strong className="mt-3 block text-xs">No pudimos confirmar tu actividad.</strong><p className="mx-auto mt-2 max-w-md text-[10px] leading-5 text-white/35">No interpretaremos este fallo como una cuenta sin movimientos.</p><button type="button" onClick={() => void refreshAccountContexts()} className="mt-4 min-h-10 rounded-xl border border-white/10 px-4 text-[9px] font-semibold text-white/60 hover:border-[#e3b653]/25 hover:text-[#e3b653]">Reintentar sincronización</button></div>
                 ) : transactions.length > 0 ? (
                   <div className="px-4 py-2 sm:px-5">
                     {transactions.map((transaction) => (
@@ -382,7 +411,7 @@ export default function PersonalOSDashboardV2() {
                     ))}
                   </div>
                 ) : (
-                  <div className="px-6 py-12 text-center"><Sparkles size={22} className="mx-auto text-[#e3b653]" /><strong className="mt-3 block text-xs">Aún no hay movimientos.</strong><p className="mx-auto mt-2 max-w-md text-[10px] leading-5 text-white/35">Personal OS no inventa actividad: este espacio se llenará cuando exista una acción real vinculada a tu cuenta.</p></div>
+                  <div className="px-6 py-12 text-center"><Sparkles size={22} className="mx-auto text-[#e3b653]" /><strong className="mt-3 block text-xs">Aún no hay movimientos confirmados.</strong><p className="mx-auto mt-2 max-w-md text-[10px] leading-5 text-white/35">Personal OS no inventa actividad: este espacio se llenará cuando exista una acción real vinculada a tu cuenta.</p></div>
                 )}
               </article>
 
