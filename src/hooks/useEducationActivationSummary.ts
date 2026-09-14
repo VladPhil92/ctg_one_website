@@ -52,7 +52,8 @@ export function useEducationActivationSummary() {
       const activeLearningItems = (payload.learning ?? [])
         .filter((item) => item.status === 'active' && (item.progressPercent ?? 0) < 100)
         .sort((a, b) => Date.parse(b.lastActivityAt ?? '') - Date.parse(a.lastActivityAt ?? ''));
-      const top = activeLearningItems[0];
+      const resumableLearningItems = activeLearningItems.filter((item) => (item.progressPercent ?? 0) > 0);
+      const top = resumableLearningItems[0];
 
       setSummary({
         state: 'ready',
@@ -62,7 +63,7 @@ export function useEducationActivationSummary() {
         topLearning: top?.continuePath && top.course?.title
           ? {
               title: top.course.title,
-              progressPercent: Math.max(0, Math.min(100, Math.round(top.progressPercent ?? 0))),
+              progressPercent: Math.max(1, Math.min(99, Math.round(top.progressPercent ?? 0))),
               continuePath: top.continuePath,
             }
           : null,
