@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0134",
-  "expectedMigrationName": "rewards_pilot_control_plane_v2",
-  "expectedMigrationCount": 134,
+  "expectedMigration": "0135",
+  "expectedMigrationName": "rewards_shadow_earning_engine_v3",
+  "expectedMigrationCount": 135,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
