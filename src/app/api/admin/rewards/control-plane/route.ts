@@ -5,6 +5,8 @@ import { calculateRewardPreview, type RewardPilotCalculationType } from '@/lib/r
 export const dynamic = 'force-dynamic';
 
 const MAX_BODY_BYTES = 24 * 1024;
+const READ_PAGE_SIZE = 200;
+const MAX_CONTROL_PLANE_ROWS = 5_000;
 const SLUG = /^[a-z0-9][a-z0-9_.-]{1,63}$/;
 const UNIT_CODE = /^[a-z0-9][a-z0-9_-]{1,47}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -13,10 +15,37 @@ const CALCULATION_TYPES = new Set<RewardPilotCalculationType>(['fixed_points', '
 const MAX_DOMAIN_VALUE = 1_000_000_000_000;
 
 type JsonRecord = Record<string, unknown>;
+type ControlPlaneAdmin = ReturnType<typeof createAdminClient>;
+type PilotUnitRow = {
+  id: string;
+  code: string;
+  name: string;
+  source_domain: string;
+  stage: 'draft' | 'validated' | 'archived';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+type RuleDraftRow = {
+  id: string;
+  pilot_unit_id: string;
+  name: string;
+  event_code: string;
+  calculation_type: RewardPilotCalculationType;
+  fixed_points: number | null;
+  points_per_block: number | null;
+  cop_block_cents: number | null;
+  minimum_amount_cents: number;
+  maximum_points_per_event: number | null;
+  stage: 'draft' | 'validated' | 'archived';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 type AdminContext = {
   userId: string;
-  admin: ReturnType<typeof createAdminClient>;
+  admin: ControlPlaneAdmin;
 };
 
 function json(body: unknown, status = 200) {
@@ -84,31 +113,61 @@ function isResponse(value: AdminContext | NextResponse): value is NextResponse {
   return value instanceof NextResponse;
 }
 
+async function loadAllPilotUnits(admin: ControlPlaneAdmin) {
+  const rows: PilotUnitRow[] = [];
+  for (let offset = 0; offset < MAX_CONTROL_PLANE_ROWS; offset += READ_PAGE_SIZE) {
+    const { data, error } = await admin.from('reward_pilot_units')
+      .select('id,code,name,source_domain,stage,notes,created_at,updated_at')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + READ_PAGE_SIZE - 1);
+    if (error) return { rows: [] as PilotUnitRow[], failed: true, overflow: false };
+    const page = (data ?? []) as PilotUnitRow[];
+    rows.push(...page);
+    if (page.length < READ_PAGE_SIZE) return { rows, failed: false, overflow: false };
+  }
+  return { rows: [] as PilotUnitRow[], failed: false, overflow: true };
+}
+
+async function loadAllRuleDrafts(admin: ControlPlaneAdmin) {
+  const rows: RuleDraftRow[] = [];
+  for (let offset = 0; offset < MAX_CONTROL_PLANE_ROWS; offset += READ_PAGE_SIZE) {
+    const { data, error } = await admin.from('reward_rule_drafts')
+      .select('id,pilot_unit_id,name,event_code,calculation_type,fixed_points,points_per_block,cop_block_cents,minimum_amount_cents,maximum_points_per_event,stage,notes,created_at,updated_at')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + READ_PAGE_SIZE - 1);
+    if (error) return { rows: [] as RuleDraftRow[], failed: true, overflow: false };
+    const page = (data ?? []) as RuleDraftRow[];
+    rows.push(...page);
+    if (page.length < READ_PAGE_SIZE) return { rows, failed: false, overflow: false };
+  }
+  return { rows: [] as RuleDraftRow[], failed: false, overflow: true };
+}
+
 export async function GET() {
   const context = await requireSuperAdmin();
   if (isResponse(context)) return context;
 
   const [unitsResult, rulesResult, simulationsResult] = await Promise.all([
-    context.admin.from('reward_pilot_units')
-      .select('id,code,name,source_domain,stage,notes,created_at,updated_at')
-      .order('created_at', { ascending: false }).limit(100),
-    context.admin.from('reward_rule_drafts')
-      .select('id,pilot_unit_id,name,event_code,calculation_type,fixed_points,points_per_block,cop_block_cents,minimum_amount_cents,maximum_points_per_event,stage,notes,created_at,updated_at')
-      .order('created_at', { ascending: false }).limit(200),
+    loadAllPilotUnits(context.admin),
+    loadAllRuleDrafts(context.admin),
     context.admin.from('reward_rule_simulations')
       .select('id,rule_id,input_amount_cents,calculated_points,calculation_snapshot,created_at')
       .order('created_at', { ascending: false }).limit(100),
   ]);
 
-  const failure = unitsResult.error ?? rulesResult.error ?? simulationsResult.error;
-  if (failure) return json({ error: 'REWARDS_CONTROL_PLANE_READ_FAILED' }, 503);
+  if (unitsResult.failed || rulesResult.failed || simulationsResult.error) {
+    return json({ error: 'REWARDS_CONTROL_PLANE_READ_FAILED' }, 503);
+  }
+  if (unitsResult.overflow || rulesResult.overflow) {
+    return json({ error: 'REWARDS_CONTROL_PLANE_RESULT_LIMIT_EXCEEDED' }, 503);
+  }
 
   return json({
     phase: 'pilot_control_plane_v2',
     commercialStatus: 'inactive',
     ledgerEffects: false,
-    units: unitsResult.data ?? [],
-    rules: rulesResult.data ?? [],
+    units: unitsResult.rows,
+    rules: rulesResult.rows,
     simulations: simulationsResult.data ?? [],
   });
 }
@@ -157,6 +216,12 @@ export async function POST(request: NextRequest) {
       return json({ error: 'INVALID_RULE' }, 400);
     }
 
+    const { data: parentUnit, error: unitError } = await context.admin.from('reward_pilot_units')
+      .select('id,stage').eq('id', pilotUnitId).maybeSingle();
+    if (unitError || !parentUnit || parentUnit.stage === 'archived') {
+      return json({ error: 'PILOT_UNIT_NOT_AVAILABLE' }, 409);
+    }
+
     const { data, error } = await context.admin.from('reward_rule_drafts').insert({
       pilot_unit_id: pilotUnitId,
       name,
@@ -196,6 +261,12 @@ export async function POST(request: NextRequest) {
       .eq('id', ruleId).maybeSingle();
     if (ruleError || !rule || rule.stage === 'archived') return json({ error: 'RULE_NOT_SIMULATABLE' }, 404);
 
+    const { data: parentUnit, error: unitError } = await context.admin.from('reward_pilot_units')
+      .select('id,stage').eq('id', rule.pilot_unit_id).maybeSingle();
+    if (unitError || !parentUnit || parentUnit.stage === 'archived') {
+      return json({ error: 'PILOT_UNIT_NOT_SIMULATABLE' }, 409);
+    }
+
     let preview;
     try {
       preview = calculateRewardPreview({
@@ -227,6 +298,7 @@ export async function POST(request: NextRequest) {
         maximumPointsPerEvent: rule.maximum_points_per_event,
         stage: rule.stage,
       },
+      pilotUnitStage: parentUnit.stage,
       inputAmountCents,
       result: preview,
     };
