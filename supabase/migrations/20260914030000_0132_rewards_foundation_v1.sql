@@ -65,7 +65,7 @@ begin
 end;
 $$;
 
-create or replace function public.rewards_prevent_ledger_mutation()
+create or replace function public.rewards_prevent_ledger_update()
 returns trigger
 language plpgsql
 set search_path = pg_catalog, public
@@ -96,12 +96,7 @@ for each row execute function public.rewards_touch_account_updated_at();
 drop trigger if exists reward_ledger_immutable_update_trg on public.reward_ledger_entries;
 create trigger reward_ledger_immutable_update_trg
 before update on public.reward_ledger_entries
-for each row execute function public.rewards_prevent_ledger_mutation();
-
-drop trigger if exists reward_ledger_immutable_delete_trg on public.reward_ledger_entries;
-create trigger reward_ledger_immutable_delete_trg
-before delete on public.reward_ledger_entries
-for each row execute function public.rewards_prevent_ledger_mutation();
+for each row execute function public.rewards_prevent_ledger_update();
 
 drop trigger if exists reward_account_on_profile_created on public.profiles;
 create trigger reward_account_on_profile_created
@@ -122,7 +117,7 @@ revoke all on table public.reward_ledger_entries from public, anon, authenticate
 
 grant select on table public.reward_accounts to authenticated;
 grant select on table public.reward_ledger_entries to authenticated;
-grant select, insert, update, delete on table public.reward_accounts to service_role;
+grant select, insert, update on table public.reward_accounts to service_role;
 grant select, insert on table public.reward_ledger_entries to service_role;
 
 -- Authenticated reads are ownership-scoped. Client roles receive no write grant.
@@ -142,7 +137,8 @@ using ((select auth.uid()) = user_id);
 
 -- Canonical future write boundary. This function is SECURITY INVOKER and is
 -- executable only by service_role. Foundation v1 does not expose an HTTP route
--- that calls it, so no commercial earning rule becomes active by this migration.
+-- that calls it. Positive credits are additionally blocked while the account
+-- remains in the default `foundation` state.
 create or replace function public.apply_reward_ledger_entry(
   p_user_id uuid,
   p_points_delta bigint,
@@ -192,6 +188,10 @@ begin
 
   if v_account is null then
     raise exception 'reward account not found';
+  end if;
+
+  if p_points_delta > 0 and v_account.status <> 'active' then
+    raise exception 'positive rewards are disabled while account status is %', v_account.status;
   end if;
 
   -- Re-check idempotency after acquiring the account lock so concurrent calls
@@ -251,7 +251,7 @@ end;
 $$;
 
 revoke execute on function public.rewards_touch_account_updated_at() from public, anon, authenticated;
-revoke execute on function public.rewards_prevent_ledger_mutation() from public, anon, authenticated;
+revoke execute on function public.rewards_prevent_ledger_update() from public, anon, authenticated;
 revoke execute on function public.rewards_create_account_for_profile() from public, anon, authenticated;
 revoke execute on function public.apply_reward_ledger_entry(uuid, bigint, text, text, text, text, text, jsonb, uuid)
   from public, anon, authenticated;
