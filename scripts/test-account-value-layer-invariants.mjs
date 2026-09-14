@@ -31,6 +31,20 @@ assert.match(
   'Rewards must remain explicitly non-live in the account value proposition.',
 );
 assert.match(
+  valueSection,
+  /isLoading \? \(/,
+  'The primary account CTA must wait for authentication bootstrap before choosing a destination.',
+);
+assert.match(
+  valueSection,
+  /Comprobando tu cuenta…/,
+  'The authentication-loading state must be explicit and non-navigable.',
+);
+assert.ok(
+  !valueSection.includes("href={isLoading || !isAuthenticated ? '/registro' : '/dashboard'}"),
+  'Auth loading must never default the primary CTA to registration.',
+);
+assert.match(
   registration,
   /CTG Rewards continúa en roadmap/,
   'Registration must not imply that Rewards activate at signup.',
