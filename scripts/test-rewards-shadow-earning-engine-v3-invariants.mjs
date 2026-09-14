@@ -66,7 +66,7 @@ assert.doesNotMatch(evaluator, /fetch\(|\.from\(|createAdminClient|reward_ledger
 
 assert.match(adminPage, /investment_role !== 'SUPER_ADMIN'/, 'Shadow admin page must require SUPER_ADMIN.');
 assert.match(panel, /SHADOW ONLY — cero efectos de ledger/, 'Shadow UI must visibly disclose zero ledger effects.');
-assert.match(panel, /solo habilita evaluación hipotética/i, 'Runtime enablement must be explained as hypothetical-only.');
+assert.match(panel, /habilita únicamente evaluación hipotética/i, 'Runtime enablement must be explained as hypothetical-only.');
 assert.match(panel, /Replay manual de evento/, 'v3 UI must expose controlled admin replay, not a public webhook.');
 assert.doesNotMatch(panel, /activar rewards|earning comercial activo|acreditar puntos ahora|redimir ahora/i, 'Shadow UI must not expose commercial activation claims.');
 assert.match(nav, /href: '\/admin\/rewards\/shadow', label: 'Rewards Shadow', roles: \['SUPER_ADMIN'\]/, 'Shadow navigation must remain SUPER_ADMIN-only.');
