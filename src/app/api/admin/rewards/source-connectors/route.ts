@@ -32,13 +32,7 @@ type ConnectorRow = {
   created_at: string;
   updated_at: string;
 };
-
-type EventRow = {
-  id: string;
-  event_kind: 'original' | 'reversal';
-  amount_cents: number;
-};
-
+type EventRow = { id: string; event_kind: 'original' | 'reversal'; amount_cents: number };
 type AttemptRow = { outcome: string };
 type EvaluationRow = { decision: string; calculated_points: number };
 
@@ -110,33 +104,6 @@ function cleanDate(value: unknown) {
   return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
 }
 
-async function connectorSnapshot(admin: Admin, connector: ConnectorRow) {
-  const { data: allowlist } = await admin.from('reward_source_connector_event_allowlist')
-    .select('event_code').eq('connector_id', connector.id).order('event_code');
-  return {
-    connectorCode: connector.connector_code,
-    pilotUnitId: connector.pilot_unit_id,
-    sourceDomain: connector.source_domain,
-    authScheme: connector.auth_scheme,
-    keyFingerprintSha256: connector.key_fingerprint_sha256,
-    stage: connector.stage,
-    ingestionEnabled: connector.ingestion_enabled,
-    maxClockSkewSeconds: connector.max_clock_skew_seconds,
-    allowedEventCodes: (allowlist ?? []).map(item => item.event_code),
-  };
-}
-
-async function recordConfigEvent(admin: Admin, connector: ConnectorRow, eventType: string, userId: string) {
-  const snapshot = await connectorSnapshot(admin, connector);
-  const { error } = await admin.from('reward_source_connector_config_events').insert({
-    connector_id: connector.id,
-    event_type: eventType,
-    config_snapshot: snapshot,
-    created_by: userId,
-  });
-  return !error;
-}
-
 async function loadRows<T>(loader: (from: number, to: number) => PromiseLike<{ data: unknown; error: unknown }>) {
   const rows: T[] = [];
   for (let offset = 0; offset < MAX_RECON_ROWS; offset += PAGE_SIZE) {
@@ -154,6 +121,26 @@ async function getConnector(admin: Admin, id: string) {
     .select('id,pilot_unit_id,connector_code,name,source_domain,auth_scheme,key_fingerprint_sha256,stage,ingestion_enabled,max_clock_skew_seconds,notes,created_at,updated_at')
     .eq('id', id).maybeSingle();
   return { connector: data as ConnectorRow | null, error };
+}
+
+function atomicError(message: string, fallback: string) {
+  const known: Array<[string, number]> = [
+    ['PILOT_UNIT_NOT_AVAILABLE', 409],
+    ['CONNECTOR_NOT_AVAILABLE', 404],
+    ['CONNECTOR_NOT_FOUND', 404],
+    ['DISABLE_CONNECTOR_BEFORE_ALLOWLIST_CHANGE', 409],
+    ['INVALID_ALLOWLIST', 400],
+    ['INVALID_STAGE_CHANGE', 400],
+    ['PILOT_UNIT_MUST_BE_VALIDATED', 409],
+    ['CONNECTOR_ALLOWLIST_REQUIRED', 409],
+    ['CONNECTOR_MUST_BE_VALIDATED', 409],
+    ['GLOBAL_SHADOW_KILL_SWITCH_CLOSED', 409],
+    ['KEY_FINGERPRINT_UNCHANGED', 409],
+  ];
+  const match = known.find(([code]) => message.includes(code));
+  if (match) return { error: match[0], status: match[1] };
+  if (message.includes('duplicate key')) return { error: fallback, status: 409 };
+  return { error: fallback, status: 503 };
 }
 
 export async function GET() {
@@ -209,7 +196,6 @@ export async function POST(request: NextRequest) {
     if (!pilotUnitId || !connectorCode || !name || !publicKeyPem || maxClockSkewSeconds === null || (body.notes && notes === null)) {
       return json({ error: 'INVALID_CONNECTOR' }, 400);
     }
-
     let key;
     try {
       key = inspectEd25519PublicKey(publicKeyPem);
@@ -217,63 +203,37 @@ export async function POST(request: NextRequest) {
       return json({ error: 'INVALID_ED25519_PUBLIC_KEY' }, 400);
     }
 
-    const { data: unit, error: unitError } = await context.admin.from('reward_pilot_units')
-      .select('id,source_domain,stage').eq('id', pilotUnitId).maybeSingle();
-    if (unitError) return json({ error: 'PILOT_UNIT_READ_FAILED' }, 503);
-    if (!unit || unit.stage === 'archived') return json({ error: 'PILOT_UNIT_NOT_AVAILABLE' }, 409);
-
-    const { data, error } = await context.admin.from('reward_source_connectors').insert({
-      pilot_unit_id: unit.id,
-      connector_code: connectorCode,
-      name,
-      source_domain: unit.source_domain,
-      auth_scheme: 'ed25519_v1',
-      public_key_pem: key.normalizedPem,
-      key_fingerprint_sha256: key.fingerprintSha256,
-      max_clock_skew_seconds: maxClockSkewSeconds,
-      notes,
-      created_by: context.userId,
-    }).select('id,pilot_unit_id,connector_code,name,source_domain,auth_scheme,key_fingerprint_sha256,stage,ingestion_enabled,max_clock_skew_seconds,notes,created_at,updated_at').single();
-    if (error || !data) return json({ error: 'CONNECTOR_CREATE_FAILED' }, 409);
-    const connector = data as ConnectorRow;
-    if (!await recordConfigEvent(context.admin, connector, 'created', context.userId)) {
-      return json({ error: 'CONNECTOR_AUDIT_WRITE_FAILED', connector }, 503);
+    const { data, error } = await context.admin.rpc('create_reward_source_connector_atomic', {
+      p_pilot_unit_id: pilotUnitId,
+      p_connector_code: connectorCode,
+      p_name: name,
+      p_public_key_pem: key.normalizedPem,
+      p_key_fingerprint_sha256: key.fingerprintSha256,
+      p_max_clock_skew_seconds: maxClockSkewSeconds,
+      p_notes: notes,
+      p_actor: context.userId,
+    });
+    if (error || !data || typeof data !== 'object' || Array.isArray(data) || typeof (data as JsonRecord).id !== 'string') {
+      const mapped = atomicError(error?.message ?? '', 'CONNECTOR_CREATE_FAILED');
+      return json({ error: mapped.error }, mapped.status);
     }
-    return json({ ok: true, connector, privateKeyStored: false, ledgerEffects: false }, 201);
+    const loaded = await getConnector(context.admin, String((data as JsonRecord).id));
+    if (loaded.error || !loaded.connector) return json({ error: 'CONNECTOR_REFRESH_FAILED' }, 503);
+    return json({ ok: true, connector: loaded.connector, privateKeyStored: false, ledgerEffects: false }, 201);
   }
 
   if (body.action === 'replace_allowlist') {
     const connectorId = typeof body.connectorId === 'string' && UUID.test(body.connectorId) ? body.connectorId : null;
     const eventCodes = cleanEventCodes(body.eventCodes);
     if (!connectorId || !eventCodes) return json({ error: 'INVALID_ALLOWLIST' }, 400);
-    const loaded = await getConnector(context.admin, connectorId);
-    if (loaded.error) return json({ error: 'CONNECTOR_READ_FAILED' }, 503);
-    if (!loaded.connector || loaded.connector.stage === 'archived') return json({ error: 'CONNECTOR_NOT_AVAILABLE' }, 404);
-    if (loaded.connector.ingestion_enabled) return json({ error: 'DISABLE_CONNECTOR_BEFORE_ALLOWLIST_CHANGE' }, 409);
-
-    const { data: current, error: currentError } = await context.admin.from('reward_source_connector_event_allowlist')
-      .select('event_code').eq('connector_id', connectorId);
-    if (currentError) return json({ error: 'ALLOWLIST_READ_FAILED' }, 503);
-    const currentCodes = new Set((current ?? []).map(item => item.event_code));
-    const desired = new Set(eventCodes);
-    const additions = eventCodes.filter(code => !currentCodes.has(code));
-    const removals = [...currentCodes].filter(code => !desired.has(code));
-
-    if (additions.length > 0) {
-      const { error } = await context.admin.from('reward_source_connector_event_allowlist').insert(
-        additions.map(eventCode => ({ connector_id: connectorId, event_code: eventCode, created_by: context.userId })),
-      );
-      if (error) return json({ error: 'ALLOWLIST_ADD_FAILED' }, 503);
-    }
-    if (removals.length > 0) {
-      const { error } = await context.admin.from('reward_source_connector_event_allowlist')
-        .delete().eq('connector_id', connectorId).in('event_code', removals);
-      if (error) return json({ error: 'ALLOWLIST_REMOVE_FAILED' }, 503);
-    }
-    const refreshed = await getConnector(context.admin, connectorId);
-    if (!refreshed.connector || refreshed.error) return json({ error: 'CONNECTOR_REFRESH_FAILED' }, 503);
-    if (!await recordConfigEvent(context.admin, refreshed.connector, 'allowlist_updated', context.userId)) {
-      return json({ error: 'CONNECTOR_AUDIT_WRITE_FAILED' }, 503);
+    const { error } = await context.admin.rpc('replace_reward_source_allowlist_atomic', {
+      p_connector_id: connectorId,
+      p_event_codes: eventCodes,
+      p_actor: context.userId,
+    });
+    if (error) {
+      const mapped = atomicError(error.message, 'ALLOWLIST_REPLACE_FAILED');
+      return json({ error: mapped.error }, mapped.status);
     }
     return json({ ok: true, eventCodes, ledgerEffects: false });
   }
@@ -282,92 +242,61 @@ export async function POST(request: NextRequest) {
     const connectorId = typeof body.connectorId === 'string' && UUID.test(body.connectorId) ? body.connectorId : null;
     const stage = body.stage === 'draft' || body.stage === 'validated' || body.stage === 'archived' ? body.stage : null;
     if (!connectorId || !stage) return json({ error: 'INVALID_STAGE_CHANGE' }, 400);
+    const { error } = await context.admin.rpc('set_reward_source_connector_stage_atomic', {
+      p_connector_id: connectorId,
+      p_stage: stage,
+      p_actor: context.userId,
+    });
+    if (error) {
+      const mapped = atomicError(error.message, 'CONNECTOR_STAGE_CHANGE_FAILED');
+      return json({ error: mapped.error }, mapped.status);
+    }
     const loaded = await getConnector(context.admin, connectorId);
-    if (loaded.error) return json({ error: 'CONNECTOR_READ_FAILED' }, 503);
-    if (!loaded.connector) return json({ error: 'CONNECTOR_NOT_FOUND' }, 404);
-
-    if (stage === 'validated') {
-      const [unit, allowlist] = await Promise.all([
-        context.admin.from('reward_pilot_units').select('stage').eq('id', loaded.connector.pilot_unit_id).maybeSingle(),
-        context.admin.from('reward_source_connector_event_allowlist').select('event_code', { count: 'exact', head: true }).eq('connector_id', connectorId),
-      ]);
-      if (unit.error || allowlist.error) return json({ error: 'CONNECTOR_VALIDATION_PREFLIGHT_FAILED' }, 503);
-      if (unit.data?.stage !== 'validated') return json({ error: 'PILOT_UNIT_MUST_BE_VALIDATED' }, 409);
-      if ((allowlist.count ?? 0) < 1) return json({ error: 'CONNECTOR_ALLOWLIST_REQUIRED' }, 409);
-    }
-
-    const { data, error } = await context.admin.from('reward_source_connectors').update({
-      stage,
-      ingestion_enabled: stage === 'archived' ? false : loaded.connector.ingestion_enabled,
-    }).eq('id', connectorId)
-      .select('id,pilot_unit_id,connector_code,name,source_domain,auth_scheme,key_fingerprint_sha256,stage,ingestion_enabled,max_clock_skew_seconds,notes,created_at,updated_at').single();
-    if (error || !data) return json({ error: 'CONNECTOR_STAGE_CHANGE_FAILED' }, 409);
-    const connector = data as ConnectorRow;
-    if (!await recordConfigEvent(context.admin, connector, stage, context.userId)) {
-      return json({ error: 'CONNECTOR_AUDIT_WRITE_FAILED', connector }, 503);
-    }
-    return json({ ok: true, connector, ledgerEffects: false });
+    if (loaded.error || !loaded.connector) return json({ error: 'CONNECTOR_REFRESH_FAILED' }, 503);
+    return json({ ok: true, connector: loaded.connector, ledgerEffects: false });
   }
 
   if (body.action === 'set_ingestion') {
     const connectorId = typeof body.connectorId === 'string' && UUID.test(body.connectorId) ? body.connectorId : null;
     const enabled = typeof body.enabled === 'boolean' ? body.enabled : null;
     if (!connectorId || enabled === null) return json({ error: 'INVALID_INGESTION_CHANGE' }, 400);
+    const { error } = await context.admin.rpc('set_reward_source_connector_ingestion_atomic', {
+      p_connector_id: connectorId,
+      p_enabled: enabled,
+      p_actor: context.userId,
+    });
+    if (error) {
+      const mapped = atomicError(error.message, 'CONNECTOR_INGESTION_CHANGE_FAILED');
+      return json({ error: mapped.error }, mapped.status);
+    }
     const loaded = await getConnector(context.admin, connectorId);
-    if (loaded.error) return json({ error: 'CONNECTOR_READ_FAILED' }, 503);
-    if (!loaded.connector || loaded.connector.stage === 'archived') return json({ error: 'CONNECTOR_NOT_AVAILABLE' }, 404);
-
-    if (enabled) {
-      if (loaded.connector.stage !== 'validated') return json({ error: 'CONNECTOR_MUST_BE_VALIDATED' }, 409);
-      const [unit, runtime, allowlist] = await Promise.all([
-        context.admin.from('reward_pilot_units').select('stage').eq('id', loaded.connector.pilot_unit_id).maybeSingle(),
-        context.admin.from('reward_shadow_runtime_config').select('processing_enabled').eq('id', 1).maybeSingle(),
-        context.admin.from('reward_source_connector_event_allowlist').select('event_code', { count: 'exact', head: true }).eq('connector_id', connectorId),
-      ]);
-      if (unit.error || runtime.error || allowlist.error) return json({ error: 'CONNECTOR_ENABLE_PREFLIGHT_FAILED' }, 503);
-      if (unit.data?.stage !== 'validated') return json({ error: 'PILOT_UNIT_MUST_BE_VALIDATED' }, 409);
-      if (!runtime.data?.processing_enabled) return json({ error: 'GLOBAL_SHADOW_KILL_SWITCH_CLOSED' }, 409);
-      if ((allowlist.count ?? 0) < 1) return json({ error: 'CONNECTOR_ALLOWLIST_REQUIRED' }, 409);
-    }
-
-    const { data, error } = await context.admin.from('reward_source_connectors')
-      .update({ ingestion_enabled: enabled }).eq('id', connectorId)
-      .select('id,pilot_unit_id,connector_code,name,source_domain,auth_scheme,key_fingerprint_sha256,stage,ingestion_enabled,max_clock_skew_seconds,notes,created_at,updated_at').single();
-    if (error || !data) return json({ error: 'CONNECTOR_INGESTION_CHANGE_FAILED' }, 409);
-    const connector = data as ConnectorRow;
-    if (!await recordConfigEvent(context.admin, connector, enabled ? 'enabled' : 'disabled', context.userId)) {
-      return json({ error: 'CONNECTOR_AUDIT_WRITE_FAILED', connector }, 503);
-    }
-    return json({ ok: true, connector, ledgerEffects: false });
+    if (loaded.error || !loaded.connector) return json({ error: 'CONNECTOR_REFRESH_FAILED' }, 503);
+    return json({ ok: true, connector: loaded.connector, ledgerEffects: false });
   }
 
   if (body.action === 'rotate_key') {
     const connectorId = typeof body.connectorId === 'string' && UUID.test(body.connectorId) ? body.connectorId : null;
     const publicKeyPem = cleanText(body.publicKeyPem, 2000, 80);
     if (!connectorId || !publicKeyPem) return json({ error: 'INVALID_KEY_ROTATION' }, 400);
-    const loaded = await getConnector(context.admin, connectorId);
-    if (loaded.error) return json({ error: 'CONNECTOR_READ_FAILED' }, 503);
-    if (!loaded.connector || loaded.connector.stage === 'archived') return json({ error: 'CONNECTOR_NOT_AVAILABLE' }, 404);
     let key;
     try {
       key = inspectEd25519PublicKey(publicKeyPem);
     } catch {
       return json({ error: 'INVALID_ED25519_PUBLIC_KEY' }, 400);
     }
-    if (key.fingerprintSha256 === loaded.connector.key_fingerprint_sha256) return json({ error: 'KEY_FINGERPRINT_UNCHANGED' }, 409);
-
-    const { data, error } = await context.admin.from('reward_source_connectors').update({
-      public_key_pem: key.normalizedPem,
-      key_fingerprint_sha256: key.fingerprintSha256,
-      ingestion_enabled: false,
-    }).eq('id', connectorId)
-      .select('id,pilot_unit_id,connector_code,name,source_domain,auth_scheme,key_fingerprint_sha256,stage,ingestion_enabled,max_clock_skew_seconds,notes,created_at,updated_at').single();
-    if (error || !data) return json({ error: 'KEY_ROTATION_FAILED' }, 409);
-    const connector = data as ConnectorRow;
-    if (!await recordConfigEvent(context.admin, connector, 'key_rotated', context.userId)) {
-      return json({ error: 'CONNECTOR_AUDIT_WRITE_FAILED', connector }, 503);
+    const { error } = await context.admin.rpc('rotate_reward_source_connector_key_atomic', {
+      p_connector_id: connectorId,
+      p_public_key_pem: key.normalizedPem,
+      p_key_fingerprint_sha256: key.fingerprintSha256,
+      p_actor: context.userId,
+    });
+    if (error) {
+      const mapped = atomicError(error.message, 'KEY_ROTATION_FAILED');
+      return json({ error: mapped.error }, mapped.status);
     }
-    return json({ ok: true, connector, ingestionDisabledForSafety: true, ledgerEffects: false });
+    const loaded = await getConnector(context.admin, connectorId);
+    if (loaded.error || !loaded.connector) return json({ error: 'CONNECTOR_REFRESH_FAILED' }, 503);
+    return json({ ok: true, connector: loaded.connector, ingestionDisabledForSafety: true, ledgerEffects: false });
   }
 
   if (body.action === 'reconcile') {
