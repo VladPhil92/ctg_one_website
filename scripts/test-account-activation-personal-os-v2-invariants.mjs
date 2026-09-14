@@ -39,16 +39,17 @@ assert.match(educationHook, /state:\s*'error'/, 'Education read failures must re
 
 const activationPlanSource = activation.slice(activation.indexOf('export function buildAccountActivationPlan'));
 const precedence = [
-  "!input.hasProfile || !input.hasCompleteProfile",
-  "input.kycStatus === 'rejected'",
-  "input.kycStatus === 'pending'",
-  "input.kycStatus !== 'verified'",
-  "!input.walletReady",
-  'continueLearningAction',
-  'hasInvestmentValue',
-  'hasTransactionValue',
-  'input.education.pendingOrders > 0',
-  'EDUCATION_DISCOVERY_ACTION',
+  "if (!input.hasProfile || !input.hasCompleteProfile)",
+  "else if (input.kycStatus === 'rejected')",
+  "else if (input.kycStatus === 'pending')",
+  "else if (input.kycStatus !== 'verified')",
+  "else if (!input.walletReady)",
+  'const learning = educationReady ? continueLearningAction',
+  'if (learning)',
+  'else if (hasInvestmentValue)',
+  'else if (hasTransactionValue)',
+  'else if (educationReady && input.education.pendingOrders > 0)',
+  'primary = EDUCATION_DISCOVERY_ACTION',
 ];
 let cursor = -1;
 for (const rule of precedence) {
