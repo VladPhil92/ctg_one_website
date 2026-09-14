@@ -134,7 +134,7 @@ export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode
               <h2 id="ecosystem-directory-title" className="mt-4 font-outfit text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl md:text-5xl">
                 {isFullDirectory
                   ? (es ? 'Todo el ecosistema, con su estado real.' : 'The full ecosystem, with its real status.')
-                  : (es ? 'Más herramientas. Menos ruido.' : 'More tools. Less noise.')}
+                  : (es ? 'Entra a lo que ya puedes usar.' : 'Enter what you can use today.')}
               </h2>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-text-muted sm:text-base">
                 {isFullDirectory
@@ -145,6 +145,11 @@ export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode
                       ? 'Wallet, inversión, gastronomía, conocimiento y educación: accesos directos al resto del ecosistema.'
                       : 'Wallet, investment, food, knowledge and education: direct access to the rest of the ecosystem.')}
               </p>
+              {!isFullDirectory && (
+                <h3 className="mt-6 font-outfit text-lg font-semibold tracking-[-0.02em] text-white/72 sm:text-xl">
+                  {es ? 'Una cuenta. Una Wallet. Menos fricción.' : 'One account. One Wallet. Less friction.'}
+                </h3>
+              )}
             </div>
             {!isFullDirectory && (
               <a href="/ecosystem" className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1c75b] transition hover:text-white">
