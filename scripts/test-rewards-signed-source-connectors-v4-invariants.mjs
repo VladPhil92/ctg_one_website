@@ -77,7 +77,7 @@ assert.match(sourceRoute, /consume_service_api_rate_limit/, 'The public signed-s
 assert.match(sourceRoute, /rewards\.source\.preverify/, 'The route must apply requester/source pre-verification rate limiting.');
 assert.match(sourceRoute, /rewards\.source\.connector/, 'The route must apply a connector-wide rate limit that cannot be bypassed by IP spoofing.');
 assert.match(sourceRoute, /Retry-After/, 'Rate-limited source requests must communicate retry timing.');
-assert.ok(sourceRoute.indexOf("consumeRateLimit(admin, 'rewards.source.preverify'") < sourceRoute.indexOf('verifyRewardsSourceSignature'), 'Durable rate limiting must happen before signature verification.');
+assert.ok(sourceRoute.indexOf("consumeRateLimit(admin, 'rewards.source.preverify'") < sourceRoute.indexOf('const signatureValid = verifyRewardsSourceSignature'), 'Durable rate limiting must happen before executable signature verification.');
 assert.match(sourceRoute, /sha256Hex\(raw\)/, 'Signatures must bind the SHA-256 digest of the raw request body.');
 for (const header of ['x-ctg-rewards-timestamp', 'x-ctg-rewards-nonce', 'x-ctg-rewards-signature']) {
   assert.ok(sourceRoute.includes(header), `Signed source route must require ${header}.`);
