@@ -1,37 +1,36 @@
 {
-  "manifestVersion": "ctg-investment-closed-beta-pilot-manifest-v1",
+  "captureVersion": "ctg-investment-closed-beta-pilot-v1",
   "classification": "synthetic-ci",
-  "preparedAt": "2026-08-30T02:00:00.000Z",
   "environment": {
-    "origin": "https://ci.invalid",
-    "provider": "ci",
-    "branch": "synthetic",
-    "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0131",
-    "schemaMigrationName": "worldmakers_community_early_access",
-    "schemaMigrationCount": 131,
-    "schemaCompatible": true,
-    "productionReadinessVerified": false
+    "baseUrl": "https://ci.invalid",
+    "branch": "main",
+    "commit": "cccccccccccccccccccccccccccccccccccccccc",
+    "schemaMigration": "0132",
+    "schemaMigrationName": "nvet_mobile_federation",
+    "schemaMigrationCount": 132,
+    "productionReadinessVerified": false,
+    "productionReadinessEvidenceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   },
-  "participant": {
-    "profileDigestSha256": "1111111111111111111111111111111111111111111111111111111111111111",
-    "kycStatus": "VERIFIED",
-    "agreementAccepted": true,
-    "agreementVersion": "closed-beta-v1",
-    "agreementDigestSha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  "pilot": {
+    "pilotId": "closed-beta-synthetic-v1",
+    "participantCount": 2,
+    "participantIds": [
+      "participant-synthetic-001",
+      "participant-synthetic-002"
+    ],
+    "lotCount": 1,
+    "lotDigests": [
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    ],
+    "operatingEvidenceSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "startsAt": "2026-08-22T00:00:00.000Z",
+    "endsAt": "2026-08-29T00:00:00.000Z",
+    "status": "planned"
   },
-  "lot": {
-    "lotDigestSha256": "3333333333333333333333333333333333333333333333333333333333333333",
-    "formulaVersion": "settlement-preview-v1",
-    "agreementVersion": "closed-beta-v1",
-    "plannedUnits": 120,
-    "serializationPlanVersion": "serialization-v1",
-    "longStopAt": "2026-10-30T02:00:00.000Z",
-    "currency": "COP",
-    "capitalTargetCents": 100000000
-  },
-  "funding": {
-    "rail": "manual-bank",
-    "manualVerificationRequired": true
+  "gates": {
+    "productionReadiness": "pending",
+    "operatingEvidence": "validated",
+    "schemaCompatibility": "validated",
+    "participantScope": "validated"
   }
 }
