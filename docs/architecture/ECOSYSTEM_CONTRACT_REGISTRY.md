@@ -1,7 +1,7 @@
 # CTG One Ecosystem Contract Registry
 
 **Status:** canonical integration registry  
-**Last review:** 2026-08-31
+**Last review:** 2026-09-14
 
 ## Purpose
 
@@ -15,12 +15,13 @@ The goal is technological harmony without forcing every product into the same fr
                         CTG One Technology
                   identity · contracts · observability
                               │
-              ┌───────────────┴───────────────┐
-              │                               │
-         CTG Wallet                      Nvet Care
-   financial/signing client       veterinary domain platform
-              │                               │
-        blockchain/Privy                Nvet backend/mobile
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+     CTG Wallet           Nvet Care            VÉRTICE OS
+financial/signing client  veterinary domain    civic participation
+                          platform             platform
+          │                   │                   │
+    blockchain/Privy    Nvet backend/mobile  VÉRTICE backend/mobile
 ```
 
 ## Canonical contracts
@@ -34,6 +35,8 @@ The goal is technological harmony without forcing every product into the same fr
 | Wallet intents | CTG One | CTG-Wallet | Money movement requires durable server-created lifecycle and trusted reconciliation |
 | Nvet identity exchange | CTG One BFF → Nvet backend | `ctgone.com/nvetcareapp` | Browser does not become bearer-token trust boundary |
 | Nvet domain authority | Nvet backend / PostgreSQL | Nvet mobile + CTG One web surface | Appointments, veterinary roles, payments and service state remain Nvet-owned |
+| VÉRTICE identity exchange | CTG One BFF (`/api/federation/vertice/*`) → VÉRTICE backend | `vertice.ctgone.com` web + VÉRTICE mobile (via VÉRTICE's own backend BFF) | Authorization-code + PKCE, server-to-server exchange only; no shared `Domain=.ctgone.com` cookies, no tokens in query strings/fragments, no account linking on email match alone |
+| VÉRTICE domain authority | VÉRTICE backend / PostgreSQL | VÉRTICE web + mobile | Civic workflows, governance ledger, authority roles and civic identity assurance remain VÉRTICE-owned; CTG One federation is not civic identity assurance |
 | Public maturity/evidence | CTG One technology proof + runtime health | Corporate web | A screen or dependency does not imply LIVE |
 
 ## Capability rule
@@ -68,6 +71,16 @@ Nvet Care remains an autonomous veterinary bounded context while reusing CTG One
 - `ctgone.com/nvetcareapp` is the canonical Nvet web surface.
 - Nvet mobile/backend may evolve independently from CTG One's Next.js runtime.
 - Shared harmony is enforced through contracts, observability, release compatibility and UX conventions rather than framework uniformity.
+
+## VÉRTICE federation baseline
+
+VÉRTICE OS remains an autonomous civic-participation bounded context while reusing CTG One account federation for the "Entrar con CTG One" entry point on web and mobile.
+
+- CTG One owns CTG account identity/session; it issues a one-time authorization code and, whenever the canonical CTG One KYC record independently verifies, automatically includes a minimal KYC assurance claim sourced strictly from `profiles.kyc_status`/`kyc_submissions` in the exchange response — never inferred from login, email, wallet or reputation. This is not a separate user consent gate: if KYC state cannot be established, CTG One omits the claim and federation continues without identity elevation.
+- `src/lib/federation/vertice.ts` implements the authorization-code + PKCE (S256) exchange with a timing-safe shared-secret check; `/api/federation/vertice/authorize` requires an authenticated, email-verified CTG One session before issuing a code, and `/api/federation/vertice/exchange` is a service-secret-authenticated, rate-limited (`federation.vertice.exchange`) server-to-server exchange.
+- VÉRTICE backend owns civic domain authorization: workflows, the liquid-democracy governance ledger, authority/role grants and civic identity assurance. CTG One federation is explicitly **not** civic identity assurance.
+- VÉRTICE mobile does not talk to a separate CTG One-side mobile provider or scheme. It reuses the same server-to-server exchange through VÉRTICE's own backend, which generates and custodies its own PKCE transaction (BFF pattern) before calling the existing web exchange contract above — no additional migration or secret is required on the CTG One side for mobile.
+- Declared status is `BETA` (see `src/config/dashboard-services.ts` and `src/data/technology-proof.ts`, id `vertice-federation`): the authorization/exchange contract is implemented and reachable in production, but end-to-end operating evidence (confirmed session/`citizen_id` parity across `ctgone.com` and `vertice.ctgone.com` in production) has not been captured and reviewed yet, so this is not claimed as fully certified.
 
 ## Technology compatibility policy
 
