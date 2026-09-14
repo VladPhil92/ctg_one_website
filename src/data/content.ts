@@ -120,17 +120,18 @@ export const ECOSYSTEM = {
 };
 
 export const REWARDS = {
-  badge: 'CTG Rewards · Roadmap',
+  badge: 'CTG Rewards · Foundation v1 · In development',
   title: 'CTG',
   titleHighlight: 'Rewards',
   description:
-    "CTG Rewards is a planned loyalty and referral program across our businesses. It isn't live yet — a specific business will only call a feature available once it has a real, working version and published rules.",
+    'CTG Rewards now has an authenticated off-chain account foundation and auditable ledger infrastructure. The commercial loyalty program is not active yet: there are no published earning, redemption, referral, transfer, cashback, or CTGO-conversion rules.',
   features: [
-    { title: 'Engagement Recognition', description: 'Ways to recognize how people engage with our businesses — not a rewards program you can join today.', icon: 'award' },
-    { title: 'Referral Recognition', description: 'Referral perks, once a specific business has a real, published version.', icon: 'userPlus' },
-    { title: 'Cross-Ecosystem Redemption', description: 'Using rewards across different CTG One businesses — a goal for later, not available yet.', icon: 'gift' },
-    { title: 'Tiered Recognition', description: 'Different benefit levels, once a business publishes its own rules for how they work.', icon: 'layers' },
+    { title: 'Rewards Account', description: 'Authenticated non-monetary account infrastructure linked to a CTG One identity.', icon: 'award' },
+    { title: 'Auditable Ledger', description: 'Infrastructure for traceable movements without fabricating historical rewards.', icon: 'database' },
+    { title: 'Earning & Referrals', description: 'Commercial rules remain inactive until approved and published.', icon: 'shield' },
+    { title: 'Cross-Ecosystem Redemption', description: 'A future utility goal; Foundation v1 does not enable redemption or monetary value.', icon: 'gift' },
   ],
+  status: 'DEVELOPMENT',
 };
 
 // CTGO is a Web3 technology roadmap. Do not add supply, holder count, price,
