@@ -3,11 +3,11 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [migration, sourceRoute, signature, processing, adminApi, adminPage, panel, nav, schemaVersion, history, docs] = await Promise.all([
+const [migration, hardening, sourceRoute, signature, adminApi, adminPage, panel, nav, schemaVersion, history, docs] = await Promise.all([
   read('supabase/migrations/20260914130944_0136_rewards_signed_source_connectors_v4.sql'),
+  read('supabase/migrations/20260914132842_0137_rewards_signed_source_atomicity_hardening.sql'),
   read('src/app/api/rewards/source-events/[connectorCode]/route.ts'),
   read('src/lib/rewards/source-signature.ts'),
-  read('src/lib/rewards/source-shadow-processing.ts'),
   read('src/app/api/admin/rewards/source-connectors/route.ts'),
   read('src/app/admin/rewards/connectors/page.tsx'),
   read('src/components/admin/RewardsSourceConnectorsPanel.tsx'),
@@ -45,12 +45,39 @@ assert.doesNotMatch(migration, /grant[^;]*(insert|update|delete)[^;]*reward_(acc
 assert.doesNotMatch(migration, /insert into public\.reward_ledger_entries|update public\.reward_accounts|points_balance\s*=/i, '0136 must have zero Rewards ledger mutation path.');
 assert.match(migration, /Signed Source Connectors & Reconciliation v4 remains shadow-only/, 'Migration must state the shadow-only boundary.');
 
+assert.match(hardening, /p_scope = 'rewards\.source\.preverify'/, '0137 must provide a durable requester pre-verification limit.');
+assert.match(hardening, /p_scope = 'rewards\.source\.connector'/, '0137 must provide a connector-wide durable limit.');
+assert.match(hardening, /v_limit := 60/, 'Requester pre-verification rate must remain bounded.');
+assert.match(hardening, /v_limit := 600/, 'Connector-wide rate must remain bounded.');
+assert.match(hardening, /pg_catalog\.pg_advisory_xact_lock/, 'Signed-source processing must serialize concurrency-sensitive decisions.');
+assert.match(hardening, /create or replace function public\.process_signed_reward_source_event_atomic/, '0137 must expose one atomic source-event processor.');
+assert.match(hardening, /insert into public\.reward_source_delivery_attempts[\s\S]*return jsonb_build_object/, 'Successful delivery evidence must commit inside the atomic source-event transaction.');
+for (const rpc of [
+  'create_reward_source_connector_atomic',
+  'replace_reward_source_allowlist_atomic',
+  'set_reward_source_connector_stage_atomic',
+  'set_reward_source_connector_ingestion_atomic',
+  'rotate_reward_source_connector_key_atomic',
+]) {
+  assert.ok(hardening.includes(`function public.${rpc}`), `${rpc} must exist in 0137.`);
+}
+assert.match(hardening, /rotate_reward_source_connector_key_atomic[\s\S]*ingestion_enabled = false[\s\S]*'key_rotated'/, 'Key rotation and its audit evidence must occur in one transaction and disable ingestion.');
+assert.match(hardening, /revoke all on function public\.process_signed_reward_source_event_atomic[\s\S]*from public, anon, authenticated/, 'Atomic source processing must not be exposed to browser roles.');
+assert.match(hardening, /grant execute on function public\.process_signed_reward_source_event_atomic[\s\S]*to service_role/, 'Only server authority may invoke atomic source processing.');
+assert.doesNotMatch(hardening, /insert into public\.reward_ledger_entries|update public\.reward_accounts|points_balance\s*=/i, '0137 must remain completely outside the Rewards ledger.');
+assert.match(hardening, /0137 remains shadow-only/, '0137 must explicitly preserve the shadow-only boundary.');
+
 assert.match(signature, /import 'server-only'/, 'Signature verification must stay server-only.');
 assert.match(signature, /asymmetricKeyType !== 'ed25519'/, 'Public-key inspection must reject non-Ed25519 keys.');
 assert.match(signature, /ctg-rewards-source-v1/, 'Canonical signing contract must be explicitly versioned.');
 assert.match(signature, /verify\(\s*null,/, 'Ed25519 verification must use the Node crypto verifier.');
 assert.doesNotMatch(signature, /createHmac|privateKey|sharedSecret/i, 'v4 verification must not depend on a server-held shared secret.');
 
+assert.match(sourceRoute, /consume_service_api_rate_limit/, 'The public signed-source boundary must rate-limit before verification.');
+assert.match(sourceRoute, /rewards\.source\.preverify/, 'The route must apply requester/source pre-verification rate limiting.');
+assert.match(sourceRoute, /rewards\.source\.connector/, 'The route must apply a connector-wide rate limit that cannot be bypassed by IP spoofing.');
+assert.match(sourceRoute, /Retry-After/, 'Rate-limited source requests must communicate retry timing.');
+assert.ok(sourceRoute.indexOf("consumeRateLimit(admin, 'rewards.source.preverify'") < sourceRoute.indexOf('verifyRewardsSourceSignature'), 'Durable rate limiting must happen before signature verification.');
 assert.match(sourceRoute, /sha256Hex\(raw\)/, 'Signatures must bind the SHA-256 digest of the raw request body.');
 for (const header of ['x-ctg-rewards-timestamp', 'x-ctg-rewards-nonce', 'x-ctg-rewards-signature']) {
   assert.ok(sourceRoute.includes(header), `Signed source route must require ${header}.`);
@@ -58,20 +85,12 @@ for (const header of ['x-ctg-rewards-timestamp', 'x-ctg-rewards-nonce', 'x-ctg-r
 assert.match(sourceRoute, /clockSkewMs > connector\.max_clock_skew_seconds \* 1000/, 'Signed requests must enforce the connector clock-skew window.');
 assert.match(sourceRoute, /reserveNonce/, 'Signed requests must reserve and verify source nonces.');
 assert.match(sourceRoute, /SOURCE_NONCE_PAYLOAD_CONFLICT/, 'Changed payloads must not reuse a nonce.');
-assert.match(sourceRoute, /nonceRetry \|\| processing\.idempotentReplay/, 'Exact retries must converge idempotently.');
-assert.match(sourceRoute, /connector\.stage !== 'validated' \|\| !connector\.ingestion_enabled/, 'Source ingestion must fail closed unless the connector is validated and enabled.');
-assert.match(sourceRoute, /reward_source_connector_event_allowlist/, 'Every signed event must pass the per-source allowlist.');
+assert.match(sourceRoute, /process_signed_reward_source_event_atomic/, 'Accepted events must cross the atomic database boundary.');
+assert.doesNotMatch(sourceRoute, /processSignedSourcePayload/, 'The route must not retain the former split client-side shadow processor.');
 assert.match(sourceRoute, /SOURCE_SUBJECT_UNKNOWN/, 'Original events must reference an existing CTG One identity.');
 assert.match(sourceRoute, /commercialStatus:\s*'inactive'/, 'Signed ingestion must keep commercial Rewards inactive.');
 assert.match(sourceRoute, /ledgerEffects:\s*false/, 'Signed ingestion must explicitly deny ledger effects.');
 assert.doesNotMatch(sourceRoute, /createClient\(|auth\.getUser|reward_accounts|reward_ledger_entries/, 'Source-system authority must be cryptographic, not browser-auth or ledger authority.');
-
-assert.match(processing, /processSignedSourcePayload/, 'Signed source events must enter an explicit shadow-processing boundary.');
-assert.match(processing, /eventKind === 'reversal'/, 'Signed sources must support explicit reversals.');
-assert.match(processing, /ensureOriginalEvaluation/, 'Original signed events must reuse the bounded shadow evaluator contract.');
-assert.match(processing, /ensureReversalEvaluation/, 'Signed reversals must create exactly-once reversal evidence.');
-assert.match(processing, /ingestionMode: 'signed_source_ed25519'/, 'Evaluation provenance must identify signed-source ingestion.');
-assert.doesNotMatch(processing, /reward_accounts|reward_ledger_entries/, 'Signed shadow processing must not touch Rewards balances or ledger rows.');
 
 const authIndex = adminApi.indexOf("supabase.auth.getUser()");
 const profileIndex = adminApi.indexOf("profile?.role !== 'admin'");
@@ -81,8 +100,16 @@ assert.ok(authIndex >= 0 && profileIndex > authIndex && superAdminIndex > authIn
 for (const action of ['create_connector', 'replace_allowlist', 'set_stage', 'set_ingestion', 'rotate_key', 'reconcile']) {
   assert.ok(adminApi.includes(`body.action === '${action}'`), `Connector admin API must implement ${action}.`);
 }
-assert.match(adminApi, /GLOBAL_SHADOW_KILL_SWITCH_CLOSED/, 'Per-source enablement must also require the global shadow kill switch.');
-assert.match(adminApi, /ingestion_enabled: false/, 'Key rotation must disable source ingestion for safety.');
+for (const rpc of [
+  'create_reward_source_connector_atomic',
+  'replace_reward_source_allowlist_atomic',
+  'set_reward_source_connector_stage_atomic',
+  'set_reward_source_connector_ingestion_atomic',
+  'rotate_reward_source_connector_key_atomic',
+]) {
+  assert.ok(adminApi.includes(`rpc('${rpc}'`), `Admin mutations must use atomic RPC ${rpc}.`);
+}
+assert.doesNotMatch(adminApi, /recordConfigEvent|connectorSnapshot/, 'Admin mutation audit must not be split into a second application transaction.');
 assert.match(adminApi, /MAX_RECON_WINDOW_MS = 31 \* 24 \* 60 \* 60 \* 1000/, 'Reconciliation windows must remain bounded.');
 assert.match(adminApi, /originalCountDelta === 0 && reversalCountDelta === 0 && amountDeltaCents === 0/, 'Matched reconciliation must require zero event/reversal/amount deltas.');
 assert.match(adminApi, /hypotheticalEligiblePoints/, 'Reconciliation must expose hypothetical value without posting it.');
@@ -95,10 +122,11 @@ assert.match(panel, /Reconciliación fuente ↔ shadow/, 'UI must expose source-
 assert.doesNotMatch(panel, /acreditar puntos ahora|earning comercial activo|redimir ahora/i, 'v4 UI must not expose commercial activation claims.');
 assert.match(nav, /href: '\/admin\/rewards\/connectors', label: 'Rewards Sources', roles: \['SUPER_ADMIN'\]/, 'Signed Sources navigation must remain SUPER_ADMIN-only.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0136'/, 'Repository schema authority must advance to 0136.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_signed_source_connectors_v4'/, 'Schema authority must name Signed Source Connectors v4.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 136/, 'Schema migration count must advance to 136.');
-assert.match(history, /"logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4"/, 'Production provenance must contain the real 0136 Supabase migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0137'/, 'Repository schema authority must advance through v4 hardening 0137.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_signed_source_atomicity_hardening'/, 'Schema authority must name the v4 atomicity hardening migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 137/, 'Schema migration count must advance to 137.');
+assert.match(history, /"logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4"/, 'Production provenance must retain the real 0136 Supabase migration.');
+assert.match(history, /"logicalVersion": "0137", "remoteVersion": "20260914132842", "remoteName": "0137_rewards_signed_source_atomicity_hardening"/, 'Production provenance must contain the real 0137 Supabase hardening migration.');
 
 for (const truth of ['Every accepted event remains **shadow-only**', 'CTG One stores only the source\'s Ed25519 public key', 'Closed Earning Canary v5']) {
   assert.ok(docs.includes(truth), `Rewards v4 governance must retain: ${truth}`);
