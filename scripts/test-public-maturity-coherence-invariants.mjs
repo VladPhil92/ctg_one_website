@@ -52,6 +52,7 @@ for (const [serviceId, capabilityId, variableName] of [
   ['investment', 'investment-platform', 'investmentStatus'],
   ['token', 'web3', 'tokenStatus'],
   ['knowledge', 'ctg-knowledge-v01', 'knowledgeStatus'],
+  ['vertice', 'vertice-federation', 'verticeStatus'],
 ]) {
   assert.ok(
     dashboardServices.includes(`getCapabilityProof('${capabilityId}')`),
