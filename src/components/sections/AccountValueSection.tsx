@@ -167,13 +167,13 @@ export const AccountValueSection: React.FC = () => {
                 <p className="text-sm font-semibold text-white">CTG Rewards</p>
                 <p className="mt-1 max-w-3xl text-xs leading-relaxed text-white/48 sm:text-sm">
                   {es
-                    ? 'La fidelización transversal entre negocios sigue en roadmap. Crear una cuenta hoy no significa que ya estés acumulando puntos o recompensas; esa capacidad solo se activará cuando exista un programa operativo y verificable.'
-                    : 'Cross-business loyalty remains on the roadmap. Creating an account today does not mean you are already earning points or rewards; that capability will only be activated when an operational, verifiable program exists.'}
+                    ? 'CTG Rewards ya tiene Foundation v1 en desarrollo: tu cuenta off-chain y la trazabilidad existen, pero todavía no hay acumulación ni redención comercial activas.'
+                    : 'CTG Rewards now has Foundation v1 in development: the off-chain account and audit foundation exist, but commercial earning and redemption are still inactive.'}
                 </p>
               </div>
             </div>
             <Link href="/rewards" className="inline-flex min-h-11 shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-[#78baff] hover:text-white">
-              {es ? 'Ver roadmap' : 'View roadmap'} <ArrowUpRight size={14} aria-hidden="true" />
+              {es ? 'Ver desarrollo' : 'View development'} <ArrowUpRight size={14} aria-hidden="true" />
             </Link>
           </div>
         </FadeInSection>
