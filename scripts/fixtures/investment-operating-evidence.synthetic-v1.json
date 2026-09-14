@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0133",
-    "schemaMigrationName": "rewards_foundation_v1",
-    "schemaMigrationCount": 133,
+    "schemaMigration": "0134",
+    "schemaMigrationName": "rewards_pilot_control_plane_v2",
+    "schemaMigrationCount": 134,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

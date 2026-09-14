@@ -2,7 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-14T03:51:47Z",
+  "capturedAt": "2026-09-14T11:12:47Z",
   "source": "Supabase production migration history",
   "migrations": [
     { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
@@ -43,6 +43,7 @@
     { "logicalVersion": "0130", "remoteVersion": "20260908231145", "remoteName": "0130_expand_identity_federation_providers" },
     { "logicalVersion": "0131", "remoteVersion": "20260911113727", "remoteName": "0131_worldmakers_community_early_access" },
     { "logicalVersion": "0132", "remoteVersion": "20260914025326", "remoteName": "0132_nvet_mobile_federation" },
-    { "logicalVersion": "0133", "remoteVersion": "20260914035147", "remoteName": "0133_rewards_foundation_v1" }
+    { "logicalVersion": "0133", "remoteVersion": "20260914035147", "remoteName": "0133_rewards_foundation_v1" },
+    { "logicalVersion": "0134", "remoteVersion": "20260914111247", "remoteName": "0134_rewards_pilot_control_plane_v2" }
   ]
 }

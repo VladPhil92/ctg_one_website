@@ -65,12 +65,13 @@ assert.match(services, /id: 'rewards'[\s\S]*href: '\/dashboard\/rewards'/, 'Rewa
 assert.match(services, /id: 'rewards'[\s\S]*status: 'DEVELOPMENT'/, 'Rewards must remain DEVELOPMENT, not LIVE.');
 assert.match(services, /id: 'rewards'[\s\S]*publicHref: '\/rewards'/, 'Rewards must retain a public maturity surface.');
 assert.ok(funnel.includes("'rewards'"), 'Rewards must be an approved funnel service key.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0133'/, 'Repository schema authority must advance to migration 0133.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_foundation_v1'/, 'Schema authority must name Rewards Foundation v1.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 133/, 'Schema migration count must advance to 133.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0134'/, 'Repository schema authority must reflect the current additive global schema.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_pilot_control_plane_v2'/, 'Current schema authority must name the latest additive Rewards control-plane migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 134/, 'Current schema migration count must remain aligned with repository history.');
 
 for (const truth of ['**does not activate**', 'No `redeem`', 'Moving CTG Rewards from `DEVELOPMENT`']) {
   assert.ok(docs.includes(truth), `Rewards governance document must retain: ${truth}`);
 }
 
 console.log('CTG Rewards Foundation v1 invariants: PASS');
+await import('./test-rewards-pilot-control-plane-v2-invariants.mjs');
