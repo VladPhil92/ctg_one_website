@@ -75,13 +75,13 @@ export const HomeProductShowcases: React.FC = () => {
               {es ? 'Empieza por lo que necesitas' : 'Start with what you need'}
             </span>
             <h2 id="featured-products-title" className="mt-4 font-outfit text-3xl font-semibold leading-[1.02] tracking-[-0.04em] text-white sm:text-4xl md:text-5xl">
-              {es ? 'Productos reales. Experiencias distintas.' : 'Real products. Distinct experiences.'}
+              {es ? 'Una cuenta que conecta experiencias distintas.' : 'One account connecting different experiences.'}
             </h2>
           </div>
           <p className="max-w-lg text-sm leading-6 text-white/52 sm:text-base">
             {es
-              ? 'Cerveza artesanal, tecnología cívica y salud veterinaria conectadas por un mismo ecosistema digital.'
-              : 'Craft beer, civic technology and veterinary care connected by one digital ecosystem.'}
+              ? 'Productos reales. Experiencias distintas: cerveza artesanal, tecnología cívica y salud veterinaria conectadas por un mismo ecosistema digital.'
+              : 'Real products. Distinct experiences: craft beer, civic technology and veterinary care connected by one digital ecosystem.'}
           </p>
         </motion.div>
 
