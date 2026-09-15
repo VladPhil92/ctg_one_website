@@ -6,6 +6,7 @@ const contract = fs.readFileSync('src/lib/worldmakers/community.ts', 'utf8');
 const publicApi = fs.readFileSync('src/app/api/worldmakers/interest/route.ts', 'utf8');
 const adminApi = fs.readFileSync('src/app/api/admin/worldmakers/interest/route.ts', 'utf8');
 const playerStateRoute = fs.readFileSync('src/app/api/worldmakers/player-state/route.ts', 'utf8');
+const playerStateBridge = fs.readFileSync('src/lib/worldmakers/player-state-bridge.ts', 'utf8');
 const publicPage = fs.readFileSync('src/app/worldmakers/community/page.tsx', 'utf8');
 const publicForm = fs.readFileSync('src/app/worldmakers/community/CommunityInterestForm.tsx', 'utf8');
 const privacyPage = fs.readFileSync('src/app/worldmakers/privacy/page.tsx', 'utf8');
@@ -92,17 +93,32 @@ assert.ok(playerAccessDock.includes('https://ctgone.com/iniciar-sesion?next=%2Fw
 assert.ok(playerAccessDock.includes('https://ctgone.com/registro?next=%2Fworldmakers%2Faccount'), 'World Makers registration must use the canonical CTG One auth origin and return to the player hub');
 assert.ok(playerAccountPage.includes('supabase.auth.getUser()'), 'player account hub must validate the authenticated user server-side');
 assert.ok(playerAccountPage.includes('Crear una cuenta no implica acceso inmediato a una beta jugable'), 'player account hub must preserve public availability truth');
-assert.ok(playerAccountPage.includes('Sin datos de gameplay'), 'Game Hub must not fabricate player progress before runtime synchronization exists');
-assert.ok(playerAccountPage.includes('No hay partidas sincronizadas'), 'Game Hub must expose an honest empty-save state');
+assert.ok(playerAccountPage.includes('Sin datos de gameplay'), 'Game Hub must preserve an honest empty-progress state before first runtime sync');
+assert.ok(playerAccountPage.includes('No hay partidas sincronizadas'), 'Game Hub must preserve an honest empty-save state');
+assert.ok(playerAccountPage.includes('readWorldMakersPlayerState(user.id)'), 'Game Hub must read real player state from the dedicated bridge');
+assert.ok(playerAccountPage.includes('remoteState?.saves.length'), 'Game Hub save counts must derive from synchronized state');
+assert.ok(playerAccountPage.includes('remoteState?.missions.length'), 'Game Hub mission counts must derive from synchronized state');
+assert.ok(playerAccountPage.includes('remoteState?.discoveries.length'), 'Game Hub discovery counts must derive from synchronized state');
 
-assert.ok(playerStateRoute.includes('supabase.auth.getUser()'), 'player-state API must authenticate server-side');
+assert.ok(playerStateRoute.includes('createAuthenticatedRequestContext(request)'), 'player-state API must accept canonical cookie or bearer CTG One authentication');
 assert.ok(playerStateRoute.includes("'Cache-Control': 'no-store'"), 'player-state API must not cache private player data');
-assert.ok(playerStateRoute.includes("gameRuntime: 'not_connected'"), 'player-state API must report runtime truth before game synchronization exists');
-assert.ok(playerStateRoute.includes('saves: []'), 'player-state API must not fabricate save data');
-assert.ok(playerStateRoute.includes('missions: []'), 'player-state API must not fabricate mission data');
-assert.ok(playerStateRoute.includes('discoveries: []'), 'player-state API must not fabricate discovery data');
-assert.ok(playerStateRoute.includes('cloudSave: false'), 'player-state API must keep unavailable capabilities disabled');
-assert.ok(!playerStateRoute.includes('.insert(') && !playerStateRoute.includes('.update(') && !playerStateRoute.includes('.delete('), 'player-state read contract must not mutate data');
+assert.ok(playerStateRoute.includes("Vary: 'Authorization, Cookie'"), 'player-state API must vary private responses by authentication transport');
+assert.ok(playerStateRoute.includes('MAX_BODY_BYTES = 64 * 1024'), 'player-state writes must have a bounded request body');
+assert.ok(playerStateRoute.includes("request.headers.get('idempotency-key')"), 'player-state writes must require an idempotency key');
+assert.ok(playerStateRoute.includes('expectedRevision'), 'player-state writes must use optimistic revision control');
+assert.ok(playerStateRoute.includes('readWorldMakersPlayerState(context.user.id)'), 'player-state reads must derive ownership from the authenticated CTG One user');
+assert.ok(playerStateRoute.includes('writeWorldMakersPlayerState(context.user.id'), 'player-state writes must derive ownership from the authenticated CTG One user');
+assert.ok(playerStateRoute.includes("gameRuntime: state.exists ? 'synced' : 'awaiting_first_sync'"), 'runtime sync status must reflect real dedicated state');
+assert.ok(playerStateRoute.includes('cloudSave: true'), 'cloud-save capability must only be enabled through the secured bridge');
+assert.ok(!playerStateRoute.includes('SUPABASE_SERVICE_ROLE_KEY'), 'runtime player-state route must never expose or rely on a service-role key');
+
+assert.ok(playerStateBridge.includes("import 'server-only'"), 'dedicated player-state bridge must remain server-only');
+assert.ok(playerStateBridge.includes('createHmac'), 'bridge calls must be signed');
+assert.ok(playerStateBridge.includes('randomBytes'), 'bridge calls must use one-time nonces');
+assert.ok(playerStateBridge.includes("client.rpc('wm_bridge_player_state'"), 'bridge must use the constrained World Makers RPC boundary');
+assert.ok(playerStateBridge.includes('WORLDMAKERS_SUPABASE_PUBLISHABLE_KEY'), 'bridge must use the World Makers publishable key at the HTTP boundary');
+assert.ok(playerStateBridge.includes('revision_conflict'), 'bridge must surface optimistic concurrency conflicts');
+assert.ok(!playerStateBridge.includes('SUPABASE_SERVICE_ROLE_KEY'), 'bridge must not contain a World Makers service-role path');
 
 assert.ok(loginPage.includes("safeRedirectPath(searchParams.get('next'), '/dashboard')"), 'login must validate its post-auth destination');
 assert.ok(loginPage.includes('isWorldMakersFlow'), 'login must expose World Makers context when returning to the player hub');
@@ -113,4 +129,4 @@ assert.ok(authCallbackRoute.includes("next === '/worldmakers/account'"), 'World 
 assert.ok(authCallbackRoute.includes("eventName: 'email_verified'"), 'World Makers confirmation must retain email verification metrics');
 assert.ok(authCallbackRoute.includes("eventName: 'first_login'"), 'World Makers confirmation must retain first-login metrics');
 
-console.log('World Makers community, early-access, player-account and player-state invariants passed.');
+console.log('World Makers community, early-access, player-account and secure runtime-sync invariants passed.');
