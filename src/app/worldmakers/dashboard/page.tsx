@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react';
-import { worldMakersDashboardUrl, worldMakersPublicUrl } from '@/lib/worldmakers/routes';
+import Link from 'next/link';
+import { worldMakersDashboardPath, worldMakersPublicUrl } from '@/lib/worldmakers/routes';
 import { adventures } from '../portal-data';
 import { worldMakersVisuals } from '../visual-assets';
 import { GameHubResumePanel } from './GameHubResumePanel';
@@ -31,7 +32,7 @@ export default function WorldMakersDashboardPage() {
             <a className={styles.primaryButton} href={worldMakersPublicUrl(`/adventures/${featured.slug}`)}>
               Explorar {featured.title} <ArrowRight size={17} aria-hidden="true" />
             </a>
-            <a className={styles.secondaryButton} href={worldMakersDashboardUrl('/progress')}>Ver mi progreso</a>
+            <Link className={styles.secondaryButton} href={worldMakersDashboardPath('/progress')}>Ver mi progreso</Link>
           </div>
         </div>
       </section>
@@ -43,7 +44,7 @@ export default function WorldMakersDashboardPage() {
             <h2 id="dashboard-resume-title">Retoma desde un estado que realmente exista.</h2>
             <p>El acceso de continuidad sólo se activa cuando el backend puede verificar una partida sincronizada.</p>
           </div>
-          <a className={styles.sectionLink} href={worldMakersDashboardUrl('/saves')}>Mis partidas →</a>
+          <Link className={styles.sectionLink} href={worldMakersDashboardPath('/saves')}>Mis partidas →</Link>
         </div>
         <GameHubResumePanel />
       </section>
@@ -55,7 +56,7 @@ export default function WorldMakersDashboardPage() {
             <h2 id="dashboard-state-title">Tu actividad, sin datos inventados.</h2>
             <p>La web consulta el contrato autenticado de World Makers y muestra únicamente progreso que existe realmente.</p>
           </div>
-          <a className={styles.sectionLink} href={worldMakersDashboardUrl('/progress')}>Abrir progreso →</a>
+          <Link className={styles.sectionLink} href={worldMakersDashboardPath('/progress')}>Abrir progreso →</Link>
         </div>
         <PlayerStateOverview />
       </section>
@@ -67,7 +68,7 @@ export default function WorldMakersDashboardPage() {
             <h2 id="dashboard-adventures-title">Aventuras para seguir descubriendo.</h2>
             <p>Un catálogo pensado como mundos jugables, no como un menú académico.</p>
           </div>
-          <a className={styles.sectionLink} href={worldMakersDashboardUrl('/adventures')}>Ver catálogo →</a>
+          <Link className={styles.sectionLink} href={worldMakersDashboardPath('/adventures')}>Ver catálogo →</Link>
         </div>
         <div className={styles.adventureGrid}>
           {shelf.map((adventure) => (
