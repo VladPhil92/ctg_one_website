@@ -5,6 +5,20 @@ function normalizeHost(request: NextRequest) {
   return request.headers.get('host')?.split(':')[0].trim().toLowerCase() ?? '';
 }
 
+function handleWorldMakersCanonicalDashboard(request: NextRequest) {
+  const host = normalizeHost(request);
+  const pathname = request.nextUrl.pathname;
+  const isCtgOneHost = host === 'ctgone.com' || host === 'www.ctgone.com';
+  const isInternalDashboard = pathname === '/worldmakers/dashboard' || pathname.startsWith('/worldmakers/dashboard/');
+
+  if (!isCtgOneHost || !isInternalDashboard) return null;
+
+  const cleanPath = pathname.slice('/worldmakers'.length) || '/dashboard';
+  const target = new URL(`https://worldmakers.ctgone.com${cleanPath}`);
+  target.search = request.nextUrl.search;
+  return NextResponse.redirect(target, 308);
+}
+
 function handleWorldMakersSubdomain(request: NextRequest) {
   const host = normalizeHost(request);
   const isWorldMakersHost = host === 'worldmakers.ctgone.com' || host === 'www.worldmakers.ctgone.com';
@@ -61,6 +75,9 @@ function handleWorldMakersSubdomain(request: NextRequest) {
 }
 
 export async function proxy(request: NextRequest) {
+  const dashboardCanonicalResponse = handleWorldMakersCanonicalDashboard(request);
+  if (dashboardCanonicalResponse) return dashboardCanonicalResponse;
+
   // The World Makers public portal lives inside this Next.js deployment but is
   // served as its own branded property at worldmakers.ctgone.com.
   const worldMakersResponse = handleWorldMakersSubdomain(request);
