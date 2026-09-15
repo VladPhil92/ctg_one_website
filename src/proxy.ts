@@ -24,6 +24,16 @@ function handleWorldMakersSubdomain(request: NextRequest) {
     return NextResponse.rewrite(metadataUrl);
   }
 
+  // The historical /account path remains valid internally for compatibility,
+  // but the branded player experience now has one canonical entry point.
+  if (pathname === '/account' || pathname.startsWith('/account/')) {
+    const canonicalDashboard = request.nextUrl.clone();
+    canonicalDashboard.pathname = pathname === '/account'
+      ? '/dashboard'
+      : `/dashboard${pathname.slice('/account'.length)}`;
+    return NextResponse.redirect(canonicalDashboard, 308);
+  }
+
   // Keep shared/static infrastructure at its canonical path. The proxy matcher
   // already excludes most image/static extensions; these explicit guards keep
   // API and framework traffic out of the branded route namespace as well.
