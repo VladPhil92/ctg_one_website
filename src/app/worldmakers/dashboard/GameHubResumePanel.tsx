@@ -1,12 +1,10 @@
 'use client';
 
 import { ArrowRight, Cloud, Gamepad2 } from 'lucide-react';
+import { worldMakersDashboardUrl, worldMakersPublicUrl } from '@/lib/worldmakers/routes';
 import { collectionFor, formatPlayerTimestamp, normalizePlayerStateItem } from './player-state-model';
 import { usePlayerState } from './PlayerStateProvider';
 import styles from './dashboard.module.css';
-
-const DASHBOARD_ORIGIN = 'https://ctgone.com/worldmakers/dashboard';
-const PUBLIC_ORIGIN = 'https://worldmakers.ctgone.com';
 
 export function GameHubResumePanel() {
   const { state, loadState } = usePlayerState();
@@ -45,7 +43,7 @@ export function GameHubResumePanel() {
           <p className={styles.kicker}>Continuidad de juego</p>
           <h2>Tu primera partida todavía no existe en la nube.</h2>
           <p>Cuando un build autenticado sincronice un guardado real, este espacio se convertirá en tu acceso de continuidad.</p>
-          <a className={styles.inlineAction} href={`${PUBLIC_ORIGIN}/adventures`}>
+          <a className={styles.inlineAction} href={worldMakersPublicUrl('/adventures')}>
             Explorar aventuras <ArrowRight size={15} aria-hidden="true" />
           </a>
         </div>
@@ -72,7 +70,7 @@ export function GameHubResumePanel() {
           </div>
         )}
       </div>
-      <a className={styles.resumeAction} href={`${DASHBOARD_ORIGIN}/saves`}>
+      <a className={styles.resumeAction} href={worldMakersDashboardUrl('/saves')}>
         Abrir mis partidas <ArrowRight size={16} aria-hidden="true" />
       </a>
     </article>
