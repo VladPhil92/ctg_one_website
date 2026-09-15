@@ -54,11 +54,20 @@ function timestampValue(record: Record<string, unknown>) {
   return stringValue(record, ['lastPlayedAt', 'updatedAt', 'completedAt', 'discoveredAt', 'unlockedAt', 'createdAt']);
 }
 
+function clampPercent(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
 function progressValue(record: Record<string, unknown>) {
-  const raw = numberValue(record, ['progressPercent', 'progress', 'completionPercent']);
-  if (raw === null) return null;
-  const normalized = raw <= 1 ? raw * 100 : raw;
-  return Math.max(0, Math.min(100, Math.round(normalized)));
+  const explicitPercent = numberValue(record, ['progressPercent', 'completionPercent']);
+  if (explicitPercent !== null) return clampPercent(explicitPercent);
+
+  const genericProgress = numberValue(record, ['progress']);
+  if (genericProgress === null) return null;
+  const normalized = genericProgress >= 0 && genericProgress <= 1
+    ? genericProgress * 100
+    : genericProgress;
+  return clampPercent(normalized);
 }
 
 const KIND_COPY: Record<PlayerStateKind, { title: string; fallback: string }> = {
