@@ -1,47 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { usePlayerState } from './PlayerStateProvider';
 import styles from './dashboard.module.css';
 
-type PlayerState = {
-  schemaVersion?: number;
-  synchronization?: {
-    identity?: string;
-    gameRuntime?: string;
-    cloudSave?: string;
-  };
-  saves?: unknown[];
-  missions?: unknown[];
-  discoveries?: unknown[];
-  achievements?: unknown[];
-  profile?: { exists?: boolean; revision?: number; updatedAt?: string | null };
-};
-
-type LoadState = 'loading' | 'ready' | 'unavailable';
+const PLAYER_DASHBOARD_ORIGIN = 'https://ctgone.com/worldmakers/dashboard';
 
 export function PlayerStateOverview({ detailed = false }: { detailed?: boolean }) {
-  const [state, setState] = useState<PlayerState | null>(null);
-  const [loadState, setLoadState] = useState<LoadState>('loading');
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetch('/api/worldmakers/player-state', { cache: 'no-store', credentials: 'include' })
-      .then(async (response) => {
-        if (!response.ok) throw new Error('player_state_unavailable');
-        return response.json() as Promise<PlayerState>;
-      })
-      .then((payload) => {
-        if (cancelled) return;
-        setState(payload);
-        setLoadState('ready');
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setState(null);
-        setLoadState('unavailable');
-      });
-    return () => { cancelled = true; };
-  }, []);
+  const { state, loadState } = usePlayerState();
 
   const counts = useMemo(() => {
     if (loadState !== 'ready' || !state) return null;
@@ -63,13 +29,23 @@ export function PlayerStateOverview({ detailed = false }: { detailed?: boolean }
       ? `Revisión actual: ${state.profile.revision ?? 0}. Última actualización: ${new Date(state.profile.updatedAt).toLocaleString()}.`
       : `Revisión actual: ${state.profile?.revision ?? 0}. Aún no existe un guardado remoto verificado.`;
 
+  const cards = [
+    { label: 'Partidas', value: metric(counts?.saves), body: counts ? 'Guardados vinculados a tu identidad.' : 'Dato pendiente de verificación.', href: '/saves' },
+    { label: 'Misiones', value: metric(counts?.missions), body: counts ? 'Objetivos recibidos desde gameplay real.' : 'Dato pendiente de verificación.', href: '/missions' },
+    { label: 'Descubrimientos', value: metric(counts?.discoveries), body: counts ? 'Hallazgos registrados dentro del juego.' : 'Dato pendiente de verificación.', href: '/discoveries' },
+    { label: 'Logros', value: metric(counts?.achievements), body: counts ? 'Hitos verificados de tu recorrido.' : 'Dato pendiente de verificación.', href: '/achievements' },
+  ] as const;
+
   return (
     <>
       <div className={styles.statGrid}>
-        <article className={styles.statCard}><small>Partidas</small><strong>{metric(counts?.saves)}</strong><span>{counts ? 'Guardados vinculados a tu identidad.' : 'Dato pendiente de verificación.'}</span></article>
-        <article className={styles.statCard}><small>Misiones</small><strong>{metric(counts?.missions)}</strong><span>{counts ? 'Objetivos recibidos desde gameplay real.' : 'Dato pendiente de verificación.'}</span></article>
-        <article className={styles.statCard}><small>Descubrimientos</small><strong>{metric(counts?.discoveries)}</strong><span>{counts ? 'Hallazgos registrados dentro del juego.' : 'Dato pendiente de verificación.'}</span></article>
-        <article className={styles.statCard}><small>Logros</small><strong>{metric(counts?.achievements)}</strong><span>{counts ? 'Hitos verificados de tu recorrido.' : 'Dato pendiente de verificación.'}</span></article>
+        {cards.map((card) => (
+          <a className={styles.statCard} href={`${PLAYER_DASHBOARD_ORIGIN}${card.href}`} key={card.label}>
+            <small>{card.label}</small>
+            <strong>{card.value}</strong>
+            <span>{card.body}</span>
+          </a>
+        ))}
       </div>
 
       <div className={styles.stateBanner}>
