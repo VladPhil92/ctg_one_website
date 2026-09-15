@@ -49,33 +49,35 @@ export const worldMakersVisuals = {
   // variables because those variables still point at the superseded v2
   // marketing/gameplay batch. The API route owns the v3 -> v2 fail-soft
   // switch and therefore never leaves a broken image on the public page.
+  // Alt descriptions below remain truthful for both the v3 primary and the
+  // temporary v2 fallback so accessibility never depends on rollout state.
   hero: nativeAsset(
     undefined,
     `${LIVE_VISUAL_BASE}/hero`,
     1672,
     941,
-    'Explorador de World Makers contemplando un mundo vivo de ciencia, naturaleza y construcción, sin texto ni logotipos incrustados',
+    'Escena conceptual del universo World Makers con un joven explorador, naturaleza, ciencia y construcción sostenible',
   ),
   beforeAfter: nativeAsset(
     undefined,
     `${LIVE_VISUAL_BASE}/before-after`,
     1536,
     1024,
-    'Un mismo mundo de World Makers antes y después de una transformación ambiental positiva',
+    'Visual conceptual de World Makers sobre exploración, construcción y transformación del entorno mediante las acciones del jugador',
   ),
   ecologicalConstruction: nativeAsset(
     undefined,
     `${LIVE_VISUAL_BASE}/ecological-construction`,
     1536,
     1024,
-    'Construcción ecológica en World Makers con vivienda sostenible, energía eólica, captación de agua, huertos y reforestación',
+    'Escena de World Makers centrada en construcción, materiales y soluciones sostenibles para transformar el entorno',
   ),
   experiment: nativeAsset(
     undefined,
     `${LIVE_VISUAL_BASE}/experiment`,
     1536,
     1024,
-    'Experimento científico en World Makers sobre el efecto de la luz en el crecimiento de las plantas',
+    'Escena de experimentación científica dentro de World Makers para investigar fenómenos y resolver problemas del mundo',
   ),
 
   // Existing page sections already consume these semantic roles. Pointing
@@ -86,21 +88,21 @@ export const worldMakersVisuals = {
     `${LIVE_VISUAL_BASE}/before-after`,
     1536,
     1024,
-    'Transformación ambiental en World Makers: un mundo degradado frente al mismo entorno restaurado por las decisiones del jugador',
+    'Visual conceptual de World Makers sobre exploración, construcción y transformación del entorno mediante las acciones del jugador',
   ),
   gameplayScience: nativeAsset(
     undefined,
     `${LIVE_VISUAL_BASE}/experiment`,
     1536,
     1024,
-    'Experimento científico de World Makers sobre cómo distintas condiciones de luz afectan el crecimiento de las plantas',
+    'Escena de experimentación científica dentro de World Makers para investigar fenómenos y resolver problemas del mundo',
   ),
   gameplayBuild: nativeAsset(
     undefined,
     `${LIVE_VISUAL_BASE}/ecological-construction`,
     1536,
     1024,
-    'Construcción ecológica de World Makers con materiales, vivienda sostenible, energía eólica, agua, huertos y reforestación',
+    'Escena de World Makers centrada en construcción, materiales y soluciones sostenibles para transformar el entorno',
   ),
 
   universeOverview: nativeAsset(
