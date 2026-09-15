@@ -24,6 +24,25 @@ function handleWorldMakersSubdomain(request: NextRequest) {
     return NextResponse.rewrite(metadataUrl);
   }
 
+  // Authentication is intentionally owned by ctgone.com. Supabase SSR cookies
+  // are host-scoped, so player dashboard routes stay on the CTG One auth host
+  // rather than broadening auth cookies to every subdomain.
+  if (
+    pathname === '/dashboard' ||
+    pathname.startsWith('/dashboard/') ||
+    pathname === '/account' ||
+    pathname.startsWith('/account/')
+  ) {
+    const dashboardPath = pathname.startsWith('/account')
+      ? pathname === '/account'
+        ? '/dashboard'
+        : `/dashboard${pathname.slice('/account'.length)}`
+      : pathname;
+    const target = new URL(`https://ctgone.com/worldmakers${dashboardPath}`);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target, 308);
+  }
+
   // Keep shared/static infrastructure at its canonical path. The proxy matcher
   // already excludes most image/static extensions; these explicit guards keep
   // API and framework traffic out of the branded route namespace as well.
