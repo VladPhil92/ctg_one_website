@@ -41,13 +41,9 @@
   color: #35554d !important;
 }
 
-/* Text that sits on the image-backed learning card remains light on dark. */
-#aprendizaje > div > div:first-child strong {
-  color: #ffffff !important;
-}
-
-#aprendizaje > div > div:first-child span {
-  color: rgba(255, 255, 255, 0.9) !important;
+/* Keep the original gameplay artwork clean: no editorial overlay card. */
+#aprendizaje > div > div:first-child > div {
+  display: none !important;
 }
 
 /* Preserve crisp hierarchy when the OS explicitly requests more contrast. */
