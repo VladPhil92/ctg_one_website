@@ -101,9 +101,20 @@ export async function GET(
     return NextResponse.json({ error: 'Visual asset not found' }, { status: 404 });
   }
 
+  // If a route is waiting for a v3 master, keep both the upstream fallback
+  // fetch and the public response cache short-lived. Otherwise a successful
+  // v2 fallback could remain cached long after the exact v3 PNG lands.
+  const isAwaitingV3 = route.candidates.some(
+    (candidate) => candidate.set === 'world-makers-v3',
+  );
+  const revalidateSeconds = isAwaitingV3 ? 60 : 3600;
+  const cacheControl = isAwaitingV3
+    ? 'public, max-age=60, s-maxage=300, stale-while-revalidate=3600'
+    : 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800';
+
   for (const candidate of route.candidates) {
     const upstream = await fetch(candidateUrl(candidate), {
-      next: { revalidate: candidate.set === 'world-makers-v3' ? 60 : 3600 },
+      next: { revalidate: revalidateSeconds },
     });
 
     if (!upstream.ok) {
@@ -118,10 +129,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control':
-          candidate.set === 'world-makers-v3'
-            ? 'public, max-age=60, s-maxage=300, stale-while-revalidate=3600'
-            : 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+        'Cache-Control': cacheControl,
         'X-WorldMakers-Asset-Set': candidate.set,
         'X-WorldMakers-Asset-File': encodeURIComponent(candidate.filename),
       },
