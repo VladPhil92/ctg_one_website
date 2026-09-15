@@ -11,17 +11,23 @@ import {
   UserRound,
 } from 'lucide-react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
+import { adventures, type WorldMakersAdventure } from '../portal-data';
 import { worldMakersVisuals } from '../visual-assets';
 import styles from './account.module.css';
+import hubStyles from './player-hub.module.css';
 
 export const metadata: Metadata = {
-  title: 'Dashboard | World Makers',
+  title: 'Player Hub | World Makers',
   description: 'Tu base de operaciones personal en World Makers.',
   robots: { index: false, follow: false },
 };
 
 const SIGN_IN_URL = 'https://ctgone.com/iniciar-sesion?next=/worldmakers/account';
 const CTG_ONE_DASHBOARD_URL = 'https://ctgone.com/dashboard';
+
+function publicAdventureStatus(status: WorldMakersAdventure['status']) {
+  return status === 'Vertical slice' ? 'Aventura de referencia' : 'En diseño';
+}
 
 export default async function WorldMakersAccountPage() {
   if (!isSupabaseConfigured) {
@@ -52,6 +58,30 @@ export default async function WorldMakersAccountPage() {
           .join('')
           .toUpperCase();
   const emailVerified = Boolean(user.email_confirmed_at);
+  const hasPlayerName = displayName !== 'Maker';
+
+  const accountSteps = [
+    {
+      label: 'Identidad CTG One',
+      detail: 'Tu sesión está conectada a una identidad válida.',
+      complete: true,
+    },
+    {
+      label: 'Correo verificado',
+      detail: emailVerified ? 'Tu correo ya fue confirmado.' : 'Confirma tu correo para fortalecer la seguridad de la cuenta.',
+      complete: emailVerified,
+    },
+    {
+      label: 'Nombre de Maker',
+      detail: hasPlayerName ? displayName : 'Completa tu nombre desde tu cuenta CTG One.',
+      complete: hasPlayerName,
+    },
+  ];
+  const completedAccountSteps = accountSteps.filter((step) => step.complete).length;
+  const readinessPercent = Math.round((completedAccountSteps / accountSteps.length) * 100);
+
+  const featuredAdventure = adventures[0]!;
+  const adventureShelf = adventures.slice(1, 5);
 
   return (
     <main className={styles.page}>
@@ -75,7 +105,7 @@ export default async function WorldMakersAccountPage() {
           />
           <span>
             <strong>World Makers</strong>
-            <small>Dashboard de jugador</small>
+            <small>Player Hub</small>
           </span>
         </a>
 
@@ -96,7 +126,7 @@ export default async function WorldMakersAccountPage() {
           <div className={styles.heroCopy}>
             <p className={styles.kicker}>Mi World Makers</p>
             <h1>Hola, {firstName}.</h1>
-            <p>Esta es tu base de operaciones para descubrir aventuras, seguir tu cuenta y entrar al universo de World Makers.</p>
+            <p>Tu Player Hub reúne tu identidad, las aventuras del universo y, cuando exista una versión jugable conectada, también tus partidas y descubrimientos.</p>
           </div>
 
           <aside className={styles.identityCard} aria-label="Perfil del jugador">
@@ -125,10 +155,10 @@ export default async function WorldMakersAccountPage() {
             <span className={styles.featuredShade} aria-hidden="true" />
             <div className={styles.featuredContent}>
               <div className={styles.featuredMeta}>
-                <span>Próxima aventura</span>
-                <span>Exploración · Ciencia · Construcción</span>
+                <span>{publicAdventureStatus(featuredAdventure.status)}</span>
+                <span>{featuredAdventure.disciplines.join(' · ')}</span>
               </div>
-              <h2>Caribbean Rainforest</h2>
+              <h2>{featuredAdventure.title}</h2>
               <p>Adéntrate en un ecosistema vivo, observa, experimenta y construye soluciones que transformen el entorno.</p>
               <div className={styles.actions}>
                 <a className={styles.primaryButton} href="https://worldmakers.ctgone.com/adventures">
@@ -144,36 +174,36 @@ export default async function WorldMakersAccountPage() {
           <aside className={styles.playerPanel}>
             <div className={styles.panelHeading}>
               <div>
-                <p className={styles.kicker}>Tu cuenta</p>
-                <h2>Todo listo para tu perfil.</h2>
+                <p className={styles.kicker}>Preparación del jugador</p>
+                <h2>{completedAccountSteps} de {accountSteps.length} pasos listos.</h2>
               </div>
               <span className={styles.panelIcon}><Gamepad2 size={24} aria-hidden="true" /></span>
             </div>
 
-            <div className={styles.accountStatusList}>
-              <div className={styles.statusRow}>
-                <span className={styles.statusIcon}><UserRound size={18} aria-hidden="true" /></span>
-                <div>
-                  <small>Identidad</small>
-                  <strong>CTG One conectada</strong>
-                </div>
-                <span className={styles.statusDot} aria-hidden="true" />
+            <div className={hubStyles.readinessBlock}>
+              <div className={hubStyles.readinessHeader}>
+                <strong>Estado de la cuenta</strong>
+                <span>{readinessPercent}%</span>
               </div>
-              <div className={styles.statusRow}>
-                <span className={styles.statusIcon}><ShieldCheck size={18} aria-hidden="true" /></span>
-                <div>
-                  <small>Seguridad</small>
-                  <strong>{emailVerified ? 'Correo verificado' : 'Verificación pendiente'}</strong>
-                </div>
-                <span className={emailVerified ? styles.statusDot : styles.statusDotPending} aria-hidden="true" />
+              <div className={hubStyles.progressTrack} aria-label={`Preparación de cuenta ${readinessPercent}%`}>
+                <span className={hubStyles.progressFill} style={{ width: `${readinessPercent}%` }} />
               </div>
-              <div className={styles.statusRow}>
-                <span className={styles.statusIcon}><Compass size={18} aria-hidden="true" /></span>
-                <div>
-                  <small>Progreso</small>
-                  <strong>Tus avances vivirán aquí</strong>
-                </div>
-                <span className={styles.statusMuted}>Próximamente</span>
+
+              <div className={hubStyles.stepList}>
+                {accountSteps.map((step) => (
+                  <div className={hubStyles.step} key={step.label}>
+                    <span className={step.complete ? hubStyles.stepMark : hubStyles.stepMarkPending} aria-hidden="true">
+                      {step.complete ? '✓' : '·'}
+                    </span>
+                    <div>
+                      <strong>{step.label}</strong>
+                      <small>{step.detail}</small>
+                    </div>
+                    <span className={step.complete ? hubStyles.stepState : hubStyles.stepStatePending}>
+                      {step.complete ? 'Listo' : 'Pendiente'}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -182,6 +212,70 @@ export default async function WorldMakersAccountPage() {
             </a>
           </aside>
         </div>
+
+        <section className={hubStyles.hubSection} aria-labelledby="adventure-catalog-title">
+          <div className={hubStyles.sectionHeading}>
+            <div>
+              <p className={styles.kicker}>Catálogo del universo</p>
+              <h2 id="adventure-catalog-title">Más mundos por descubrir.</h2>
+              <p>Estas aventuras provienen del catálogo real de World Makers. Su presencia aquí no significa que ya sean jugables.</p>
+            </div>
+            <a className={hubStyles.sectionLink} href="https://worldmakers.ctgone.com/adventures">
+              Ver las {adventures.length} aventuras <ArrowRight size={15} aria-hidden="true" />
+            </a>
+          </div>
+
+          <div className={hubStyles.catalogGrid}>
+            {adventureShelf.map((adventure, index) => (
+              <a className={hubStyles.adventureCard} href="https://worldmakers.ctgone.com/adventures" key={adventure.slug}>
+                <div className={hubStyles.adventureTop}>
+                  <span className={hubStyles.adventureStatus}>{publicAdventureStatus(adventure.status)}</span>
+                  <span className={hubStyles.adventureIndex}>{String(index + 2).padStart(2, '0')}</span>
+                </div>
+                <h3>{adventure.title}</h3>
+                <div className={hubStyles.disciplineList}>
+                  {adventure.disciplines.map((discipline) => <span key={discipline}>{discipline}</span>)}
+                </div>
+                <div className={hubStyles.adventureFoot}>
+                  <span>Conocer aventura</span>
+                  <ArrowRight size={16} aria-hidden="true" />
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section className={hubStyles.hubSection} aria-labelledby="game-state-title">
+          <div className={hubStyles.gameStatePanel}>
+            <div className={hubStyles.gameStateIntro}>
+              <div>
+                <p className={styles.kicker}>Partidas y progreso</p>
+                <h2 id="game-state-title">Tu historia todavía no ha comenzado aquí.</h2>
+              </div>
+              <p>World Makers aún no tiene una fuente de partidas conectada a este Player Hub. Cuando una versión jugable use tu cuenta, este espacio podrá mostrar únicamente progreso real sincronizado desde el juego.</p>
+            </div>
+
+            <div className={hubStyles.stateGrid}>
+              <article className={hubStyles.stateCard}>
+                <strong>Partidas</strong>
+                <span>Tus sesiones guardadas aparecerán cuando el juego pueda vincularlas a esta cuenta.</span>
+                <span className={hubStyles.emptyPill}>Sin datos todavía</span>
+              </article>
+              <article className={hubStyles.stateCard}>
+                <strong>Misiones</strong>
+                <span>Los objetivos y avances se mostrarán sólo cuando provengan de una experiencia jugable real.</span>
+                <span className={hubStyles.emptyPill}>Sin datos todavía</span>
+              </article>
+              <article className={hubStyles.stateCard}>
+                <strong>Descubrimientos</strong>
+                <span>Hallazgos, experimentos y logros se sincronizarán cuando exista esa conexión.</span>
+                <span className={hubStyles.emptyPill}>Sin datos todavía</span>
+              </article>
+            </div>
+
+            <p className={hubStyles.dataTruth}>Este panel no genera XP, niveles, partidas ni estadísticas simuladas. La interfaz queda preparada para recibir datos del juego cuando exista una fuente verificable.</p>
+          </div>
+        </section>
 
         <section className={styles.quickSection} aria-labelledby="quick-actions-title">
           <div className={styles.sectionTitleRow}>
@@ -222,7 +316,7 @@ export default async function WorldMakersAccountPage() {
         </section>
 
         <p className={styles.truthNote}>
-          Crear una cuenta no implica acceso inmediato a una beta jugable. Tu cuenta ya está vinculada al ecosistema CTG One y este dashboard irá incorporando progreso, mundos, descubrimientos y logros cuando esas funciones estén disponibles para jugadores.
+          Crear una cuenta no implica acceso inmediato a una beta jugable. Tu cuenta ya está vinculada al ecosistema CTG One y este Player Hub incorporará partidas, progreso, descubrimientos y logros únicamente cuando esas funciones estén disponibles y conectadas a una fuente real del juego.
         </p>
       </section>
     </main>
