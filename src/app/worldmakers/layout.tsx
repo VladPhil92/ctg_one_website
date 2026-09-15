@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next';
+import { PlayerAccessDock } from './PlayerAccessDock';
+import './worldmakers-contrast.css';
 
 const title = 'World Makers | Imagina. Crea. Aprende. Transforma.';
 const description =
@@ -58,5 +60,10 @@ export const viewport: Viewport = {
 };
 
 export default function WorldMakersLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      {children}
+      <PlayerAccessDock />
+    </>
+  );
 }
