@@ -16,6 +16,11 @@ import {
   UserRound,
 } from 'lucide-react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
+import {
+  isWorldMakersPlayerStateBridgeConfigured,
+  readWorldMakersPlayerState,
+  type WorldMakersRemotePlayerState,
+} from '@/lib/worldmakers/player-state-bridge';
 import { worldMakersVisuals } from '../visual-assets';
 import styles from './account.module.css';
 
@@ -57,6 +62,36 @@ export default async function WorldMakersAccountPage() {
           .join('')
           .toUpperCase();
   const emailVerified = Boolean(user.email_confirmed_at);
+
+  let remoteState: WorldMakersRemotePlayerState | null = null;
+  if (isWorldMakersPlayerStateBridgeConfigured) {
+    try {
+      remoteState = await readWorldMakersPlayerState(user.id);
+    } catch {
+      // The Game Hub remains truthful and usable when the dedicated game-state
+      // store is temporarily unavailable. Never substitute synthetic progress.
+      remoteState = null;
+    }
+  }
+
+  const cloudConnected = remoteState !== null;
+  const runtimeSynced = Boolean(remoteState?.exists);
+  const saveCount = remoteState?.saves.length ?? 0;
+  const missionCount = remoteState?.missions.length ?? 0;
+  const discoveryCount = remoteState?.discoveries.length ?? 0;
+  const achievementCount = remoteState?.achievements.length ?? 0;
+  const totalGameplayRecords = saveCount + missionCount + discoveryCount + achievementCount;
+
+  const runtimeLabel = runtimeSynced
+    ? 'Sincronizado'
+    : cloudConnected
+      ? 'Esperando primera sincronización'
+      : 'Temporalmente no disponible';
+  const cloudLabel = cloudConnected
+    ? saveCount > 0
+      ? `${saveCount} ${saveCount === 1 ? 'partida sincronizada' : 'partidas sincronizadas'}`
+      : 'Nube conectada · sin partidas'
+    : 'Servicio temporalmente no disponible';
 
   return (
     <main className={styles.page}>
@@ -101,7 +136,7 @@ export default async function WorldMakersAccountPage() {
           <div className={styles.heroCopy}>
             <p className={styles.kicker}>Mi World Makers</p>
             <h1>Hola, {firstName}.</h1>
-            <p>Tu Game Hub reúne identidad, aventuras y el futuro progreso de juego en un mismo lugar. Sólo mostramos datos que ya están realmente sincronizados.</p>
+            <p>Tu Game Hub reúne identidad, aventuras y progreso de juego en un mismo lugar. Sólo mostramos datos que están realmente sincronizados.</p>
           </div>
 
           <aside className={styles.identityCard} aria-label="Perfil del jugador">
@@ -125,14 +160,14 @@ export default async function WorldMakersAccountPage() {
             <span className={styles.liveDot} aria-hidden="true" />
           </div>
           <div className={styles.syncItem}>
-            <span className={styles.syncIconPending}><Radio size={18} aria-hidden="true" /></span>
-            <div><small>Runtime del juego</small><strong>Aún no sincronizado</strong></div>
-            <span className={styles.pendingPill}>Pendiente</span>
+            <span className={runtimeSynced ? styles.syncIconActive : styles.syncIconPending}><Radio size={18} aria-hidden="true" /></span>
+            <div><small>Runtime del juego</small><strong>{runtimeLabel}</strong></div>
+            <span className={runtimeSynced ? styles.liveDot : styles.pendingPill}>{runtimeSynced ? '' : 'Pendiente'}</span>
           </div>
           <div className={styles.syncItem}>
-            <span className={styles.syncIconPending}><Cloud size={18} aria-hidden="true" /></span>
-            <div><small>Guardado en la nube</small><strong>Sin partidas conectadas</strong></div>
-            <span className={styles.pendingPill}>0 partidas</span>
+            <span className={cloudConnected ? styles.syncIconActive : styles.syncIconPending}><Cloud size={18} aria-hidden="true" /></span>
+            <div><small>Guardado en la nube</small><strong>{cloudLabel}</strong></div>
+            {cloudConnected ? <span className={styles.liveDot} aria-hidden="true" /> : <span className={styles.pendingPill}>Sin conexión</span>}
           </div>
         </section>
 
@@ -168,7 +203,7 @@ export default async function WorldMakersAccountPage() {
             <div className={styles.panelHeading}>
               <div>
                 <p className={styles.kicker}>Estado del jugador</p>
-                <h2>Tu perfil está preparado. El juego aún no envía progreso.</h2>
+                <h2>{runtimeSynced ? 'Tu progreso sincronizado está disponible.' : 'Tu perfil está preparado. El juego aún no envía progreso.'}</h2>
               </div>
               <span className={styles.panelIcon}><Gamepad2 size={24} aria-hidden="true" /></span>
             </div>
@@ -181,13 +216,13 @@ export default async function WorldMakersAccountPage() {
               </div>
               <div className={styles.statusRow}>
                 <span className={styles.statusIcon}><Database size={18} aria-hidden="true" /></span>
-                <div><small>Progreso</small><strong>Sin datos de gameplay</strong></div>
-                <span className={styles.statusMuted}>0 registros</span>
+                <div><small>Progreso</small><strong>{runtimeSynced ? 'Datos de gameplay sincronizados' : 'Sin datos de gameplay'}</strong></div>
+                <span className={styles.statusMuted}>{totalGameplayRecords} registros</span>
               </div>
               <div className={styles.statusRow}>
                 <span className={styles.statusIcon}><Trophy size={18} aria-hidden="true" /></span>
-                <div><small>Logros</small><strong>Aún no sincronizados</strong></div>
-                <span className={styles.statusMuted}>—</span>
+                <div><small>Logros</small><strong>{achievementCount > 0 ? 'Sincronizados' : 'Aún no sincronizados'}</strong></div>
+                <span className={styles.statusMuted}>{achievementCount}</span>
               </div>
             </div>
 
@@ -202,33 +237,33 @@ export default async function WorldMakersAccountPage() {
             <div>
               <p className={styles.kicker}>Game Hub</p>
               <h2 id="game-data-title">Tu actividad de juego</h2>
-              <p>Estas áreas ya están estructuradas para recibir datos del cliente de juego cuando la sincronización esté habilitada.</p>
+              <p>Esta información proviene del estado sincronizado por el cliente de juego. Si todavía no has jugado una versión conectada, verás estados vacíos reales.</p>
             </div>
           </div>
 
           <div className={styles.gameDataGrid}>
             <article className={styles.dataCard}>
               <span className={styles.dataIcon}><Gamepad2 size={24} aria-hidden="true" /></span>
-              <div className={styles.dataCardHeader}><small>Partidas</small><strong>0</strong></div>
-              <h3>No hay partidas sincronizadas.</h3>
-              <p>Cuando World Makers publique guardados verificables, aparecerán aquí tus partidas y la opción de continuar.</p>
-              <span className={styles.emptyState}>Esperando conexión del runtime</span>
+              <div className={styles.dataCardHeader}><small>Partidas</small><strong>{saveCount}</strong></div>
+              <h3>{saveCount > 0 ? 'Tus partidas están sincronizadas.' : 'No hay partidas sincronizadas.'}</h3>
+              <p>{saveCount > 0 ? 'El Game Hub ya recibió estados de partida verificables desde World Makers.' : 'Cuando World Makers publique guardados verificables, aparecerán aquí tus partidas y la opción de continuar.'}</p>
+              <span className={styles.emptyState}>{saveCount > 0 ? `${saveCount} en la nube` : 'Esperando conexión del runtime'}</span>
             </article>
 
             <article className={styles.dataCard}>
               <span className={styles.dataIcon}><MapPinned size={24} aria-hidden="true" /></span>
-              <div className={styles.dataCardHeader}><small>Misiones</small><strong>0</strong></div>
-              <h3>Sin misiones activas todavía.</h3>
-              <p>El Game Hub mostrará únicamente misiones emitidas por el juego y su progreso real, no tareas simuladas.</p>
-              <span className={styles.emptyState}>Sin datos recibidos</span>
+              <div className={styles.dataCardHeader}><small>Misiones</small><strong>{missionCount}</strong></div>
+              <h3>{missionCount > 0 ? 'Tienes misiones sincronizadas.' : 'Sin misiones activas todavía.'}</h3>
+              <p>El Game Hub muestra únicamente misiones emitidas por el juego y su progreso real, nunca tareas simuladas.</p>
+              <span className={styles.emptyState}>{missionCount > 0 ? `${missionCount} registros recibidos` : 'Sin datos recibidos'}</span>
             </article>
 
             <article className={styles.dataCard}>
               <span className={styles.dataIcon}><Sparkles size={24} aria-hidden="true" /></span>
-              <div className={styles.dataCardHeader}><small>Descubrimientos</small><strong>0</strong></div>
-              <h3>Tu colección empezará con el juego.</h3>
-              <p>Especies, materiales, lugares y hallazgos aparecerán aquí cuando hayan sido descubiertos dentro de una partida.</p>
-              <span className={styles.emptyState}>Colección aún vacía</span>
+              <div className={styles.dataCardHeader}><small>Descubrimientos</small><strong>{discoveryCount}</strong></div>
+              <h3>{discoveryCount > 0 ? 'Tu colección ya está creciendo.' : 'Tu colección empezará con el juego.'}</h3>
+              <p>Especies, materiales, lugares y hallazgos aparecerán aquí sólo cuando hayan sido descubiertos dentro de una partida.</p>
+              <span className={styles.emptyState}>{discoveryCount > 0 ? `${discoveryCount} descubrimientos` : 'Colección aún vacía'}</span>
             </article>
           </div>
         </section>
@@ -261,7 +296,7 @@ export default async function WorldMakersAccountPage() {
         </section>
 
         <p className={styles.truthNote}>
-          Crear una cuenta no implica acceso inmediato a una beta jugable. Tu identidad ya está vinculada a CTG One; partidas, misiones, descubrimientos y logros aparecerán sólo cuando el cliente de World Makers los sincronice de forma verificable.
+          Crear una cuenta no implica acceso inmediato a una beta jugable. Tu identidad ya está vinculada a CTG One; partidas, misiones, descubrimientos y logros aparecen sólo cuando el cliente de World Makers los sincroniza de forma verificable.
         </p>
       </section>
     </main>
