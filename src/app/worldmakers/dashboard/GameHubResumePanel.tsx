@@ -27,15 +27,9 @@ export function GameHubResumePanel() {
   }
 
   const saves = collectionFor(state, 'saves')
-    .map((save, index) => normalizePlayerStateItem('saves', save, index))
-    .sort((a, b) => {
-      const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-      const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-      return bTime - aTime;
-    });
-  const latest = saves[0] ?? null;
+    .map((save, index) => normalizePlayerStateItem('saves', save, index));
 
-  if (!latest) {
+  if (!saves.length) {
     return (
       <article className={styles.resumePanel}>
         <span className={styles.resumeIcon}><Gamepad2 size={19} aria-hidden="true" /></span>
@@ -47,6 +41,30 @@ export function GameHubResumePanel() {
             Explorar aventuras <ArrowRight size={15} aria-hidden="true" />
           </a>
         </div>
+      </article>
+    );
+  }
+
+  const latest = saves
+    .map((save) => ({
+      save,
+      timestamp: save.timestamp ? new Date(save.timestamp).getTime() : Number.NaN,
+    }))
+    .filter((entry) => Number.isFinite(entry.timestamp))
+    .sort((a, b) => b.timestamp - a.timestamp)[0]?.save ?? null;
+
+  if (!latest) {
+    return (
+      <article className={styles.resumePanelReady}>
+        <span className={styles.resumeIcon}><Gamepad2 size={19} aria-hidden="true" /></span>
+        <div className={styles.resumeBody}>
+          <p className={styles.kicker}>Partidas sincronizadas</p>
+          <h2>{saves.length === 1 ? 'Tienes una partida en la nube.' : `Tienes ${saves.length} partidas en la nube.`}</h2>
+          <p>El runtime no envió una marca temporal compatible, así que no asumimos cuál fue la última.</p>
+        </div>
+        <a className={styles.resumeAction} href={worldMakersDashboardUrl('/saves')}>
+          Abrir mis partidas <ArrowRight size={16} aria-hidden="true" />
+        </a>
       </article>
     );
   }
