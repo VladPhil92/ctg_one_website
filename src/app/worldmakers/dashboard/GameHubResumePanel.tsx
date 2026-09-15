@@ -1,7 +1,8 @@
 'use client';
 
 import { ArrowRight, Cloud, Gamepad2 } from 'lucide-react';
-import { worldMakersDashboardUrl, worldMakersPublicUrl } from '@/lib/worldmakers/routes';
+import Link from 'next/link';
+import { worldMakersDashboardPath, worldMakersPublicUrl } from '@/lib/worldmakers/routes';
 import { collectionFor, formatPlayerTimestamp, normalizePlayerStateItem } from './player-state-model';
 import { usePlayerState } from './PlayerStateProvider';
 import styles from './dashboard.module.css';
@@ -62,9 +63,9 @@ export function GameHubResumePanel() {
           <h2>{saves.length === 1 ? 'Tienes una partida en la nube.' : `Tienes ${saves.length} partidas en la nube.`}</h2>
           <p>El runtime no envió una marca temporal compatible, así que no asumimos cuál fue la última.</p>
         </div>
-        <a className={styles.resumeAction} href={worldMakersDashboardUrl('/saves')}>
+        <Link className={styles.resumeAction} href={worldMakersDashboardPath('/saves')}>
           Abrir mis partidas <ArrowRight size={16} aria-hidden="true" />
-        </a>
+        </Link>
       </article>
     );
   }
@@ -88,9 +89,9 @@ export function GameHubResumePanel() {
           </div>
         )}
       </div>
-      <a className={styles.resumeAction} href={worldMakersDashboardUrl('/saves')}>
+      <Link className={styles.resumeAction} href={worldMakersDashboardPath('/saves')}>
         Abrir mis partidas <ArrowRight size={16} aria-hidden="true" />
-      </a>
+      </Link>
     </article>
   );
 }
