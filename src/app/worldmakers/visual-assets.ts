@@ -11,13 +11,13 @@ type AssetDefinition = {
 /**
  * World Makers original-master contract.
  *
- * Every asset below resolves to an unmodified master: either a production
- * master URL supplied through a Render environment variable, or the live
- * proxy at `/api/worldmakers/visuals/*`, which streams the exact committed
- * bytes from `World-Makers-Game/docs/visual-reference/world-makers-v2`
- * (see that directory's README for the LFS-bypass storage note). Neither
- * path performs WebP/AVIF derivation, quality reduction, destructive crop
- * or Next.js image re-optimization, so `isOriginal` is always true here.
+ * v3 public-story assets resolve through `/api/worldmakers/visuals/*`, which
+ * prefers the user-approved byte-identical PNG masters in
+ * `World-Makers-Game/docs/visual-reference/world-makers-v3` and fails soft to
+ * the established v2 originals until a v3 binary is present upstream.
+ * Existing v2 assets may still resolve from explicitly configured production
+ * master URLs. No asset in this registry is intentionally routed through the
+ * Next.js image optimizer or a WebP/AVIF derivative pipeline.
  */
 function nativeAsset(
   source: string | undefined,
@@ -44,12 +44,36 @@ export const worldMakersVisuals = {
     1536,
     'World Makers',
   ),
+  // Deliberately bypass the legacy WORLDMK_ASSET_HERO_URL override: that
+  // production variable still points at the v2 banner with baked-in copy.
+  // The route below is the authoritative clean-hero switch for v3.
   hero: nativeAsset(
-    process.env.WORLDMK_ASSET_HERO_URL,
+    undefined,
     `${LIVE_VISUAL_BASE}/hero`,
     1672,
     941,
-    'World Makers: crea, explora y aprende en un mundo vivo de ciencia, naturaleza, exploración y construcción',
+    'Explorador de World Makers contemplando un mundo vivo de ciencia, naturaleza y construcción, sin texto ni logotipos incrustados',
+  ),
+  beforeAfter: nativeAsset(
+    undefined,
+    `${LIVE_VISUAL_BASE}/before-after`,
+    1536,
+    1024,
+    'Un mismo mundo de World Makers antes y después de una transformación ambiental positiva',
+  ),
+  ecologicalConstruction: nativeAsset(
+    undefined,
+    `${LIVE_VISUAL_BASE}/ecological-construction`,
+    1536,
+    1024,
+    'Construcción ecológica en World Makers con vivienda sostenible, energía eólica, captación de agua, huertos y reforestación',
+  ),
+  experiment: nativeAsset(
+    undefined,
+    `${LIVE_VISUAL_BASE}/experiment`,
+    1536,
+    1024,
+    'Experimento científico en World Makers sobre el efecto de la luz en el crecimiento de las plantas',
   ),
   gameplayOverview: nativeAsset(
     process.env.WORLDMK_ASSET_GAMEPLAY_OVERVIEW_URL,
