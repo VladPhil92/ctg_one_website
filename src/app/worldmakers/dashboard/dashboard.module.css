@@ -132,7 +132,9 @@
   min-height: 130px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;
   border-radius: 20px; border: 1px solid rgba(255,255,255,.07);
   background: linear-gradient(145deg, rgba(11,35,43,.86), rgba(5,22,29,.86));
+  color: #fff; text-decoration: none; transition: transform 160ms ease, border-color 160ms ease;
 }
+.statCard:hover { transform: translateY(-2px); border-color: rgba(201,244,109,.2); }
 .statCard small { color: rgba(255,255,255,.42); font-size: .64rem; font-weight: 800; }
 .statCard strong { font-size: 2rem; letter-spacing: -.05em; }
 .statCard span { color: rgba(255,255,255,.42); font-size: .64rem; line-height: 1.4; }
@@ -169,11 +171,81 @@
 .profileCard p { margin: 7px 0 16px; color: rgba(255,255,255,.48); font-size: .72rem; line-height: 1.5; }
 .profileCard a { color: #dfff9f; text-decoration: none; font-size: .68rem; font-weight: 850; }
 
+.resumePanel, .resumePanelReady {
+  min-height: 168px;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  border-radius: 26px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(135deg, rgba(8,35,43,.92), rgba(5,22,29,.9));
+}
+.resumePanelReady { border-color: rgba(201,244,109,.16); box-shadow: inset 0 0 0 1px rgba(201,244,109,.03); }
+.resumeIcon {
+  width: 52px; height: 52px; display: grid; place-items: center; border-radius: 17px;
+  color: #dfff9f; background: rgba(201,244,109,.09); border: 1px solid rgba(201,244,109,.12);
+}
+.resumePanel h2, .resumePanelReady h2 { margin: 0; font-size: clamp(1.35rem, 2.4vw, 2.1rem); letter-spacing: -.04em; }
+.resumePanel p:not(.kicker), .resumePanelReady p:not(.kicker) { margin: 7px 0 0; color: rgba(255,255,255,.5); font-size: .76rem; line-height: 1.55; }
+.resumeBody { min-width: 0; }
+.resumeAction, .inlineAction {
+  min-height: 42px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border-radius: 999px; color: #102019; background: #c9f46d; text-decoration: none; font-size: .68rem; font-weight: 900;
+}
+.inlineAction { margin-top: 14px; }
+.resumeProgress { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
+.resumeProgress > span { width: min(320px, 100%); height: 7px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.08); }
+.resumeProgress > span > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #c9f46d, #74e9e1); }
+.resumeProgress strong { color: #dfff9f; font-size: .68rem; }
+.resumeSkeleton, .collectionSkeleton {
+  position: relative; overflow: hidden; border-radius: 24px; min-height: 168px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.05);
+}
+.resumeSkeleton::after, .collectionSkeleton::after {
+  content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.055), transparent); animation: hubShimmer 1.4s infinite;
+}
+
+.collectionGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.collectionCard {
+  min-height: 230px; padding: 21px; display: flex; flex-direction: column; border-radius: 24px;
+  border: 1px solid rgba(255,255,255,.07); background: radial-gradient(circle at 90% 5%, rgba(116,233,225,.08), transparent 24%), rgba(7,28,36,.82);
+}
+.collectionCardTop { display: flex; align-items: start; justify-content: space-between; gap: 14px; }
+.collectionCardTop small { color: #c9f46d; font-size: .59rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.collectionCard h3 { margin: 4px 0 0; font-size: 1.2rem; line-height: 1.05; letter-spacing: -.035em; }
+.collectionCard > p { margin: 12px 0 0; color: rgba(255,255,255,.5); font-size: .72rem; line-height: 1.55; }
+.syncedPill { flex: 0 0 auto; padding: 6px 8px; border-radius: 999px; color: #dfff9f; background: rgba(201,244,109,.08); border: 1px solid rgba(201,244,109,.12); font-size: .56rem; font-weight: 900; }
+.collectionMeta { margin-top: 15px; display: flex; flex-wrap: wrap; gap: 6px; }
+.collectionMeta span { padding: 5px 7px; border-radius: 999px; color: rgba(255,255,255,.56); background: rgba(255,255,255,.04); font-size: .58rem; font-weight: 780; }
+.collectionProgress { margin-top: 18px; display: grid; gap: 7px; }
+.collectionProgress > div { display: flex; justify-content: space-between; gap: 10px; color: rgba(255,255,255,.5); font-size: .6rem; }
+.collectionProgress > div strong { color: #dfff9f; }
+.collectionProgressTrack { height: 6px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.07); }
+.collectionProgressTrack > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #c9f46d, #74e9e1); }
+.collectionFoot { margin-top: auto; padding-top: 18px; display: flex; justify-content: space-between; align-items: end; gap: 12px; color: rgba(255,255,255,.34); font-size: .58rem; }
+.collectionFoot code { max-width: 42%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(255,255,255,.28); font-size: .55rem; }
+.collectionSkeleton { min-height: 230px; }
+.unavailablePanel {
+  min-height: 180px; padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 22px;
+  border-radius: 24px; border: 1px solid rgba(255,215,147,.12); background: rgba(72,46,18,.18);
+}
+.unavailablePanel strong { display: block; color: #ffe1a6; }
+.unavailablePanel p { margin: 6px 0 0; color: rgba(255,255,255,.48); font-size: .72rem; line-height: 1.5; }
+.retryButton {
+  min-height: 40px; padding: 0 13px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px; color: #fff; background: rgba(255,255,255,.04); font: inherit; font-size: .67rem; font-weight: 850; cursor: pointer;
+}
+
 .empty {
   min-height: 220px; padding: 30px; display: grid; place-items: center; text-align: center;
   border: 1px dashed rgba(255,255,255,.1); border-radius: 24px; color: rgba(255,255,255,.48);
 }
 .empty strong { display: block; color: rgba(255,255,255,.8); margin-bottom: 6px; }
+.empty span { display: block; max-width: 620px; font-size: .74rem; line-height: 1.55; }
+
+@keyframes hubShimmer { to { transform: translateX(100%); } }
 
 @media (max-width: 1050px) {
   .dashboardRoot { grid-template-columns: 88px minmax(0,1fr); }
@@ -188,14 +260,15 @@
 @media (max-width: 720px) {
   .dashboardRoot { display: block; }
   .sidebar {
-    position: fixed; inset: auto 10px 10px 10px; width: auto; height: 64px; padding: 7px;
-    flex-direction: row; align-items: center; border: 1px solid rgba(255,255,255,.1); border-radius: 20px;
+    position: fixed; inset: auto 10px 10px 10px; width: auto; height: 68px; padding: 7px;
+    flex-direction: row; align-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 20px;
     box-shadow: 0 18px 45px rgba(0,0,0,.38);
   }
   .brand, .sidebarFooter { display: none; }
-  .nav { width: 100%; grid-template-columns: repeat(4, 1fr); margin: 0; gap: 4px; }
-  .navItem, .navActive { min-height: 48px; }
-  .contentColumn { padding-bottom: 88px; }
+  .nav { width: 100%; display: flex; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; margin: 0; gap: 4px; }
+  .nav::-webkit-scrollbar { display: none; }
+  .navItem, .navActive { min-width: 56px; min-height: 50px; flex: 0 0 56px; }
+  .contentColumn { padding-bottom: 94px; }
   .topbar { padding: 10px 16px; }
   .topbar > div:first-child { display: none; }
   .identityChip { margin-left: auto; }
@@ -204,11 +277,15 @@
   .hero { min-height: 410px; border-radius: 24px; }
   .heroContent { padding: 28px 22px; }
   .heroShade { background: linear-gradient(0deg, rgba(3,12,17,.95), rgba(3,12,17,.4) 70%, rgba(3,12,17,.15)); }
-  .statGrid, .adventureGrid, .profileGrid, .gridTwo { grid-template-columns: 1fr; }
+  .statGrid, .adventureGrid, .profileGrid, .gridTwo, .collectionGrid { grid-template-columns: 1fr; }
   .sectionHeader { align-items: start; flex-direction: column; }
   .stateBanner { align-items: flex-start; flex-direction: column; }
+  .resumePanel, .resumePanelReady { grid-template-columns: auto minmax(0,1fr); align-items: start; }
+  .resumeAction { grid-column: 1 / -1; width: 100%; }
+  .unavailablePanel { align-items: flex-start; flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .navItem, .adventureCard { transition: none; }
+  .navItem, .adventureCard, .statCard { transition: none; }
+  .resumeSkeleton::after, .collectionSkeleton::after { animation: none; }
 }
