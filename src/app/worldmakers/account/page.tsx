@@ -306,7 +306,7 @@ export default async function WorldMakersAccountPage() {
             <div className={hubStyles.stateGrid}>
               <article className={hubStyles.stateCard}>
                 <strong>Partidas</strong>
-                <span>Tus sesiones guardadas aparecerán cuando el juego pueda vincularlas a esta cuenta.</span>
+                <span>No hay partidas sincronizadas. Tus sesiones guardadas aparecerán cuando el juego pueda vincularlas a esta cuenta.</span>
                 <span className={hubStyles.emptyPill}>Sin datos todavía</span>
               </article>
               <article className={hubStyles.stateCard}>
