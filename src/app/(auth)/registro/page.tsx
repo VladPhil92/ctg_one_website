@@ -38,9 +38,9 @@ function RegistroForm() {
   const es = locale === 'es';
   const redirectTo = safeRedirectPath(searchParams.get('next'), '/dashboard');
   const isWorldMakersFlow = redirectTo.startsWith('/worldmakers');
-  const loginHref = redirectTo === '/dashboard'
-    ? '/iniciar-sesion'
-    : `/iniciar-sesion?next=${encodeURIComponent(redirectTo)}`;
+  const signInHref = isWorldMakersFlow
+    ? `/iniciar-sesion?next=${encodeURIComponent(redirectTo)}`
+    : '/iniciar-sesion';
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -68,7 +68,7 @@ function RegistroForm() {
               'Conservar accesos de inversión y educación vinculados a la misma cuenta.',
             ],
         truthNote: isWorldMakersFlow
-          ? 'Crear tu cuenta prepara tu identidad de jugador, pero no implica acceso inmediato a una beta jugable.'
+          ? 'Crear tu cuenta prepara tu identidad de jugador, pero no implica acceso inmediato a una beta jugable. Si eres menor de edad, pide a tu madre, padre o tutor que gestione el registro contigo.'
           : 'CTG Rewards está en Foundation v1: la infraestructura de cuenta existe, pero crear tu cuenta no activa acumulación ni redención de puntos.',
         fullName: 'Nombre completo',
         phone: 'Teléfono',
@@ -105,7 +105,7 @@ function RegistroForm() {
               'Keep investment and education access linked to the same account.',
             ],
         truthNote: isWorldMakersFlow
-          ? 'Creating an account prepares your player identity but does not grant immediate access to a playable beta.'
+          ? 'Creating an account prepares your player identity but does not grant immediate access to a playable beta. If you are under 18, ask a parent or guardian to manage registration with you.'
           : 'CTG Rewards is in Foundation v1: the account infrastructure exists, but creating your account does not activate point earning or redemption.',
         fullName: 'Full name',
         phone: 'Phone',
@@ -157,10 +157,10 @@ function RegistroForm() {
     try {
       const supabase = createClient();
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-      const emailRedirectOptions = redirectTo === '/dashboard'
+      const analyticsAnonymousId = getAnalyticsAnonymousId();
+      const redirectOptions = redirectTo === '/dashboard'
         ? { emailRedirectTo: `${siteUrl}/auth/callback?next=/dashboard` }
         : { emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(redirectTo)}` };
-      const analyticsAnonymousId = getAnalyticsAnonymousId();
       void trackFunnelEvent('signup_started', { sourcePath: isWorldMakersFlow ? '/worldmakers' : '/registro' });
       const { error: signUpError } = await supabase.auth.signUp({
         email: parsed.data.email,
@@ -171,7 +171,7 @@ function RegistroForm() {
             phone: parsed.data.phone,
             analytics_anonymous_id: analyticsAnonymousId,
           },
-          ...emailRedirectOptions,
+          ...redirectOptions,
         },
       });
       if (signUpError) throw signUpError;
@@ -239,7 +239,7 @@ function RegistroForm() {
       <p className="mt-6 text-center text-xs text-text-dim">
         {copy.existing}{' '}
         <Link
-          href={loginHref}
+          href={signInHref}
           className="inline-flex min-h-11 items-center text-accent hover:underline"
         >
           {copy.signIn}

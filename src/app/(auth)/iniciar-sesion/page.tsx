@@ -32,9 +32,9 @@ function IniciarSesionForm() {
   const es = locale === 'es';
   const redirectTo = safeRedirectPath(searchParams.get('next'), '/dashboard');
   const isWorldMakersFlow = redirectTo.startsWith('/worldmakers');
-  const registrationHref = redirectTo === '/dashboard'
-    ? '/registro'
-    : `/registro?next=${encodeURIComponent(redirectTo)}`;
+  const registrationHref = isWorldMakersFlow
+    ? `/registro?next=${encodeURIComponent(redirectTo)}`
+    : '/registro';
   const authError = searchParams.get('error');
   const resetComplete = searchParams.get('password_reset') === 'success';
   const [email, setEmail] = useState('');
