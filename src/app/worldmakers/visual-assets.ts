@@ -11,13 +11,13 @@ type AssetDefinition = {
 /**
  * World Makers original-master contract.
  *
- * Every asset below resolves to an unmodified master: either a production
- * master URL supplied through a Render environment variable, or the live
- * proxy at `/api/worldmakers/visuals/*`, which streams the exact committed
- * bytes from `World-Makers-Game/docs/visual-reference/world-makers-v2`
- * (see that directory's README for the LFS-bypass storage note). Neither
- * path performs WebP/AVIF derivation, quality reduction, destructive crop
- * or Next.js image re-optimization, so `isOriginal` is always true here.
+ * v3 public-story assets resolve through `/api/worldmakers/visuals/*`, which
+ * prefers the user-approved byte-identical PNG masters in
+ * `World-Makers-Game/docs/visual-reference/world-makers-v3` and fails soft to
+ * the established v2 originals until a v3 binary is present upstream.
+ * Existing v2 assets may still resolve from explicitly configured production
+ * master URLs. No asset in this registry is intentionally routed through the
+ * Next.js image optimizer or a WebP/AVIF derivative pipeline.
  */
 function nativeAsset(
   source: string | undefined,
@@ -44,34 +44,65 @@ export const worldMakersVisuals = {
     1536,
     'World Makers',
   ),
+
+  // v3 public visual story. These deliberately bypass legacy Render image
+  // variables because those variables still point at the superseded v2
+  // marketing/gameplay batch. The API route owns the v3 -> v2 fail-soft
+  // switch and therefore never leaves a broken image on the public page.
   hero: nativeAsset(
-    process.env.WORLDMK_ASSET_HERO_URL,
+    undefined,
     `${LIVE_VISUAL_BASE}/hero`,
     1672,
     941,
-    'World Makers: crea, explora y aprende en un mundo vivo de ciencia, naturaleza, exploración y construcción',
+    'Explorador de World Makers contemplando un mundo vivo de ciencia, naturaleza y construcción, sin texto ni logotipos incrustados',
   ),
-  gameplayOverview: nativeAsset(
-    process.env.WORLDMK_ASSET_GAMEPLAY_OVERVIEW_URL,
-    `${LIVE_VISUAL_BASE}/gameplay-overview`,
+  beforeAfter: nativeAsset(
+    undefined,
+    `${LIVE_VISUAL_BASE}/before-after`,
     1536,
     1024,
-    'Visualización aprobada de World Makers con gameplay en primera persona, construcción, ciencia y misión integrada',
+    'Un mismo mundo de World Makers antes y después de una transformación ambiental positiva',
+  ),
+  ecologicalConstruction: nativeAsset(
+    undefined,
+    `${LIVE_VISUAL_BASE}/ecological-construction`,
+    1536,
+    1024,
+    'Construcción ecológica en World Makers con vivienda sostenible, energía eólica, captación de agua, huertos y reforestación',
+  ),
+  experiment: nativeAsset(
+    undefined,
+    `${LIVE_VISUAL_BASE}/experiment`,
+    1536,
+    1024,
+    'Experimento científico en World Makers sobre el efecto de la luz en el crecimiento de las plantas',
+  ),
+
+  // Existing page sections already consume these semantic roles. Pointing
+  // them at the v3 story assets places the new imagery where it makes visual
+  // sense without duplicating sections: transformation, science, building.
+  gameplayOverview: nativeAsset(
+    undefined,
+    `${LIVE_VISUAL_BASE}/before-after`,
+    1536,
+    1024,
+    'Transformación ambiental en World Makers: un mundo degradado frente al mismo entorno restaurado por las decisiones del jugador',
   ),
   gameplayScience: nativeAsset(
-    process.env.WORLDMK_ASSET_GAMEPLAY_SCIENCE_URL,
-    `${LIVE_VISUAL_BASE}/gameplay-science`,
-    1672,
-    941,
-    'Gameplay científico de World Makers: misión River Renewal Project con paneles de química, física, biología y botánica integrados en primera persona',
+    undefined,
+    `${LIVE_VISUAL_BASE}/experiment`,
+    1536,
+    1024,
+    'Experimento científico de World Makers sobre cómo distintas condiciones de luz afectan el crecimiento de las plantas',
   ),
   gameplayBuild: nativeAsset(
-    process.env.WORLDMK_ASSET_GAMEPLAY_EXPLORATION_URL || process.env.WORLDMK_ASSET_GAMEPLAY_BUILD_URL,
-    `${LIVE_VISUAL_BASE}/gameplay-build`,
-    1672,
-    941,
-    'Gameplay de construcción de World Makers: módulo eco-científico, materiales y sistema de snap-to-connector en primera persona',
+    undefined,
+    `${LIVE_VISUAL_BASE}/ecological-construction`,
+    1536,
+    1024,
+    'Construcción ecológica de World Makers con materiales, vivienda sostenible, energía eólica, agua, huertos y reforestación',
   ),
+
   universeOverview: nativeAsset(
     process.env.WORLDMK_ASSET_UNIVERSE_URL,
     `${LIVE_VISUAL_BASE}/universe`,
