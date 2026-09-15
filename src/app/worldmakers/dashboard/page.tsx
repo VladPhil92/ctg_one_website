@@ -1,12 +1,10 @@
 import { ArrowRight } from 'lucide-react';
+import { worldMakersDashboardUrl, worldMakersPublicUrl } from '@/lib/worldmakers/routes';
 import { adventures } from '../portal-data';
 import { worldMakersVisuals } from '../visual-assets';
 import { GameHubResumePanel } from './GameHubResumePanel';
 import { PlayerStateOverview } from './PlayerStateOverview';
 import styles from './dashboard.module.css';
-
-const WORLDMAKERS_ORIGIN = 'https://worldmakers.ctgone.com';
-const PLAYER_DASHBOARD_ORIGIN = 'https://ctgone.com/worldmakers/dashboard';
 
 export default function WorldMakersDashboardPage() {
   const featured = adventures[0]!;
@@ -30,10 +28,10 @@ export default function WorldMakersDashboardPage() {
             El Game Hub conecta tu identidad CTG One con las aventuras de World Makers y con el progreso real que el runtime sincronice.
           </p>
           <div className={styles.heroActions}>
-            <a className={styles.primaryButton} href={`${WORLDMAKERS_ORIGIN}/adventures/${featured.slug}`}>
+            <a className={styles.primaryButton} href={worldMakersPublicUrl(`/adventures/${featured.slug}`)}>
               Explorar {featured.title} <ArrowRight size={17} aria-hidden="true" />
             </a>
-            <a className={styles.secondaryButton} href={`${PLAYER_DASHBOARD_ORIGIN}/progress`}>Ver mi progreso</a>
+            <a className={styles.secondaryButton} href={worldMakersDashboardUrl('/progress')}>Ver mi progreso</a>
           </div>
         </div>
       </section>
@@ -45,7 +43,7 @@ export default function WorldMakersDashboardPage() {
             <h2 id="dashboard-resume-title">Retoma desde un estado que realmente exista.</h2>
             <p>El acceso de continuidad sólo se activa cuando el backend puede verificar una partida sincronizada.</p>
           </div>
-          <a className={styles.sectionLink} href={`${PLAYER_DASHBOARD_ORIGIN}/saves`}>Mis partidas →</a>
+          <a className={styles.sectionLink} href={worldMakersDashboardUrl('/saves')}>Mis partidas →</a>
         </div>
         <GameHubResumePanel />
       </section>
@@ -57,7 +55,7 @@ export default function WorldMakersDashboardPage() {
             <h2 id="dashboard-state-title">Tu actividad, sin datos inventados.</h2>
             <p>La web consulta el contrato autenticado de World Makers y muestra únicamente progreso que existe realmente.</p>
           </div>
-          <a className={styles.sectionLink} href={`${PLAYER_DASHBOARD_ORIGIN}/progress`}>Abrir progreso →</a>
+          <a className={styles.sectionLink} href={worldMakersDashboardUrl('/progress')}>Abrir progreso →</a>
         </div>
         <PlayerStateOverview />
       </section>
@@ -69,11 +67,11 @@ export default function WorldMakersDashboardPage() {
             <h2 id="dashboard-adventures-title">Aventuras para seguir descubriendo.</h2>
             <p>Un catálogo pensado como mundos jugables, no como un menú académico.</p>
           </div>
-          <a className={styles.sectionLink} href={`${PLAYER_DASHBOARD_ORIGIN}/adventures`}>Ver catálogo →</a>
+          <a className={styles.sectionLink} href={worldMakersDashboardUrl('/adventures')}>Ver catálogo →</a>
         </div>
         <div className={styles.adventureGrid}>
           {shelf.map((adventure) => (
-            <a className={styles.adventureCard} href={`${WORLDMAKERS_ORIGIN}/adventures/${adventure.slug}`} key={adventure.slug}>
+            <a className={styles.adventureCard} href={worldMakersPublicUrl(`/adventures/${adventure.slug}`)} key={adventure.slug}>
               <small>{adventure.disciplines.join(' · ')}</small>
               <h3>{adventure.title}</h3>
               <p>{adventure.premise}</p>
