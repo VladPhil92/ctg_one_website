@@ -1,5 +1,7 @@
 import styles from '../dashboard.module.css';
 
+const WORLDMAKERS_ORIGIN = 'https://worldmakers.ctgone.com';
+
 export default function WorldMakersDashboardProfilePage() {
   return (
     <section className={styles.section}>
@@ -25,12 +27,12 @@ export default function WorldMakersDashboardProfilePage() {
         <article className={styles.profileCard}>
           <strong>Privacidad World Makers</strong>
           <p>Consulta qué información se usa en el portal y cómo se protege la actividad asociada al juego.</p>
-          <a href="/privacy">Ver privacidad →</a>
+          <a href={`${WORLDMAKERS_ORIGIN}/privacy`}>Ver privacidad →</a>
         </article>
         <article className={styles.profileCard}>
           <strong>Comunidad</strong>
           <p>Participa en novedades, investigación y futuras oportunidades de prueba cuando estén disponibles.</p>
-          <a href="/community">Ir a comunidad →</a>
+          <a href={`${WORLDMAKERS_ORIGIN}/community`}>Ir a comunidad →</a>
         </article>
       </div>
     </section>
