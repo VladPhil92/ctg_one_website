@@ -11,8 +11,12 @@ export function worldMakersPublicUrl(path = '') {
   return `${WORLDMAKERS_PUBLIC_ORIGIN}${normalizeSuffix(path)}`;
 }
 
+export function worldMakersDashboardPath(suffix = '') {
+  return `${WORLDMAKERS_DASHBOARD_PATH}${normalizeSuffix(suffix)}`;
+}
+
 export function worldMakersDashboardUrl(suffix = '') {
-  return `${CTG_ONE_ORIGIN}${WORLDMAKERS_DASHBOARD_PATH}${normalizeSuffix(suffix)}`;
+  return `${CTG_ONE_ORIGIN}${worldMakersDashboardPath(suffix)}`;
 }
 
 export function ctgOneUrl(path = '') {
