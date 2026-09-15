@@ -6,11 +6,12 @@ import type { ReactNode } from 'react';
 import { worldMakersVisuals } from '../visual-assets';
 import styles from './dashboard.module.css';
 
+const WORLDMAKERS_ORIGIN = 'https://worldmakers.ctgone.com';
 const navItems = [
-  { href: '/dashboard', label: 'Inicio', icon: Gauge },
-  { href: '/dashboard/progress', label: 'Progreso', icon: Sparkles },
-  { href: '/dashboard/adventures', label: 'Aventuras', icon: Compass },
-  { href: '/dashboard/profile', label: 'Perfil', icon: UserRound },
+  { path: '/dashboard', label: 'Inicio', icon: Gauge },
+  { path: '/dashboard/progress', label: 'Progreso', icon: Sparkles },
+  { path: '/dashboard/adventures', label: 'Aventuras', icon: Compass },
+  { path: '/dashboard/profile', label: 'Perfil', icon: UserRound },
 ] as const;
 
 type Props = {
@@ -32,7 +33,7 @@ export function DashboardShell({ children, displayName, email, emailVerified }: 
   return (
     <div className={styles.dashboardRoot}>
       <aside className={styles.sidebar}>
-        <a className={styles.brand} href="/" aria-label="World Makers">
+        <a className={styles.brand} href={WORLDMAKERS_ORIGIN} aria-label="World Makers">
           <img
             src={worldMakersVisuals.logo.src}
             alt="World Makers"
@@ -47,12 +48,16 @@ export function DashboardShell({ children, displayName, email, emailVerified }: 
 
         <nav className={styles.nav} aria-label="Dashboard de jugador">
           {navItems.map((item) => {
-            const active = item.href === '/dashboard'
+            const active = item.path === '/dashboard'
               ? pathname === '/dashboard' || pathname === '/worldmakers/dashboard'
-              : pathname.endsWith(item.href.replace('/dashboard', ''));
+              : pathname.endsWith(item.path.replace('/dashboard', ''));
             const Icon = item.icon;
             return (
-              <a key={item.href} href={item.href} className={active ? styles.navActive : styles.navItem}>
+              <a
+                key={item.path}
+                href={`${WORLDMAKERS_ORIGIN}${item.path}`}
+                className={active ? styles.navActive : styles.navItem}
+              >
                 <Icon size={18} aria-hidden="true" />
                 <span>{item.label}</span>
               </a>
@@ -61,7 +66,7 @@ export function DashboardShell({ children, displayName, email, emailVerified }: 
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <a href="/how-to-play" className={styles.utilityLink}>
+          <a href={`${WORLDMAKERS_ORIGIN}/how-to-play`} className={styles.utilityLink}>
             <BookOpen size={16} aria-hidden="true" /> Cómo se juega
           </a>
           <a href="https://ctgone.com/dashboard" className={styles.utilityLink}>
