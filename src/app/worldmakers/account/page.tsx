@@ -58,7 +58,6 @@ export default async function WorldMakersAccountPage() {
           .join('')
           .toUpperCase();
   const emailVerified = Boolean(user.email_confirmed_at);
-  const hasPlayerName = displayName !== 'Maker';
 
   const accountSteps = [
     {
@@ -70,11 +69,6 @@ export default async function WorldMakersAccountPage() {
       label: 'Correo verificado',
       detail: emailVerified ? 'Tu correo ya fue confirmado.' : 'Confirma tu correo para fortalecer la seguridad de la cuenta.',
       complete: emailVerified,
-    },
-    {
-      label: 'Nombre de Maker',
-      detail: hasPlayerName ? displayName : 'Completa tu nombre desde tu cuenta CTG One.',
-      complete: hasPlayerName,
     },
   ];
   const completedAccountSteps = accountSteps.filter((step) => step.complete).length;
@@ -161,7 +155,7 @@ export default async function WorldMakersAccountPage() {
               <h2>{featuredAdventure.title}</h2>
               <p>Adéntrate en un ecosistema vivo, observa, experimenta y construye soluciones que transformen el entorno.</p>
               <div className={styles.actions}>
-                <a className={styles.primaryButton} href="https://worldmakers.ctgone.com/adventures">
+                <a className={styles.primaryButton} href={`https://worldmakers.ctgone.com/adventures/${featuredAdventure.slug}`}>
                   Conocer la aventura <ArrowRight size={17} aria-hidden="true" />
                 </a>
                 <a className={styles.secondaryButton} href="https://worldmakers.ctgone.com/how-to-play">
@@ -227,7 +221,7 @@ export default async function WorldMakersAccountPage() {
 
           <div className={hubStyles.catalogGrid}>
             {adventureShelf.map((adventure, index) => (
-              <a className={hubStyles.adventureCard} href="https://worldmakers.ctgone.com/adventures" key={adventure.slug}>
+              <a className={hubStyles.adventureCard} href={`https://worldmakers.ctgone.com/adventures/${adventure.slug}`} key={adventure.slug}>
                 <div className={hubStyles.adventureTop}>
                   <span className={hubStyles.adventureStatus}>{publicAdventureStatus(adventure.status)}</span>
                   <span className={hubStyles.adventureIndex}>{String(index + 2).padStart(2, '0')}</span>
