@@ -2,6 +2,8 @@ import { ArrowRight } from 'lucide-react';
 import { adventures } from '../../portal-data';
 import styles from '../dashboard.module.css';
 
+const WORLDMAKERS_ORIGIN = 'https://worldmakers.ctgone.com';
+
 export default function WorldMakersDashboardAdventuresPage() {
   return (
     <section className={styles.section}>
@@ -14,7 +16,7 @@ export default function WorldMakersDashboardAdventuresPage() {
       </div>
       <div className={styles.adventureGrid}>
         {adventures.map((adventure) => (
-          <a className={styles.adventureCard} href={`/adventures/${adventure.slug}`} key={adventure.slug}>
+          <a className={styles.adventureCard} href={`${WORLDMAKERS_ORIGIN}/adventures/${adventure.slug}`} key={adventure.slug}>
             <small>{adventure.disciplines.join(' · ')}</small>
             <h3>{adventure.title}</h3>
             <p>{adventure.challenge}</p>
