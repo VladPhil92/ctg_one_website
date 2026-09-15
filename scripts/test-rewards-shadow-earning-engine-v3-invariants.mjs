@@ -72,12 +72,14 @@ assert.match(panel, /Replay manual de evento/, 'v3 UI must retain controlled adm
 assert.doesNotMatch(panel, /activar rewards|earning comercial activo|acreditar puntos ahora|redimir ahora/i, 'Shadow UI must not expose commercial activation claims.');
 assert.match(nav, /href: '\/admin\/rewards\/shadow', label: 'Rewards Shadow', roles: \['SUPER_ADMIN'\]/, 'Shadow navigation must remain SUPER_ADMIN-only.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0137'/, 'Repository schema authority must reflect signed-source hardening.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_signed_source_atomicity_hardening'/, 'Schema authority must name Rewards signed-source atomicity hardening.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 137/, 'Schema migration count must advance to 137.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0139'/, 'Repository schema authority must reflect the current signed-source hardening state.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'rewards_source_integrity_transactional_boundaries_v4_1'/, 'Schema authority must name the current Rewards source-integrity hardening migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 139/, 'Schema migration count must advance to 139.');
 assert.match(history, /"logicalVersion": "0135", "remoteVersion": "20260914123941", "remoteName": "0135_rewards_shadow_earning_engine_v3"/, 'Production provenance must retain the real 0135 Supabase migration.');
 assert.match(history, /"logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4"/, 'Production provenance must retain the real 0136 Supabase migration.');
 assert.match(history, /"logicalVersion": "0137", "remoteVersion": "20260914132842", "remoteName": "0137_rewards_signed_source_atomicity_hardening"/, 'Production provenance must contain the real 0137 Supabase hardening migration.');
+assert.match(history, /"logicalVersion": "0138", "remoteVersion": "20260914154606", "remoteName": "0138_rewards_signed_source_integrity_hardening_v4_1"/, 'Production provenance must retain the real 0138 Supabase hardening migration.');
+assert.match(history, /"logicalVersion": "0139", "remoteVersion": "20260914155204", "remoteName": "0139_rewards_source_integrity_transactional_boundaries_v4_1"/, 'Production provenance must retain the real 0139 Supabase transactional-boundaries migration.');
 
 for (const truth of ['Every result remains **shadow-only**', '`admin_replay_only`', 'Signed Source Connectors & Reconciliation v4']) {
   assert.ok(docs.includes(truth), `Rewards v3 governance must retain: ${truth}`);
