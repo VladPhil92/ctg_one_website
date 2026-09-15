@@ -4,15 +4,20 @@ import { LogIn, UserPlus } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import styles from './player-access.module.css';
 
-const SIGN_IN_URL = 'https://ctgone.com/iniciar-sesion?next=%2Fworldmakers%2Faccount';
-const CREATE_ACCOUNT_URL = 'https://ctgone.com/registro?next=%2Fworldmakers%2Faccount';
+const SIGN_IN_URL = 'https://ctgone.com/iniciar-sesion?next=%2Fworldmakers%2Fdashboard';
+const CREATE_ACCOUNT_URL = 'https://ctgone.com/registro?next=%2Fworldmakers%2Fdashboard';
 
 export function PlayerAccessDock() {
   const pathname = usePathname();
+  const isPlayerArea =
+    pathname === '/worldmakers/account' ||
+    pathname === '/account' ||
+    pathname === '/worldmakers/dashboard' ||
+    pathname === '/dashboard' ||
+    pathname.startsWith('/worldmakers/dashboard/') ||
+    pathname.startsWith('/dashboard/');
 
-  if (pathname === '/worldmakers/account' || pathname === '/account') {
-    return null;
-  }
+  if (isPlayerArea) return null;
 
   return (
     <aside className={styles.dock} aria-label="Acceso de jugador">
