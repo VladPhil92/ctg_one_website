@@ -44,9 +44,11 @@ export const worldMakersVisuals = {
     1536,
     'World Makers',
   ),
-  // Deliberately bypass the legacy WORLDMK_ASSET_HERO_URL override: that
-  // production variable still points at the v2 banner with baked-in copy.
-  // The route below is the authoritative clean-hero switch for v3.
+
+  // v3 public visual story. These deliberately bypass legacy Render image
+  // variables because those variables still point at the superseded v2
+  // marketing/gameplay batch. The API route owns the v3 -> v2 fail-soft
+  // switch and therefore never leaves a broken image on the public page.
   hero: nativeAsset(
     undefined,
     `${LIVE_VISUAL_BASE}/hero`,
@@ -75,27 +77,32 @@ export const worldMakersVisuals = {
     1024,
     'Experimento científico en World Makers sobre el efecto de la luz en el crecimiento de las plantas',
   ),
+
+  // Existing page sections already consume these semantic roles. Pointing
+  // them at the v3 story assets places the new imagery where it makes visual
+  // sense without duplicating sections: transformation, science, building.
   gameplayOverview: nativeAsset(
-    process.env.WORLDMK_ASSET_GAMEPLAY_OVERVIEW_URL,
-    `${LIVE_VISUAL_BASE}/gameplay-overview`,
+    undefined,
+    `${LIVE_VISUAL_BASE}/before-after`,
     1536,
     1024,
-    'Visualización aprobada de World Makers con gameplay en primera persona, construcción, ciencia y misión integrada',
+    'Transformación ambiental en World Makers: un mundo degradado frente al mismo entorno restaurado por las decisiones del jugador',
   ),
   gameplayScience: nativeAsset(
-    process.env.WORLDMK_ASSET_GAMEPLAY_SCIENCE_URL,
-    `${LIVE_VISUAL_BASE}/gameplay-science`,
-    1672,
-    941,
-    'Gameplay científico de World Makers: misión River Renewal Project con paneles de química, física, biología y botánica integrados en primera persona',
+    undefined,
+    `${LIVE_VISUAL_BASE}/experiment`,
+    1536,
+    1024,
+    'Experimento científico de World Makers sobre cómo distintas condiciones de luz afectan el crecimiento de las plantas',
   ),
   gameplayBuild: nativeAsset(
-    process.env.WORLDMK_ASSET_GAMEPLAY_EXPLORATION_URL || process.env.WORLDMK_ASSET_GAMEPLAY_BUILD_URL,
-    `${LIVE_VISUAL_BASE}/gameplay-build`,
-    1672,
-    941,
-    'Gameplay de construcción de World Makers: módulo eco-científico, materiales y sistema de snap-to-connector en primera persona',
+    undefined,
+    `${LIVE_VISUAL_BASE}/ecological-construction`,
+    1536,
+    1024,
+    'Construcción ecológica de World Makers con materiales, vivienda sostenible, energía eólica, agua, huertos y reforestación',
   ),
+
   universeOverview: nativeAsset(
     process.env.WORLDMK_ASSET_UNIVERSE_URL,
     `${LIVE_VISUAL_BASE}/universe`,
