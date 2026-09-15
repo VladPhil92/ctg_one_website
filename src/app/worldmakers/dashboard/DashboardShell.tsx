@@ -14,12 +14,11 @@ import {
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { ctgOneUrl, worldMakersDashboardUrl, worldMakersPublicUrl } from '@/lib/worldmakers/routes';
 import { worldMakersVisuals } from '../visual-assets';
 import { PlayerStateProvider } from './PlayerStateProvider';
 import styles from './dashboard.module.css';
 
-const WORLDMAKERS_ORIGIN = 'https://worldmakers.ctgone.com';
-const PLAYER_DASHBOARD_ORIGIN = 'https://ctgone.com/worldmakers/dashboard';
 const navItems = [
   { suffix: '', label: 'Inicio', icon: Gauge },
   { suffix: '/saves', label: 'Partidas', icon: Save },
@@ -51,7 +50,7 @@ export function DashboardShell({ children, displayName, email, emailVerified }: 
     <PlayerStateProvider>
       <div className={styles.dashboardRoot}>
         <aside className={styles.sidebar}>
-          <a className={styles.brand} href={WORLDMAKERS_ORIGIN} aria-label="World Makers">
+          <a className={styles.brand} href={worldMakersPublicUrl()} aria-label="World Makers">
             <img
               src={worldMakersVisuals.logo.src}
               alt="World Makers"
@@ -72,7 +71,7 @@ export function DashboardShell({ children, displayName, email, emailVerified }: 
               return (
                 <a
                   key={item.suffix || 'home'}
-                  href={`${PLAYER_DASHBOARD_ORIGIN}${item.suffix}`}
+                  href={worldMakersDashboardUrl(item.suffix)}
                   className={active ? styles.navActive : styles.navItem}
                 >
                   <Icon size={18} aria-hidden="true" />
@@ -84,10 +83,10 @@ export function DashboardShell({ children, displayName, email, emailVerified }: 
           </nav>
 
           <div className={styles.sidebarFooter}>
-            <a href={`${WORLDMAKERS_ORIGIN}/how-to-play`} className={styles.utilityLink}>
+            <a href={worldMakersPublicUrl('/how-to-play')} className={styles.utilityLink}>
               <BookOpen size={16} aria-hidden="true" /> Cómo se juega
             </a>
-            <a href="https://ctgone.com/dashboard" className={styles.utilityLink}>
+            <a href={ctgOneUrl('/dashboard')} className={styles.utilityLink}>
               <ShieldCheck size={16} aria-hidden="true" /> Seguridad CTG One
             </a>
           </div>
