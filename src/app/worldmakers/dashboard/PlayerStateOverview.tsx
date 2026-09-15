@@ -1,10 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
+import { worldMakersDashboardUrl } from '@/lib/worldmakers/routes';
 import { usePlayerState } from './PlayerStateProvider';
 import styles from './dashboard.module.css';
-
-const PLAYER_DASHBOARD_ORIGIN = 'https://ctgone.com/worldmakers/dashboard';
 
 export function PlayerStateOverview({ detailed = false }: { detailed?: boolean }) {
   const { state, loadState } = usePlayerState();
@@ -40,7 +39,7 @@ export function PlayerStateOverview({ detailed = false }: { detailed?: boolean }
     <>
       <div className={styles.statGrid}>
         {cards.map((card) => (
-          <a className={styles.statCard} href={`${PLAYER_DASHBOARD_ORIGIN}${card.href}`} key={card.label}>
+          <a className={styles.statCard} href={worldMakersDashboardUrl(card.href)} key={card.label}>
             <small>{card.label}</small>
             <strong>{card.value}</strong>
             <span>{card.body}</span>
