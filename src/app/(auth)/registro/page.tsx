@@ -38,6 +38,9 @@ function RegistroForm() {
   const es = locale === 'es';
   const redirectTo = safeRedirectPath(searchParams.get('next'), '/dashboard');
   const isWorldMakersFlow = redirectTo.startsWith('/worldmakers');
+  const loginHref = redirectTo === '/dashboard'
+    ? '/iniciar-sesion'
+    : `/iniciar-sesion?next=${encodeURIComponent(redirectTo)}`;
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -236,7 +239,7 @@ function RegistroForm() {
       <p className="mt-6 text-center text-xs text-text-dim">
         {copy.existing}{' '}
         <Link
-          href={`/iniciar-sesion?next=${encodeURIComponent(redirectTo)}`}
+          href={loginHref}
           className="inline-flex min-h-11 items-center text-accent hover:underline"
         >
           {copy.signIn}
