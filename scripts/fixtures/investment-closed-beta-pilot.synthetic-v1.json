@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0137",
-    "schemaMigrationName": "rewards_signed_source_atomicity_hardening",
-    "schemaMigrationCount": 137,
+    "schemaMigration": "0139",
+    "schemaMigrationName": "rewards_source_integrity_transactional_boundaries_v4_1",
+    "schemaMigrationCount": 139,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
