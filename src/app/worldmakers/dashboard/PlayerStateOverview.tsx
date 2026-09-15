@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo } from 'react';
-import { worldMakersDashboardUrl } from '@/lib/worldmakers/routes';
+import { worldMakersDashboardPath } from '@/lib/worldmakers/routes';
 import { usePlayerState } from './PlayerStateProvider';
 import styles from './dashboard.module.css';
 
@@ -39,11 +40,11 @@ export function PlayerStateOverview({ detailed = false }: { detailed?: boolean }
     <>
       <div className={styles.statGrid}>
         {cards.map((card) => (
-          <a className={styles.statCard} href={worldMakersDashboardUrl(card.href)} key={card.label}>
+          <Link className={styles.statCard} href={worldMakersDashboardPath(card.href)} key={card.label}>
             <small>{card.label}</small>
             <strong>{card.value}</strong>
             <span>{card.body}</span>
-          </a>
+          </Link>
         ))}
       </div>
 
