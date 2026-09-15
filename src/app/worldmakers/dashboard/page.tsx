@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import { adventures } from '../portal-data';
 import { worldMakersVisuals } from '../visual-assets';
+import { GameHubResumePanel } from './GameHubResumePanel';
 import { PlayerStateOverview } from './PlayerStateOverview';
 import styles from './dashboard.module.css';
 
@@ -26,7 +27,7 @@ export default function WorldMakersDashboardPage() {
           <p className={styles.kicker}>Tu base de operaciones</p>
           <h1>Explora, construye y deja que el mundo recuerde.</h1>
           <p>
-            El Player Dashboard conecta tu identidad CTG One con las aventuras de World Makers y con el progreso real que el juego sincronice.
+            El Game Hub conecta tu identidad CTG One con las aventuras de World Makers y con el progreso real que el runtime sincronice.
           </p>
           <div className={styles.heroActions}>
             <a className={styles.primaryButton} href={`${WORLDMAKERS_ORIGIN}/adventures/${featured.slug}`}>
@@ -35,6 +36,18 @@ export default function WorldMakersDashboardPage() {
             <a className={styles.secondaryButton} href={`${PLAYER_DASHBOARD_ORIGIN}/progress`}>Ver mi progreso</a>
           </div>
         </div>
+      </section>
+
+      <section className={styles.section} aria-labelledby="dashboard-resume-title">
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.kicker}>Game Hub</p>
+            <h2 id="dashboard-resume-title">Retoma desde un estado que realmente exista.</h2>
+            <p>El acceso de continuidad sólo se activa cuando el backend puede verificar una partida sincronizada.</p>
+          </div>
+          <a className={styles.sectionLink} href={`${PLAYER_DASHBOARD_ORIGIN}/saves`}>Mis partidas →</a>
+        </div>
+        <GameHubResumePanel />
       </section>
 
       <section className={styles.section} aria-labelledby="dashboard-state-title">
