@@ -5,6 +5,7 @@ import { PlayerStateOverview } from './PlayerStateOverview';
 import styles from './dashboard.module.css';
 
 const WORLDMAKERS_ORIGIN = 'https://worldmakers.ctgone.com';
+const PLAYER_DASHBOARD_ORIGIN = 'https://ctgone.com/worldmakers/dashboard';
 
 export default function WorldMakersDashboardPage() {
   const featured = adventures[0]!;
@@ -31,7 +32,7 @@ export default function WorldMakersDashboardPage() {
             <a className={styles.primaryButton} href={`${WORLDMAKERS_ORIGIN}/adventures/${featured.slug}`}>
               Explorar {featured.title} <ArrowRight size={17} aria-hidden="true" />
             </a>
-            <a className={styles.secondaryButton} href={`${WORLDMAKERS_ORIGIN}/dashboard/progress`}>Ver mi progreso</a>
+            <a className={styles.secondaryButton} href={`${PLAYER_DASHBOARD_ORIGIN}/progress`}>Ver mi progreso</a>
           </div>
         </div>
       </section>
@@ -43,7 +44,7 @@ export default function WorldMakersDashboardPage() {
             <h2 id="dashboard-state-title">Tu actividad, sin datos inventados.</h2>
             <p>La web consulta el contrato autenticado de World Makers y muestra únicamente progreso que existe realmente.</p>
           </div>
-          <a className={styles.sectionLink} href={`${WORLDMAKERS_ORIGIN}/dashboard/progress`}>Abrir progreso →</a>
+          <a className={styles.sectionLink} href={`${PLAYER_DASHBOARD_ORIGIN}/progress`}>Abrir progreso →</a>
         </div>
         <PlayerStateOverview />
       </section>
@@ -55,7 +56,7 @@ export default function WorldMakersDashboardPage() {
             <h2 id="dashboard-adventures-title">Aventuras para seguir descubriendo.</h2>
             <p>Un catálogo pensado como mundos jugables, no como un menú académico.</p>
           </div>
-          <a className={styles.sectionLink} href={`${WORLDMAKERS_ORIGIN}/dashboard/adventures`}>Ver catálogo →</a>
+          <a className={styles.sectionLink} href={`${PLAYER_DASHBOARD_ORIGIN}/adventures`}>Ver catálogo →</a>
         </div>
         <div className={styles.adventureGrid}>
           {shelf.map((adventure) => (
