@@ -1,11 +1,11 @@
 import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { worldMakersDashboardPath, worldMakersPublicUrl } from '@/lib/worldmakers/routes';
 import { adventures } from '../portal-data';
 import { worldMakersVisuals } from '../visual-assets';
+import { GameHubResumePanel } from './GameHubResumePanel';
 import { PlayerStateOverview } from './PlayerStateOverview';
 import styles from './dashboard.module.css';
-
-const WORLDMAKERS_ORIGIN = 'https://worldmakers.ctgone.com';
-const PLAYER_DASHBOARD_ORIGIN = 'https://ctgone.com/worldmakers/dashboard';
 
 export default function WorldMakersDashboardPage() {
   const featured = adventures[0]!;
@@ -26,15 +26,27 @@ export default function WorldMakersDashboardPage() {
           <p className={styles.kicker}>Tu base de operaciones</p>
           <h1>Explora, construye y deja que el mundo recuerde.</h1>
           <p>
-            El Player Dashboard conecta tu identidad CTG One con las aventuras de World Makers y con el progreso real que el juego sincronice.
+            El Game Hub conecta tu identidad CTG One con las aventuras de World Makers y con el progreso real que el runtime sincronice.
           </p>
           <div className={styles.heroActions}>
-            <a className={styles.primaryButton} href={`${WORLDMAKERS_ORIGIN}/adventures/${featured.slug}`}>
+            <a className={styles.primaryButton} href={worldMakersPublicUrl(`/adventures/${featured.slug}`)}>
               Explorar {featured.title} <ArrowRight size={17} aria-hidden="true" />
             </a>
-            <a className={styles.secondaryButton} href={`${PLAYER_DASHBOARD_ORIGIN}/progress`}>Ver mi progreso</a>
+            <Link className={styles.secondaryButton} href={worldMakersDashboardPath('/progress')}>Ver mi progreso</Link>
           </div>
         </div>
+      </section>
+
+      <section className={styles.section} aria-labelledby="dashboard-resume-title">
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.kicker}>Game Hub</p>
+            <h2 id="dashboard-resume-title">Retoma desde un estado que realmente exista.</h2>
+            <p>El acceso de continuidad sólo se activa cuando el backend puede verificar una partida sincronizada.</p>
+          </div>
+          <Link className={styles.sectionLink} href={worldMakersDashboardPath('/saves')}>Mis partidas →</Link>
+        </div>
+        <GameHubResumePanel />
       </section>
 
       <section className={styles.section} aria-labelledby="dashboard-state-title">
@@ -44,7 +56,7 @@ export default function WorldMakersDashboardPage() {
             <h2 id="dashboard-state-title">Tu actividad, sin datos inventados.</h2>
             <p>La web consulta el contrato autenticado de World Makers y muestra únicamente progreso que existe realmente.</p>
           </div>
-          <a className={styles.sectionLink} href={`${PLAYER_DASHBOARD_ORIGIN}/progress`}>Abrir progreso →</a>
+          <Link className={styles.sectionLink} href={worldMakersDashboardPath('/progress')}>Abrir progreso →</Link>
         </div>
         <PlayerStateOverview />
       </section>
@@ -56,11 +68,11 @@ export default function WorldMakersDashboardPage() {
             <h2 id="dashboard-adventures-title">Aventuras para seguir descubriendo.</h2>
             <p>Un catálogo pensado como mundos jugables, no como un menú académico.</p>
           </div>
-          <a className={styles.sectionLink} href={`${PLAYER_DASHBOARD_ORIGIN}/adventures`}>Ver catálogo →</a>
+          <Link className={styles.sectionLink} href={worldMakersDashboardPath('/adventures')}>Ver catálogo →</Link>
         </div>
         <div className={styles.adventureGrid}>
           {shelf.map((adventure) => (
-            <a className={styles.adventureCard} href={`${WORLDMAKERS_ORIGIN}/adventures/${adventure.slug}`} key={adventure.slug}>
+            <a className={styles.adventureCard} href={worldMakersPublicUrl(`/adventures/${adventure.slug}`)} key={adventure.slug}>
               <small>{adventure.disciplines.join(' · ')}</small>
               <h3>{adventure.title}</h3>
               <p>{adventure.premise}</p>
