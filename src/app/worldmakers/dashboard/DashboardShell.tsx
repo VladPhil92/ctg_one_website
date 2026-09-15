@@ -12,9 +12,10 @@ import {
   Trophy,
   UserRound,
 } from 'lucide-react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { ctgOneUrl, worldMakersDashboardUrl, worldMakersPublicUrl } from '@/lib/worldmakers/routes';
+import { ctgOneUrl, worldMakersDashboardPath, worldMakersPublicUrl } from '@/lib/worldmakers/routes';
 import { worldMakersVisuals } from '../visual-assets';
 import { PlayerStateProvider } from './PlayerStateProvider';
 import styles from './dashboard.module.css';
@@ -65,19 +66,19 @@ export function DashboardShell({ children, displayName, email, emailVerified }: 
 
           <nav className={styles.nav} aria-label="Dashboard de jugador">
             {navItems.map((item) => {
-              const targetPath = `/worldmakers/dashboard${item.suffix}`;
+              const targetPath = worldMakersDashboardPath(item.suffix);
               const active = item.suffix ? pathname.endsWith(item.suffix) : pathname === '/worldmakers/dashboard';
               const Icon = item.icon;
               return (
-                <a
+                <Link
                   key={item.suffix || 'home'}
-                  href={worldMakersDashboardUrl(item.suffix)}
+                  href={targetPath}
                   className={active ? styles.navActive : styles.navItem}
                 >
                   <Icon size={18} aria-hidden="true" />
                   <span>{item.label}</span>
                   <span hidden>{targetPath}</span>
-                </a>
+                </Link>
               );
             })}
           </nav>
