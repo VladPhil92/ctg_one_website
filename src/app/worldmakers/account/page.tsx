@@ -8,6 +8,7 @@ import {
   Compass,
   Database,
   Gamepad2,
+  MapPinned,
   Radio,
   ShieldCheck,
   Sparkles,
@@ -160,10 +161,8 @@ export default async function WorldMakersAccountPage() {
           <div className={styles.heroCopy}>
             <p className={styles.kicker}>Mi World Makers</p>
             <h1>Hola, {firstName}.</h1>
-            <p>Tu Game Hub reúne identidad, aventuras y progreso de juego en un mismo lugar. Sólo mostramos datos que están realmente sincronizados.</p>
             <p>
-              Tu Player Hub reúne tu identidad, las aventuras del universo y, cuando exista una versión jugable conectada,
-              también tus partidas y descubrimientos. Sólo mostramos datos que provienen de fuentes reales.
+              Tu Game Hub reúne identidad, aventuras y progreso de juego en un mismo lugar. Sólo mostramos datos que están realmente sincronizados.
             </p>
           </div>
 
@@ -232,8 +231,6 @@ export default async function WorldMakersAccountPage() {
               <div>
                 <p className={styles.kicker}>Estado del jugador</p>
                 <h2>{runtimeSynced ? 'Tu progreso sincronizado está disponible.' : 'Tu perfil está preparado. El juego aún no envía progreso.'}</h2>
-                <p className={styles.kicker}>Preparación del jugador</p>
-                <h2>{completedAccountSteps} de {accountSteps.length} pasos listos.</h2>
               </div>
               <span className={styles.panelIcon}><Gamepad2 size={24} aria-hidden="true" /></span>
             </div>
@@ -289,21 +286,15 @@ export default async function WorldMakersAccountPage() {
           </aside>
         </div>
 
-        <section className={hubStyles.hubSection} aria-labelledby="adventure-catalog-title">
-          <div className={hubStyles.sectionHeading}>
+        <section className={styles.gameDataSection} aria-labelledby="game-data-title">
+          <div className={styles.sectionTitleRow}>
             <div>
               <p className={styles.kicker}>Game Hub</p>
               <h2 id="game-data-title">Tu actividad de juego</h2>
-              <p>Esta información proviene del estado sincronizado por el cliente de juego. Si todavía no has jugado una versión conectada, verás estados vacíos reales.</p>
-              <p className={styles.kicker}>Catálogo del universo</p>
-              <h2 id="adventure-catalog-title">Más mundos por descubrir.</h2>
               <p>
-                Estas aventuras provienen del catálogo real de World Makers. Su presencia aquí no significa que ya sean jugables.
+                Esta información proviene del estado sincronizado por el cliente de juego. Si todavía no has jugado una versión conectada, verás estados vacíos reales.
               </p>
             </div>
-            <a className={hubStyles.sectionLink} href="https://worldmakers.ctgone.com/adventures">
-              Ver las {adventures.length} aventuras <ArrowRight size={15} aria-hidden="true" />
-            </a>
           </div>
 
           <div className={styles.gameDataGrid}>
@@ -330,6 +321,23 @@ export default async function WorldMakersAccountPage() {
               <p>Especies, materiales, lugares y hallazgos aparecerán aquí sólo cuando hayan sido descubiertos dentro de una partida.</p>
               <span className={styles.emptyState}>{discoveryCount > 0 ? `${discoveryCount} descubrimientos` : 'Colección aún vacía'}</span>
             </article>
+          </div>
+        </section>
+
+        <section className={hubStyles.hubSection} aria-labelledby="adventure-catalog-title">
+          <div className={hubStyles.sectionHeading}>
+            <div>
+              <p className={styles.kicker}>Catálogo del universo</p>
+              <h2 id="adventure-catalog-title">Más mundos por descubrir.</h2>
+              <p>
+                Estas aventuras provienen del catálogo real de World Makers. Su presencia aquí no significa que ya sean jugables.
+              </p>
+            </div>
+            <a className={hubStyles.sectionLink} href="https://worldmakers.ctgone.com/adventures">
+              Ver las {adventures.length} aventuras <ArrowRight size={15} aria-hidden="true" />
+            </a>
+          </div>
+
           <div className={hubStyles.catalogGrid}>
             {adventureShelf.map((adventure, index) => (
               <a
@@ -351,44 +359,6 @@ export default async function WorldMakersAccountPage() {
                 </div>
               </a>
             ))}
-          </div>
-        </section>
-
-        <section className={hubStyles.hubSection} aria-labelledby="game-state-title">
-          <div className={hubStyles.gameStatePanel}>
-            <div className={hubStyles.gameStateIntro}>
-              <div>
-                <p className={styles.kicker}>Partidas y progreso</p>
-                <h2 id="game-state-title">Tu historia todavía no ha comenzado aquí.</h2>
-              </div>
-              <p>
-                World Makers aún no tiene una fuente de partidas conectada a este Player Hub. Cuando una versión jugable use tu cuenta,
-                este espacio mostrará únicamente progreso real sincronizado desde el juego.
-              </p>
-            </div>
-
-            <div className={hubStyles.stateGrid}>
-              <article className={hubStyles.stateCard}>
-                <strong>Partidas</strong>
-                <span>No hay partidas sincronizadas. Tus sesiones guardadas aparecerán cuando el juego pueda vincularlas a esta cuenta.</span>
-                <span className={hubStyles.emptyPill}>Sin datos todavía</span>
-              </article>
-              <article className={hubStyles.stateCard}>
-                <strong>Misiones</strong>
-                <span>Los objetivos y avances se mostrarán sólo cuando provengan de una experiencia jugable real.</span>
-                <span className={hubStyles.emptyPill}>Sin datos todavía</span>
-              </article>
-              <article className={hubStyles.stateCard}>
-                <strong>Descubrimientos</strong>
-                <span>Hallazgos, experimentos y logros se sincronizarán cuando exista esa conexión.</span>
-                <span className={hubStyles.emptyPill}>Sin datos todavía</span>
-              </article>
-            </div>
-
-            <p className={hubStyles.dataTruth}>
-              Este panel no genera XP, niveles, partidas ni estadísticas simuladas. La interfaz queda preparada para recibir datos del juego
-              cuando exista una fuente verificable.
-            </p>
           </div>
         </section>
 
@@ -421,8 +391,6 @@ export default async function WorldMakersAccountPage() {
 
         <p className={styles.truthNote}>
           Crear una cuenta no implica acceso inmediato a una beta jugable. Tu identidad ya está vinculada a CTG One; partidas, misiones, descubrimientos y logros aparecen sólo cuando el cliente de World Makers los sincroniza de forma verificable.
-          Crear una cuenta no implica acceso inmediato a una beta jugable. Tu cuenta ya está vinculada al ecosistema CTG One y este Player Hub
-          incorporará partidas, progreso, descubrimientos y logros únicamente cuando esas funciones estén disponibles y conectadas a una fuente real del juego.
         </p>
       </section>
     </main>
