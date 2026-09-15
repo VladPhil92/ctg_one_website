@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import {
   ArrowLeft,
@@ -16,12 +15,13 @@ import { worldMakersVisuals } from '../visual-assets';
 import styles from './account.module.css';
 
 export const metadata: Metadata = {
-  title: 'Mi cuenta | World Makers',
-  description: 'Centro personal de World Makers conectado a tu identidad CTG One.',
+  title: 'Dashboard | World Makers',
+  description: 'Tu base de operaciones personal en World Makers.',
   robots: { index: false, follow: false },
 };
 
 const SIGN_IN_URL = 'https://ctgone.com/iniciar-sesion?next=/worldmakers/account';
+const CTG_ONE_DASHBOARD_URL = 'https://ctgone.com/dashboard';
 
 export default async function WorldMakersAccountPage() {
   if (!isSupabaseConfigured) {
@@ -41,7 +41,16 @@ export default async function WorldMakersAccountPage() {
     typeof user.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
       ? user.user_metadata.full_name.trim()
       : 'Maker';
-
+  const firstName = displayName === 'Maker' ? 'Maker' : displayName.split(/\s+/)[0];
+  const initials =
+    displayName === 'Maker'
+      ? 'WM'
+      : displayName
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((part) => part.charAt(0))
+          .join('')
+          .toUpperCase();
   const emailVerified = Boolean(user.email_confirmed_at);
 
   return (
@@ -66,100 +75,154 @@ export default async function WorldMakersAccountPage() {
           />
           <span>
             <strong>World Makers</strong>
-            <small>Cuenta de jugador</small>
+            <small>Dashboard de jugador</small>
           </span>
         </a>
-        <a className={styles.backLink} href="https://worldmakers.ctgone.com">
-          <ArrowLeft size={16} aria-hidden="true" /> Volver al universo
-        </a>
+
+        <nav className={styles.headerActions} aria-label="Navegación del jugador">
+          <a className={styles.accountLink} href={CTG_ONE_DASHBOARD_URL}>
+            <UserRound size={16} aria-hidden="true" />
+            <span>Mi CTG One</span>
+          </a>
+          <a className={styles.backLink} href="https://worldmakers.ctgone.com">
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span>Volver al universo</span>
+          </a>
+        </nav>
       </header>
 
       <section className={styles.shell}>
-        <div className={styles.heroCopy}>
-          <p className={styles.kicker}>Player account · CTG One identity</p>
-          <h1>Hola, {displayName}.</h1>
-          <p>
-            Tu identidad CTG One es la puerta de entrada a World Makers. Este espacio reúne tu acceso al universo del juego sin duplicar cuentas ni credenciales.
-          </p>
-        </div>
+        <div className={styles.welcomeRow}>
+          <div className={styles.heroCopy}>
+            <p className={styles.kicker}>Mi World Makers</p>
+            <h1>Hola, {firstName}.</h1>
+            <p>Esta es tu base de operaciones para descubrir aventuras, seguir tu cuenta y entrar al universo de World Makers.</p>
+          </div>
 
-        <div className={styles.statusGrid}>
-          <article className={styles.statusCard}>
-            <span className={styles.statusIcon}><UserRound size={22} aria-hidden="true" /></span>
-            <div>
-              <small>Identidad</small>
-              <h2>Cuenta CTG One conectada</h2>
-              <p>{user.email ?? 'Correo asociado a tu identidad CTG One'}</p>
+          <aside className={styles.identityCard} aria-label="Perfil del jugador">
+            <div className={styles.avatar} aria-hidden="true">{initials}</div>
+            <div className={styles.identityCopy}>
+              <span className={styles.identityLabel}>Jugador</span>
+              <strong>{displayName}</strong>
+              <small>{user.email ?? 'Identidad CTG One conectada'}</small>
             </div>
-          </article>
-
-          <article className={styles.statusCard}>
-            <span className={styles.statusIcon}><ShieldCheck size={22} aria-hidden="true" /></span>
-            <div>
-              <small>Seguridad</small>
-              <h2>{emailVerified ? 'Correo verificado' : 'Verificación pendiente'}</h2>
-              <p>La misma identidad segura podrá acompañar tu progreso cuando las funciones de jugador estén habilitadas.</p>
-            </div>
-          </article>
-
-          <article className={styles.statusCard}>
-            <span className={styles.statusIcon}><Gamepad2 size={22} aria-hidden="true" /></span>
-            <div>
-              <small>World Makers</small>
-              <h2>Perfil de jugador preparado</h2>
-              <p>Progreso, mundos, descubrimientos y logros se integrarán aquí a medida que esas funciones estén disponibles.</p>
-            </div>
-          </article>
+            <span className={emailVerified ? styles.verifiedBadge : styles.pendingBadge}>
+              <ShieldCheck size={14} aria-hidden="true" />
+              {emailVerified ? 'Verificado' : 'Pendiente'}
+            </span>
+          </aside>
         </div>
 
         <div className={styles.dashboardGrid}>
-          <article className={styles.primaryPanel}>
-            <div className={styles.panelIcon}><Compass size={28} aria-hidden="true" /></div>
-            <p className={styles.kicker}>Tu próximo paso</p>
-            <h2>Empieza por conocer el universo.</h2>
-            <p>
-              Explora las aventuras y mundos anunciados, entiende cómo se juega y acompaña el desarrollo desde una cuenta que ya está lista para futuras funciones de jugador.
-            </p>
-            <div className={styles.actions}>
-              <a className={styles.primaryButton} href="https://worldmakers.ctgone.com/adventures">
-                Explorar aventuras <ArrowRight size={17} aria-hidden="true" />
-              </a>
-              <a className={styles.secondaryButton} href="https://worldmakers.ctgone.com/how-to-play">
-                Cómo se juega
-              </a>
+          <article className={styles.featuredAdventure}>
+            <img
+              className={styles.featuredImage}
+              src={worldMakersVisuals.gameplayOverview.src}
+              alt={worldMakersVisuals.gameplayOverview.alt}
+              width={worldMakersVisuals.gameplayOverview.width}
+              height={worldMakersVisuals.gameplayOverview.height}
+            />
+            <span className={styles.featuredShade} aria-hidden="true" />
+            <div className={styles.featuredContent}>
+              <div className={styles.featuredMeta}>
+                <span>Próxima aventura</span>
+                <span>Exploración · Ciencia · Construcción</span>
+              </div>
+              <h2>Caribbean Rainforest</h2>
+              <p>Adéntrate en un ecosistema vivo, observa, experimenta y construye soluciones que transformen el entorno.</p>
+              <div className={styles.actions}>
+                <a className={styles.primaryButton} href="https://worldmakers.ctgone.com/adventures">
+                  Conocer la aventura <ArrowRight size={17} aria-hidden="true" />
+                </a>
+                <a className={styles.secondaryButton} href="https://worldmakers.ctgone.com/how-to-play">
+                  Cómo se juega
+                </a>
+              </div>
             </div>
           </article>
 
-          <div className={styles.sidePanels}>
-            <a className={styles.actionCard} href="https://worldmakers.ctgone.com/community">
-              <Sparkles size={22} aria-hidden="true" />
+          <aside className={styles.playerPanel}>
+            <div className={styles.panelHeading}>
               <div>
-                <strong>Comunidad</strong>
-                <span>Recibe novedades y participa en futuras oportunidades.</span>
+                <p className={styles.kicker}>Tu cuenta</p>
+                <h2>Todo listo para tu perfil.</h2>
               </div>
-              <ArrowRight size={17} aria-hidden="true" />
+              <span className={styles.panelIcon}><Gamepad2 size={24} aria-hidden="true" /></span>
+            </div>
+
+            <div className={styles.accountStatusList}>
+              <div className={styles.statusRow}>
+                <span className={styles.statusIcon}><UserRound size={18} aria-hidden="true" /></span>
+                <div>
+                  <small>Identidad</small>
+                  <strong>CTG One conectada</strong>
+                </div>
+                <span className={styles.statusDot} aria-hidden="true" />
+              </div>
+              <div className={styles.statusRow}>
+                <span className={styles.statusIcon}><ShieldCheck size={18} aria-hidden="true" /></span>
+                <div>
+                  <small>Seguridad</small>
+                  <strong>{emailVerified ? 'Correo verificado' : 'Verificación pendiente'}</strong>
+                </div>
+                <span className={emailVerified ? styles.statusDot : styles.statusDotPending} aria-hidden="true" />
+              </div>
+              <div className={styles.statusRow}>
+                <span className={styles.statusIcon}><Compass size={18} aria-hidden="true" /></span>
+                <div>
+                  <small>Progreso</small>
+                  <strong>Tus avances vivirán aquí</strong>
+                </div>
+                <span className={styles.statusMuted}>Próximamente</span>
+              </div>
+            </div>
+
+            <a className={styles.manageAccount} href={CTG_ONE_DASHBOARD_URL}>
+              Gestionar identidad y seguridad <ArrowRight size={16} aria-hidden="true" />
             </a>
-            <a className={styles.actionCard} href="https://worldmakers.ctgone.com/educators">
-              <BookOpen size={22} aria-hidden="true" />
-              <div>
-                <strong>Para educadores</strong>
-                <span>Conoce cómo el aprendizaje vive dentro del gameplay.</span>
-              </div>
-              <ArrowRight size={17} aria-hidden="true" />
-            </a>
-            <Link className={styles.actionCard} href="/dashboard">
-              <UserRound size={22} aria-hidden="true" />
-              <div>
-                <strong>Mi CTG One</strong>
-                <span>Gestiona tu identidad, seguridad y demás servicios de tu cuenta.</span>
-              </div>
-              <ArrowRight size={17} aria-hidden="true" />
-            </Link>
-          </div>
+          </aside>
         </div>
 
+        <section className={styles.quickSection} aria-labelledby="quick-actions-title">
+          <div className={styles.sectionTitleRow}>
+            <div>
+              <p className={styles.kicker}>Explora</p>
+              <h2 id="quick-actions-title">¿Qué quieres hacer ahora?</h2>
+            </div>
+          </div>
+
+          <div className={styles.quickGrid}>
+            <a className={styles.actionCard} href="https://worldmakers.ctgone.com/adventures">
+              <span className={styles.actionIcon}><Compass size={23} aria-hidden="true" /></span>
+              <div>
+                <strong>Descubrir aventuras</strong>
+                <span>Conoce los mundos y experiencias del universo World Makers.</span>
+              </div>
+              <ArrowRight size={18} aria-hidden="true" />
+            </a>
+
+            <a className={styles.actionCard} href="https://worldmakers.ctgone.com/community">
+              <span className={styles.actionIcon}><Sparkles size={23} aria-hidden="true" /></span>
+              <div>
+                <strong>Entrar a la comunidad</strong>
+                <span>Novedades, participación y futuras oportunidades para jugadores.</span>
+              </div>
+              <ArrowRight size={18} aria-hidden="true" />
+            </a>
+
+            <a className={styles.actionCard} href="https://worldmakers.ctgone.com/educators">
+              <span className={styles.actionIcon}><BookOpen size={23} aria-hidden="true" /></span>
+              <div>
+                <strong>Aprender jugando</strong>
+                <span>Descubre cómo la ciencia y el aprendizaje se integran al gameplay.</span>
+              </div>
+              <ArrowRight size={18} aria-hidden="true" />
+            </a>
+          </div>
+        </section>
+
         <p className={styles.truthNote}>
-          Crear una cuenta no implica acceso inmediato a una beta jugable. Las funciones de jugador se habilitarán únicamente cuando estén disponibles y verificadas para uso público.
+          World Makers todavía no ofrece una beta pública jugable. Tu cuenta ya está vinculada al ecosistema CTG One y este dashboard irá incorporando progreso, mundos, descubrimientos y logros cuando esas funciones estén disponibles para jugadores.
         </p>
       </section>
     </main>
