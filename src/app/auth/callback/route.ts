@@ -33,9 +33,11 @@ export async function GET(request: NextRequest) {
       : crypto.randomUUID();
 
   // Registration confirmation is the only callback that contributes to this
-  // funnel. Password recovery intentionally redirects elsewhere and must not
+  // funnel. Both CTG One and World Makers registration destinations are
+  // validated local paths; password recovery redirects elsewhere and must not
   // inflate email verification or first-login activation milestones.
-  if (next === '/dashboard' && user && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  const isRegistrationConfirmation = next === '/dashboard' || next === '/worldmakers/account';
+  if (isRegistrationConfirmation && user && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     await Promise.all([
       recordFunnelEvent({
         eventName: 'email_verified',

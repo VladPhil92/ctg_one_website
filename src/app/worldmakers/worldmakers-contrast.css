@@ -1,0 +1,66 @@
+/*
+ * World Makers public contrast layer.
+ *
+ * Keep light-surface editorial sections in dark ink and reserve white type
+ * for genuinely dark/image-backed surfaces. These selectors intentionally
+ * anchor to stable public section/title IDs instead of CSS-module hashes so
+ * the accessibility contract survives CSS-module recompilation.
+ */
+
+#experiencia h2,
+#gameplay-title,
+#makers-title,
+#learning-title {
+  color: #071a22 !important;
+  text-shadow: none !important;
+}
+
+#world-makers-title,
+#worlds-title {
+  color: #ffffff !important;
+}
+
+/* Learning band: #dfeee5 is a light surface. White text is only ~1.2:1 here. */
+#aprendizaje #learning-title {
+  color: #071a22 !important;
+}
+
+#aprendizaje > div > div:last-child > p:first-child {
+  color: #2f6548 !important;
+}
+
+#aprendizaje > div > div:last-child > p:not(:first-child) {
+  color: #35554d !important;
+}
+
+#aprendizaje > div > div:last-child strong {
+  color: #10242a !important;
+}
+
+#aprendizaje > div > div:last-child span {
+  color: #35554d !important;
+}
+
+/* Text that sits on the image-backed learning card remains light on dark. */
+#aprendizaje > div > div:first-child strong {
+  color: #ffffff !important;
+}
+
+#aprendizaje > div > div:first-child span {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Preserve crisp hierarchy when the OS explicitly requests more contrast. */
+@media (prefers-contrast: more) {
+  #experiencia h2,
+  #gameplay-title,
+  #makers-title,
+  #learning-title {
+    color: #031217 !important;
+  }
+
+  #aprendizaje > div > div:last-child > p,
+  #aprendizaje > div > div:last-child span {
+    color: #24463d !important;
+  }
+}
