@@ -222,7 +222,7 @@ export default async function WorldMakersAccountPage() {
         </section>
 
         <p className={styles.truthNote}>
-          World Makers todavía no ofrece una beta pública jugable. Tu cuenta ya está vinculada al ecosistema CTG One y este dashboard irá incorporando progreso, mundos, descubrimientos y logros cuando esas funciones estén disponibles para jugadores.
+          Crear una cuenta no implica acceso inmediato a una beta jugable. Tu cuenta ya está vinculada al ecosistema CTG One y este dashboard irá incorporando progreso, mundos, descubrimientos y logros cuando esas funciones estén disponibles para jugadores.
         </p>
       </section>
     </main>
