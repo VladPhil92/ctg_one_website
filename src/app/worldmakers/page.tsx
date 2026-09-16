@@ -14,6 +14,7 @@ import {
   Zap,
 } from 'lucide-react';
 import styles from './worldmakers-home.module.css';
+import visualStyles from './worldmakers-visual-story-v3.module.css';
 import { worldMakersVisuals } from './visual-assets';
 
 const pillars = [
@@ -36,30 +37,6 @@ const pillars = [
     title: 'Transforma',
     copy: 'Tus decisiones dejan huella: recupera hábitats, resuelve problemas y cambia el mundo que habitas.',
     icon: Leaf,
-  },
-];
-
-const mediaMoments = [
-  {
-    title: 'Un mundo que responde a lo que haces',
-    copy: 'Exploración en primera persona, misiones, construcción y descubrimiento dentro de una misma experiencia.',
-    eyebrow: 'Exploración y aventura',
-    asset: worldMakersVisuals.gameplayOverview,
-    icon: Gamepad2,
-  },
-  {
-    title: 'La ciencia ocurre dentro del juego',
-    copy: 'Investiga fenómenos y usa la evidencia para resolver problemas reales del mundo.',
-    eyebrow: 'Descubre y experimenta',
-    asset: worldMakersVisuals.gameplayScience,
-    icon: Atom,
-  },
-  {
-    title: 'Construir también es pensar',
-    copy: 'Materiales, energía, agua y naturaleza forman parte de cada solución que diseñas.',
-    eyebrow: 'Crea soluciones',
-    asset: worldMakersVisuals.gameplayBuild,
-    icon: Wrench,
   },
 ];
 
@@ -170,9 +147,9 @@ export default function WorldMakersPage() {
 
           <nav className={styles.nav} aria-label="Navegación de World Makers">
             <Link href="#experiencia">Experiencia</Link>
+            <Link href="#universo">Universo</Link>
             <Link href="#mundos">Mundos</Link>
             <Link href="#makers">Makers</Link>
-            <Link href="#aprendizaje">Aprender jugando</Link>
           </nav>
 
           <Link href="/worldmakers/community" className={styles.headerCta}>
@@ -205,7 +182,7 @@ export default function WorldMakersPage() {
               Cada pregunta puede convertirse en un lugar, una misión o una nueva forma de cambiar el entorno.
             </p>
             <div className={styles.heroActions}>
-              <Link className={styles.primaryButton} href="#experiencia">
+              <Link className={styles.primaryButton} href="#universo">
                 Descubre World Makers <ArrowRight size={18} aria-hidden="true" />
               </Link>
               <Link className={styles.secondaryButton} href="/worldmakers/adventures">
@@ -239,7 +216,7 @@ export default function WorldMakersPage() {
             <h2>Un mundo no se memoriza. Se explora.</h2>
           </div>
           <p className={styles.sectionIntro}>
-            World Makers conecta aventura y pensamiento en un mismo loop: descubres algo, pruebas una idea, construyes una respuesta y ves cómo el mundo cambia.
+            Descubres algo, pruebas una idea, construyes una respuesta y ves cómo el mundo cambia. Ese es el loop central de World Makers.
           </p>
         </div>
 
@@ -256,37 +233,87 @@ export default function WorldMakersPage() {
         </div>
       </section>
 
-      <section className={`${styles.section} ${styles.mediaSection}`} aria-labelledby="gameplay-title">
-        <div className={styles.sectionHeader}>
+      <section id="universo" className={visualStyles.visualStory} aria-labelledby="visual-story-title">
+        <div className={visualStyles.storyIntro}>
           <div>
-            <p className={styles.kicker}>Dentro del juego</p>
-            <h2 id="gameplay-title">La aventura se entiende mejor cuando puedes verla.</h2>
+            <p className={visualStyles.storyKicker}>El mundo responde</p>
+            <h2 id="visual-story-title">No sólo recorres el mundo. Dejas huella en él.</h2>
           </div>
-          <p className={styles.sectionIntro}>
-            Explorar, investigar y construir no viven en menús separados: forman parte del mismo mundo y de las mismas decisiones del jugador.
+          <p>
+            World Makers une exploración, ciencia y construcción en una sola experiencia visual. Las decisiones del jugador tienen consecuencias visibles.
           </p>
         </div>
 
-        <div className={styles.mediaGrid}>
-          {mediaMoments.map(({ title, copy, eyebrow, asset, icon: Icon }) => (
-            <article className={styles.mediaCard} key={title}>
+        <article className={visualStyles.transformation}>
+          <img
+            src={worldMakersVisuals.beforeAfter.src}
+            alt={worldMakersVisuals.beforeAfter.alt}
+            width={worldMakersVisuals.beforeAfter.width}
+            height={worldMakersVisuals.beforeAfter.height}
+            loading="lazy"
+            decoding="async"
+            className={visualStyles.transformationImage}
+          />
+          <div className={visualStyles.transformationCopy}>
+            <span className={visualStyles.storyLabel}>Transformación del mundo</span>
+            <h3>Tus decisiones cambian lo que existe después.</h3>
+            <p>
+              Recupera un ecosistema, resuelve un problema o altera el equilibrio de un lugar. El antes y el después forman parte del juego.
+            </p>
+          </div>
+        </article>
+
+        <div className={visualStyles.storyDuo}>
+          <article className={visualStyles.storyPanel}>
+            <div className={visualStyles.panelVisual}>
               <img
-                src={asset.src}
-                alt={asset.alt}
-                width={asset.width}
-                height={asset.height}
+                src={worldMakersVisuals.experiment.src}
+                alt={worldMakersVisuals.experiment.alt}
+                width={worldMakersVisuals.experiment.width}
+                height={worldMakersVisuals.experiment.height}
                 loading="lazy"
                 decoding="async"
               />
-              <div className={styles.mediaBody}>
-                <span className={styles.mediaEyebrow}>
-                  <Icon size={15} aria-hidden="true" /> {eyebrow}
-                </span>
-                <h3>{title}</h3>
-                <p>{copy}</p>
-              </div>
-            </article>
-          ))}
+              <span className={visualStyles.panelIndex}>01 · Experimenta</span>
+            </div>
+            <div className={visualStyles.panelBody}>
+              <span className={visualStyles.storyLabel}>Ciencia aplicada</span>
+              <h3>La pregunta se convierte en mecánica.</h3>
+              <p>
+                Formula hipótesis, observa variables y usa resultados para tomar decisiones dentro de la aventura. El conocimiento aparece porque lo necesitas para avanzar.
+              </p>
+            </div>
+          </article>
+
+          <article className={visualStyles.storyPanel}>
+            <div className={visualStyles.panelVisual}>
+              <img
+                src={worldMakersVisuals.ecologicalConstruction.src}
+                alt={worldMakersVisuals.ecologicalConstruction.alt}
+                width={worldMakersVisuals.ecologicalConstruction.width}
+                height={worldMakersVisuals.ecologicalConstruction.height}
+                loading="lazy"
+                decoding="async"
+              />
+              <span className={visualStyles.panelIndex}>02 · Construye</span>
+            </div>
+            <div className={visualStyles.panelBody}>
+              <span className={visualStyles.storyLabel}>Construcción ecológica</span>
+              <h3>Construir es diseñar consecuencias.</h3>
+              <p>
+                Materiales, energía, agua y naturaleza son sistemas conectados. Una buena solución debe funcionar dentro del mundo, no sólo verse bien.
+              </p>
+            </div>
+          </article>
+        </div>
+
+        <div className={visualStyles.storyPrinciple}>
+          <div className={visualStyles.principleMark}>WM</div>
+          <div>
+            <strong>Una sola experiencia, no tres minijuegos separados.</strong>
+            <span>Explorar revela el problema. Experimentar produce evidencia. Construir transforma el entorno.</span>
+          </div>
+          <span className={visualStyles.principleMeta}>Explora → prueba → transforma</span>
         </div>
       </section>
 
@@ -390,10 +417,6 @@ export default function WorldMakersPage() {
               loading="lazy"
               decoding="async"
             />
-            <div className={styles.learningVisualBadge}>
-              <strong>El mundo es el laboratorio.</strong>
-              <span>La misión plantea el problema. Tú decides cómo construir la respuesta.</span>
-            </div>
           </div>
 
           <div className={styles.learningCopy}>
