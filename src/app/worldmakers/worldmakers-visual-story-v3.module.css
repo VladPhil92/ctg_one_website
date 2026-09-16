@@ -2,6 +2,7 @@
   width: min(1380px, calc(100% - 48px));
   margin: 0 auto;
   padding: 16px 0 124px;
+  scroll-margin-top: 110px;
 }
 
 .storyIntro {
@@ -238,6 +239,7 @@
   .visualStory {
     width: min(100% - 32px, 1380px);
     padding-bottom: 96px;
+    scroll-margin-top: 96px;
   }
 
   .storyIntro {
@@ -270,21 +272,44 @@
   .visualStory {
     width: calc(100% - 24px);
     padding-bottom: 72px;
+    scroll-margin-top: 88px;
   }
 
   .transformation {
-    min-height: 580px;
+    min-height: 0;
     border-radius: 26px;
+    background: #071a22;
+  }
+
+  .transformation::after {
+    display: none;
   }
 
   .transformationImage {
-    object-position: 54% center;
+    position: relative;
+    inset: auto;
+    z-index: 0;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .transformation:hover .transformationImage {
+    transform: none;
   }
 
   .transformationCopy {
-    left: 22px;
-    bottom: 26px;
-    width: calc(100% - 44px);
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: 100%;
+    padding: 28px 22px 32px;
+  }
+
+  .transformationCopy h3 {
+    font-size: clamp(2rem, 12vw, 3.15rem);
   }
 
   .storyPanel {
@@ -302,6 +327,7 @@
 
   .principleMeta {
     grid-column: 1;
+    white-space: normal;
   }
 }
 
