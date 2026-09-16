@@ -28,6 +28,16 @@
   padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
 }
 
+.nvet-visual-rail {
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+  scroll-padding-inline: 0.25rem;
+}
+
+.nvet-visual-rail::-webkit-scrollbar {
+  display: none;
+}
+
 @media (min-width: 768px) {
   .nvet-care-landing {
     padding-bottom: 0;
