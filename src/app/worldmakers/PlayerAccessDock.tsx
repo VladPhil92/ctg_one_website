@@ -27,6 +27,10 @@ function readDisplayName(user: { user_metadata?: Record<string, unknown>; email?
   return 'Maker';
 }
 
+function firstName(displayName: string) {
+  return displayName.trim().split(/\s+/)[0] || 'Maker';
+}
+
 export function PlayerAccessDock() {
   const pathname = usePathname();
   const [identity, setIdentity] = useState<PlayerIdentity>({ status: 'checking', displayName: null });
@@ -73,6 +77,10 @@ export function PlayerAccessDock() {
   if (identity.status === 'checking') {
     return (
       <aside className={styles.dock} aria-label="Acceso de jugador" data-state="checking">
+        <div className={styles.context}>
+          <span>World Makers Game Hub</span>
+          <small>Tu identidad de jugador</small>
+        </div>
         <a className={styles.hubEntry} href={worldMakersDashboardPath()}>
           <Gamepad2 size={17} aria-hidden="true" />
           <span>Game Hub</span>
@@ -84,6 +92,10 @@ export function PlayerAccessDock() {
   if (identity.status === 'member') {
     return (
       <aside className={styles.dock} aria-label="Área de jugador" data-state="member">
+        <div className={styles.context}>
+          <span>Hola, {firstName(identity.displayName)}</span>
+          <small>Tu base de operaciones</small>
+        </div>
         <a className={styles.memberHub} href={worldMakersDashboardPath()}>
           <Gamepad2 size={17} aria-hidden="true" />
           <span>Mi Game Hub</span>
@@ -98,6 +110,10 @@ export function PlayerAccessDock() {
 
   return (
     <aside className={styles.dock} aria-label="Acceso de jugador" data-state="guest">
+      <div className={styles.context}>
+        <span>World Makers Game Hub</span>
+        <small>Progreso · misiones · descubrimientos</small>
+      </div>
       <a className={styles.signIn} href={worldMakersSignInUrl()}>
         <LogIn size={16} aria-hidden="true" />
         <span>Iniciar sesión</span>
