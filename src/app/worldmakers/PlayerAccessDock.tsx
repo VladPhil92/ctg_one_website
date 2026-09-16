@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import {
-  worldMakersDashboardPath,
+  worldMakersDashboardUrl,
   worldMakersRegistrationUrl,
   worldMakersSignInUrl,
 } from '@/lib/worldmakers/routes';
@@ -81,7 +81,7 @@ export function PlayerAccessDock() {
           <span>World Makers Game Hub</span>
           <small>Tu identidad de jugador</small>
         </div>
-        <a className={styles.hubEntry} href={worldMakersDashboardPath()}>
+        <a className={styles.hubEntry} href={worldMakersDashboardUrl()}>
           <Gamepad2 size={17} aria-hidden="true" />
           <span>Game Hub</span>
         </a>
@@ -96,11 +96,11 @@ export function PlayerAccessDock() {
           <span>Hola, {firstName(identity.displayName)}</span>
           <small>Tu base de operaciones</small>
         </div>
-        <a className={styles.memberHub} href={worldMakersDashboardPath()}>
+        <a className={styles.memberHub} href={worldMakersDashboardUrl()}>
           <Gamepad2 size={17} aria-hidden="true" />
           <span>Mi Game Hub</span>
         </a>
-        <a className={styles.profile} href={worldMakersDashboardPath('/profile')} aria-label="Abrir perfil de jugador">
+        <a className={styles.profile} href={worldMakersDashboardUrl('/profile')} aria-label="Abrir perfil de jugador">
           <UserRound size={16} aria-hidden="true" />
           <span>{identity.displayName}</span>
         </a>
