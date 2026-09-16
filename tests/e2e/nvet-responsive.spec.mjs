@@ -11,12 +11,24 @@ async function expectNoHorizontalOverflow(page) {
 }
 
 async function expectVisualLibraryImagesLoaded(page) {
-  const brokenImages = await page.locator('[data-testid="nvet-visual-library"] img').evaluateAll((images) =>
-    images
-      .filter((image) => !image.complete || image.naturalWidth === 0)
-      .map((image) => image.getAttribute('src')),
-  );
-  expect(brokenImages).toEqual([]);
+  const visualLibrary = page.getByTestId('nvet-visual-library');
+  await visualLibrary.scrollIntoViewIfNeeded();
+
+  const images = visualLibrary.locator('img');
+  const count = await images.count();
+
+  for (let index = 0; index < count; index += 1) {
+    const image = images.nth(index);
+    await image.scrollIntoViewIfNeeded();
+    await expect
+      .poll(
+        () => image.evaluate((element) => ({ complete: element.complete, naturalWidth: element.naturalWidth })),
+        { timeout: 10000 },
+      )
+      .toMatchObject({ complete: true });
+    const naturalWidth = await image.evaluate((element) => element.naturalWidth);
+    expect(naturalWidth).toBeGreaterThan(0);
+  }
 }
 
 test.describe('Nvet Care responsive public landing', () => {
@@ -56,6 +68,7 @@ test.describe('Nvet Care responsive public landing', () => {
     expect(landingPaddingBottom).toBeGreaterThan(70);
 
     const rail = page.locator('.nvet-visual-rail');
+    await rail.scrollIntoViewIfNeeded();
     await expect(rail).toBeVisible();
     const railDimensions = await rail.evaluate((element) => ({
       scrollWidth: element.scrollWidth,
