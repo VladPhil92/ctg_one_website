@@ -7,6 +7,7 @@ const publicApi = fs.readFileSync('src/app/api/worldmakers/interest/route.ts', '
 const adminApi = fs.readFileSync('src/app/api/admin/worldmakers/interest/route.ts', 'utf8');
 const playerStateRoute = fs.readFileSync('src/app/api/worldmakers/player-state/route.ts', 'utf8');
 const playerStateBridge = fs.readFileSync('src/lib/worldmakers/player-state-bridge.ts', 'utf8');
+const worldMakersRoutes = fs.readFileSync('src/lib/worldmakers/routes.ts', 'utf8');
 const publicPage = fs.readFileSync('src/app/worldmakers/community/page.tsx', 'utf8');
 const publicForm = fs.readFileSync('src/app/worldmakers/community/CommunityInterestForm.tsx', 'utf8');
 const privacyPage = fs.readFileSync('src/app/worldmakers/privacy/page.tsx', 'utf8');
@@ -89,8 +90,12 @@ assert.ok(playerAccessStyles.includes('height: calc(84px + env(safe-area-inset-b
 assert.ok(playerAccessStyles.includes('bottom: calc(12px + env(safe-area-inset-bottom))'), 'mobile player dock must respect the device safe-area inset');
 assert.ok(playerAccessDock.includes('Iniciar sesión'), 'player access dock must expose sign in');
 assert.ok(playerAccessDock.includes('Crear cuenta'), 'player access dock must expose account creation');
-assert.ok(playerAccessDock.includes('https://ctgone.com/iniciar-sesion?next=%2Fworldmakers%2Faccount'), 'World Makers sign in must use the canonical CTG One auth origin and return to the player hub');
-assert.ok(playerAccessDock.includes('https://ctgone.com/registro?next=%2Fworldmakers%2Faccount'), 'World Makers registration must use the canonical CTG One auth origin and return to the player hub');
+assert.ok(playerAccessDock.includes('worldMakersSignInUrl()'), 'player access dock must use the centralized World Makers sign-in route');
+assert.ok(playerAccessDock.includes('worldMakersRegistrationUrl()'), 'player access dock must use the centralized World Makers registration route');
+assert.ok(worldMakersRoutes.includes("export const CTG_ONE_ORIGIN = 'https://ctgone.com'"), 'World Makers auth must keep the canonical CTG One origin');
+assert.ok(worldMakersRoutes.includes("export const WORLDMAKERS_DASHBOARD_PATH = '/worldmakers/dashboard'"), 'World Makers auth must return to the canonical player dashboard');
+assert.ok(worldMakersRoutes.includes("/iniciar-sesion?next=${encodeURIComponent(nextPath)}"), 'World Makers sign-in helper must preserve a validated encoded return path');
+assert.ok(worldMakersRoutes.includes("/registro?next=${encodeURIComponent(nextPath)}"), 'World Makers registration helper must preserve a validated encoded return path');
 assert.ok(playerAccountPage.includes('supabase.auth.getUser()'), 'player account hub must validate the authenticated user server-side');
 assert.ok(playerAccountPage.includes('Crear una cuenta no implica acceso inmediato a una beta jugable'), 'player account hub must preserve public availability truth');
 assert.ok(playerAccountPage.includes('Sin datos de gameplay'), 'Game Hub must preserve an honest empty-progress state before first runtime sync');

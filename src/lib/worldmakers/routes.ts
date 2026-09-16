@@ -19,6 +19,14 @@ export function worldMakersDashboardUrl(suffix = '') {
   return `${CTG_ONE_ORIGIN}${worldMakersDashboardPath(suffix)}`;
 }
 
+export function worldMakersSignInUrl(nextPath = WORLDMAKERS_DASHBOARD_PATH) {
+  return `${CTG_ONE_ORIGIN}/iniciar-sesion?next=${encodeURIComponent(nextPath)}`;
+}
+
+export function worldMakersRegistrationUrl(nextPath = WORLDMAKERS_DASHBOARD_PATH) {
+  return `${CTG_ONE_ORIGIN}/registro?next=${encodeURIComponent(nextPath)}`;
+}
+
 export function ctgOneUrl(path = '') {
   return `${CTG_ONE_ORIGIN}${normalizeSuffix(path)}`;
 }

@@ -1,19 +1,13 @@
 'use client';
 
-import { LogIn, UserPlus } from 'lucide-react';
+import { Gamepad2, LogIn, UserPlus } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import {
+  worldMakersDashboardUrl,
+  worldMakersRegistrationUrl,
+  worldMakersSignInUrl,
+} from '@/lib/worldmakers/routes';
 import styles from './player-access.module.css';
-
-const SIGN_IN_URL = 'https://ctgone.com/iniciar-sesion?next=%2Fworldmakers%2Fdashboard';
-const CREATE_ACCOUNT_URL = 'https://ctgone.com/registro?next=%2Fworldmakers%2Fdashboard';
-
-// Compatibility markers: previously issued bookmarks and auth links can still
-// target the historical account route while the branded host canonicalizes it
-// to /dashboard. Keep these explicit until the legacy route is retired.
-const LEGACY_SIGN_IN_URL = 'https://ctgone.com/iniciar-sesion?next=%2Fworldmakers%2Faccount';
-const LEGACY_CREATE_ACCOUNT_URL = 'https://ctgone.com/registro?next=%2Fworldmakers%2Faccount';
-void LEGACY_SIGN_IN_URL;
-void LEGACY_CREATE_ACCOUNT_URL;
 
 export function PlayerAccessDock() {
   const pathname = usePathname();
@@ -29,11 +23,19 @@ export function PlayerAccessDock() {
 
   return (
     <aside className={styles.dock} aria-label="Acceso de jugador">
-      <a className={styles.signIn} href={SIGN_IN_URL}>
+      <div className={styles.context}>
+        <span>World Makers Game Hub</span>
+        <small>Progreso · misiones · descubrimientos</small>
+      </div>
+      <a className={styles.hubEntry} href={worldMakersDashboardUrl()}>
+        <Gamepad2 size={17} aria-hidden="true" />
+        <span>Abrir Game Hub</span>
+      </a>
+      <a className={styles.signIn} href={worldMakersSignInUrl()}>
         <LogIn size={16} aria-hidden="true" />
         <span>Iniciar sesión</span>
       </a>
-      <a className={styles.create} href={CREATE_ACCOUNT_URL}>
+      <a className={styles.create} href={worldMakersRegistrationUrl()}>
         <UserPlus size={16} aria-hidden="true" />
         <span>Crear cuenta</span>
       </a>
