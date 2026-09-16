@@ -19,7 +19,7 @@ type VisualCard = {
   imageClassName?: string;
 };
 
-function VisualCard({ card, priority = false }: { card: VisualCard; priority?: boolean }) {
+function VisualCard({ card, priority = false, es }: { card: VisualCard; priority?: boolean; es: boolean }) {
   const Icon = card.icon;
   const dark = card.tone === 'dark';
 
@@ -32,7 +32,7 @@ function VisualCard({ card, priority = false }: { card: VisualCard; priority?: b
     >
       <Image
         src={card.asset.src}
-        alt={card.asset.altEs}
+        alt={es ? card.asset.altEs : card.asset.altEn}
         fill
         priority={priority}
         sizes="(min-width: 1280px) 38vw, (min-width: 768px) 48vw, 88vw"
@@ -205,7 +205,7 @@ export function NvetCareVisualLibrary() {
         <div className="nvet-visual-rail mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-3 lg:grid lg:grid-cols-2 lg:overflow-visible lg:pb-0">
           {copy.cards.map((card, index) => (
             <div key={card.id} className="w-[86vw] max-w-[620px] shrink-0 lg:w-auto lg:max-w-none">
-              <VisualCard card={card} priority={index === 0} />
+              <VisualCard card={card} priority={index === 0} es={es} />
             </div>
           ))}
         </div>
