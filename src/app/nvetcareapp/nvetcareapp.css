@@ -2,6 +2,7 @@
   background: #ffffff;
   color: #0d1b2a;
   font-family: var(--font-poppins-nvet), Poppins, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  scroll-behavior: smooth;
 }
 
 .nvet-care-page * {
@@ -13,7 +14,28 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+.nvet-care-page a:focus-visible,
+.nvet-care-page button:focus-visible {
+  outline: 2px solid #34b27a;
+  outline-offset: 3px;
+}
+
+.nvet-care-page section[id] {
+  scroll-margin-top: 5.5rem;
+}
+
+.nvet-care-landing {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .nvet-care-landing {
+    padding-bottom: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .nvet-care-page,
   .nvet-care-page *,
   .nvet-care-page *::before,
   .nvet-care-page *::after {
