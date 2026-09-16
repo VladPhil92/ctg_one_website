@@ -35,7 +35,7 @@ function VisualCard({ card, priority = false, es }: { card: VisualCard; priority
         alt={es ? card.asset.altEs : card.asset.altEn}
         fill
         priority={priority}
-        sizes="(min-width: 1280px) 38vw, (min-width: 768px) 48vw, 88vw"
+        sizes="(min-width: 1280px) 38vw, (min-width: 1024px) 46vw, (min-width: 768px) 620px, 88vw"
         className={`transition duration-700 ease-out group-hover:scale-[1.025] ${card.imageClassName ?? 'object-cover'}`}
       />
       <div
