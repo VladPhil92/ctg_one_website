@@ -19,7 +19,10 @@
 }
 
 .signIn,
-.create {
+.create,
+.hubEntry,
+.memberHub,
+.profile {
   min-height: 42px;
   padding: 0 14px;
   display: inline-flex;
@@ -34,31 +37,56 @@
   transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 
-.signIn {
+.signIn,
+.profile {
   color: rgba(255, 255, 255, 0.86);
   background: rgba(255, 255, 255, 0.055);
 }
 
-.create {
+.create,
+.memberHub,
+.hubEntry {
   background: #c9f46d;
   color: #10251b;
 }
 
+.hubEntry {
+  min-width: 126px;
+}
+
+.profile {
+  max-width: 190px;
+}
+
+.profile span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .signIn:hover,
-.create:hover {
+.create:hover,
+.hubEntry:hover,
+.memberHub:hover,
+.profile:hover {
   transform: translateY(-1px);
 }
 
-.signIn:hover {
+.signIn:hover,
+.profile:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.create:hover {
+.create:hover,
+.hubEntry:hover,
+.memberHub:hover {
   box-shadow: 0 10px 28px rgba(201, 244, 109, 0.22);
 }
 
 .signIn:focus-visible,
-.create:focus-visible {
+.create:focus-visible,
+.hubEntry:focus-visible,
+.memberHub:focus-visible,
+.profile:focus-visible {
   outline: 2px solid #74e9e1;
   outline-offset: 3px;
 }
@@ -80,16 +108,32 @@
   }
 
   .signIn,
-  .create {
+  .create,
+  .hubEntry,
+  .memberHub,
+  .profile {
     flex: 1;
     min-width: 0;
     padding-inline: 10px;
+  }
+
+  .profile {
+    max-width: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .profile span {
+    max-width: 96px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .signIn,
-  .create {
+  .create,
+  .hubEntry,
+  .memberHub,
+  .profile {
     transition: none;
   }
 }
