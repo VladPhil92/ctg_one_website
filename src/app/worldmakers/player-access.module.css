@@ -8,14 +8,41 @@
   gap: 7px;
   padding: 7px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
-  background: rgba(4, 22, 29, 0.82);
+  border-radius: 24px;
+  background: rgba(4, 22, 29, 0.86);
   box-shadow: 0 16px 50px rgba(0, 12, 18, 0.28);
   backdrop-filter: blur(18px) saturate(135%);
 }
 
 .mobileDockSpacer {
   display: none;
+}
+
+.context {
+  min-width: 176px;
+  padding: 2px 12px 2px 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.context span,
+.context small {
+  display: block;
+}
+
+.context span {
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.context small {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.64rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .signIn,
@@ -89,6 +116,16 @@
 .profile:focus-visible {
   outline: 2px solid #74e9e1;
   outline-offset: 3px;
+}
+
+@media (max-width: 980px) {
+  .context {
+    display: none;
+  }
+
+  .dock {
+    border-radius: 999px;
+  }
 }
 
 @media (max-width: 760px) {
