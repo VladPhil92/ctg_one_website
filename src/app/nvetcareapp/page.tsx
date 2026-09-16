@@ -9,8 +9,10 @@ export const revalidate = 0;
 export default function NvetCareAppPage() {
   return (
     <PublicPageShell>
-      <NvetCareAppSection />
-      <NvetCareMobileActionBar />
+      <div className="nvet-care-landing">
+        <NvetCareAppSection />
+        <NvetCareMobileActionBar />
+      </div>
     </PublicPageShell>
   );
 }
