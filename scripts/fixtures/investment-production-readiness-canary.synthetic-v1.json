@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0141",
-  "expectedMigrationName": "expand_service_federation_rate_limits",
-  "expectedMigrationCount": 141,
+  "expectedMigration": "0142",
+  "expectedMigrationName": "reconcile_identity_federation_rate_limits",
+  "expectedMigrationCount": 142,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
