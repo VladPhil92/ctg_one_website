@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0139",
-  "expectedMigrationName": "rewards_source_integrity_transactional_boundaries_v4_1",
-  "expectedMigrationCount": 139,
+  "expectedMigration": "0141",
+  "expectedMigrationName": "expand_service_federation_rate_limits",
+  "expectedMigrationCount": 141,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
