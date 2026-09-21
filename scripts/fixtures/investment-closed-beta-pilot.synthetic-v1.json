@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0139",
-    "schemaMigrationName": "rewards_source_integrity_transactional_boundaries_v4_1",
-    "schemaMigrationCount": 139,
+    "schemaMigration": "0142",
+    "schemaMigrationName": "reconcile_identity_federation_rate_limits",
+    "schemaMigrationCount": 142,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

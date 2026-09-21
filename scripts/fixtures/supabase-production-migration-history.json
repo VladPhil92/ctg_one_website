@@ -2,7 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-14T15:52:04Z",
+  "capturedAt": "2026-09-21T00:21:48Z",
   "source": "Supabase production migration history",
   "migrations": [
     { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
@@ -49,6 +49,9 @@
     { "logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4" },
     { "logicalVersion": "0137", "remoteVersion": "20260914132842", "remoteName": "0137_rewards_signed_source_atomicity_hardening" },
     { "logicalVersion": "0138", "remoteVersion": "20260914154606", "remoteName": "0138_rewards_signed_source_integrity_hardening_v4_1" },
-    { "logicalVersion": "0139", "remoteVersion": "20260914155204", "remoteName": "0139_rewards_source_integrity_transactional_boundaries_v4_1" }
+    { "logicalVersion": "0139", "remoteVersion": "20260914155204", "remoteName": "0139_rewards_source_integrity_transactional_boundaries_v4_1" },
+    { "logicalVersion": "0140", "remoteVersion": "20260921001007", "remoteName": "kev_identity_federation" },
+    { "logicalVersion": "0141", "remoteVersion": "20260921001120", "remoteName": "expand_service_federation_rate_limits" },
+    { "logicalVersion": "0142", "remoteVersion": "20260921002148", "remoteName": "reconcile_identity_federation_rate_limits" }
   ]
 }
