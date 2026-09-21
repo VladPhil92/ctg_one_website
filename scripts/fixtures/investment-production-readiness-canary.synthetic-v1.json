@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0142",
-  "expectedMigrationName": "reconcile_identity_federation_rate_limits",
-  "expectedMigrationCount": 142,
+  "expectedMigration": "0143",
+  "expectedMigrationName": "runtime_schema_requirement_probe_timestamp_compatibility",
+  "expectedMigrationCount": 143,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

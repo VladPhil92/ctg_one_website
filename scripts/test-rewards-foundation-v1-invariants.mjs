@@ -65,9 +65,9 @@ assert.match(services, /id: 'rewards'[\s\S]*href: '\/dashboard\/rewards'/, 'Rewa
 assert.match(services, /id: 'rewards'[\s\S]*status: 'DEVELOPMENT'/, 'Rewards must remain DEVELOPMENT, not LIVE.');
 assert.match(services, /id: 'rewards'[\s\S]*publicHref: '\/rewards'/, 'Rewards must retain a public maturity surface.');
 assert.ok(funnel.includes("'rewards'"), 'Rewards must be an approved funnel service key.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0142'/, 'Repository schema authority must reflect the current additive global schema.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'reconcile_identity_federation_rate_limits'/, 'Current schema authority must name the latest additive global migration.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 142/, 'Current schema migration count must remain aligned with repository history.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0143'/, 'Repository schema authority must reflect the current additive global schema.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'runtime_schema_requirement_probe_timestamp_compatibility'/, 'Current schema authority must name the latest additive global migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 143/, 'Current schema migration count must remain aligned with repository history.');
 
 for (const truth of ['**does not activate**', 'No `redeem`', 'Moving CTG Rewards from `DEVELOPMENT`']) {
   assert.ok(docs.includes(truth), `Rewards governance document must retain: ${truth}`);
