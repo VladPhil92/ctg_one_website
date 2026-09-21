@@ -1,6 +1,5 @@
--- Expand the service-role-only federation exchange limiter to every
--- explicitly supported CTG One relying party. Unknown scope/actor pairs remain
--- rejected before any counter mutation.
+-- Reconcile CTG One federation provider and rate-limit allow-lists after Kev onboarding.
+-- Preserve every existing relying party and Rewards signed-source scope while adding Kev.
 
 create or replace function public.consume_service_api_rate_limit(
   p_scope text,
@@ -19,29 +18,52 @@ declare
   v_now timestamptz := clock_timestamp();
   v_started_at timestamptz;
   v_request_count integer;
-  v_limit constant integer := 120;
+  v_limit integer;
   v_retry integer;
 begin
-  if not (
-    (p_scope = 'federation.vertice.exchange' and p_actor_key = 'vertice')
-    or (p_scope = 'federation.pisao.exchange' and p_actor_key = 'pisao')
-    or (p_scope = 'federation.kev.exchange' and p_actor_key = 'kev')
-  ) then
+  if p_scope = 'federation.vertice.exchange' then
+    if p_actor_key is distinct from 'vertice' then
+      raise exception 'SERVICE_RATE_LIMIT_ACTOR_INVALID';
+    end if;
+    v_limit := 120;
+  elsif p_scope = 'federation.pisao.exchange' then
+    if p_actor_key is distinct from 'pisao' then
+      raise exception 'SERVICE_RATE_LIMIT_ACTOR_INVALID';
+    end if;
+    v_limit := 120;
+  elsif p_scope = 'federation.nvet.mobile.exchange' then
+    if p_actor_key is distinct from 'nvet' then
+      raise exception 'SERVICE_RATE_LIMIT_ACTOR_INVALID';
+    end if;
+    v_limit := 120;
+  elsif p_scope = 'federation.kev.exchange' then
+    if p_actor_key is distinct from 'kev' then
+      raise exception 'SERVICE_RATE_LIMIT_ACTOR_INVALID';
+    end if;
+    v_limit := 120;
+  elsif p_scope = 'rewards.source.public' then
+    if p_actor_key is distinct from 'public' then
+      raise exception 'SERVICE_RATE_LIMIT_ACTOR_INVALID';
+    end if;
+    v_limit := 1200;
+  elsif p_scope = 'rewards.source.preverify' then
+    if p_actor_key !~ '^r_[0-9a-f]{40}$' then
+      raise exception 'SERVICE_RATE_LIMIT_ACTOR_INVALID';
+    end if;
+    v_limit := 60;
+  elsif p_scope = 'rewards.source.connector' then
+    if p_actor_key !~ '^c_[a-z0-9][a-z0-9_-]{1,47}$' then
+      raise exception 'SERVICE_RATE_LIMIT_ACTOR_INVALID';
+    end if;
+    v_limit := 600;
+  else
     raise exception 'SERVICE_RATE_LIMIT_SCOPE_INVALID';
   end if;
 
   insert into private.service_api_rate_limit_windows(
-    scope,
-    actor_key,
-    window_started_at,
-    request_count,
-    updated_at
+    scope, actor_key, window_started_at, request_count, updated_at
   ) values (
-    p_scope,
-    p_actor_key,
-    v_now,
-    0,
-    v_now
+    p_scope, p_actor_key, v_now, 0, v_now
   )
   on conflict (scope, actor_key) do nothing;
 
@@ -87,4 +109,4 @@ grant execute on function public.consume_service_api_rate_limit(text, text)
   to service_role;
 
 comment on function public.consume_service_api_rate_limit(text, text) is
-  'Service-role-only fixed-window limiter for explicitly allow-listed CTG One federation exchanges: vertice, pisao, and kev.';
+  'Service-role-only durable limiter for CTG One federation exchanges and Rewards signed-source public/requester/connector boundaries.';
