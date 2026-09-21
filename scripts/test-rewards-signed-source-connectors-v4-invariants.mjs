@@ -122,9 +122,9 @@ assert.match(panel, /Reconciliación fuente ↔ shadow/, 'UI must expose source-
 assert.doesNotMatch(panel, /acreditar puntos ahora|earning comercial activo|redimir ahora/i, 'v4 UI must not expose commercial activation claims.');
 assert.match(nav, /href: '\/admin\/rewards\/connectors', label: 'Rewards Sources', roles: \['SUPER_ADMIN'\]/, 'Signed Sources navigation must remain SUPER_ADMIN-only.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0141'/, 'Repository schema authority must reflect the current additive global schema.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'expand_service_federation_rate_limits'/, 'Schema authority must name the current additive global migration.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 141/, 'Schema migration count must align with the current global schema.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0142'/, 'Repository schema authority must reflect the current additive global schema.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'reconcile_identity_federation_rate_limits'/, 'Schema authority must name the current additive global migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 142/, 'Schema migration count must align with the current global schema.');
 assert.match(history, /"logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4"/, 'Production provenance must retain the real 0136 Supabase migration.');
 assert.match(history, /"logicalVersion": "0137", "remoteVersion": "20260914132842", "remoteName": "0137_rewards_signed_source_atomicity_hardening"/, 'Production provenance must contain the real 0137 Supabase hardening migration.');
 assert.match(history, /"logicalVersion": "0138", "remoteVersion": "20260914154606", "remoteName": "0138_rewards_signed_source_integrity_hardening_v4_1"/, 'Production provenance must retain the real 0138 Supabase hardening migration.');
