@@ -14,6 +14,7 @@ import {
   UserRoundCheck,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 type Offering = {
   id: string;
@@ -140,8 +141,8 @@ export function EducationCampusClient() {
             <div className="mt-7 flex items-center gap-3" aria-hidden="true"><span className="h-px w-24 bg-[#6f0d12]" /><span className="h-2 w-2 rounded-full bg-[#6f0d12]" /></div>
             <p className="mt-7 max-w-3xl font-serif text-lg leading-8 text-[#564a42] sm:text-xl">Conferencias, libros, cursos, clases, recursos y servicios educativos viven dentro de la misma identidad de CTG One. Lo que adquieras o te sea asignado aparece en tu biblioteca personal.</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href={accountHref} aria-disabled={isLoading} className="inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">{accountLabel}<ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
-              {!isAuthenticated && !isLoading ? <a href="/registro?next=/jpvalderrama/campus" className="inline-flex min-h-12 items-center rounded-sm border border-[#6f0d12]/35 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Crear cuenta CTG One</a> : null}
+              <Link href={accountHref} aria-disabled={isLoading} className="inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">{accountLabel}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+              {!isAuthenticated && !isLoading ? <Link href="/registro?next=/jpvalderrama/campus" className="inline-flex min-h-12 items-center rounded-sm border border-[#6f0d12]/35 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Crear cuenta CTG One</Link> : null}
             </div>
           </div>
 
@@ -178,7 +179,7 @@ export function EducationCampusClient() {
               <p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#6f0d12]">Catálogo publicado</p>
               <h2 className="mt-3 font-serif text-4xl text-[#17110e] sm:text-5xl">Disponibilidad real, no productos ficticios.</h2>
             </div>
-            {isAuthenticated ? <a href="/dashboard/educacion" className="inline-flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Mi biblioteca <ArrowRight className="h-4 w-4" aria-hidden="true" /></a> : null}
+            {isAuthenticated ? <Link href="/dashboard/educacion" className="inline-flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Mi biblioteca <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link> : null}
           </div>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -193,7 +194,7 @@ export function EducationCampusClient() {
                 </div>
                 <h3 className="mt-6 font-serif text-2xl leading-tight text-[#17110e]">{offering.title}</h3>
                 <p className="mt-4 flex-1 font-serif text-[15px] leading-7 text-[#665950]">{offering.summary}</p>
-                <a href={offering.access_path ?? '/contact'} className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Ver información <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+                <Link href={offering.access_path ?? '/contact'} className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Ver información <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
               </article>
             ))}
           </div>
@@ -214,7 +215,7 @@ export function EducationCampusClient() {
               <Building2 className="h-7 w-7 text-[#6f0d12]" aria-hidden="true" />
               <h3 className="mt-5 font-serif text-3xl text-[#17110e]">Identifícate para solicitar asesoría.</h3>
               <p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">Así la institución conserva un historial único de solicitudes, propuestas y servicios dentro del ecosistema.</p>
-              <a href="/iniciar-sesion?next=/jpvalderrama/campus%23instituciones" className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Iniciar sesión <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+              <Link href="/iniciar-sesion?next=/jpvalderrama/campus%23instituciones" className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Iniciar sesión <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
             </div>
           ) : (
             <form onSubmit={submitAdvisory} className="border border-[#6f0d12]/16 bg-[#fbf7f1] p-7 sm:p-8">

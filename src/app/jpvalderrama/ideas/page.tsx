@@ -2,6 +2,7 @@ import { ArrowRight, BookOpenText, GraduationCap, Search } from 'lucide-react';
 import { EducationAxisCatalog } from '@/components/jpvalderrama/EducationAxisCatalog';
 import { JPSubbrandLanding } from '@/components/jpvalderrama/JPValderramaShell';
 import { IDEAS_VISUAL_SRC } from '@/data/jpvalderrama-visuals/ideas-src';
+import Link from 'next/link';
 
 const cards = [
   {
@@ -53,7 +54,7 @@ export default function ValderramaIdeasPage() {
               </article>
             ))}
           </div>
-          <a href="/jpvalderrama/campus" className="mt-7 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Explorar todo el Campus <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+          <Link href="/jpvalderrama/campus" className="mt-7 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Explorar todo el Campus <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
         </div>
       </section>
 

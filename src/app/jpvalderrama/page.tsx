@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { IDEAS_VISUAL_SRC } from '@/data/jpvalderrama-visuals/ideas-src';
+import Link from 'next/link';
 
 const visual = (name: string) => `/api/jpvalderrama/assets/${name}`;
 
@@ -69,7 +70,7 @@ export default function JPValderramaPage() {
 
       <header className="sticky top-0 z-50 border-b border-[#151515]/10 bg-[#FCFBF8]/95 backdrop-blur-xl">
         <div className="mx-auto flex min-h-[76px] max-w-[1500px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
-          <a href="/" aria-label="CTG One, ir al inicio" className="flex min-h-12 items-center"><BrandLogo priority tone="light" /></a>
+          <Link href="/" aria-label="CTG One, ir al inicio" className="flex min-h-12 items-center"><BrandLogo priority tone="light" /></Link>
           <nav className="hidden items-center gap-7 text-[10px] font-semibold uppercase tracking-[.16em] text-[#414141] lg:flex" aria-label="Navegación JP Valderrama">
             <a href="#pensamiento" className="transition hover:text-[#681F27]">Pensamiento</a>
             <a href="#universo" className="transition hover:text-[#681F27]">Universo</a>
@@ -130,7 +131,7 @@ export default function JPValderramaPage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {subbrands.map((brand) => (
-                <a key={brand.name} href={brand.href} className="group flex min-h-full flex-col border border-[#151515]/12 bg-[#FCFBF8] p-4 transition duration-300 hover:-translate-y-1 hover:border-[#681F27]/35 hover:shadow-[0_20px_55px_rgba(40,22,18,.08)]">
+                <Link key={brand.name} href={brand.href} className="group flex min-h-full flex-col border border-[#151515]/12 bg-[#FCFBF8] p-4 transition duration-300 hover:-translate-y-1 hover:border-[#681F27]/35 hover:shadow-[0_20px_55px_rgba(40,22,18,.08)]">
                   <div className="flex aspect-square items-center justify-center overflow-hidden bg-[#F3EFE6] p-2">
                     <Image src={brand.image} alt={`Identidad oficial de ${brand.name}`} width={brand.width} height={brand.height} unoptimized className="h-full w-full object-contain" sizes="(max-width: 640px) 90vw, (max-width: 1280px) 45vw, 320px" />
                   </div>
@@ -140,7 +141,7 @@ export default function JPValderramaPage() {
                     <p className="mt-3 flex-1 text-[13px] leading-6 text-[#5B5B5B]">{brand.copy}</p>
                     <span className="mt-6 inline-flex items-center gap-2 border-t border-[#151515]/10 pt-4 text-[9px] font-bold uppercase tracking-[.14em] text-[#151515] transition group-hover:text-[#681F27]">Entrar <ArrowRight className="h-3.5 w-3.5" /></span>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -166,7 +167,7 @@ export default function JPValderramaPage() {
                   ['Inscripciones', '3186428218'],
                 ].map(([label, value]) => <div key={label} className="border-t border-white/15 pt-3"><span className="block text-[9px] uppercase tracking-[.14em] text-[#A8A8A8]">{label}</span><strong className="mt-1 block text-sm font-medium text-white sm:text-[15px]">{value}</strong></div>)}
               </div>
-              <a href="/jpvalderrama/talks#inscripcion" className="mt-8 inline-flex min-h-12 items-center gap-2 bg-[#681F27] px-6 text-[10px] font-bold uppercase tracking-[.15em] text-white transition hover:bg-[#7A252F] sm:text-xs">Inscribirme <ArrowRight className="h-4 w-4" /></a>
+              <Link href="/jpvalderrama/talks#inscripcion" className="mt-8 inline-flex min-h-12 items-center gap-2 bg-[#681F27] px-6 text-[10px] font-bold uppercase tracking-[.15em] text-white transition hover:bg-[#7A252F] sm:text-xs">Inscribirme <ArrowRight className="h-4 w-4" /></Link>
             </div>
           </div>
         </section>
@@ -207,12 +208,12 @@ export default function JPValderramaPage() {
         <section id="contacto" className="border-t border-white/10 bg-[#111] py-14 text-[#FCFBF8] sm:py-16">
           <div className="mx-auto flex max-w-[1440px] flex-col gap-8 px-5 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:px-12">
             <div className="max-w-3xl"><p className="text-[10px] font-semibold uppercase tracking-[.20em] text-[#D4AEB3]">Educación · contenido · proyectos</p><h2 className="mt-4 font-serif text-3xl font-normal leading-tight text-white sm:text-4xl">Conferencias, proyectos editoriales, educación y desarrollo institucional.</h2><p className="mt-4 max-w-2xl text-sm leading-7 text-[#AAA] sm:text-base">Un punto de encuentro para convertir ideas en conversaciones, aprendizaje y proyectos concretos.</p></div>
-            <a href="/contact" className="inline-flex min-h-12 shrink-0 items-center gap-2 border border-white px-6 text-[10px] font-bold uppercase tracking-[.15em] text-white transition hover:border-[#681F27] hover:bg-[#681F27] sm:text-xs">Escribir mensaje <ArrowRight className="h-4 w-4" /></a>
+            <Link href="/contact" className="inline-flex min-h-12 shrink-0 items-center gap-2 border border-white px-6 text-[10px] font-bold uppercase tracking-[.15em] text-white transition hover:border-[#681F27] hover:bg-[#681F27] sm:text-xs">Escribir mensaje <ArrowRight className="h-4 w-4" /></Link>
           </div>
         </section>
       </div>
 
-      <footer className="border-t border-white/10 bg-[#111] text-[#EEE]"><div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-5 py-8 sm:px-8 md:flex-row md:items-end md:justify-between lg:px-12"><div><p className="font-serif text-2xl tracking-[.04em] text-white">Juan Pablo Valderrama</p><p className="mt-1 text-[10px] text-[#999]">Filosofía · Educación · Escritura · Proyectos</p></div><div className="flex flex-wrap gap-4 text-[9px] font-semibold uppercase tracking-[.14em] text-[#BBB]"><a href="/jpvalderrama/talks" className="hover:text-white">Talks</a><a href="/jpvalderrama/ideas" className="hover:text-white">Ideas</a><a href="/jpvalderrama/books" className="hover:text-white">Books</a><a href="/jpvalderrama/projects" className="hover:text-white">Projects</a><a href="/contact" className="hover:text-white">Contacto</a></div></div></footer>
+      <footer className="border-t border-white/10 bg-[#111] text-[#EEE]"><div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-5 py-8 sm:px-8 md:flex-row md:items-end md:justify-between lg:px-12"><div><p className="font-serif text-2xl tracking-[.04em] text-white">Juan Pablo Valderrama</p><p className="mt-1 text-[10px] text-[#999]">Filosofía · Educación · Escritura · Proyectos</p></div><div className="flex flex-wrap gap-4 text-[9px] font-semibold uppercase tracking-[.14em] text-[#BBB]"><Link href="/jpvalderrama/talks" className="hover:text-white">Talks</Link><Link href="/jpvalderrama/ideas" className="hover:text-white">Ideas</Link><Link href="/jpvalderrama/books" className="hover:text-white">Books</Link><Link href="/jpvalderrama/projects" className="hover:text-white">Projects</Link><Link href="/contact" className="hover:text-white">Contacto</Link></div></div></footer>
     </main>
   );
 }

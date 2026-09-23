@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { BrandLogo } from '@/components/BrandLogo';
+import Link from 'next/link';
 
 const navItems = [
   { href: '/jpvalderrama/campus', label: 'Campus' },
@@ -17,34 +18,34 @@ export function JPValderramaHeader({ active }: { active?: string }) {
     <header className="sticky top-0 z-50 border-b border-[#6f0d12]/10 bg-[#f7f0e7]/95 backdrop-blur-xl">
       <div className="mx-auto flex min-h-[76px] max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-12">
         <div className="flex min-w-0 shrink-0 items-center gap-4">
-          <a
+          <Link
             href="/"
             className="flex min-h-12 shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#6f0d12]"
             aria-label="CTG One Technology, ir al inicio"
           >
             <BrandLogo priority tone="light" className="transition-transform duration-300 hover:-translate-y-px" />
-          </a>
+          </Link>
           <span className="hidden h-8 w-px bg-[#6f0d12]/20 lg:block" aria-hidden="true" />
-          <a
+          <Link
             href="/jpvalderrama"
             className="hidden whitespace-nowrap font-serif text-[12px] tracking-[.16em] text-[#6f0d12] lg:inline"
             aria-label="Ir a JP Valderrama"
           >
             JP VALDERRAMA
-          </a>
+          </Link>
         </div>
 
         <nav className="flex min-w-0 items-center gap-3 overflow-x-auto text-[10px] font-bold uppercase tracking-[.13em] text-[#665950] sm:gap-5" aria-label="JP Valderrama: campus y submarcas">
-          <a href="/jpvalderrama" className="whitespace-nowrap text-[#6f0d12] lg:hidden" aria-label="Ir a JP Valderrama">JP</a>
+          <Link href="/jpvalderrama" className="whitespace-nowrap text-[#6f0d12] lg:hidden" aria-label="Ir a JP Valderrama">JP</Link>
           {navItems.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               aria-current={active === item.label.toLowerCase() ? 'page' : undefined}
               className={active === item.label.toLowerCase() ? 'whitespace-nowrap border-b border-[#6f0d12] pb-1 text-[#6f0d12]' : 'whitespace-nowrap hover:text-[#6f0d12]'}
             >
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
       </div>
@@ -61,12 +62,12 @@ export function JPValderramaFooter() {
           <p className="mt-2 text-[10px] font-semibold uppercase tracking-[.16em] text-[#665950]">Filosofía · Educación · Escritura · Tecnología</p>
         </div>
         <div className="flex flex-wrap gap-5 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
-          <a href="/jpvalderrama">Perfil</a>
-          <a href="/jpvalderrama/campus">Campus</a>
-          <a href="/jpvalderrama/learningcenter">Learning Center</a>
-          <a href="/dashboard/educacion">Mi biblioteca</a>
-          <a href="/contact">Contacto</a>
-          <a href="/">CTG One</a>
+          <Link href="/jpvalderrama">Perfil</Link>
+          <Link href="/jpvalderrama/campus">Campus</Link>
+          <Link href="/jpvalderrama/learningcenter">Learning Center</Link>
+          <Link href="/dashboard/educacion">Mi biblioteca</Link>
+          <Link href="/contact">Contacto</Link>
+          <Link href="/">CTG One</Link>
         </div>
       </div>
     </footer>
@@ -114,7 +115,7 @@ export function JPSubbrandLanding({
               <Image src={image} alt={imageAlt} width={560} height={560} priority className="h-auto w-full rounded-full mix-blend-multiply" sizes="(max-width: 1024px) 72vw, 430px" />
             </div>
             <div className="max-w-3xl">
-              <a href="/jpvalderrama" className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-[#6f0d12]"><ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> JP Valderrama</a>
+              <Link href="/jpvalderrama" className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-[#6f0d12]"><ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> JP Valderrama</Link>
               <p className="mt-8 text-[10px] font-bold uppercase tracking-[.22em] text-[#6f0d12]">{eyebrow}</p>
               <h1 className="mt-4 font-serif text-5xl leading-[.98] tracking-[-.035em] text-[#17110e] sm:text-6xl lg:text-[4.6rem]">{headline}</h1>
               <div className="mt-6 flex items-center gap-3" aria-hidden="true"><span className="h-px w-24 bg-[#6f0d12]" /><span className="h-2 w-2 rounded-full bg-[#6f0d12]" /></div>
@@ -146,7 +147,7 @@ export function JPSubbrandLanding({
               <h2 className="mt-3 font-serif text-3xl text-[#17110e] sm:text-4xl">{statusTitle}</h2>
               <p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">{statusText}</p>
             </div>
-            <a href="/contact" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Proponer colaboración <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+            <Link href="/contact" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Proponer colaboración <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
           </div>
         </section>
       </div>

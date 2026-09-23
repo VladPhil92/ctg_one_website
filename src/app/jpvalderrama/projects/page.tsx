@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { ArrowRight, CheckCircle2, FileSearch, Layers3, Route, Wrench } from 'lucide-react';
 import { EducationAxisCatalog } from '@/components/jpvalderrama/EducationAxisCatalog';
 import { JPSubbrandLanding } from '@/components/jpvalderrama/JPValderramaShell';
+import Link from 'next/link';
 
 const cards = [
   {
@@ -137,7 +138,7 @@ export default function ValderramaProjectsPage() {
               <article key={title} className="border border-white/10 bg-white/[.035] p-6"><div className="flex items-center justify-between"><Icon className="h-5 w-5 text-[#d8b56a]" aria-hidden="true" /><span className="font-serif text-xl text-[#d8b56a]/55">0{index + 1}</span></div><h3 className="mt-5 font-serif text-xl">{title}</h3><p className="mt-3 text-sm leading-7 text-[#c9bdb4]">{text}</p></article>
             ))}
           </div>
-          <a href="/jpvalderrama/campus#instituciones" className="mt-8 inline-flex min-h-12 items-center gap-2 bg-[#d8b56a] px-6 text-[10px] font-bold uppercase tracking-[.14em] text-[#17110e]">Plantear un proyecto <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+          <Link href="/jpvalderrama/campus#instituciones" className="mt-8 inline-flex min-h-12 items-center gap-2 bg-[#d8b56a] px-6 text-[10px] font-bold uppercase tracking-[.14em] text-[#17110e]">Plantear un proyecto <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
         </div>
       </section>
 

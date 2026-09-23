@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, BookOpen, GraduationCap, Lightbulb, Mic2, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 
 type Axis = 'talks' | 'ideas' | 'books' | 'projects';
 
@@ -127,9 +128,9 @@ export function EducationAxisCatalog({ axis, title, intro }: { axis: Axis; title
                   <p className="mt-6 text-[10px] font-bold uppercase tracking-[.18em] text-[#8a7568]">{offering.offering_type}</p>
                   <h3 className="mt-2 font-serif text-2xl leading-tight text-[#17110e]">{offering.title}</h3>
                   <p className="mt-4 flex-1 text-sm leading-7 text-[#665950]">{offering.summary}</p>
-                  <a href={href} className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
+                  <Link href={href} className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
                     {actionLabel(offering)} <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                  </a>
+                  </Link>
                 </article>
               );
             })}
@@ -137,9 +138,9 @@ export function EducationAxisCatalog({ axis, title, intro }: { axis: Axis; title
         ) : (
           <div className="mt-10 border border-[#6f0d12]/12 bg-[#fffaf2] p-8 sm:p-10">
             <p className="max-w-3xl font-serif text-xl leading-8 text-[#3b312b]">{state === 'error' ? 'El catálogo no está disponible temporalmente.' : axisLabels[axis].empty}</p>
-            <a href={inquiryHref} className="mt-5 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
+            <Link href={inquiryHref} className="mt-5 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
               {axis === 'projects' ? 'Plantear una colaboración' : 'Explorar el Campus'} <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </a>
+            </Link>
           </div>
         )}
       </div>

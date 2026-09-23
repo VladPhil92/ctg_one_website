@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { ArrowLeft, Shield } from 'lucide-react';
+import Link from 'next/link';
 
 export default function PrivacidadPage() {
   return (
@@ -19,7 +20,7 @@ export default function PrivacidadPage() {
       >
         <div className="max-w-6xl mx-auto px-8 lg:px-12">
           <div className="flex items-center justify-between">
-            <a href="/" className="flex items-center gap-4 z-10">
+            <Link href="/" className="flex items-center gap-4 z-10">
               <div className="relative w-10 h-10 rounded-full overflow-hidden">
                 <Image
                   src="/images/logo/CTGLOGO.jpeg"
@@ -37,14 +38,14 @@ export default function PrivacidadPage() {
                   Technology
                 </span>
               </div>
-            </a>
-            <a
+            </Link>
+            <Link
               href="/"
               className="flex items-center gap-2 text-[11px] uppercase tracking-[0.15em] font-medium text-text-dim hover:text-white transition-colors duration-500"
             >
               <ArrowLeft size={14} />
               Volver al inicio
-            </a>
+            </Link>
           </div>
         </div>
       </nav>

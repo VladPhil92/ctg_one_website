@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 const routes = [
   ['/jpvalderrama/campus', 'Campus'],
@@ -17,7 +18,7 @@ export function SubbrandLauncher() {
 
   return (
     <>
-      <a
+      <Link
         href="/jpvalderrama/ideas"
         aria-label="Abrir Valderrama Ideas"
         className="fixed bottom-24 right-4 z-[70] flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[#681F27]/25 bg-[#FCFBF8]/95 p-1.5 shadow-[0_18px_55px_rgba(40,22,18,.20)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:scale-[1.03] sm:bottom-28 sm:right-6 sm:h-24 sm:w-24"
@@ -31,7 +32,7 @@ export function SubbrandLauncher() {
           unoptimized
           className="h-full w-full object-contain"
         />
-      </a>
+      </Link>
 
       <nav
         aria-label="Explorar submarcas y campus JP Valderrama"

@@ -22,6 +22,7 @@ import {
 import { Navbar } from '@/components/Navbar';
 import { Container } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 type EducationOffering = {
   id: string;
@@ -216,7 +217,7 @@ export default function EducationDashboardPage() {
       <main className="pb-20 pt-24">
         <Container>
           <section className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/[.055] to-white/[.015] p-6 sm:p-8">
-            <a href="/dashboard" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Dashboard</a>
+            <Link href="/dashboard" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Dashboard</Link>
             <div className="mt-5 grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
               <div>
                 <p className="text-[9px] font-semibold uppercase tracking-[.24em] text-white/35">CTG One / Education OS</p>
@@ -224,7 +225,7 @@ export default function EducationDashboardPage() {
                 <p className="mt-4 max-w-3xl text-sm leading-7 text-white/55">{firstName}, este es tu centro educativo: progreso de cursos, accesos, conferencias, libros, clases, compras y solicitudes institucionales bajo la misma identidad CTG One.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <a href="/jpvalderrama/campus" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-4 text-[10px] font-bold uppercase tracking-[.13em] text-accent">Explorar Campus <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+                <Link href="/jpvalderrama/campus" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-4 text-[10px] font-bold uppercase tracking-[.13em] text-accent">Explorar Campus <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
                 <button type="button" onClick={() => void loadLibrary()} disabled={state === 'loading'} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-[10px] font-bold uppercase tracking-[.13em] text-white/60 disabled:opacity-50"><RefreshCw className={state === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} aria-hidden="true" /> Actualizar</button>
               </div>
             </div>
@@ -246,12 +247,12 @@ export default function EducationDashboardPage() {
           <section className="mt-8">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div><p className="text-[9px] font-semibold uppercase tracking-[.24em] text-white/35">Learning Core</p><h2 className="mt-2 font-outfit text-2xl font-semibold">Continuar aprendiendo</h2></div>
-              <a href="/jpvalderrama/ideas#oferta" className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-accent">Descubrir cursos <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></a>
+              <Link href="/jpvalderrama/ideas#oferta" className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-accent">Descubrir cursos <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></Link>
             </div>
 
             {state === 'loading' ? <div className="rounded-2xl border border-white/10 bg-white/[.025] p-6 text-sm text-white/35">Sincronizando progreso…</div> : null}
             {state === 'ready' && learning.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-white/[.025] p-6 sm:p-7"><p className="text-sm leading-7 text-white/45">Aún no tienes matrículas activas. Puedes activar un curso gratuito o adquirir una experiencia formativa desde el Campus.</p><a href="/jpvalderrama/campus#catalogo" className="mt-4 inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-accent">Ver oferta publicada <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></a></div>
+              <div className="rounded-2xl border border-white/10 bg-white/[.025] p-6 sm:p-7"><p className="text-sm leading-7 text-white/45">Aún no tienes matrículas activas. Puedes activar un curso gratuito o adquirir una experiencia formativa desde el Campus.</p><Link href="/jpvalderrama/campus#catalogo" className="mt-4 inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-accent">Ver oferta publicada <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></Link></div>
             ) : null}
             <div className="grid gap-4 xl:grid-cols-2">
               {learning.map((item) => (
@@ -319,7 +320,7 @@ export default function EducationDashboardPage() {
               <div className="mt-4 space-y-3">
                 {state === 'ready' && (library.orders ?? []).length === 0 ? <p className="text-sm leading-6 text-white/35">Aún no hay órdenes educativas asociadas a tu cuenta.</p> : null}
                 {(library.orders ?? []).map((order) => <div key={order.id} className="rounded-xl border border-white/[.07] bg-black/20 p-4"><div className="flex items-start justify-between gap-4"><div><p className="font-mono text-[10px] text-white/45">{order.id.slice(0, 8).toUpperCase()}</p><p className="mt-2 text-sm font-semibold text-white/85">{formatAmount(order.total_amount, order.currency)}</p></div><span className={order.status === 'paid' ? 'text-right text-[9px] font-bold uppercase tracking-[.12em] text-emerald-300' : 'text-right text-[9px] font-bold uppercase tracking-[.12em] text-amber-200/80'}>{orderStatus[order.status] ?? order.status}</span></div><p className="mt-3 text-[10px] text-white/30">{formatDate(order.created_at)}{order.verified_at ? ` · verificada ${formatDate(order.verified_at)}` : ''}</p></div>)}
-                <a href="/jpvalderrama/campus#catalogo" className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-accent">Explorar productos <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></a>
+                <Link href="/jpvalderrama/campus#catalogo" className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-accent">Explorar productos <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></Link>
               </div>
             </article>
 
@@ -329,7 +330,7 @@ export default function EducationDashboardPage() {
               <div className="mt-4 space-y-3">
                 {state === 'ready' && (library.advisoryRequests ?? []).length === 0 ? <p className="text-sm leading-6 text-white/35">No tienes solicitudes educativas registradas.</p> : null}
                 {(library.advisoryRequests ?? []).map((request) => <div key={request.id} className="rounded-xl border border-white/[.07] bg-black/20 p-4"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-white/85">{request.institution_name}</p><p className="mt-1 text-xs text-white/40">{request.service_area}</p></div><span className="text-[9px] font-bold uppercase tracking-[.12em] text-accent">{advisoryStatus[request.status] ?? request.status}</span></div><p className="mt-3 flex items-center gap-2 text-[10px] text-white/30"><CalendarDays className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(request.created_at)}</p></div>)}
-                <a href="/jpvalderrama/campus#instituciones" className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-accent">Nueva solicitud <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></a>
+                <Link href="/jpvalderrama/campus#instituciones" className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-accent">Nueva solicitud <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></Link>
               </div>
             </article>
           </section>

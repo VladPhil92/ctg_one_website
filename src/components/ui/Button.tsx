@@ -1,6 +1,7 @@
 'use client';
 
 import React, { ReactNode } from 'react';
+import Link from 'next/link';
 import { ArrowRight, Loader2 } from 'lucide-react';
 
 interface ButtonProps {
@@ -74,6 +75,13 @@ export const Button: React.FC<ButtonProps> = ({
 
   if (href && !isDisabled) {
     const opensNewTab = /^https?:\/\//.test(href);
+    if (href.startsWith('/') && !href.startsWith('//') && !href.startsWith('/api/')) {
+      return (
+        <Link href={href} className={baseClasses} aria-label={ariaLabel} onClick={onClick}>
+          {content}
+        </Link>
+      );
+    }
     return (
       <a
         href={href}

@@ -4,6 +4,7 @@ import { EducationAxisCatalog } from '@/components/jpvalderrama/EducationAxisCat
 import { EducationCommerceJourney } from '@/components/jpvalderrama/EducationCommerceJourney';
 import { JPValderramaFooter, JPValderramaHeader } from '@/components/jpvalderrama/JPValderramaShell';
 import { TalkRegistrationForm } from '@/components/jpvalderrama/TalkRegistrationForm';
+import Link from 'next/link';
 
 const eventDetails = [
   { label: 'Fecha', value: '17 de septiembre', icon: CalendarDays },
@@ -71,7 +72,7 @@ export default function ValderramaTalksPage() {
                   ))}
                 </dl>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <a href={checkoutHref} className="inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Comprar ticket <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+                  <Link href={checkoutHref} className="inline-flex min-h-12 items-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Comprar ticket <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
                   <a href="#inscripcion" className="inline-flex min-h-12 items-center rounded-sm border border-[#6f0d12]/40 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Registrar interés / asistencia</a>
                 </div>
                 <p className="mt-4 text-xs leading-6 text-[#75665c]">La compra y la inscripción son operaciones distintas: la compra crea una orden autenticada; el formulario inferior sirve para registro operativo y comunicaciones del evento.</p>
@@ -89,7 +90,7 @@ export default function ValderramaTalksPage() {
           </div>
         </section>
 
-        <section className="py-16 sm:py-20"><div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12"><div className="grid gap-8 border border-[#6f0d12]/14 bg-[#fbf7f1] p-8 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center"><div className="max-w-3xl"><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#6f0d12]">Talks para organizaciones</p><h2 className="mt-3 font-serif text-3xl text-[#17110e] sm:text-4xl">Conferencias y conversaciones privadas se contratan por alcance.</h2><p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">Para colegios, universidades, empresas e instituciones, la ruta correcta no es comprar un ticket público: primero se define audiencia, tema, modalidad, fecha y alcance; después se emite una propuesta.</p></div><a href="/jpvalderrama/campus#instituciones" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-[#6f0d12]/40 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Contratar una charla <ArrowRight className="h-4 w-4" aria-hidden="true" /></a></div></div></section>
+        <section className="py-16 sm:py-20"><div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12"><div className="grid gap-8 border border-[#6f0d12]/14 bg-[#fbf7f1] p-8 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center"><div className="max-w-3xl"><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#6f0d12]">Talks para organizaciones</p><h2 className="mt-3 font-serif text-3xl text-[#17110e] sm:text-4xl">Conferencias y conversaciones privadas se contratan por alcance.</h2><p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">Para colegios, universidades, empresas e instituciones, la ruta correcta no es comprar un ticket público: primero se define audiencia, tema, modalidad, fecha y alcance; después se emite una propuesta.</p></div><Link href="/jpvalderrama/campus#instituciones" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-[#6f0d12]/40 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Contratar una charla <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></div></div></section>
 
         <EducationCommerceJourney />
       </div>
