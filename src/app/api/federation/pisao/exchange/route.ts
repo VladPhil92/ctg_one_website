@@ -159,6 +159,37 @@ export async function POST(request: Request) {
   const challenge = pkceChallengeForVerifier(body.code_verifier);
   const consumedAt = new Date().toISOString();
 
+  // Resolve identity/role before consuming the one-time code. A transient
+  // profile lookup failure must remain retryable and must not burn the code.
+  const { data: candidate, error: candidateError } = await admin
+    .from('identity_federation_authorization_codes')
+    .select('subject_user_id, subject_email, subject_email_verified')
+    .eq('provider', PISAO_FEDERATION_PROVIDER)
+    .eq('code_hash', codeHash)
+    .eq('code_challenge', challenge)
+    .is('consumed_at', null)
+    .gt('expires_at', consumedAt)
+    .maybeSingle();
+
+  if (candidateError) {
+    return noStoreJson({ error: 'FEDERATION_EXCHANGE_FAILED' }, 503);
+  }
+  if (!candidate || !candidate.subject_email_verified) {
+    return noStoreJson({ error: 'INVALID_OR_EXPIRED_CODE' }, 401);
+  }
+
+  const { data: profile, error: profileError } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', candidate.subject_user_id)
+    .maybeSingle();
+
+  if (profileError) {
+    return noStoreJson({ error: 'FEDERATION_PROFILE_LOOKUP_FAILED' }, 503);
+  }
+
+  // The conditional update is the single-use concurrency gate. If another
+  // request consumed the code after our pre-read, maybeSingle() returns null.
   const { data, error } = await admin
     .from('identity_federation_authorization_codes')
     .update({ consumed_at: consumedAt })
@@ -173,16 +204,6 @@ export async function POST(request: Request) {
   if (error) return noStoreJson({ error: 'FEDERATION_EXCHANGE_FAILED' }, 503);
   if (!data || !data.subject_email_verified) {
     return noStoreJson({ error: 'INVALID_OR_EXPIRED_CODE' }, 401);
-  }
-
-  const { data: profile, error: profileError } = await admin
-    .from('profiles')
-    .select('role')
-    .eq('id', data.subject_user_id)
-    .maybeSingle();
-
-  if (profileError) {
-    return noStoreJson({ error: 'FEDERATION_PROFILE_LOOKUP_FAILED' }, 503);
   }
 
   return noStoreJson({
