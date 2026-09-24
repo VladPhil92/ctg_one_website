@@ -15,6 +15,7 @@ import {
 import { Navbar } from '@/components/Navbar';
 import { Container } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 type Offering = {
   id: string;
@@ -255,7 +256,7 @@ export default function EducationAccessLifecyclePage() {
               <ShieldCheck className="h-6 w-6 text-accent" aria-hidden="true" />
               <h1 className="mt-5 font-outfit text-3xl font-semibold">Operaciones restringidas</h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-white/50">Esta consola sólo está disponible para el rol administrativo canónico de CTG One.</p>
-              <a href="/dashboard/educacion" className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-accent"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Volver a Educación</a>
+              <Link href="/dashboard/educacion" className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-accent"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Volver a Educación</Link>
             </section>
           </Container>
         </main>
@@ -269,7 +270,7 @@ export default function EducationAccessLifecyclePage() {
       <main className="pb-24 pt-24">
         <Container>
           <section className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/[.055] to-white/[.015] p-6 sm:p-8">
-            <a href="/dashboard/educacion/operaciones" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Conciliación</a>
+            <Link href="/dashboard/educacion/operaciones" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Conciliación</Link>
             <div className="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-[9px] font-semibold uppercase tracking-[.24em] text-white/35">CTG One / Education Access Lifecycle</p>

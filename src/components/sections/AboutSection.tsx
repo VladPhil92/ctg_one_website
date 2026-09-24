@@ -22,6 +22,7 @@ import {
   Workflow,
   type LucideIcon,
 } from 'lucide-react';
+import Link from 'next/link';
 
 type Maturity = ProofStatus;
 
@@ -356,10 +357,10 @@ export const AboutSection: React.FC = () => {
                 <Badge variant="accent" className="mb-6">{copy.stackBadge}</Badge>
                 <h2 className="font-outfit font-semibold text-3xl sm:text-4xl md:text-[2.8rem] tracking-[-0.035em] leading-[1.07] text-white mb-6">{copy.stackTitle}</h2>
                 <p className="text-sm sm:text-base text-text-muted leading-relaxed mb-8">{copy.stackText}</p>
-                <a href="/services" className="inline-flex min-h-11 items-center gap-2 text-xs uppercase tracking-[0.12em] text-accent hover:text-white transition-colors">
+                <Link href="/services" className="inline-flex min-h-11 items-center gap-2 text-xs uppercase tracking-[0.12em] text-accent hover:text-white transition-colors">
                   {copy.explore}
                   <ArrowUpRight size={14} />
-                </a>
+                </Link>
               </div>
             </FadeInSection>
 

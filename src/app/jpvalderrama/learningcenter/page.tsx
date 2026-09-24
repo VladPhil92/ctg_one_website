@@ -3,6 +3,7 @@ import { ArrowRight, BookOpenCheck, GraduationCap, Home, Languages, Monitor, Sch
 import { EducationFamilyServiceRequest } from '@/components/jpvalderrama/EducationFamilyServiceRequest';
 import { EducationInstantPurchaseOffers } from '@/components/jpvalderrama/EducationInstantPurchaseOffers';
 import { JPValderramaFooter, JPValderramaHeader } from '@/components/jpvalderrama/JPValderramaShell';
+import Link from 'next/link';
 
 const title = 'Valderrama Learning Center | Tutorías privadas | CTG One';
 const description = 'Tutorías privadas, refuerzo, preparación de exámenes y acompañamiento académico en modalidad virtual o a domicilio para estudiantes y familias.';
@@ -34,7 +35,7 @@ export default function ValderramaLearningCenterPage() {
             <p className="mt-7 max-w-3xl font-serif text-xl leading-9 text-[#564a42]">Tutorías privadas, refuerzo, preparación de exámenes y acompañamiento académico en modalidad virtual o a domicilio.</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="#compra" className="inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Comprar tutoría <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
-              <a href="/dashboard/educacion" className="inline-flex min-h-12 items-center gap-2 border border-[#6f0d12]/35 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Mi aprendizaje <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+              <Link href="/dashboard/educacion" className="inline-flex min-h-12 items-center gap-2 border border-[#6f0d12]/35 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Mi aprendizaje <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
             </div>
           </div>
           <aside className="border border-[#6f0d12]/16 bg-[#fbf7f1] p-8">

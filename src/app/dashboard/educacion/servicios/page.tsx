@@ -6,6 +6,7 @@ import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, FileText, MapPin, Refres
 import { Navbar } from '@/components/Navbar';
 import { Container } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 type ServiceRequest = {
   id: string;
@@ -138,7 +139,7 @@ export default function EducationServicesPage() {
       <Navbar />
       <main className="pb-20 pt-24"><Container>
         <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[.055] to-white/[.015] p-6 sm:p-8">
-          <a href="/dashboard/educacion" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" /> Mi aprendizaje</a>
+          <Link href="/dashboard/educacion" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" /> Mi aprendizaje</Link>
           <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div><p className="text-[9px] font-semibold uppercase tracking-[.24em] text-white/35">Education OS / Academic Fulfillment</p><h1 className="mt-3 font-outfit text-4xl font-semibold tracking-[-.045em] sm:text-5xl">Mis servicios y agenda</h1><p className="mt-4 max-w-3xl text-sm leading-7 text-white/55">Sigue solicitudes personalizadas, revisa cotizaciones y consulta sesiones programadas o finalizadas. Aceptar una cotización confirma el alcance; no registra un pago.</p></div>
             <button type="button" onClick={() => void load()} disabled={state === 'loading'} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 px-4 text-[10px] font-bold uppercase tracking-[.13em] text-white/60 disabled:opacity-50"><RefreshCw className={state === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} /> Actualizar</button>

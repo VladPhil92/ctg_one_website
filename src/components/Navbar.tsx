@@ -11,6 +11,7 @@ import { AFTER_PRIMARY_NAVIGATION_ID, SkipLink } from './SkipLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import styles from '@/styles/CommandCenter.module.css';
+import Link from 'next/link';
 
 const MOBILE_NAVIGATION_ID = 'mobile-navigation';
 const PLATFORM_MENU_ID = 'platform-navigation';
@@ -90,16 +91,16 @@ export const Navbar: React.FC = () => {
       <nav aria-label={primaryLabel} className="fixed left-0 right-0 top-0 z-50 px-2.5 pt-2.5 sm:px-4 sm:pt-4 lg:px-6">
         <div className={`${styles.theme} ${styles.navFrame} ${isScrolled ? styles.navFrameScrolled : ''} mx-auto max-w-[1500px] px-4 sm:px-5 lg:px-7`}>
           <div className="relative z-10 flex min-h-[72px] items-center justify-between gap-4 lg:min-h-[78px]">
-            <a href="/" className="z-10 flex min-h-12 shrink-0 items-center" aria-label={logoLabel}><BrandLogo priority className="transition-transform duration-300 hover:-translate-y-px" /></a>
+            <Link href="/" className="z-10 flex min-h-12 shrink-0 items-center" aria-label={logoLabel}><BrandLogo priority className="transition-transform duration-300 hover:-translate-y-px" /></Link>
 
             <div className="hidden min-w-0 flex-1 items-center justify-center gap-3 xl:flex 2xl:gap-5">
               {desktopItemsBeforePlatforms.map((item) => {
                 const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(`${item.href}/`));
                 return (
-                  <a key={item.href} href={item.href} aria-current={isActive ? 'page' : undefined} className={navLinkClass(isActive)}>
+                  <Link key={item.href} href={item.href} aria-current={isActive ? 'page' : undefined} className={navLinkClass(isActive)}>
                     {t(item.label)}
                     {isActive && <><span className="absolute -bottom-0.5 left-1/2 h-px w-full -translate-x-1/2 bg-gradient-to-r from-transparent via-[#f1c75b] to-transparent" aria-hidden="true" /><span className="absolute -bottom-2 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#f1c75b] shadow-[0_0_12px_rgba(241,199,91,.8)]" aria-hidden="true" /></>}
-                  </a>
+                  </Link>
                 );
               })}
 
@@ -113,13 +114,13 @@ export const Navbar: React.FC = () => {
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#d6ae56]/[.055] via-transparent to-[#248cff]/[.035]" aria-hidden="true" />
                     {PLATFORM_NAV_ITEMS.map((item, index) => {
                       const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                      return <a key={item.href} href={item.href} role="menuitem" aria-current={active ? 'page' : undefined} className={`relative flex min-h-11 items-center justify-between rounded-xl px-4 text-sm font-medium transition-colors ${active ? 'bg-[#d6ae56]/[.09] text-[#f1c75b]' : 'text-text-muted hover:bg-white/[.05] hover:text-white'}`}><span>{t(item.label)}</span><span className="font-mono text-[9px] tracking-[.12em] text-text-dim">0{index + 1}</span></a>;
+                      return <Link key={item.href} href={item.href} role="menuitem" aria-current={active ? 'page' : undefined} className={`relative flex min-h-11 items-center justify-between rounded-xl px-4 text-sm font-medium transition-colors ${active ? 'bg-[#d6ae56]/[.09] text-[#f1c75b]' : 'text-text-muted hover:bg-white/[.05] hover:text-white'}`}><span>{t(item.label)}</span><span className="font-mono text-[9px] tracking-[.12em] text-text-dim">0{index + 1}</span></Link>;
                     })}
                   </div>
                 )}
               </div>
 
-              <a href={contactItem.href} aria-current={pathname === contactItem.href ? 'page' : undefined} className={navLinkClass(pathname === contactItem.href)}>{t(contactItem.label)}</a>
+              <Link href={contactItem.href} aria-current={pathname === contactItem.href ? 'page' : undefined} className={navLinkClass(pathname === contactItem.href)}>{t(contactItem.label)}</Link>
             </div>
 
             <div className="hidden shrink-0 items-center gap-3 xl:flex">
@@ -127,7 +128,7 @@ export const Navbar: React.FC = () => {
               {!isLoading && (isAuthenticated ? (
                 <Button href="/dashboard" variant="primary" size="sm" className="rounded-xl border border-[#ffd56a]/25 bg-[#d6ae56] shadow-[0_0_28px_rgba(214,174,86,.12)] hover:-translate-y-px">{t('My Account')}</Button>
               ) : (
-                <><a href="/iniciar-sesion" className="inline-flex min-h-11 items-center whitespace-nowrap px-2 text-sm font-semibold uppercase tracking-[0.1em] text-text-dim hover:text-white">{t('Sign In')}</a><Button href="/registro" variant="primary" size="sm" className="rounded-xl border border-[#ffd56a]/20 bg-[#d6ae56] hover:-translate-y-px">{t('Create Account')}</Button></>
+                <><Link href="/iniciar-sesion" className="inline-flex min-h-11 items-center whitespace-nowrap px-2 text-sm font-semibold uppercase tracking-[0.1em] text-text-dim hover:text-white">{t('Sign In')}</Link><Button href="/registro" variant="primary" size="sm" className="rounded-xl border border-[#ffd56a]/20 bg-[#d6ae56] hover:-translate-y-px">{t('Create Account')}</Button></>
               ))}
             </div>
 
@@ -151,16 +152,16 @@ export const Navbar: React.FC = () => {
                 <div className="space-y-1">
                   {PRIMARY_NAV_ITEMS.map((item, index) => {
                     const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(`${item.href}/`));
-                    return <a key={item.href} ref={index === 0 ? firstMobileLinkRef : undefined} href={item.href} aria-current={active ? 'page' : undefined} onClick={() => setIsOpen(false)} className={`flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-semibold uppercase tracking-[0.12em] ${active ? 'bg-[#d6ae56]/[.08] text-[#f1c75b]' : 'text-text-muted hover:bg-white/[.035] hover:text-white'}`}><span>{t(item.label)}</span><span className="font-mono text-[9px] text-text-dim">0{index + 1}</span></a>;
+                    return <Link key={item.href} ref={index === 0 ? firstMobileLinkRef : undefined} href={item.href} aria-current={active ? 'page' : undefined} onClick={() => setIsOpen(false)} className={`flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-semibold uppercase tracking-[0.12em] ${active ? 'bg-[#d6ae56]/[.08] text-[#f1c75b]' : 'text-text-muted hover:bg-white/[.035] hover:text-white'}`}><span>{t(item.label)}</span><span className="font-mono text-[9px] text-text-dim">0{index + 1}</span></Link>;
                   })}
                 </div>
                 <div className="mt-6 border-t border-white/[.08] pt-5">
                   <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#f1c75b]">{platformsLabel}</p>
-                  <div className="space-y-1">{PLATFORM_NAV_ITEMS.map((item) => { const active = pathname === item.href || pathname.startsWith(`${item.href}/`); return <a key={item.href} href={item.href} aria-current={active ? 'page' : undefined} onClick={() => setIsOpen(false)} className={`flex min-h-11 items-center rounded-xl px-3 text-sm font-medium ${active ? 'bg-[#d6ae56]/[.07] text-[#f1c75b]' : 'text-text-muted hover:bg-white/[.035] hover:text-white'}`}>{t(item.label)}</a>; })}</div>
+                  <div className="space-y-1">{PLATFORM_NAV_ITEMS.map((item) => { const active = pathname === item.href || pathname.startsWith(`${item.href}/`); return <Link key={item.href} href={item.href} aria-current={active ? 'page' : undefined} onClick={() => setIsOpen(false)} className={`flex min-h-11 items-center rounded-xl px-3 text-sm font-medium ${active ? 'bg-[#d6ae56]/[.07] text-[#f1c75b]' : 'text-text-muted hover:bg-white/[.035] hover:text-white'}`}>{t(item.label)}</Link>; })}</div>
                 </div>
               </div>
               <div className="mt-8 space-y-3 border-t border-white/[.08] pt-6">
-                {!isLoading && (isAuthenticated ? <Button href="/dashboard" variant="primary" size="md" fullWidth className="rounded-xl">{t('My Account')}</Button> : <><Button href="/registro" variant="primary" size="md" fullWidth className="rounded-xl">{t('Create Account')}</Button><a href="/iniciar-sesion" onClick={() => setIsOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl text-sm font-semibold uppercase tracking-[0.1em] text-text-muted hover:bg-white/[.03] hover:text-white">{t('Sign In')}</a></>)}
+                {!isLoading && (isAuthenticated ? <Button href="/dashboard" variant="primary" size="md" fullWidth className="rounded-xl">{t('My Account')}</Button> : <><Button href="/registro" variant="primary" size="md" fullWidth className="rounded-xl">{t('Create Account')}</Button><Link href="/iniciar-sesion" onClick={() => setIsOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl text-sm font-semibold uppercase tracking-[0.1em] text-text-muted hover:bg-white/[.03] hover:text-white">{t('Sign In')}</Link></>)}
               </div>
               <p className="pt-7 text-xs tracking-wide text-text-dim">© {new Date().getFullYear()} CTG One Technology</p>
             </div>

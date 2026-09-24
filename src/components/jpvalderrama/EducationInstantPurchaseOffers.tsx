@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, CreditCard, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 
 type Offering = {
   slug: string;
@@ -83,7 +84,7 @@ export function EducationInstantPurchaseOffers() {
             <p className="font-serif text-4xl text-[#6f0d12]">{price(offering.price_amount as number, offering.currency)}</p>
             <p className="mt-2 flex items-center gap-2 text-xs leading-5 text-[#665950]"><ShieldCheck className="h-4 w-4 text-[#6f0d12]" aria-hidden="true" /> El servidor fija el precio; no hay cotización ni aprobación comercial previa.</p>
           </div>
-          <a href={offering.action_path ?? `/jpvalderrama/campus/checkout/${encodeURIComponent(offering.slug)}`} className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Comprar y pagar ahora <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+          <Link href={offering.action_path ?? `/jpvalderrama/campus/checkout/${encodeURIComponent(offering.slug)}`} className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Comprar y pagar ahora <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
         </article>
       ))}
     </div>

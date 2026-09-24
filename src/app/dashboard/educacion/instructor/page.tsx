@@ -17,6 +17,7 @@ import {
 import { Navbar } from '@/components/Navbar';
 import { Container } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 type LifecycleStatus = 'draft' | 'published' | 'archived';
 type Course = { id: string; slug: string; title: string; summary: string; status: LifecycleStatus; estimated_minutes: number };
@@ -182,7 +183,7 @@ export default function EducationInstructorStudioPage() {
       <main className="pb-20 pt-24">
         <Container>
           <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[.055] to-white/[.015] p-6 sm:p-8">
-            <a href="/dashboard/educacion" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" /> Education OS</a>
+            <Link href="/dashboard/educacion" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" /> Education OS</Link>
             <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div><p className="text-[9px] font-semibold uppercase tracking-[.24em] text-white/35">Instructor Studio V1</p><h1 className="mt-3 font-outfit text-4xl font-semibold tracking-[-.045em] sm:text-5xl">Autoría académica</h1><p className="mt-4 max-w-3xl text-sm leading-7 text-white/55">Crea, organiza y publica cursos, módulos, lecciones y evaluaciones sin editar SQL. El servidor vuelve a comprobar permisos administrativos en cada mutación.</p></div>
               <button type="button" onClick={() => void load()} disabled={state === 'loading'} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-[10px] font-bold uppercase tracking-[.13em] text-white/60 disabled:opacity-50"><RefreshCw className={state === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} /> Actualizar</button>

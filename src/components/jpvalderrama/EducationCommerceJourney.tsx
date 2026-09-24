@@ -1,4 +1,5 @@
 import { ArrowRight, CheckCircle2, CircleDollarSign, GraduationCap, MessagesSquare } from 'lucide-react';
+import Link from 'next/link';
 
 const rails = [
   {
@@ -63,12 +64,12 @@ export function EducationCommerceJourney({ compact = false }: { compact?: boolea
 
         {!compact ? (
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="/jpvalderrama/campus#catalogo" className="inline-flex min-h-11 items-center gap-2 bg-[#d8b56a] px-5 text-[10px] font-bold uppercase tracking-[.14em] text-[#17110e]">
+            <Link href="/jpvalderrama/campus#catalogo" className="inline-flex min-h-11 items-center gap-2 bg-[#d8b56a] px-5 text-[10px] font-bold uppercase tracking-[.14em] text-[#17110e]">
               Explorar catálogo <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </a>
-            <a href="/dashboard/educacion" className="inline-flex min-h-11 items-center gap-2 border border-white/18 px-5 text-[10px] font-bold uppercase tracking-[.14em] text-[#fffaf2]">
+            </Link>
+            <Link href="/dashboard/educacion" className="inline-flex min-h-11 items-center gap-2 border border-white/18 px-5 text-[10px] font-bold uppercase tracking-[.14em] text-[#fffaf2]">
               Ir a Mi aprendizaje <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </a>
+            </Link>
           </div>
         ) : null}
       </div>

@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle2, LoaderCircle, RotateCcw, ShieldCheck, XCircle 
 import { Navbar } from '@/components/Navbar';
 import { Container } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 type Option = { id: string; label: string; text: string; position: number };
 type Question = { id: string; prompt: string; questionType: string; points: number; position: number; options: Option[] };
@@ -78,7 +79,7 @@ export function AssessmentPlayer({ assessmentId }: { assessmentId: string }) {
   const attempts = data.attempts ?? [];
   return <Shell><Container><div className="pb-16 pt-8">
     <header className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[.055] to-white/[.015] p-6 sm:p-8">
-      <a href={`/learn/${data.course.slug}`} className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-accent"><ArrowLeft className="h-4 w-4" /> Volver al curso</a>
+      <Link href={`/learn/${data.course.slug}`} className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-accent"><ArrowLeft className="h-4 w-4" /> Volver al curso</Link>
       <p className="mt-6 text-[9px] font-bold uppercase tracking-[.22em] text-white/35">Assessment Core · {data.course.title}</p>
       <h1 className="mt-3 font-outfit text-4xl font-semibold tracking-[-.045em] sm:text-5xl">{data.assessment.title}</h1>
       <p className="mt-4 max-w-3xl text-sm leading-7 text-white/55">{data.assessment.instructions}</p>

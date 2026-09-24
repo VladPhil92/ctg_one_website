@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2, CircleDollarSign, KeyRound, LockKeyhole, MessageCircle, ReceiptText, ShieldCheck, UserRoundCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 type Offering = {
   id: string;
@@ -173,9 +174,9 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
 
   return (
     <section className="mx-auto max-w-[1180px] px-5 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-      <a href="/jpvalderrama/campus#catalogo" className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
+      <Link href="/jpvalderrama/campus#catalogo" className="inline-flex min-h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Volver al Campus
-      </a>
+      </Link>
 
       <div className="mt-8 grid overflow-hidden border border-[#6f0d12]/16 bg-[#fbf7f1] lg:grid-cols-[1.06fr_.94fr]">
         <div className="p-7 sm:p-10 lg:p-12">
@@ -192,9 +193,9 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
                 <p className="mt-2 font-serif text-4xl text-[#6f0d12]">{formatPrice(offering.price_amount, offering.currency)}</p>
                 {isPaidOffering ? <p className="mt-2 text-xs leading-5 text-[#665950]">No requiere cotización ni aprobación comercial antes de pagar.</p> : null}
               </div>
-              <a href={sourceHref} className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
+              <Link href={sourceHref} className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">
                 {detailLabel(offering)} <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </a>
+              </Link>
             </>
           ) : (
             <>
@@ -228,12 +229,12 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
             <div className="mt-8 border border-[#6f0d12]/18 bg-[#fffaf2] p-6">
               <p className="font-serif text-lg text-[#17110e]">Esta oferta no utiliza el checkout pagado.</p>
               <p className="mt-2 text-sm leading-6 text-[#665950]">Los accesos gratuitos se activan desde su ruta de aprendizaje; solo los servicios realmente personalizados y sin precio publicado usan solicitud y cotización.</p>
-              <a href={postAccessHref} className="mt-4 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Continuar por la ruta correcta <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+              <Link href={postAccessHref} className="mt-4 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Continuar por la ruta correcta <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
             </div>
           ) : null}
 
           {!isLoading && !isAuthenticated && isPaidOffering ? (
-            <a href={loginHref} className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Iniciar sesión para pagar <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+            <Link href={loginHref} className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Iniciar sesión para pagar <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
           ) : null}
 
           {isAuthenticated && offering && isPaidOffering && checkoutState !== 'created' && checkoutState !== 'entitled' ? (
@@ -253,15 +254,15 @@ export function EducationCheckoutClient({ slug }: { slug: string }) {
               </div>
               <p className="mt-5 font-serif text-[15px] leading-7 text-[#665950]">El gateway de pago en línea no está configurado en este entorno. La orden conserva el precio publicado, pero para completar este pago debes usar temporalmente el canal asistido.</p>
               <a href={whatsappHref} target="_blank" rel="noreferrer" className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]"><MessageCircle className="h-4 w-4" aria-hidden="true" /> Continuar por canal asistido</a>
-              <a href="/dashboard/educacion" className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Ver estado de mi orden <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+              <Link href="/dashboard/educacion" className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Ver estado de mi orden <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
             </div>
           ) : null}
 
           {checkoutState === 'entitled' ? (
             <div className="mt-8 border border-[#6f0d12]/18 bg-[#fffaf2] p-6">
               <p className="font-serif text-lg text-[#17110e]">Esta oferta ya está activa en tu cuenta.</p>
-              <a href={postAccessHref} className="mt-4 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Abrir acceso <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
-              <a href="/dashboard/educacion" className="ml-4 mt-4 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Mi aprendizaje</a>
+              <Link href={postAccessHref} className="mt-4 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Abrir acceso <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+              <Link href="/dashboard/educacion" className="ml-4 mt-4 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Mi aprendizaje</Link>
             </div>
           ) : null}
 

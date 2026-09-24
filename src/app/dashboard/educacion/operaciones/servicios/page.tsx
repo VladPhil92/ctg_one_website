@@ -6,6 +6,7 @@ import { ArrowLeft, CalendarPlus, FileSignature, RefreshCw, ShieldCheck } from '
 import { Navbar } from '@/components/Navbar';
 import { Container } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 type ServiceRequest = { id: string; user_id: string; request_kind: string; institution_name: string; contact_name: string; contact_email: string; contact_phone: string | null; service_area: string; message: string; status: string; created_at: string; updated_at: string };
 type Quote = { id: string; request_id: string; user_id: string; version: number; title: string; scope_summary: string; status: string; currency: string; total_amount: number; valid_until: string | null };
@@ -87,7 +88,7 @@ export default function EducationServiceOperationsPage() {
 
   return <div className="min-h-screen bg-[#050505] text-white"><Navbar /><main className="pb-20 pt-24"><Container>
     <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[.055] to-white/[.015] p-6 sm:p-8">
-      <a href="/dashboard/educacion/operaciones" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" /> Conciliación</a>
+      <Link href="/dashboard/educacion/operaciones" className="inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-accent"><ArrowLeft className="h-4 w-4" /> Conciliación</Link>
       <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-[9px] font-semibold uppercase tracking-[.24em] text-white/35">Education Operations</p><h1 className="mt-3 font-outfit text-4xl font-semibold tracking-[-.045em]">Servicios, propuestas y agenda</h1><p className="mt-4 max-w-3xl text-sm leading-7 text-white/55">Opera servicios personalizados sin mezclarlos con órdenes de precio fijo. Emitir una propuesta no registra un pago; programar o cerrar una sesión registra fulfillment académico, pero no concede un entitlement.</p></div><button onClick={() => void load()} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-[10px] font-bold uppercase tracking-[.13em] text-white/60"><RefreshCw className={state === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} /> Actualizar</button></div>
     </section>
     {notice ? <p role="status" className="mt-5 rounded-2xl border border-accent/20 bg-accent/10 p-4 text-sm text-white/75">{notice}</p> : null}

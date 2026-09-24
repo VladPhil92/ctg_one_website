@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { ArrowRight, Clock3, ShieldCheck } from 'lucide-react';
 import { JPValderramaFooter, JPValderramaHeader } from '@/components/jpvalderrama/JPValderramaShell';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Verificación de pago | JP Valderrama Education | CTG One',
@@ -27,8 +28,8 @@ export default function EducationPaymentReturnPage() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="/dashboard/educacion" className="inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Ver mi orden <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
-            <a href="/jpvalderrama/campus" className="inline-flex min-h-12 items-center gap-2 border border-[#6f0d12]/30 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Volver al Campus <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+            <Link href="/dashboard/educacion" className="inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Ver mi orden <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+            <Link href="/jpvalderrama/campus" className="inline-flex min-h-12 items-center gap-2 border border-[#6f0d12]/30 px-6 text-xs font-bold uppercase tracking-[.13em] text-[#6f0d12]">Volver al Campus <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
           </div>
         </div>
       </section>

@@ -21,6 +21,7 @@ import { Container } from '@/components/ui';
 import { FadeInSection } from '@/components/ui/FadeInSection';
 import { PUBLIC_ECOSYSTEM_SERVICES, type DashboardService, type DashboardServiceStatus } from '@/config/dashboard-services';
 import { useLanguage } from '@/contexts/LanguageContext';
+import Link from 'next/link';
 
 const SERVICE_ICONS: Record<string, LucideIcon> = {
   'world-makers': Gamepad2,
@@ -152,9 +153,9 @@ export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode
               )}
             </div>
             {!isFullDirectory && (
-              <a href="/ecosystem" className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1c75b] transition hover:text-white">
+              <Link href="/ecosystem" className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1c75b] transition hover:text-white">
                 {es ? 'Ver ecosistema completo' : 'View full ecosystem'} <ArrowUpRight size={14} aria-hidden="true" />
-              </a>
+              </Link>
             )}
           </div>
         </FadeInSection>
@@ -188,9 +189,9 @@ export const EcosystemDirectorySection: React.FC<{ mode?: EcosystemDirectoryMode
                   </p>
                 )}
               </div>
-              <a href="/technology/status" className="inline-flex min-h-11 items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55 transition hover:text-[#f1c75b]">
+              <Link href="/technology/status" className="inline-flex min-h-11 items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55 transition hover:text-[#f1c75b]">
                 {es ? 'Consultar estado técnico' : 'View technical status'} <ArrowUpRight size={13} aria-hidden="true" />
-              </a>
+              </Link>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {evolvingServices.map((service, index) => (

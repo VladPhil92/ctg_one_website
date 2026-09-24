@@ -16,6 +16,7 @@ import {
 import { PublicPageShell } from '@/components/PublicPageShell';
 import { Container } from '@/components/ui';
 import { useLanguage } from '@/contexts/LanguageContext';
+import Link from 'next/link';
 
 const PWA_URL = 'https://ctg-one-wallet.vercel.app';
 
@@ -97,9 +98,9 @@ export default function WalletPage() {
                 {es ? 'Accede desde la web o instala la app. Ambas superficies usan la misma cuenta CTG One, la misma relación de identidad y las mismas fuentes financieras canónicas.' : 'Access it on the web or install the app. Both surfaces use the same CTG One account, the same identity relationship and the same canonical financial sources.'}
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <a href="/dashboard/wallet" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#c9a962] px-6 text-xs font-semibold uppercase tracking-[0.1em] text-black transition-all hover:-translate-y-0.5 hover:bg-[#d4b676]">
+                <Link href="/dashboard/wallet" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#c9a962] px-6 text-xs font-semibold uppercase tracking-[0.1em] text-black transition-all hover:-translate-y-0.5 hover:bg-[#d4b676]">
                   {es ? 'Abrir Wallet Web' : 'Open Web Wallet'} <ArrowUpRight size={14} />
-                </a>
+                </Link>
                 <a href="#app" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.025] px-6 text-xs font-semibold uppercase tracking-[0.1em] text-white transition-all hover:-translate-y-0.5 hover:border-[#c9a962]/35 hover:bg-white/[0.05]">
                   {es ? 'Instalar app' : 'Install app'} <Smartphone size={14} />
                 </a>
@@ -183,7 +184,7 @@ export default function WalletPage() {
               <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.17em] text-white/35">Web Wallet</p>
               <h2 className="mt-3 font-outfit text-3xl font-semibold tracking-[-0.04em] text-white">{es ? 'Integrada directamente en ctgone.com' : 'Integrated directly into ctgone.com'}</h2>
               <p className="mt-4 text-sm leading-relaxed text-text-muted">{es ? 'Si ya tienes sesión CTG One, entras a la Wallet con esa misma cuenta. Si no la tienes, el login conserva el destino y te devuelve a la Wallet.' : 'If you already have a CTG One session, you enter the Wallet with that same account. Otherwise, login preserves the destination and returns you to the Wallet.'}</p>
-              <a href="/dashboard/wallet" className="mt-7 inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-[#d4b676] hover:text-white">{es ? 'Abrir Wallet Web' : 'Open Web Wallet'} <ArrowUpRight size={14} /></a>
+              <Link href="/dashboard/wallet" className="mt-7 inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-[#d4b676] hover:text-white">{es ? 'Abrir Wallet Web' : 'Open Web Wallet'} <ArrowUpRight size={14} /></Link>
             </article>
 
             <article className="rounded-[28px] border border-white/[0.08] bg-white/[0.025] p-7 sm:p-8">
@@ -201,7 +202,7 @@ export default function WalletPage() {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#d4b676]">{es ? 'Recargar Saldo CTG' : 'Top up CTG Balance'}</p>
                 <p className="mt-3 text-sm leading-relaxed text-text-muted">{es ? 'Las recargas COP pertenecen a la Wallet. El pago se registra como evidencia y el saldo solo cambia después de la verificación y conciliación correspondiente.' : 'COP top-ups belong to the Wallet. Payment is registered as evidence and the balance changes only after the corresponding verification and reconciliation.'}</p>
               </div>
-              <a href="/dashboard/depositos" className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#c9a962] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black hover:bg-[#d4b676]">{es ? 'Recargar' : 'Top up'} <ArrowUpRight size={14} /></a>
+              <Link href="/dashboard/depositos" className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#c9a962] px-5 text-xs font-semibold uppercase tracking-[0.1em] text-black hover:bg-[#d4b676]">{es ? 'Recargar' : 'Top up'} <ArrowUpRight size={14} /></Link>
             </div>
           </div>
         </section>

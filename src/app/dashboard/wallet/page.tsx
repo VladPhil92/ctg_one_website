@@ -24,6 +24,7 @@ import {
   type WalletOverviewActivityItem,
   type WalletOverviewV2,
 } from '@/lib/wallet/domain';
+import Link from 'next/link';
 
 type WalletLoadState =
   | { status: 'idle' | 'loading'; data: null; error: null }
@@ -258,21 +259,21 @@ export default function WalletDashboardPage() {
           </section>
 
           <section className="grid sm:grid-cols-3 gap-3">
-            <a href="/dashboard/depositos" className="rounded-xl border border-white/10 bg-white/[.025] p-4 hover:border-accent/35 transition-colors">
+            <Link href="/dashboard/depositos" className="rounded-xl border border-white/10 bg-white/[.025] p-4 hover:border-accent/35 transition-colors">
               <p className="text-sm font-medium">Añadir fondos</p>
               <p className="text-xs text-white/35 mt-1">Canales COP reconciliados</p>
               <ArrowRight size={14} className="text-accent mt-4" />
-            </a>
-            <a href="/dashboard/inversion" className="rounded-xl border border-white/10 bg-white/[.025] p-4 hover:border-accent/35 transition-colors">
+            </Link>
+            <Link href="/dashboard/inversion" className="rounded-xl border border-white/10 bg-white/[.025] p-4 hover:border-accent/35 transition-colors">
               <p className="text-sm font-medium">Inversiones</p>
               <p className="text-xs text-white/35 mt-1">Ledger contractual independiente</p>
               <ArrowRight size={14} className="text-accent mt-4" />
-            </a>
-            <a href="/dashboard/kyc" className="rounded-xl border border-white/10 bg-white/[.025] p-4 hover:border-accent/35 transition-colors">
+            </Link>
+            <Link href="/dashboard/kyc" className="rounded-xl border border-white/10 bg-white/[.025] p-4 hover:border-accent/35 transition-colors">
               <p className="text-sm font-medium">Identidad</p>
               <p className="text-xs text-white/35 mt-1">KYC y vínculo de wallet</p>
               <ExternalLink size={14} className="text-accent mt-4" />
-            </a>
+            </Link>
           </section>
 
           <p className="text-[10px] text-white/25 mt-6 leading-5">

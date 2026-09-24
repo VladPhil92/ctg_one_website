@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { ArrowRight, CheckCircle2, UserRoundCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 type AdvisoryResponse = { ok?: boolean };
 
@@ -77,7 +78,7 @@ export function EducationFamilyServiceRequest() {
         <UserRoundCheck className="h-7 w-7 text-[#6f0d12]" aria-hidden="true" />
         <h3 className="mt-5 font-serif text-3xl text-[#17110e]">Identifícate para solicitar un plan personalizado.</h3>
         <p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">Los servicios con precio publicado se compran directamente arriba. Esta ruta se usa únicamente cuando necesitamos diseñar un alcance especial.</p>
-        <a href="/iniciar-sesion?next=/jpvalderrama/learningcenter%23solicitud" className="mt-7 inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Iniciar sesión <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+        <Link href="/iniciar-sesion?next=/jpvalderrama/learningcenter%23solicitud" className="mt-7 inline-flex min-h-12 items-center gap-2 bg-[#6f0d12] px-6 text-xs font-bold uppercase tracking-[.13em] text-[#fffaf2]">Iniciar sesión <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
       </div>
     );
   }
@@ -88,7 +89,7 @@ export function EducationFamilyServiceRequest() {
         <CheckCircle2 className="h-7 w-7 text-[#6f0d12]" aria-hidden="true" />
         <h3 className="mt-5 font-serif text-3xl text-[#17110e]">Solicitud especial registrada.</h3>
         <p className="mt-4 font-serif text-[16px] leading-7 text-[#665950]">Como esta necesidad no corresponde a un servicio de precio fijo, revisaremos alcance y disponibilidad antes de emitir una propuesta. Las tutorías estándar no pasan por esta espera.</p>
-        <a href="/dashboard/educacion/servicios" className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Ver solicitud y seguimiento <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+        <Link href="/dashboard/educacion/servicios" className="mt-6 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#6f0d12]">Ver solicitud y seguimiento <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
       </div>
     );
   }
