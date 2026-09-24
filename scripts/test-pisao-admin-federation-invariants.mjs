@@ -8,7 +8,7 @@ const exchangeRoute = await readFile(
 
 assert.match(
   exchangeRoute,
-  /\.from\('profiles'\)[\s\S]*?\.select\('role'\)[\s\S]*?\.eq\('id', data\.subject_user_id\)/,
+  /\.from\('profiles'\)[\s\S]*?\.select\('role'\)[\s\S]*?\.eq\('id', candidate\.subject_user_id\)/,
   'PISÁO federation must resolve the canonical CTG One profile role for the exchanged subject.',
 );
 
