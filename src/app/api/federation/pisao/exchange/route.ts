@@ -175,10 +175,21 @@ export async function POST(request: Request) {
     return noStoreJson({ error: 'INVALID_OR_EXPIRED_CODE' }, 401);
   }
 
+  const { data: profile, error: profileError } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', data.subject_user_id)
+    .maybeSingle();
+
+  if (profileError) {
+    return noStoreJson({ error: 'FEDERATION_PROFILE_LOOKUP_FAILED' }, 503);
+  }
+
   return noStoreJson({
     provider: PISAO_FEDERATION_PROVIDER,
     subject: data.subject_user_id,
     email: data.subject_email,
     email_verified: true,
+    role: profile?.role ?? null,
   }, 200);
 }
