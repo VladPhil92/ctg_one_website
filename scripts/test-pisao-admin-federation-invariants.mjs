@@ -30,4 +30,11 @@ assert.doesNotMatch(
   'PISÁO federation must never hard-code administrative authority.',
 );
 
+const profileLookupIndex = exchangeRoute.indexOf(".from('profiles')");
+const consumeIndex = exchangeRoute.indexOf(".update({ consumed_at: consumedAt })");
+assert.ok(
+  profileLookupIndex >= 0 && consumeIndex >= 0 && profileLookupIndex < consumeIndex,
+  'Canonical role lookup must complete before the one-time federation code is consumed.',
+);
+
 console.log('PISÁO admin federation invariants: PASS');
