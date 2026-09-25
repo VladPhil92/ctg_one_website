@@ -15,9 +15,14 @@
 }
 
 .nvet-care-page a:focus-visible,
-.nvet-care-page button:focus-visible {
+.nvet-care-page button:focus-visible,
+.nvet-care-page input:focus-visible,
+.nvet-care-page select:focus-visible,
+.nvet-care-page textarea:focus-visible,
+.nvet-care-page [tabindex]:not([tabindex="-1"]):focus-visible {
   outline: 2px solid #34b27a;
   outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(52, 178, 122, 0.14);
 }
 
 .nvet-care-page section[id] {
