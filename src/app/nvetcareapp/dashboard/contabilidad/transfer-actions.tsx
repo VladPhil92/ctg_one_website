@@ -61,6 +61,7 @@ export function TransferActions({ transactionId }: { transactionId: string }) {
     return (
       <div className="flex w-56 flex-col items-end gap-2">
         <textarea
+          aria-label="Motivo del rechazo de la transferencia"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Motivo del rechazo (mín. 10 caracteres)"
