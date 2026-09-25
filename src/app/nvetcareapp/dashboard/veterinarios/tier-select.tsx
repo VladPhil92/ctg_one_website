@@ -43,6 +43,7 @@ export function TierSelect({ vetId, currentTier }: { vetId: string; currentTier:
     <div className="flex flex-col items-end gap-2">
       <div className="flex items-center gap-2">
         <select
+          aria-label="Nivel del veterinario"
           value={tier}
           onChange={(e) => setTier(e.target.value as NvetVetTier)}
           className="rounded-lg border border-[#0D1B2A]/10 bg-white px-2 py-1 text-xs text-[#0D1B2A]"
@@ -64,6 +65,7 @@ export function TierSelect({ vetId, currentTier }: { vetId: string; currentTier:
       </div>
       {dirty && (
         <input
+          aria-label="Motivo del cambio de nivel"
           type="text"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
