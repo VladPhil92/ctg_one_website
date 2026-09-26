@@ -4,6 +4,7 @@ import { ShieldCheck, UserRound } from 'lucide-react';
 import { fetchNvetClientProfile, fetchNvetUserSessions } from '@/lib/nvetcareapp/profile';
 import { NVET_ACCESS_COOKIE } from '@/lib/nvetcareapp/session';
 import { fetchNvetCurrentUser } from '@/lib/nvetcareapp/user';
+import { AccountSecurityActions } from './account-security-actions';
 import { ProfileAccountCenter } from './profile-account-center';
 
 const PROFILE_PATH = '/nvetcareapp/dashboard/perfil';
@@ -74,6 +75,10 @@ export default async function NvetClientProfilePage() {
             <ProfileAccountCenter
               initialProfile={profileResult.data}
               initialSessions={sessionsResult.ok ? sessionsResult.data : []}
+            />
+            <AccountSecurityActions
+              identitySource={profileResult.data.identitySource}
+              twoFactorEnabled={profileResult.data.twoFactorEnabled}
             />
           </>
         )}

@@ -93,6 +93,10 @@ export const Footer: React.FC = () => {
             <div className="mb-4 flex min-h-8 items-center gap-2.5"><span className="h-px w-5 bg-[#248cff]/40" aria-hidden="true" /><h3 className={`${headingClass} text-text-dim`}>Legal</h3></div>
             <ul className="space-y-1">
               <li><Link href="/privacy" className={linkClass}><span>{t('Privacy Policy')}</span></Link></li>
+              <li><Link href="/nvetcareapp/privacidad" className={linkClass}><span>Nvet · {locale === 'es' ? 'Privacidad' : 'Privacy'}</span></Link></li>
+              <li><Link href="/nvetcareapp/terminos" className={linkClass}><span>Nvet · {locale === 'es' ? 'Términos' : 'Terms'}</span></Link></li>
+              <li><Link href="/nvetcareapp/cookies" className={linkClass}><span>Nvet · Cookies</span></Link></li>
+              <li><Link href="/nvetcareapp/eliminar-cuenta" className={linkClass}><span>Nvet · {locale === 'es' ? 'Eliminar cuenta' : 'Delete account'}</span></Link></li>
               <li><Link href="/inversion/legal" className={linkClass}><span>{locale === 'es' ? 'Información legal de inversión' : 'Investment legal information'}</span></Link></li>
               <li><Link href="/inversion/riesgos" className={linkClass}><span>{locale === 'es' ? 'Riesgos de inversión' : 'Investment risks'}</span></Link></li>
             </ul>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
+import { NvetCookieConsent } from '@/components/nvet/NvetCookieConsent';
 import './nvetcareapp.css';
 
 const poppins = Poppins({
@@ -39,5 +40,10 @@ export const metadata: Metadata = {
 };
 
 export default function NvetCareAppLayout({ children }: { children: React.ReactNode }) {
-  return <div className={`${poppins.variable} nvet-care-page`}>{children}</div>;
+  return (
+    <div className={`${poppins.variable} nvet-care-page`}>
+      {children}
+      <NvetCookieConsent />
+    </div>
+  );
 }
