@@ -78,7 +78,7 @@ export function NvetCookieConsent() {
           setSettings(true);
           setOpen(true);
         }}
-        className="fixed bottom-3 left-3 z-[70] inline-flex min-h-11 items-center gap-2 rounded-full border border-[#0D1B2A]/10 bg-white px-4 py-2 text-xs font-bold text-[#0D1B2A] shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34B27A]"
+        className="fixed bottom-20 left-3 z-[70] inline-flex min-h-11 items-center gap-2 rounded-full border border-[#0D1B2A]/10 bg-white px-4 py-2 text-xs font-bold text-[#0D1B2A] shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34B27A]"
       >
         <Settings2 className="h-4 w-4" aria-hidden="true" />
         Cookies
