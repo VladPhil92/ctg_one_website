@@ -11,6 +11,7 @@ import {
   Search,
   Stethoscope,
 } from 'lucide-react';
+import { BetaLegalConsentCard } from './beta-legal-consent-card';
 import type {
   NvetAvailabilitySlot,
   NvetCreatedAppointment,
@@ -105,6 +106,7 @@ export function ClientBookingFlow({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [creatingPet, setCreatingPet] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
   const [bookingAttempt, setBookingAttempt] = useState<BookingAttempt | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<NvetCreatedAppointment | null>(null);
@@ -303,6 +305,10 @@ export function ClientBookingFlow({
 
   async function handleBooking(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!legalAccepted) {
+      setError('Debes aceptar los Términos y la Política de Privacidad vigentes antes de reservar.');
+      return;
+    }
     if (!selectedPetId || !selectedVetId || !selectedPriceId || !date || !time || !address.trim()) {
       setError('Completa mascota, veterinario, servicio, fecha, hora y dirección.');
       return;
@@ -488,7 +494,9 @@ export function ClientBookingFlow({
                     El servidor vuelve a consultar el tarifario oficial antes de crear la cita; el navegador no puede fijar el precio. El cobro se habilita en una fase separada y no se ejecuta automáticamente aquí.
                   </div>
 
-                  <button type="submit" disabled={booking || !selectedPetId || !selectedVetId || !selectedPriceId || !date || !time || !address.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0D1B2A] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#172B3F] disabled:cursor-not-allowed disabled:opacity-45">
+                  <BetaLegalConsentCard onAcceptanceChange={setLegalAccepted} />
+
+                  <button type="submit" disabled={booking || !legalAccepted || !selectedPetId || !selectedVetId || !selectedPriceId || !date || !time || !address.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0D1B2A] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#172B3F] disabled:cursor-not-allowed disabled:opacity-45">
                     {booking && <Loader2 className="h-4 w-4 animate-spin" />}{booking ? 'Reservando…' : 'Confirmar reserva'}
                   </button>
                 </div>
