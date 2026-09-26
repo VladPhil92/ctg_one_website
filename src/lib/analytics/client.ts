@@ -27,16 +27,31 @@ export function getAnalyticsAnonymousId(): string {
   }
 }
 
+function nvetAnalyticsAllowed(sourcePath: string): boolean {
+  if (!sourcePath.startsWith('/nvetcareapp')) return true;
+  try {
+    const raw = window.localStorage.getItem('nvet_cookie_consent');
+    if (!raw) return false;
+    const consent = JSON.parse(raw) as { version?: string; analytics?: boolean };
+    return consent.version === 'nvet-cookie-policy-v1-2026-09-25' && consent.analytics === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function trackFunnelEvent(
   eventName: Exclude<FunnelEventName, 'email_verified'>,
   options: TrackFunnelOptions = {},
 ): Promise<void> {
   if (typeof window === 'undefined') return;
 
+  const sourcePath = options.sourcePath ?? window.location.pathname;
+  if (!nvetAnalyticsAllowed(sourcePath)) return;
+
   const payload = {
     eventName,
     anonymousId: getAnalyticsAnonymousId(),
-    sourcePath: options.sourcePath ?? window.location.pathname,
+    sourcePath,
     serviceKey: options.serviceKey,
   };
 
