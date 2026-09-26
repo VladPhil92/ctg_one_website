@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PawPrint, Loader2 } from 'lucide-react';
 import { safeRedirectPath } from '@/lib/security/safe-redirect';
@@ -124,6 +125,12 @@ export function SignInForm() {
               </p>
             )}
 
+            <div className="flex items-center justify-end">
+              <Link href="/nvetcareapp/recuperar-contrasena" className="text-xs font-semibold text-[#237754] hover:underline">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={submitting}
@@ -133,6 +140,11 @@ export function SignInForm() {
               {submitting ? 'Ingresando...' : 'Ingresar'}
             </button>
           </form>
+          <p className="mt-5 text-center text-[11px] leading-5 text-[#69757F]">
+            Al utilizar Nvet Care aplican nuestros <Link className="font-semibold text-[#237754]" href="/nvetcareapp/terminos">Términos</Link>,{' '}
+            <Link className="font-semibold text-[#237754]" href="/nvetcareapp/privacidad">Privacidad</Link> y{' '}
+            <Link className="font-semibold text-[#237754]" href="/nvetcareapp/cookies">Cookies</Link>.
+          </p>
         </div>
       </div>
     </main>
