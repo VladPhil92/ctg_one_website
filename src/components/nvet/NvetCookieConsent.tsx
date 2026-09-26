@@ -89,7 +89,7 @@ export function NvetCookieConsent() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-[80] mx-auto max-w-3xl rounded-3xl border border-[#0D1B2A]/10 bg-white p-5 text-[#0D1B2A] shadow-2xl sm:bottom-5 sm:p-6" role="dialog" aria-modal="false" aria-labelledby="nvet-cookie-title">
+    <div className="fixed inset-x-3 bottom-24 z-[80] mx-auto max-w-3xl rounded-3xl border border-[#0D1B2A]/10 bg-white p-5 text-[#0D1B2A] shadow-2xl sm:bottom-5 sm:p-6" role="dialog" aria-modal="false" aria-labelledby="nvet-cookie-title">
       <div className="flex items-start gap-3">
         <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#34B27A]/10 text-[#237754]">
           <Cookie className="h-5 w-5" aria-hidden="true" />
