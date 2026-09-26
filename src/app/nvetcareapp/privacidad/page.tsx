@@ -139,9 +139,10 @@ export default function NvetPrivacyPage() {
         <p className="mt-3">
           Esta política se estructura principalmente bajo la Constitución Política de Colombia, la Ley 1581 de 2012 y su
           reglamentación compilada en el Decreto 1074 de 2015; las reglas de comercio electrónico y mensajes de datos de la
-          Ley 527 de 1999; el Estatuto del Consumidor —Ley 1480 de 2011 y sus modificaciones—; y las normas aplicables al
-          ejercicio y ética profesional veterinaria, entre ellas las Leyes 73 de 1985 y 576 de 2000. Las comunicaciones
-          comerciales deben observar además las reglas aplicables de contacto y exclusión.
+          Ley 527 de 1999; el Estatuto del Consumidor —Ley 1480 de 2011, incluida su actualización en materia de comercio
+          electrónico por la Ley 2439 de 2024—; y las normas aplicables al ejercicio y ética profesional veterinaria,
+          entre ellas las Leyes 73 de 1985 y 576 de 2000. Las comunicaciones comerciales y de cobranza, cuando correspondan,
+          deben observar además las reglas aplicables de contacto, entre ellas la Ley 2300 de 2023.
         </p>
       </section>
 
