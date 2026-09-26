@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
-    const text = await upstream.text();
+    await upstream.text();
     // Upstream returns HTML by design. Do not reflect it into the CTG One UI;
     // return only the generic privacy-preserving outcome.
     return NextResponse.json(
