@@ -96,6 +96,7 @@ export const Footer: React.FC = () => {
               <li><Link href="/nvetcareapp/privacidad" className={linkClass}><span>Nvet · {locale === 'es' ? 'Privacidad' : 'Privacy'}</span></Link></li>
               <li><Link href="/nvetcareapp/terminos" className={linkClass}><span>Nvet · {locale === 'es' ? 'Términos' : 'Terms'}</span></Link></li>
               <li><Link href="/nvetcareapp/cookies" className={linkClass}><span>Nvet · Cookies</span></Link></li>
+              <li><Link href="/nvetcareapp/eliminar-cuenta" className={linkClass}><span>Nvet · {locale === 'es' ? 'Eliminar cuenta' : 'Delete account'}</span></Link></li>
               <li><Link href="/inversion/legal" className={linkClass}><span>{locale === 'es' ? 'Información legal de inversión' : 'Investment legal information'}</span></Link></li>
               <li><Link href="/inversion/riesgos" className={linkClass}><span>{locale === 'es' ? 'Riesgos de inversión' : 'Investment risks'}</span></Link></li>
             </ul>
