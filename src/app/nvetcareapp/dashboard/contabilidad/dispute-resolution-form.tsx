@@ -62,6 +62,7 @@ export function DisputeResolutionForm({ transactionId }: { transactionId: string
   return (
     <div className="flex w-64 flex-col gap-2 rounded-lg border border-[#0D1B2A]/10 bg-[#F2F4F7] p-3">
       <select
+        aria-label="Resolución de la disputa"
         value={resolution}
         onChange={(e) => setResolution(e.target.value as NvetDisputeResolution)}
         className="rounded-lg border border-[#0D1B2A]/10 bg-white px-2 py-1 text-xs text-[#0D1B2A]"
@@ -71,6 +72,7 @@ export function DisputeResolutionForm({ transactionId }: { transactionId: string
         ))}
       </select>
       <textarea
+        aria-label="Notas de la resolución"
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
         placeholder="Notas de la resolución (mín. 10 caracteres)"

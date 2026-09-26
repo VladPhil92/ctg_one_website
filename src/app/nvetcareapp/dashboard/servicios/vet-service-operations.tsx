@@ -260,6 +260,7 @@ export function VetServiceOperations({
                       </p>
                       <div className="mt-3 grid gap-3 sm:grid-cols-2">
                         <input
+                          aria-label={`Código de transferencia para la cita de ${appointment.pet.name}`}
                           value={transferCodes[transaction.id] ?? ''}
                           onChange={(event) => setTransferCodes((current) => ({ ...current, [transaction.id]: event.target.value }))}
                           minLength={4}
@@ -268,6 +269,7 @@ export function VetServiceOperations({
                           className="rounded-lg border border-[#0D1B2A]/15 px-3 py-2 text-sm outline-none focus:border-[#34B27A]"
                         />
                         <input
+                          aria-label={`Comprobante de transferencia para la cita de ${appointment.pet.name}`}
                           type="file"
                           accept="application/pdf,image/jpeg,image/png,image/webp"
                           onChange={(event) => setTransferFiles((current) => ({ ...current, [transaction.id]: event.target.files?.[0] ?? null }))}
@@ -324,6 +326,7 @@ export function VetServiceOperations({
                       <p className="text-sm font-semibold text-[#0D1B2A]">Registro clínico</p>
                       <div className="mt-3 grid gap-3">
                         <textarea
+                          aria-label={`Diagnóstico clínico de ${appointment.pet.name}`}
                           value={draft.diagnosis}
                           onChange={(event) => setClinicalDrafts((current) => ({
                             ...current,
@@ -334,6 +337,7 @@ export function VetServiceOperations({
                           className="min-h-24 w-full rounded-lg border border-[#0D1B2A]/15 p-3 text-sm outline-none focus:border-[#34B27A]"
                         />
                         <textarea
+                          aria-label={`Tratamiento e indicaciones de ${appointment.pet.name}`}
                           value={draft.treatment}
                           onChange={(event) => setClinicalDrafts((current) => ({
                             ...current,
