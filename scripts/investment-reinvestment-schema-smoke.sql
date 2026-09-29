@@ -176,6 +176,11 @@ select public.create_production_lot_from_style(
   1000::bigint, 100::bigint, 50::bigint,
   3000::bigint, 2500::bigint, 0.08::numeric, 0.035::numeric, 4
 ) as target_lot_id \gset
+
+-- Migration 0144 makes lifecycle transitions backend-only. Keep the canonical
+-- Production actor in auth.uid(), but execute the privileged transition through
+-- service_role instead of weakening the browser grant boundary.
+set local role service_role;
 select public.transition_lot_status(:'target_lot_id'::uuid, 'FUNDING_PENDING', 'CI reinvestment contract', null);
 select public.transition_lot_status(:'target_lot_id'::uuid, 'FUNDING_OPEN', 'CI reinvestment contract', null);
 reset role;
