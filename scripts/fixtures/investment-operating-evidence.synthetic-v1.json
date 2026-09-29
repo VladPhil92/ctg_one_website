@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0152",
-    "schemaMigrationName": "wallet_crypto_rate_limit_scopes",
-    "schemaMigrationCount": 151,
+    "schemaMigration": "0153",
+    "schemaMigrationName": "wallet_crypto_rls_permission_hoisting",
+    "schemaMigrationCount": 152,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
