@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0149",
-    "schemaMigrationName": "kev_context_assembly_governed_recall",
-    "schemaMigrationCount": 148,
+    "schemaMigration": "0152",
+    "schemaMigrationName": "wallet_crypto_rate_limit_scopes",
+    "schemaMigrationCount": 151,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
