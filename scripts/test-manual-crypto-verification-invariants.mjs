@@ -71,18 +71,57 @@ assert.ok(
   'Only the trusted server role may persist server-computed crypto proof digests.',
 );
 
+// Operator-approved Binance deposit destinations are public payment-routing
+// data. The source allowlist is intentional and tests pin both asset/network
+// pairings and exact addresses to prevent silent payment-route substitution.
 assert.ok(
-  paymentConfig.includes('INVESTMENT_CRYPTO_CONFIGURED') && paymentConfig.includes('NEXT_PUBLIC_INVESTMENT_CRYPTO_ADDRESS'),
-  'The destination wallet must come from deployment configuration, never from source.',
+  paymentConfig.includes('INVESTMENT_CRYPTO_DESTINATIONS'),
+  'Investment crypto checkout must use an explicit destination allowlist.',
+);
+assert.match(
+  paymentConfig,
+  /asset: 'USDT'[\s\S]*?network: 'BNB Smart Chain \(BEP20\)'/,
+  'USDT must be accepted only through BNB Smart Chain (BEP20).',
+);
+assert.match(
+  paymentConfig,
+  /asset: 'BNB'[\s\S]*?network: 'BNB Smart Chain \(BEP20\)'/,
+  'BNB must be accepted only through BNB Smart Chain (BEP20).',
+);
+assert.match(
+  paymentConfig,
+  /asset: 'ETH'[\s\S]*?network: 'Ethereum \(ERC20\)'/,
+  'ETH must be accepted only through Ethereum (ERC20).',
+);
+assert.match(
+  paymentConfig,
+  /asset: 'BTC'[\s\S]*?network: 'Bitcoin'/,
+  'BTC must be accepted only through the Bitcoin network.',
 );
 assert.ok(
-  !paymentConfig.match(/INVESTMENT_CRYPTO_INSTRUCTIONS[\s\S]*?0x[0-9a-fA-F]{6}/),
-  'No wallet address may be embedded in source.',
+  paymentConfig.includes("0xf27f2ab291cb3fee22298b3169b119c6b854b21c")
+    && paymentConfig.includes("13Kg9rf5C4mNQG9A21G655q7dARrbJmatF"),
+  'Approved Binance deposit addresses changed unexpectedly.',
+);
+assert.ok(
+  paymentConfig.includes('INVESTMENT_PSE_ENABLED = false'),
+  'PSE must remain explicitly disabled until its backend provider integration exists.',
 );
 
 assert.ok(
-  railChoice.includes('if (!INVESTMENT_CRYPTO_CONFIGURED) return null'),
-  'Checkout must stay fail-closed on the single Bancolombia rail until a wallet is configured.',
+  railChoice.includes('QR PISAO')
+    && railChoice.includes('PSE')
+    && railChoice.includes('Criptomonedas'),
+  'Checkout must expose the three intended payment choices: QR, PSE placeholder and crypto.',
+);
+assert.ok(
+  railChoice.includes('disabled={disabled || !INVESTMENT_PSE_ENABLED}'),
+  'PSE choice must stay non-interactive while the service is unavailable.',
+);
+assert.ok(
+  railChoice.includes('INVESTMENT_CRYPTO_DESTINATIONS')
+    && railChoice.includes("encodeQR(destination.address, 'svg')"),
+  'Crypto checkout must render a QR directly from the pinned approved destination.',
 );
 assert.ok(
   checkout.includes('uploadInvestmentPaymentProof') && checkout.includes('rail'),
