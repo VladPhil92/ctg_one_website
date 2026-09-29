@@ -37,9 +37,10 @@ const MIN_CONFIRMATIONS: Record<WalletCryptoAsset, number> = {
 };
 
 function toDecimalString(value: bigint, decimals: number) {
-  const negative = value < 0n;
+  const zero = BigInt(0);
+  const negative = value < zero;
   const absolute = negative ? -value : value;
-  const divisor = 10n ** BigInt(decimals);
+  const divisor = BigInt(10) ** BigInt(decimals);
   const whole = absolute / divisor;
   const fraction = (absolute % divisor).toString().padStart(decimals, '0').replace(/0+$/, '');
   return `${negative ? '-' : ''}${whole}${fraction ? `.${fraction}` : ''}`;
@@ -154,7 +155,9 @@ async function validateEvm(input: ClaimInput): Promise<CryptoValidationResult> {
   }
 
   const currentBlock = await client.getBlockNumber();
-  const confirmations = Number(currentBlock >= receipt.blockNumber ? currentBlock - receipt.blockNumber + 1n : 0n);
+  const one = BigInt(1);
+  const zero = BigInt(0);
+  const confirmations = Number(currentBlock >= receipt.blockNumber ? currentBlock - receipt.blockNumber + one : zero);
   let received = 0;
 
   if (input.asset === 'ETH' || input.asset === 'BNB') {
@@ -167,7 +170,7 @@ async function validateEvm(input: ClaimInput): Promise<CryptoValidationResult> {
     const contract = config.tokenContract as Address;
     const decimals = await client.readContract({ address: contract, abi: erc20Abi, functionName: 'decimals' });
     const transfers = parseEventLogs({ abi: erc20Abi, eventName: 'Transfer', logs: receipt.logs, strict: false });
-    let units = 0n;
+    let units = BigInt(0);
     for (const log of transfers) {
       if (log.address.toLowerCase() !== contract.toLowerCase()) continue;
       const args = log.args as { to?: Address; value?: bigint };
