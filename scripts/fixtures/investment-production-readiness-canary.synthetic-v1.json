@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0143",
-  "expectedMigrationName": "runtime_schema_requirement_probe_timestamp_compatibility",
-  "expectedMigrationCount": 143,
+  "expectedMigration": "0149",
+  "expectedMigrationName": "kev_context_assembly_governed_recall",
+  "expectedMigrationCount": 148,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
