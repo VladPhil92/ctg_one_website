@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [migration, api, hook, dashboard, publicSection, services, funnel, schemaVersion, docs] = await Promise.all([
+const [migration, api, hook, dashboard, publicSection, services, funnel, schemaVersion, docs, migrationFiles] = await Promise.all([
   read('supabase/migrations/20260914035147_0133_rewards_foundation_v1.sql'),
   read('src/app/api/rewards/account/route.ts'),
   read('src/hooks/useRewardsSummary.ts'),
@@ -13,6 +13,7 @@ const [migration, api, hook, dashboard, publicSection, services, funnel, schemaV
   read('src/lib/analytics/funnel.ts'),
   read('src/lib/observability/schema-version.ts'),
   read('docs/product/CTG_REWARDS_FOUNDATION_V1.md'),
+  readdir(new URL('../supabase/migrations/', import.meta.url)),
 ]);
 
 for (const table of ['reward_accounts', 'reward_ledger_entries']) {
@@ -65,9 +66,24 @@ assert.match(services, /id: 'rewards'[\s\S]*href: '\/dashboard\/rewards'/, 'Rewa
 assert.match(services, /id: 'rewards'[\s\S]*status: 'DEVELOPMENT'/, 'Rewards must remain DEVELOPMENT, not LIVE.');
 assert.match(services, /id: 'rewards'[\s\S]*publicHref: '\/rewards'/, 'Rewards must retain a public maturity surface.');
 assert.ok(funnel.includes("'rewards'"), 'Rewards must be an approved funnel service key.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0143'/, 'Repository schema authority must reflect the current additive global schema.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'runtime_schema_requirement_probe_timestamp_compatibility'/, 'Current schema authority must name the latest additive global migration.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 143/, 'Current schema migration count must remain aligned with repository history.');
+
+// The Rewards contract only needs the global schema authority to be truthful;
+// it must not freeze the repository at the migration that happened to be latest
+// when Rewards Foundation v1 was introduced. Derive the authority from the
+// migration directory so future additive migrations do not make this test stale.
+const parsedMigrations = migrationFiles
+  .map((file) => {
+    const match = file.match(/(?:^|_)(\d{4})_([^/]+)\.sql$/);
+    return match ? { file, logicalVersion: match[1], name: match[2] } : null;
+  })
+  .filter(Boolean);
+assert.ok(parsedMigrations.length > 0, 'Repository migration directory must contain parseable migrations.');
+const latestMigration = parsedMigrations.reduce((latest, current) =>
+  Number(current.logicalVersion) > Number(latest.logicalVersion) ? current : latest
+);
+assert.match(schemaVersion, new RegExp(`EXPECTED_DATABASE_MIGRATION = '${latestMigration.logicalVersion}'`), 'Repository schema authority must reflect the latest additive global migration.');
+assert.match(schemaVersion, new RegExp(`EXPECTED_DATABASE_MIGRATION_NAME = '${latestMigration.name}'`), 'Current schema authority must name the latest additive global migration.');
+assert.match(schemaVersion, new RegExp(`EXPECTED_DATABASE_MIGRATION_COUNT = ${parsedMigrations.length}`), 'Current schema migration count must remain aligned with repository history.');
 
 for (const truth of ['**does not activate**', 'No `redeem`', 'Moving CTG Rewards from `DEVELOPMENT`']) {
   assert.ok(docs.includes(truth), `Rewards governance document must retain: ${truth}`);
