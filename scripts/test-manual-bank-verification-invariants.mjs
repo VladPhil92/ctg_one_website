@@ -57,9 +57,9 @@ assert.ok(uploadRoute.includes('createAdminClient'), 'After participant authoriz
 assert.ok(uploadRoute.includes("'submit_investment_order_bank_proof_server'") && uploadRoute.includes('admin.rpc(proofRpc'), 'Proof upload must persist the server digest through the service-role-only RPC.');
 assert.ok(uploadRoute.includes('objectCreatedByThisRequest') && uploadRoute.includes('objectIsAuthoritative') && uploadRoute.includes('payment_proof_storage_path,payment_proof_sha256'), 'Upload cleanup must not delete a deterministic proof object adopted by a concurrent successful submission.');
 
-assert.ok(checkout.includes('INVESTMENT_BANK_TRANSFER_INSTRUCTIONS') && checkout.includes('Ver QR Bancolombia'), 'Checkout must present the approved Bancolombia QR flow.');
+assert.ok(checkout.includes('INVESTMENT_BANK_TRANSFER_INSTRUCTIONS') && checkout.includes('Ver QR PISAO / Bancolombia'), 'Checkout must present the approved PISAO/Bancolombia QR flow.');
 assert.ok(checkout.includes('pendiente de verificación bancaria humana'), 'Checkout must clearly state that proof upload does not approve the investment.');
-assert.ok(!checkout.includes("'pse'") && !checkout.includes("'bre_b_qr'"), 'Investment checkout must not offer rails that have no independently checkable manual verification.');
+assert.ok(!checkout.includes("'pse'") && !checkout.includes("'bre_b_qr'"), 'Investment checkout must never submit unimplemented PSE or Bre-B backend rails.');
 assert.ok(checkout.includes('uploadInvestmentPaymentProof'), 'Checkout UI must delegate proof transport through the browser repository boundary.');
 assert.ok(checkoutRepository.includes("'Content-Type': input.proof.type") && checkoutRepository.includes("'X-File-Name': encodeURIComponent"), 'Checkout repository must send the proof as a raw bounded upload, not multipart FormData.');
 assert.ok(checkoutRepository.includes('/payment-proof'), 'Checkout repository must use the server-hashed proof upload endpoint.');

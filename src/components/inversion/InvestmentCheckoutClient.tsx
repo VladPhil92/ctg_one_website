@@ -12,7 +12,6 @@ import {
   INVESTMENT_BANK_TRANSFER_CONFIGURED,
   INVESTMENT_BANK_TRANSFER_INSTRUCTIONS,
   INVESTMENT_CRYPTO_CONFIGURED,
-  INVESTMENT_CRYPTO_INSTRUCTIONS,
 } from '@/lib/payment-instructions';
 import {
   InvestmentCryptoDestination,
@@ -106,8 +105,8 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
     if (!orderId || !proof) return;
     if (!railConfigured) {
       setError(rail === 'crypto'
-        ? 'La dirección de destino en cripto aún no está configurada en producción. La orden queda reservada, pero no se aceptará evidencia hasta publicarla.'
-        : 'El QR de Bancolombia aún no está configurado en producción. La orden queda reservada, pero no se aceptará evidencia hasta publicar el QR aprobado.');
+        ? 'Los destinos de pago con criptomonedas no están disponibles. La orden queda reservada, pero no se aceptará evidencia hasta restablecerlos.'
+        : 'El QR de PISAO/Bancolombia no está disponible. La orden queda reservada, pero no se aceptará evidencia hasta restablecerlo.');
       return;
     }
     if (proof.size <= 0 || proof.size > MAX_FILE_BYTES) {
@@ -157,7 +156,7 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
 
           <label className="flex items-start gap-3 rounded-xl border border-white/[.07] p-4 cursor-pointer mb-5" style={{background:'rgba(255,255,255,.018)'}}>
             <input type="checkbox" checked={accepted} disabled={!!orderId || !canInvest} onChange={(event) => setAccepted(event.target.checked)} className="mt-1 accent-accent" />
-            <span className="text-xs text-text-muted leading-relaxed">Entiendo que esta participación financia un equivalente productivo dentro de un lote físico, que no existe rentabilidad garantizada y que la inversión solo se activa después de la verificación bancaria humana. Leí y acepto las <a href="/inversion/legal" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline" onClick={(event) => event.stopPropagation()}>condiciones legales</a>.</span>
+            <span className="text-xs text-text-muted leading-relaxed">Entiendo que esta participación financia un equivalente productivo dentro de un lote físico, que no existe rentabilidad garantizada y que la inversión solo se activa después de la verificación humana del medio de pago elegido. Leí y acepto las <a href="/inversion/legal" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline" onClick={(event) => event.stopPropagation()}>condiciones legales</a>.</span>
           </label>
 
           {!orderId
@@ -169,7 +168,7 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
           <div className="flex items-center gap-3 mb-5"><ShieldCheck size={18} className="text-accent"/><div><p className="text-[9px] uppercase tracking-[.22em] text-text-dim">Control de fraude</p><h3 className="text-base font-outfit font-semibold mt-1">El comprobante no aprueba la inversión</h3></div></div>
           <div className="grid sm:grid-cols-3 gap-3 text-xs text-text-muted">
             <Control text="SHA-256 exacto para detectar reutilización del mismo archivo"/>
-            <Control text="Finance verifica el abono directamente en Bancolombia"/>
+            <Control text="Finance verifica el abono en Bancolombia o en la red blockchain declarada"/>
             <Control text="Contrato y allocation nacen solo después de confirmación humana"/>
           </div>
         </section>
@@ -183,18 +182,18 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
         </section>
 
         <section className="rounded-[24px] border border-white/10 p-5 sm:p-6" style={{background:'rgba(255,255,255,.022)'}}>
-          <div className="flex items-center gap-3 mb-5"><div className="w-9 h-9 rounded-full border border-accent/20 flex items-center justify-center text-accent">{rail === 'crypto' ? <Coins size={17}/> : <Landmark size={17}/>}</div><div><p className="text-[9px] uppercase tracking-[.22em] text-accent">02 · Transferencia</p><h2 className="text-lg font-outfit font-semibold mt-1">{rail === 'crypto' ? 'Cripto' : 'Bancolombia'}</h2></div></div>
+          <div className="flex items-center gap-3 mb-5"><div className="w-9 h-9 rounded-full border border-accent/20 flex items-center justify-center text-accent">{rail === 'crypto' ? <Coins size={17}/> : <Landmark size={17}/>}</div><div><p className="text-[9px] uppercase tracking-[.22em] text-accent">02 · Pago</p><h2 className="text-lg font-outfit font-semibold mt-1">{rail === 'crypto' ? 'Criptomonedas' : 'QR PISAO'}</h2></div></div>
 
-          {!orderId ? <p className="text-xs text-text-dim">Primero crea la orden para fijar el valor exacto a transferir.</p> : submitted ? <div className="rounded-xl border border-accent/20 bg-accent/[.05] p-4"><p className="text-sm text-white font-medium">Comprobante recibido</p><p className="text-xs text-text-muted mt-2 leading-relaxed">Estado: <strong className="text-accent">{rail === 'crypto' ? 'pendiente de verificación humana en cadena' : 'pendiente de verificación bancaria humana'}</strong>. Ninguna IA ni lectura automática puede activar esta inversión.</p><Button href="/inversion/app" variant="secondary" size="sm" fullWidth className="mt-4">Volver a mis inversiones</Button></div> : <>
+          {!orderId ? <p className="text-xs text-text-dim">Primero crea la orden para fijar el valor exacto a pagar.</p> : submitted ? <div className="rounded-xl border border-accent/20 bg-accent/[.05] p-4"><p className="text-sm text-white font-medium">Comprobante recibido</p><p className="text-xs text-text-muted mt-2 leading-relaxed">Estado: <strong className="text-accent">{rail === 'crypto' ? 'pendiente de verificación humana en cadena' : 'pendiente de verificación bancaria humana'}</strong>. Ninguna IA ni lectura automática puede activar esta inversión.</p><Button href="/inversion/app" variant="secondary" size="sm" fullWidth className="mt-4">Volver a mis inversiones</Button></div> : <>
             <InvestmentPaymentRailChoice rail={rail} onChange={setRail} disabled={busy} />
 
             {rail === 'crypto' ? <InvestmentCryptoDestination amountLabel={formatCents(displayCapital)} /> : <>
               <div className="rounded-xl border border-white/[.07] p-4 mb-4 text-xs text-text-muted leading-relaxed">
-                Transfiere exactamente <strong className="text-white">{formatCents(displayCapital)}</strong> a la cuenta de ahorros de {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName}. Usa exclusivamente el QR oficial mostrado aquí.
+                Paga exactamente <strong className="text-white">{formatCents(displayCapital)}</strong> usando el QR oficial de PISAO en {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName}.
               </div>
 
-              <Button onClick={() => setShowQr(true)} disabled={!INVESTMENT_BANK_TRANSFER_CONFIGURED} variant="secondary" size="sm" fullWidth><QrCode size={14}/> Ver QR Bancolombia</Button>
-              {!INVESTMENT_BANK_TRANSFER_CONFIGURED && <p className="text-[11px] text-amber-300/80 mt-2">El QR aprobado todavía no está publicado en la configuración productiva. La orden permanece reservada.</p>}
+              <Button onClick={() => setShowQr(true)} disabled={!INVESTMENT_BANK_TRANSFER_CONFIGURED} variant="secondary" size="sm" fullWidth><QrCode size={14}/> Ver QR PISAO / Bancolombia</Button>
+              {!INVESTMENT_BANK_TRANSFER_CONFIGURED && <p className="text-[11px] text-amber-300/80 mt-2">El QR aprobado no está disponible. La orden permanece reservada.</p>}
             </>}
 
             <label className="block rounded-xl border border-dashed border-white/15 p-4 mt-5 mb-5 cursor-pointer hover:border-accent/30 transition-colors">
@@ -208,17 +207,17 @@ export function InvestmentCheckoutClient({ lot, funding }: { lot: InvestmentProd
         </section>
       </aside>
 
-      {showQr && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="QR Bancolombia">
+      {showQr && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="QR PISAO Bancolombia">
         <div className="relative w-full max-w-md rounded-[24px] border border-white/10 bg-[#0b0b0b] p-5 sm:p-6 shadow-2xl">
           <button type="button" aria-label="Cerrar QR" onClick={() => setShowQr(false)} className="absolute right-4 top-4 rounded-full border border-white/10 p-2 text-text-muted hover:text-white"><X size={16}/></button>
-          <p className="text-[9px] uppercase tracking-[.2em] text-accent mb-2">Transferencia oficial</p>
-          <h3 className="text-xl font-outfit font-semibold text-white">QR Bancolombia</h3>
+          <p className="text-[9px] uppercase tracking-[.2em] text-accent mb-2">Pago oficial</p>
+          <h3 className="text-xl font-outfit font-semibold text-white">QR PISAO</h3>
           <p className="text-xs text-text-muted mt-2 mb-5">{INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName} · {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.accountType}</p>
           <div className="rounded-2xl bg-white p-4">
             {/* QR is an approved public payment asset configured outside source code. */}
-            <img src={INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl} alt={`QR oficial de la cuenta de ahorros Bancolombia para ${investmentConfig.programDisplayName}`} className="mx-auto block max-h-[360px] w-auto max-w-full" />
+            <img src={INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl} alt={`QR oficial de PISAO en Bancolombia para ${investmentConfig.programDisplayName}`} className="mx-auto block max-h-[360px] w-auto max-w-full" />
           </div>
-          <p className="text-[11px] text-text-dim mt-4 leading-relaxed">Después de transferir, vuelve a esta ventana y sube el comprobante. El comprobante será tratado como evidencia, no como confirmación de fondos.</p>
+          <p className="text-[11px] text-text-dim mt-4 leading-relaxed">Después de pagar, vuelve a esta ventana y sube el comprobante. El comprobante será tratado como evidencia, no como confirmación de fondos.</p>
         </div>
       </div>}
     </div>
