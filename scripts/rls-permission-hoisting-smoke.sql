@@ -3,10 +3,11 @@
 -- CTG One — RLS permission-call hoisting contract (whole `public` schema)
 --
 -- Migrations 0070 (investment tables), 0071 (accounts and knowledge tables),
--- 0083 (wallet top-up claims), 0105 (wallet query-plan hardening), and 0106
--- (policy consolidation) hoist every row-independent permission call in the
--- reviewed RLS policies into a `(select ...)` InitPlan, so Postgres evaluates
--- it once per query instead of once per candidate row.
+-- 0083 (wallet top-up claims), 0105 (wallet query-plan hardening), 0106
+-- (policy consolidation), and 0153 (direct-crypto wallet claim/quote policies)
+-- hoist every row-independent permission call in the reviewed RLS policies
+-- into a `(select ...)` InitPlan, so Postgres evaluates it once per query
+-- instead of once per candidate row.
 --
 -- Two things must stay true, and they pull against each other:
 --   1. no policy may go back to calling a permission function per row
@@ -70,6 +71,8 @@ declare
     'kyc_submissions.kyc_submissions_select',
     'profiles.profiles_select',
     'transactions.transactions_select',
+    'wallet_crypto_quotes.wallet_crypto_quotes_read_own_or_admin',
+    'wallet_crypto_topup_claims.wallet_crypto_topups_read_own_or_admin',
     'wallet_identity_audit_log.wallet_identity_audit_log_read_own_or_admin',
     'wallet_topup_claims.wallet_topup_claims_read_own_or_admin',
     'wallets.wallets_select'
