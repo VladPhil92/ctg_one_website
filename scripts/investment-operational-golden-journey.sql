@@ -36,7 +36,8 @@ insert into public.investment_formula_versions(version,participant_profit_share,
 select 'CI-OPERATIONAL-GOLDEN-JOURNEY',0.5000,0.5000,'ACTIVE',now()
 where not exists(select 1 from public.investment_formula_versions where status='ACTIVE');
 
--- Source lot + canonical locations.
+-- Source lot. The participant-facing creation RPC remains authenticated, while
+-- migration 0144 moves lifecycle/location mutations behind the trusted backend.
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000712',true);
 select public.create_production_lot_from_style(
@@ -44,6 +45,8 @@ select public.create_production_lot_from_style(
   1000::bigint,100::bigint,50::bigint,
   3000::bigint,2500::bigint,0.08::numeric,0.035::numeric,2
 ) as source_lot_id \gset
+
+set local role service_role;
 select public.transition_lot_status(:'source_lot_id'::uuid,'FUNDING_PENDING','CI journey',null);
 select public.transition_lot_status(:'source_lot_id'::uuid,'FUNDING_OPEN','CI journey',null);
 select (public.upsert_inventory_location('CI_JOURNEY_SALES','CI Journey Sales Point','SALES_POINT',null,true)).id as sales_location_id \gset
@@ -85,8 +88,9 @@ select pg_temp.assert_journey(
   'receipt must equal the server-priced capital requirement'
 );
 
--- Production and serialized physical lifecycle.
-set local role authenticated;
+-- Production and serialized physical lifecycle. The privileged mutation RPCs
+-- execute as service_role while auth.uid() stays bound to Production.
+set local role service_role;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000712',true);
 select public.transition_lot_status(:'source_lot_id'::uuid,'FUNDED',null,null);
 select public.transition_lot_status(:'source_lot_id'::uuid,'PROCUREMENT',null,null);
@@ -95,32 +99,53 @@ select public.transition_lot_status(:'source_lot_id'::uuid,'FERMENTATION',null,n
 select public.transition_lot_status(:'source_lot_id'::uuid,'CONDITIONING',null,null);
 select public.transition_lot_status(:'source_lot_id'::uuid,'BOTTLING',null,null);
 select * from public.generate_bottle_units(:'source_lot_id'::uuid,4);
+reset role;
+
+-- service_role intentionally has no direct table SELECT after KEV hardening.
+-- The rolled-back CI harness reads deterministic serials outside that role and
+-- passes them as explicit arguments to the trusted mutation RPCs.
+select array_agg(serial_code order by unit_number)::text[] as bottle_serials
+from public.investment_bottle_units
+where lot_id=:'source_lot_id'::uuid
+\gset
+select serial_code as returned_serial
+from public.investment_bottle_units
+where lot_id=:'source_lot_id'::uuid
+order by unit_number
+limit 1
+\gset
+
+set local role service_role;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000712',true);
 select public.transition_lot_status(:'source_lot_id'::uuid,'QUALITY_CONTROL',null,null);
-select public.update_bottle_units_status(:'source_lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id=:'source_lot_id'::uuid order by unit_number),'QC_APPROVED',null);
+select public.update_bottle_units_status(
+  :'source_lot_id'::uuid,:'bottle_serials'::text[],'QC_APPROVED',null
+);
 select public.transition_lot_status(:'source_lot_id'::uuid,'WAREHOUSE',null,null);
-select public.update_bottle_units_status(:'source_lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id=:'source_lot_id'::uuid order by unit_number),'WAREHOUSE','CTG_WAREHOUSE');
+select public.update_bottle_units_status(
+  :'source_lot_id'::uuid,:'bottle_serials'::text[],'WAREHOUSE','CTG_WAREHOUSE'
+);
 select public.transition_lot_status(:'source_lot_id'::uuid,'DISPATCHED',null,null);
-select public.update_bottle_units_status(:'source_lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id=:'source_lot_id'::uuid order by unit_number),'DISPATCHED','IN_TRANSIT');
+select public.update_bottle_units_status(
+  :'source_lot_id'::uuid,:'bottle_serials'::text[],'DISPATCHED','IN_TRANSIT'
+);
 select public.transition_lot_status(:'source_lot_id'::uuid,'IN_MARKET',null,null);
-select public.update_bottle_units_status(:'source_lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id=:'source_lot_id'::uuid order by unit_number),'IN_MARKET','CI_JOURNEY_SALES');
+select public.update_bottle_units_status(
+  :'source_lot_id'::uuid,:'bottle_serials'::text[],'IN_MARKET','CI_JOURNEY_SALES'
+);
 select public.transition_lot_status(:'source_lot_id'::uuid,'SELLING',null,null);
 reset role;
 
--- Sell all four units, then credit one exact customer return.
-set local role authenticated;
+-- Sell all four units, then credit one exact customer return. These sales and
+-- return mutations are backend-only after 0144, with the Sales actor retained.
+set local role service_role;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000714',true);
 select sale_id,gross_revenue_cents,tax_recognized_cents
 from public.record_bottle_sale_document(
   :'source_lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id=:'source_lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   3000::bigint,'DIRECT','ci-operational-sale-0001','CI-OP-SALE-001','CI_JOURNEY_SALES',800::bigint
 ) \gset sale_
-select serial_code as returned_serial
-from public.investment_bottle_units where lot_id=:'source_lot_id'::uuid order by unit_number limit 1 \gset
 select credit_note_id,returned_count,gross_credit_cents,tax_credit_cents
 from public.record_sale_return_credit_note(
   :'sale_sale_id'::uuid,array[:'returned_serial'::text],
@@ -147,7 +172,7 @@ select pg_temp.assert_journey(
 );
 
 -- A credited return is not a terminal physical disposition. Resolve it before SOLD_OUT.
-set local role authenticated;
+set local role service_role;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000712',true);
 select public.update_bottle_units_status(
   :'source_lot_id'::uuid,array[:'returned_serial'::text],'DAMAGED','CI_JOURNEY_RETURN'
@@ -172,7 +197,7 @@ select pg_temp.assert_journey(
 -- Commercial close and settlement.
 -- NDLP = (12000-3000) - (800-200) - 4600 = 3800.
 -- Participant credit = 4600 capital + 50% * 3800 = 6500.
-set local role authenticated;
+set local role service_role;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000712',true);
 select public.transition_lot_status(:'source_lot_id'::uuid,'SOLD_OUT',null,null);
 select public.transition_lot_status(:'source_lot_id'::uuid,'SETTLEMENT_PENDING',null,null);
@@ -206,6 +231,7 @@ select public.create_production_lot_from_style(
   500::bigint,50::bigint,25::bigint,
   3000::bigint,2500::bigint,0.08::numeric,0.035::numeric,2
 ) as target_lot_id \gset
+set local role service_role;
 select public.transition_lot_status(:'target_lot_id'::uuid,'FUNDING_PENDING','CI reinvestment target',null);
 select public.transition_lot_status(:'target_lot_id'::uuid,'FUNDING_OPEN','CI reinvestment target',null);
 reset role;
