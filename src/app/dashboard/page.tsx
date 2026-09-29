@@ -1,7 +1,5 @@
-import PersonalOSDashboardV2 from '@/components/dashboard/PersonalOSDashboardV2';
+import InvestorDashboard from '@/components/dashboard/InvestorDashboard';
 
-// Canonical account-dashboard identity: TU ECOSISTEMA CTG ONE.
-// Personal OS v2 turns authenticated account state into a prioritized activation journey.
 export default function DashboardPage() {
-  return <PersonalOSDashboardV2 />;
+  return <InvestorDashboard />;
 }
