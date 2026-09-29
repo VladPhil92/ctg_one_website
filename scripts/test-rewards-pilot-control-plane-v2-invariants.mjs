@@ -64,12 +64,18 @@ assert.match(nav, /href: '\/admin\/rewards', label: 'Rewards Lab', roles: \['SUP
 assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0149'/, 'Repository schema authority must reflect the current additive schema.');
 assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'kev_context_assembly_governed_recall'/, 'Schema authority must name the current additive global migration.');
 assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 148/, 'Schema migration count must align with the current global schema.');
-assert.match(history, /"logicalVersion": "0134", "remoteVersion": "20260914111247", "remoteName": "0134_rewards_pilot_control_plane_v2"/, 'Production provenance must retain the real 0134 Supabase migration.');
-assert.match(history, /"logicalVersion": "0135", "remoteVersion": "20260914123941", "remoteName": "0135_rewards_shadow_earning_engine_v3"/, 'Production provenance must retain the real 0135 Supabase migration.');
-assert.match(history, /"logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4"/, 'Production provenance must retain the real 0136 Supabase migration.');
-assert.match(history, /"logicalVersion": "0137", "remoteVersion": "20260914132842", "remoteName": "0137_rewards_signed_source_atomicity_hardening"/, 'Production provenance must contain the real 0137 Supabase hardening migration.');
-assert.match(history, /"logicalVersion": "0138", "remoteVersion": "20260914154606", "remoteName": "0138_rewards_signed_source_integrity_hardening_v4_1"/, 'Production provenance must retain the real 0138 Supabase hardening migration.');
-assert.match(history, /"logicalVersion": "0139", "remoteVersion": "20260914155204", "remoteName": "0139_rewards_source_integrity_transactional_boundaries_v4_1"/, 'Production provenance must retain the real 0139 Supabase transactional-boundaries migration.');
+
+const productionHistory = JSON.parse(history);
+const assertHistoryEntry = (logicalVersion, remoteVersion, remoteName) => {
+  const entry = productionHistory.migrations.find((item) => item.logicalVersion === logicalVersion);
+  assert.deepEqual(entry, { logicalVersion, remoteVersion, remoteName }, `Production provenance must retain migration ${logicalVersion}.`);
+};
+assertHistoryEntry('0134', '20260914111247', '0134_rewards_pilot_control_plane_v2');
+assertHistoryEntry('0135', '20260914123941', '0135_rewards_shadow_earning_engine_v3');
+assertHistoryEntry('0136', '20260914130944', '0136_rewards_signed_source_connectors_v4');
+assertHistoryEntry('0137', '20260914132842', '0137_rewards_signed_source_atomicity_hardening');
+assertHistoryEntry('0138', '20260914154606', '0138_rewards_signed_source_integrity_hardening_v4_1');
+assertHistoryEntry('0139', '20260914155204', '0139_rewards_source_integrity_transactional_boundaries_v4_1');
 
 for (const truth of ['**simulation only**', 'There is intentionally no `active`', 'separate decision before any CTGO interoperability']) {
   assert.ok(docs.includes(truth), `Rewards v2 governance must retain: ${truth}`);
