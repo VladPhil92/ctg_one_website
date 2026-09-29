@@ -88,12 +88,8 @@ export const PAYMENT_INSTRUCTIONS_CONFIGURED =
   CRYPTO_DEPOSIT_CONFIGURED;
 
 /**
- * CTG Craft Beer Investment currently operates with one deliberately simple
- * inbound rail: direct Bancolombia/Bre-B transfer using the approved QR.
- *
- * The QR is public display material, not a credential. Its scan-validated
- * module matrix is versioned in source and rendered by a first-party route so
- * checkout does not depend on a mutable third-party image URL or Render env.
+ * CTG Craft Beer Investment accepts the approved PISAO/Bancolombia QR as its
+ * COP rail. The QR is public display material, not a credential.
  */
 const INVESTMENT_BANCOLOMBIA_QR_ASSET = '/api/investment/payment-qr';
 
@@ -107,17 +103,71 @@ export const INVESTMENT_BANK_TRANSFER_CONFIGURED =
   configured(INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl);
 
 /**
- * Second manual inbound rail. Like the bank rail it carries no provider or
- * custody integration: the participant transfers on-chain and Finance confirms
- * the movement on a public block explorer. The destination wallet is real
- * operational data, so it is never embedded in source — checkout stays fail
- * closed until all three values are configured in the deployment environment.
+ * PSE is intentionally visible in the investment checkout as a coming-soon
+ * rail, but it must remain disabled until the provider integration and server
+ * trust boundary are implemented. This flag is deliberately not environment-
+ * configurable to prevent accidentally enabling a non-existent backend rail.
  */
-export const INVESTMENT_CRYPTO_INSTRUCTIONS = {
-  network: process.env.NEXT_PUBLIC_INVESTMENT_CRYPTO_NETWORK ?? PENDING,
-  asset: process.env.NEXT_PUBLIC_INVESTMENT_CRYPTO_ASSET ?? PENDING,
-  address: process.env.NEXT_PUBLIC_INVESTMENT_CRYPTO_ADDRESS ?? PENDING,
+export const INVESTMENT_PSE_ENABLED = false;
+
+export type InvestmentCryptoAsset = 'USDT' | 'BNB' | 'ETH' | 'BTC';
+
+export type InvestmentCryptoDestination = {
+  asset: InvestmentCryptoAsset;
+  name: string;
+  network: string;
+  address: string;
+  exchange: 'Binance';
 };
 
+// Approved Binance deposit destinations supplied by the operator on 2026-09-28.
+// Deposit addresses are public payment-routing data, not secrets. Three assets
+// share the same EVM address but MUST use the exact network shown for each one.
+const INVESTMENT_BINANCE_EVM_ADDRESS = '0xf27f2ab291cb3fee22298b3169b119c6b854b21c';
+const INVESTMENT_BINANCE_BTC_ADDRESS = '13Kg9rf5C4mNQG9A21G655q7dARrbJmatF';
+
+export const INVESTMENT_CRYPTO_DESTINATIONS: InvestmentCryptoDestination[] = [
+  {
+    asset: 'USDT',
+    name: 'Tether USD',
+    network: 'BNB Smart Chain (BEP20)',
+    address: INVESTMENT_BINANCE_EVM_ADDRESS,
+    exchange: 'Binance',
+  },
+  {
+    asset: 'BNB',
+    name: 'BNB',
+    network: 'BNB Smart Chain (BEP20)',
+    address: INVESTMENT_BINANCE_EVM_ADDRESS,
+    exchange: 'Binance',
+  },
+  {
+    asset: 'ETH',
+    name: 'Ethereum',
+    network: 'Ethereum (ERC20)',
+    address: INVESTMENT_BINANCE_EVM_ADDRESS,
+    exchange: 'Binance',
+  },
+  {
+    asset: 'BTC',
+    name: 'Bitcoin',
+    network: 'Bitcoin',
+    address: INVESTMENT_BINANCE_BTC_ADDRESS,
+    exchange: 'Binance',
+  },
+];
+
+/**
+ * Compatibility export for legacy investment surfaces that still expect a
+ * single crypto destination. New checkout UI uses INVESTMENT_CRYPTO_DESTINATIONS.
+ */
+export const INVESTMENT_CRYPTO_INSTRUCTIONS = INVESTMENT_CRYPTO_DESTINATIONS[0];
+
 export const INVESTMENT_CRYPTO_CONFIGURED =
-  Object.values(INVESTMENT_CRYPTO_INSTRUCTIONS).every(configured);
+  INVESTMENT_CRYPTO_DESTINATIONS.length > 0 &&
+  INVESTMENT_CRYPTO_DESTINATIONS.every((item) =>
+    configured(item.network) &&
+    configured(item.asset) &&
+    configured(item.address) &&
+    configured(item.exchange)
+  );
