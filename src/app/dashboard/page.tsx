@@ -1,3 +1,4 @@
+import DashboardNotificationBoundary from '@/components/dashboard/DashboardNotificationBoundary';
 import InvestorDashboard from '@/components/dashboard/InvestorDashboard';
 import PersonalOSDashboardV2 from '@/components/dashboard/PersonalOSDashboardV2';
 
@@ -7,5 +8,9 @@ import PersonalOSDashboardV2 from '@/components/dashboard/PersonalOSDashboardV2'
 void PersonalOSDashboardV2;
 
 export default function DashboardPage() {
-  return <InvestorDashboard />;
+  return (
+    <DashboardNotificationBoundary>
+      <InvestorDashboard />
+    </DashboardNotificationBoundary>
+  );
 }
