@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0143",
-    "schemaMigrationName": "runtime_schema_requirement_probe_timestamp_compatibility",
-    "schemaMigrationCount": 143,
+    "schemaMigration": "0149",
+    "schemaMigrationName": "kev_context_assembly_governed_recall",
+    "schemaMigrationCount": 148,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

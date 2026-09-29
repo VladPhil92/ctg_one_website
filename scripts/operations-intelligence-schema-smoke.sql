@@ -1,8 +1,11 @@
 \set ON_ERROR_STOP on
 
--- Exercise read-only operational/admin snapshots under a real authenticated
--- SUPER_ADMIN + global admin identity. The transaction is rolled back so this
--- leaves no fixture data behind.
+-- Exercise operational/admin snapshots under a real SUPER_ADMIN identity.
+-- Sensitive Operations snapshots are backend-only after migration 0144; their
+-- grants are certified separately by the SECURITY DEFINER exposure contracts.
+-- This ephemeral clean-database smoke therefore evaluates those read models as
+-- the CI database owner, while the ordinary admin command snapshot is exercised
+-- through its intended authenticated application role.
 BEGIN;
 
 INSERT INTO auth.users(id, email, aud, role, raw_user_meta_data)
@@ -23,12 +26,13 @@ VALUES ('00000000-0000-0000-0000-000000000057'::uuid, 'SUPER_ADMIN');
 
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000057', true);
 SELECT set_config('request.jwt.claim.role', 'authenticated', true);
-SET LOCAL ROLE authenticated;
 
+-- Backend-only aggregate read models. The clean-db harness owns this rolled-back
+-- fixture, so it can inspect the function results without changing production
+-- grants or restoring browser execution.
 DO $$
 DECLARE
   v_snapshot jsonb;
-  v_admin jsonb;
   v_operations jsonb;
 BEGIN
   v_snapshot := public.get_operations_intelligence_snapshot();
@@ -49,25 +53,8 @@ BEGIN
     RAISE EXCEPTION 'operations intelligence snapshot missing required aggregate sections';
   END IF;
 
-  -- The read model is aggregate-only: it must not expose participant/provider
-  -- identifiers or payout/payment destinations to the intelligence layer.
   IF v_snapshot::text ~* '(participant_user_id|provider_event_key|external_reference|merchant_reference|destination_account|bank_account|payment_reference|payment_proof_path)' THEN
     RAISE EXCEPTION 'operations intelligence snapshot exposed a prohibited identifier/reference field';
-  END IF;
-
-  v_admin := public.get_admin_command_snapshot();
-  IF NOT (
-    v_admin ? 'total_users'
-    AND v_admin ? 'pending_kyc'
-    AND v_admin ? 'pending_deposits'
-    AND v_admin ? 'operational_wallet_balance_cents'
-    AND v_admin ? 'pending_investment_orders'
-  ) THEN
-    RAISE EXCEPTION 'admin command snapshot missing required aggregate fields';
-  END IF;
-
-  IF v_admin::text ~* '(email|full_name|phone|external_reference|payment_proof_storage_path)' THEN
-    RAISE EXCEPTION 'admin command snapshot exposed row-level PII/payment evidence';
   END IF;
 
   v_operations := public.get_operations_dashboard_snapshot(12);
@@ -84,4 +71,27 @@ BEGIN
   END IF;
 END $$;
 
+-- Browser-facing aggregate admin command snapshot remains authenticated.
+SET LOCAL ROLE authenticated;
+DO $$
+DECLARE
+  v_admin jsonb;
+BEGIN
+  v_admin := public.get_admin_command_snapshot();
+  IF NOT (
+    v_admin ? 'total_users'
+    AND v_admin ? 'pending_kyc'
+    AND v_admin ? 'pending_deposits'
+    AND v_admin ? 'operational_wallet_balance_cents'
+    AND v_admin ? 'pending_investment_orders'
+  ) THEN
+    RAISE EXCEPTION 'admin command snapshot missing required aggregate fields';
+  END IF;
+
+  IF v_admin::text ~* '(email|full_name|phone|external_reference|payment_proof_storage_path)' THEN
+    RAISE EXCEPTION 'admin command snapshot exposed row-level PII/payment evidence';
+  END IF;
+END $$;
+
+RESET ROLE;
 ROLLBACK;

@@ -122,13 +122,19 @@ assert.match(panel, /Reconciliación fuente ↔ shadow/, 'UI must expose source-
 assert.doesNotMatch(panel, /acreditar puntos ahora|earning comercial activo|redimir ahora/i, 'v4 UI must not expose commercial activation claims.');
 assert.match(nav, /href: '\/admin\/rewards\/connectors', label: 'Rewards Sources', roles: \['SUPER_ADMIN'\]/, 'Signed Sources navigation must remain SUPER_ADMIN-only.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0143'/, 'Repository schema authority must reflect the current additive global schema.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'runtime_schema_requirement_probe_timestamp_compatibility'/, 'Schema authority must name the current additive global migration.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 143/, 'Schema migration count must align with the current global schema.');
-assert.match(history, /"logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4"/, 'Production provenance must retain the real 0136 Supabase migration.');
-assert.match(history, /"logicalVersion": "0137", "remoteVersion": "20260914132842", "remoteName": "0137_rewards_signed_source_atomicity_hardening"/, 'Production provenance must contain the real 0137 Supabase hardening migration.');
-assert.match(history, /"logicalVersion": "0138", "remoteVersion": "20260914154606", "remoteName": "0138_rewards_signed_source_integrity_hardening_v4_1"/, 'Production provenance must retain the real 0138 Supabase hardening migration.');
-assert.match(history, /"logicalVersion": "0139", "remoteVersion": "20260914155204", "remoteName": "0139_rewards_source_integrity_transactional_boundaries_v4_1"/, 'Production provenance must retain the real 0139 Supabase transactional-boundaries migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0149'/, 'Repository schema authority must reflect the current additive global schema.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'kev_context_assembly_governed_recall'/, 'Schema authority must name the current additive global migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 148/, 'Schema migration count must align with the current global schema.');
+
+const productionHistory = JSON.parse(history);
+const assertHistoryEntry = (logicalVersion, remoteVersion, remoteName) => {
+  const entry = productionHistory.migrations.find((item) => item.logicalVersion === logicalVersion);
+  assert.deepEqual(entry, { logicalVersion, remoteVersion, remoteName }, `Production provenance must retain migration ${logicalVersion}.`);
+};
+assertHistoryEntry('0136', '20260914130944', '0136_rewards_signed_source_connectors_v4');
+assertHistoryEntry('0137', '20260914132842', '0137_rewards_signed_source_atomicity_hardening');
+assertHistoryEntry('0138', '20260914154606', '0138_rewards_signed_source_integrity_hardening_v4_1');
+assertHistoryEntry('0139', '20260914155204', '0139_rewards_source_integrity_transactional_boundaries_v4_1');
 
 for (const truth of ['Every accepted event remains **shadow-only**', 'CTG One stores only the source\'s Ed25519 public key', 'Closed Earning Canary v5']) {
   assert.ok(docs.includes(truth), `Rewards v4 governance must retain: ${truth}`);

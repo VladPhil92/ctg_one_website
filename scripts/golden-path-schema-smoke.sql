@@ -94,12 +94,20 @@ BEGIN
     RAISE EXCEPTION 'authenticated must execute the live transport-aware lot creation RPC';
   END IF;
 
-  IF NOT has_function_privilege(
+  IF has_function_privilege(
     'authenticated',
     'public.update_investment_beer_style_economics(text,bigint,bigint,bigint,bigint,bigint,numeric,numeric)',
     'EXECUTE'
   ) THEN
-    RAISE EXCEPTION 'authenticated must execute the live transport-aware beer-style economics RPC';
+    RAISE EXCEPTION 'authenticated must not execute the hardened transport-aware beer-style economics RPC';
+  END IF;
+
+  IF NOT has_function_privilege(
+    'service_role',
+    'public.update_investment_beer_style_economics(text,bigint,bigint,bigint,bigint,bigint,numeric,numeric)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'service_role must execute the hardened transport-aware beer-style economics RPC';
   END IF;
 
   IF has_function_privilege(

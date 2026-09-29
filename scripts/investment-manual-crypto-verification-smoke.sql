@@ -42,11 +42,15 @@ insert into public.investment_formula_versions(version,participant_profit_share,
 select 'CI-CRYPTO-E2E',0.5000,0.5000,'ACTIVE',now()
 where not exists(select 1 from public.investment_formula_versions where status='ACTIVE');
 
+-- Lot creation remains a reviewed authenticated Production workflow. Migration
+-- 0144 moves lifecycle transitions behind the trusted backend while preserving
+-- the canonical Production actor in auth.uid() for defense-in-depth checks.
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000902',true);
 select public.create_production_lot_from_style(
   'GOLD','CI Crypto E2E',24,2,1000::bigint,100::bigint,50::bigint,3000::bigint,2500::bigint,0.08::numeric,0.035::numeric,24
 ) as lot_id \gset
+set local role service_role;
 select public.transition_lot_status(:'lot_id'::uuid,'FUNDING_PENDING','CI crypto',null);
 select public.transition_lot_status(:'lot_id'::uuid,'FUNDING_OPEN','CI crypto',null);
 reset role;
@@ -169,8 +173,9 @@ select pg_temp.must_fail(
 );
 reset role;
 
--- Rejection creates no money facts and is rail-labelled in the audit log.
-set local role authenticated;
+-- Rejection creates no money facts and is rail-labelled in the audit log. The
+-- rejection RPC is backend-only after 0144; keep the Finance actor bound.
+set local role service_role;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000903',true);
 select public.reject_investment_bank_proof(:'order2_id'::uuid,'CI crypto rejection');
 reset role;
@@ -223,8 +228,8 @@ select pg_temp.assert_ok(
   'the Bancolombia rail must still work end to end and record no network'
 );
 
--- Health counters must see the crypto rail.
-set local role authenticated;
+-- Health counters are an internal Finance/operations surface after 0144.
+set local role service_role;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000903',true);
 select pg_temp.assert_ok(
   (select allocated_without_human_verification=0 and allocated_without_receipt=0

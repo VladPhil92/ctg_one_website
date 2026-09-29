@@ -7,6 +7,13 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
 const migrationsDir = join(root, 'supabase', 'migrations');
 
+// Logical phase 0148 shipped as the KEV Memory Worker & Runtime Integration
+// (Edge Function/runtime work) and intentionally had no database migration.
+// Keep this exception explicit so genuine migration gaps still fail closed.
+const NON_DATABASE_LOGICAL_PHASES = new Map([
+  ['0148', 'KEV Memory Worker & Runtime Integration (runtime/Edge Function only)'],
+]);
+
 const files = (await readdir(migrationsDir))
   .filter((name) => name.endsWith('.sql'))
   .sort();
@@ -56,12 +63,21 @@ assert.equal(
   'Duplicate remote Supabase migration versions are not allowed.'
 );
 
-for (let index = 0; index < logicalVersions.length; index += 1) {
-  const expected = String(index + 1).padStart(4, '0');
-  assert.equal(
-    logicalVersions[index],
-    expected,
-    `Migration sequence drift: expected logical ${expected}, found ${logicalVersions[index]}.`
+const maxLogicalVersion = Number(logicalVersions.at(-1));
+const migrationVersionSet = new Set(logicalVersions);
+for (let numericVersion = 1; numericVersion <= maxLogicalVersion; numericVersion += 1) {
+  const expected = String(numericVersion).padStart(4, '0');
+  if (migrationVersionSet.has(expected)) continue;
+  assert.ok(
+    NON_DATABASE_LOGICAL_PHASES.has(expected),
+    `Migration sequence drift: logical ${expected} is missing and is not a documented non-database phase.`
+  );
+}
+
+for (const [logicalVersion] of NON_DATABASE_LOGICAL_PHASES) {
+  assert.ok(
+    !migrationVersionSet.has(logicalVersion),
+    `Documented non-database phase ${logicalVersion} must not also have a SQL migration.`
   );
 }
 
@@ -156,11 +172,19 @@ for (let index = 0; index < productionAnchors.length; index += 1) {
 
   if (index > 0) {
     const previous = productionAnchors[index - 1];
-    assert.equal(
-      Number(anchor.logicalVersion),
-      Number(previous.logicalVersion) + 1,
-      'Production migration provenance anchors must be logically contiguous.'
+    const previousLogical = Number(previous.logicalVersion);
+    const currentLogical = Number(anchor.logicalVersion);
+    assert.ok(
+      currentLogical > previousLogical,
+      'Production migration provenance logical versions must increase monotonically.'
     );
+    for (let skipped = previousLogical + 1; skipped < currentLogical; skipped += 1) {
+      const skippedVersion = String(skipped).padStart(4, '0');
+      assert.ok(
+        NON_DATABASE_LOGICAL_PHASES.has(skippedVersion),
+        `Production migration provenance skips undocumented logical phase ${skippedVersion}.`
+      );
+    }
     assert.ok(
       BigInt(anchor.remoteVersion) > BigInt(previous.remoteVersion),
       'Production migration provenance remote versions must increase monotonically.'

@@ -62,7 +62,10 @@ select pg_temp.assert_true(
 );
 
 -- ---------------------------------------------------------------------------
--- Production creates the authoritative lot and opens funding.
+-- Production creates the authoritative lot through the participant-facing RPC.
+-- Privileged lifecycle and inventory mutations then cross the trusted backend
+-- boundary restored by migration 0144: service_role executes while auth.uid()
+-- remains bound to the canonical Production actor for defense-in-depth checks.
 -- ---------------------------------------------------------------------------
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000201', true);
@@ -82,6 +85,7 @@ select public.create_production_lot_from_style(
   p_total_eligible_units => 2
 ) as lot_id \gset
 
+set local role service_role;
 select public.transition_lot_status(:'lot_id'::uuid, 'FUNDING_PENDING', 'CI transactional Golden Path', null);
 select public.transition_lot_status(:'lot_id'::uuid, 'FUNDING_OPEN', 'CI transactional Golden Path', null);
 
@@ -227,9 +231,10 @@ select public.record_lot_financial_entry(
 reset role;
 
 -- ---------------------------------------------------------------------------
--- Production and inventory traverse the physical state machine.
+-- Production and inventory traverse the physical state machine through the
+-- trusted server authority while remaining actor-bound to Production.
 -- ---------------------------------------------------------------------------
-set local role authenticated;
+set local role service_role;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000201', true);
 
 select public.transition_lot_status(:'lot_id'::uuid, 'FUNDED', null, null);
@@ -240,29 +245,40 @@ select public.transition_lot_status(:'lot_id'::uuid, 'CONDITIONING', null, null)
 select public.transition_lot_status(:'lot_id'::uuid, 'BOTTLING', null, null);
 
 select * from public.generate_bottle_units(:'lot_id'::uuid, 4);
+reset role;
 
+-- service_role intentionally has no direct table SELECT after KEV hardening.
+-- The CI harness may inspect its rolled-back fixture to prepare deterministic
+-- function arguments, but every operational mutation still crosses the RPC.
+select array_agg(serial_code order by unit_number)::text[] as bottle_serials
+from public.investment_bottle_units
+where lot_id = :'lot_id'::uuid
+\gset
+
+set local role service_role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000201', true);
 select public.transition_lot_status(:'lot_id'::uuid, 'QUALITY_CONTROL', null, null);
 select public.update_bottle_units_status(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   'QC_APPROVED', null
 );
 select public.transition_lot_status(:'lot_id'::uuid, 'WAREHOUSE', null, null);
 select public.update_bottle_units_status(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   'WAREHOUSE', 'CTG_WAREHOUSE'
 );
 select public.transition_lot_status(:'lot_id'::uuid, 'DISPATCHED', null, null);
 select public.update_bottle_units_status(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   'DISPATCHED', 'IN_TRANSIT'
 );
 select public.transition_lot_status(:'lot_id'::uuid, 'IN_MARKET', null, null);
 select public.update_bottle_units_status(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   'IN_MARKET', 'CI_GP_SALES_POINT'
 );
 select public.transition_lot_status(:'lot_id'::uuid, 'SELLING', null, null);
@@ -281,15 +297,17 @@ select pg_temp.assert_true(
 );
 
 -- ---------------------------------------------------------------------------
--- Sales records one authoritative sale; exact replay is idempotent.
+-- Sales records one authoritative sale through the trusted server authority;
+-- the canonical Sales actor remains bound for in-function permission checks.
+-- Exact replay remains idempotent.
 -- ---------------------------------------------------------------------------
-set local role authenticated;
+set local role service_role;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000401', true);
 
 select sale_id, sold_count, gross_revenue_cents, tax_recognized_cents
 from public.record_bottle_sale_document(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   3000::bigint,
   'DIRECT',
   'ci-golden-path-sale-0001',
@@ -303,7 +321,7 @@ from public.record_bottle_sale_document(
 select sale_id as replay_sale_id
 from public.record_bottle_sale_document(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   3000::bigint,
   'DIRECT',
   'ci-golden-path-sale-0001',
@@ -349,10 +367,11 @@ select pg_temp.assert_true(
 );
 
 -- ---------------------------------------------------------------------------
--- Physical close and Finance settlement.
+-- Physical close crosses the hardened production server boundary; Finance
+-- settlement remains on its reviewed authenticated workflow.
 -- NDLP = 12,000 - 800 - 4,600 = 6,600 cents.
 -- ---------------------------------------------------------------------------
-set local role authenticated;
+set local role service_role;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000201', true);
 select public.transition_lot_status(:'lot_id'::uuid, 'SOLD_OUT', null, null);
 select public.transition_lot_status(:'lot_id'::uuid, 'SETTLEMENT_PENDING', null, null);

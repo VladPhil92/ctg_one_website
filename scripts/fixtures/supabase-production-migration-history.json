@@ -2,57 +2,278 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-21T01:01:46Z",
+  "capturedAt": "2026-09-26T01:15:00Z",
   "source": "Supabase production migration history",
   "migrations": [
-    { "logicalVersion": "0095", "remoteVersion": "20260901214059", "remoteName": "jp_education_commerce" },
-    { "logicalVersion": "0096", "remoteVersion": "20260901214127", "remoteName": "jp_education_checkout_hardening" },
-    { "logicalVersion": "0097", "remoteVersion": "20260901232757", "remoteName": "jp_education_settlement_operations" },
-    { "logicalVersion": "0098", "remoteVersion": "20260901235958", "remoteName": "jp_education_index_hardening" },
-    { "logicalVersion": "0099", "remoteVersion": "20260902001302", "remoteName": "jp_education_access_lifecycle" },
-    { "logicalVersion": "0100", "remoteVersion": "20260902005837", "remoteName": "0100_expand_acquisition_service_portfolio" },
-    { "logicalVersion": "0101", "remoteVersion": "20260902135645", "remoteName": "0101_expand_acquisition_service_portfolio_craft_beer" },
-    { "logicalVersion": "0102", "remoteVersion": "20260902135655", "remoteName": "0102_expand_acquisition_service_portfolio_vertice" },
-    { "logicalVersion": "0103", "remoteVersion": "20260902135707", "remoteName": "0103_vertice_federation_authorization_codes" },
-    { "logicalVersion": "0104", "remoteVersion": "20260902135718", "remoteName": "0104_converge_acquisition_service_portfolio" },
-    { "logicalVersion": "0105", "remoteVersion": "20260902140604", "remoteName": "0105_wallet_rls_query_plan_hardening" },
-    { "logicalVersion": "0106", "remoteVersion": "20260902143348", "remoteName": "0106_rls_policy_consolidation" },
-    { "logicalVersion": "0107", "remoteVersion": "20260902153842", "remoteName": "0107_authorization_surface_hardening" },
-    { "logicalVersion": "0108", "remoteVersion": "20260902165429", "remoteName": "application_rpc_boundary_compatibility" },
-    { "logicalVersion": "0109", "remoteVersion": "20260903000252", "remoteName": "add_vertice_federation_authorities" },
-    { "logicalVersion": "0110", "remoteVersion": "20260906153332", "remoteName": "0110_service_federation_rate_limits" },
-    { "logicalVersion": "0111", "remoteVersion": "20260906165045", "remoteName": "admin_server_rpc_boundaries" },
-    { "logicalVersion": "0112", "remoteVersion": "20260906170727", "remoteName": "revoke_legacy_admin_rpc_client_execution" },
-    { "logicalVersion": "0113", "remoteVersion": "20260906173817", "remoteName": "investment_financial_server_boundaries" },
-    { "logicalVersion": "0114", "remoteVersion": "20260906180100", "remoteName": "revoke_legacy_financial_rpc_client_execution" },
-    { "logicalVersion": "0115", "remoteVersion": "20260906200632", "remoteName": "0115_financial_security_step_up_telemetry" },
-    { "logicalVersion": "0116", "remoteVersion": "20260906230742", "remoteName": "0116_jp_education_learning_core" },
-    { "logicalVersion": "0117", "remoteVersion": "20260907012804", "remoteName": "0117_jp_education_academic_operations" },
-    { "logicalVersion": "0118", "remoteVersion": "20260907023732", "remoteName": "0118_jp_education_assessment_instructor_core" },
-    { "logicalVersion": "0119", "remoteVersion": "20260907024455", "remoteName": "0119_jp_education_instant_checkout_catalog" },
-    { "logicalVersion": "0120", "remoteVersion": "20260907025245", "remoteName": "0120_jp_education_service_role_boundary_reconciliation" },
-    { "logicalVersion": "0121", "remoteVersion": "20260907030547", "remoteName": "0121_jp_education_assessment_time_consistency" },
-    { "logicalVersion": "0122", "remoteVersion": "20260907031457", "remoteName": "0122_jp_education_wompi_provider_boundary" },
-    { "logicalVersion": "0123", "remoteVersion": "20260907032218", "remoteName": "0123_jp_education_assessment_answer_count_fix" },
-    { "logicalVersion": "0124", "remoteVersion": "20260907032719", "remoteName": "0124_jp_education_service_role_privilege_portability_reconciliation" },
-    { "logicalVersion": "0125", "remoteVersion": "20260907143125", "remoteName": "0125_runtime_schema_requirement_probe" },
-    { "logicalVersion": "0126", "remoteVersion": "20260908140320", "remoteName": "0126_crowdfunding_settlement_foundation" },
-    { "logicalVersion": "0127", "remoteVersion": "20260908140427", "remoteName": "0127_crowdfunding_provider_reconciliation" },
-    { "logicalVersion": "0128", "remoteVersion": "20260908140710", "remoteName": "0128_crowdfunding_fk_index_hardening" },
-    { "logicalVersion": "0129", "remoteVersion": "20260908183412", "remoteName": "0129_crowdfunding_review_hardening" },
-    { "logicalVersion": "0130", "remoteVersion": "20260908231145", "remoteName": "0130_expand_identity_federation_providers" },
-    { "logicalVersion": "0131", "remoteVersion": "20260911113727", "remoteName": "0131_worldmakers_community_early_access" },
-    { "logicalVersion": "0132", "remoteVersion": "20260914025326", "remoteName": "0132_nvet_mobile_federation" },
-    { "logicalVersion": "0133", "remoteVersion": "20260914035147", "remoteName": "0133_rewards_foundation_v1" },
-    { "logicalVersion": "0134", "remoteVersion": "20260914111247", "remoteName": "0134_rewards_pilot_control_plane_v2" },
-    { "logicalVersion": "0135", "remoteVersion": "20260914123941", "remoteName": "0135_rewards_shadow_earning_engine_v3" },
-    { "logicalVersion": "0136", "remoteVersion": "20260914130944", "remoteName": "0136_rewards_signed_source_connectors_v4" },
-    { "logicalVersion": "0137", "remoteVersion": "20260914132842", "remoteName": "0137_rewards_signed_source_atomicity_hardening" },
-    { "logicalVersion": "0138", "remoteVersion": "20260914154606", "remoteName": "0138_rewards_signed_source_integrity_hardening_v4_1" },
-    { "logicalVersion": "0139", "remoteVersion": "20260914155204", "remoteName": "0139_rewards_source_integrity_transactional_boundaries_v4_1" },
-    { "logicalVersion": "0140", "remoteVersion": "20260921001007", "remoteName": "kev_identity_federation" },
-    { "logicalVersion": "0141", "remoteVersion": "20260921001120", "remoteName": "expand_service_federation_rate_limits" },
-    { "logicalVersion": "0142", "remoteVersion": "20260921002148", "remoteName": "reconcile_identity_federation_rate_limits" },
-    { "logicalVersion": "0143", "remoteVersion": "20260921010146", "remoteName": "0143_runtime_schema_requirement_probe_timestamp_compatibility" }
+    {
+      "logicalVersion": "0095",
+      "remoteVersion": "20260901214059",
+      "remoteName": "jp_education_commerce"
+    },
+    {
+      "logicalVersion": "0096",
+      "remoteVersion": "20260901214127",
+      "remoteName": "jp_education_checkout_hardening"
+    },
+    {
+      "logicalVersion": "0097",
+      "remoteVersion": "20260901232757",
+      "remoteName": "jp_education_settlement_operations"
+    },
+    {
+      "logicalVersion": "0098",
+      "remoteVersion": "20260901235958",
+      "remoteName": "jp_education_index_hardening"
+    },
+    {
+      "logicalVersion": "0099",
+      "remoteVersion": "20260902001302",
+      "remoteName": "jp_education_access_lifecycle"
+    },
+    {
+      "logicalVersion": "0100",
+      "remoteVersion": "20260902005837",
+      "remoteName": "0100_expand_acquisition_service_portfolio"
+    },
+    {
+      "logicalVersion": "0101",
+      "remoteVersion": "20260902135645",
+      "remoteName": "0101_expand_acquisition_service_portfolio_craft_beer"
+    },
+    {
+      "logicalVersion": "0102",
+      "remoteVersion": "20260902135655",
+      "remoteName": "0102_expand_acquisition_service_portfolio_vertice"
+    },
+    {
+      "logicalVersion": "0103",
+      "remoteVersion": "20260902135707",
+      "remoteName": "0103_vertice_federation_authorization_codes"
+    },
+    {
+      "logicalVersion": "0104",
+      "remoteVersion": "20260902135718",
+      "remoteName": "0104_converge_acquisition_service_portfolio"
+    },
+    {
+      "logicalVersion": "0105",
+      "remoteVersion": "20260902140604",
+      "remoteName": "0105_wallet_rls_query_plan_hardening"
+    },
+    {
+      "logicalVersion": "0106",
+      "remoteVersion": "20260902143348",
+      "remoteName": "0106_rls_policy_consolidation"
+    },
+    {
+      "logicalVersion": "0107",
+      "remoteVersion": "20260902153842",
+      "remoteName": "0107_authorization_surface_hardening"
+    },
+    {
+      "logicalVersion": "0108",
+      "remoteVersion": "20260902165429",
+      "remoteName": "application_rpc_boundary_compatibility"
+    },
+    {
+      "logicalVersion": "0109",
+      "remoteVersion": "20260903000252",
+      "remoteName": "add_vertice_federation_authorities"
+    },
+    {
+      "logicalVersion": "0110",
+      "remoteVersion": "20260906153332",
+      "remoteName": "0110_service_federation_rate_limits"
+    },
+    {
+      "logicalVersion": "0111",
+      "remoteVersion": "20260906165045",
+      "remoteName": "admin_server_rpc_boundaries"
+    },
+    {
+      "logicalVersion": "0112",
+      "remoteVersion": "20260906170727",
+      "remoteName": "revoke_legacy_admin_rpc_client_execution"
+    },
+    {
+      "logicalVersion": "0113",
+      "remoteVersion": "20260906173817",
+      "remoteName": "investment_financial_server_boundaries"
+    },
+    {
+      "logicalVersion": "0114",
+      "remoteVersion": "20260906180100",
+      "remoteName": "revoke_legacy_financial_rpc_client_execution"
+    },
+    {
+      "logicalVersion": "0115",
+      "remoteVersion": "20260906200632",
+      "remoteName": "0115_financial_security_step_up_telemetry"
+    },
+    {
+      "logicalVersion": "0116",
+      "remoteVersion": "20260906230742",
+      "remoteName": "0116_jp_education_learning_core"
+    },
+    {
+      "logicalVersion": "0117",
+      "remoteVersion": "20260907012804",
+      "remoteName": "0117_jp_education_academic_operations"
+    },
+    {
+      "logicalVersion": "0118",
+      "remoteVersion": "20260907023732",
+      "remoteName": "0118_jp_education_assessment_instructor_core"
+    },
+    {
+      "logicalVersion": "0119",
+      "remoteVersion": "20260907024455",
+      "remoteName": "0119_jp_education_instant_checkout_catalog"
+    },
+    {
+      "logicalVersion": "0120",
+      "remoteVersion": "20260907025245",
+      "remoteName": "0120_jp_education_service_role_boundary_reconciliation"
+    },
+    {
+      "logicalVersion": "0121",
+      "remoteVersion": "20260907030547",
+      "remoteName": "0121_jp_education_assessment_time_consistency"
+    },
+    {
+      "logicalVersion": "0122",
+      "remoteVersion": "20260907031457",
+      "remoteName": "0122_jp_education_wompi_provider_boundary"
+    },
+    {
+      "logicalVersion": "0123",
+      "remoteVersion": "20260907032218",
+      "remoteName": "0123_jp_education_assessment_answer_count_fix"
+    },
+    {
+      "logicalVersion": "0124",
+      "remoteVersion": "20260907032719",
+      "remoteName": "0124_jp_education_service_role_privilege_portability_reconciliation"
+    },
+    {
+      "logicalVersion": "0125",
+      "remoteVersion": "20260907143125",
+      "remoteName": "0125_runtime_schema_requirement_probe"
+    },
+    {
+      "logicalVersion": "0126",
+      "remoteVersion": "20260908140320",
+      "remoteName": "0126_crowdfunding_settlement_foundation"
+    },
+    {
+      "logicalVersion": "0127",
+      "remoteVersion": "20260908140427",
+      "remoteName": "0127_crowdfunding_provider_reconciliation"
+    },
+    {
+      "logicalVersion": "0128",
+      "remoteVersion": "20260908140710",
+      "remoteName": "0128_crowdfunding_fk_index_hardening"
+    },
+    {
+      "logicalVersion": "0129",
+      "remoteVersion": "20260908183412",
+      "remoteName": "0129_crowdfunding_review_hardening"
+    },
+    {
+      "logicalVersion": "0130",
+      "remoteVersion": "20260908231145",
+      "remoteName": "0130_expand_identity_federation_providers"
+    },
+    {
+      "logicalVersion": "0131",
+      "remoteVersion": "20260911113727",
+      "remoteName": "0131_worldmakers_community_early_access"
+    },
+    {
+      "logicalVersion": "0132",
+      "remoteVersion": "20260914025326",
+      "remoteName": "0132_nvet_mobile_federation"
+    },
+    {
+      "logicalVersion": "0133",
+      "remoteVersion": "20260914035147",
+      "remoteName": "0133_rewards_foundation_v1"
+    },
+    {
+      "logicalVersion": "0134",
+      "remoteVersion": "20260914111247",
+      "remoteName": "0134_rewards_pilot_control_plane_v2"
+    },
+    {
+      "logicalVersion": "0135",
+      "remoteVersion": "20260914123941",
+      "remoteName": "0135_rewards_shadow_earning_engine_v3"
+    },
+    {
+      "logicalVersion": "0136",
+      "remoteVersion": "20260914130944",
+      "remoteName": "0136_rewards_signed_source_connectors_v4"
+    },
+    {
+      "logicalVersion": "0137",
+      "remoteVersion": "20260914132842",
+      "remoteName": "0137_rewards_signed_source_atomicity_hardening"
+    },
+    {
+      "logicalVersion": "0138",
+      "remoteVersion": "20260914154606",
+      "remoteName": "0138_rewards_signed_source_integrity_hardening_v4_1"
+    },
+    {
+      "logicalVersion": "0139",
+      "remoteVersion": "20260914155204",
+      "remoteName": "0139_rewards_source_integrity_transactional_boundaries_v4_1"
+    },
+    {
+      "logicalVersion": "0140",
+      "remoteVersion": "20260921001007",
+      "remoteName": "kev_identity_federation"
+    },
+    {
+      "logicalVersion": "0141",
+      "remoteVersion": "20260921001120",
+      "remoteName": "expand_service_federation_rate_limits"
+    },
+    {
+      "logicalVersion": "0142",
+      "remoteVersion": "20260921002148",
+      "remoteName": "reconcile_identity_federation_rate_limits"
+    },
+    {
+      "logicalVersion": "0143",
+      "remoteVersion": "20260921010146",
+      "remoteName": "0143_runtime_schema_requirement_probe_timestamp_compatibility"
+    },
+    {
+      "logicalVersion": "0144",
+      "remoteVersion": "20260921043817",
+      "remoteName": "0144_kev_security_definer_surface_hardening"
+    },
+    {
+      "logicalVersion": "0145",
+      "remoteVersion": "20260921044022",
+      "remoteName": "0145_kev_capability_rls_governance"
+    },
+    {
+      "logicalVersion": "0146",
+      "remoteVersion": "20260921044525",
+      "remoteName": "0146_kev_cognitive_memory_layer"
+    },
+    {
+      "logicalVersion": "0147",
+      "remoteVersion": "20260921044744",
+      "remoteName": "0147_kev_memory_ingestion_learning_pipeline"
+    },
+    {
+      "logicalVersion": "0149",
+      "remoteVersion": "20260921112707",
+      "remoteName": "0149_kev_context_assembly_governed_recall"
+    }
   ]
 }

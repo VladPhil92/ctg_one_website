@@ -1,6 +1,6 @@
-export const EXPECTED_DATABASE_MIGRATION = '0143' as const;
-export const EXPECTED_DATABASE_MIGRATION_NAME = 'runtime_schema_requirement_probe_timestamp_compatibility' as const;
-export const EXPECTED_DATABASE_MIGRATION_COUNT = 143 as const;
+export const EXPECTED_DATABASE_MIGRATION = '0149' as const;
+export const EXPECTED_DATABASE_MIGRATION_NAME = 'kev_context_assembly_governed_recall' as const;
+export const EXPECTED_DATABASE_MIGRATION_COUNT = 148 as const;
 
 // Wallet Canary V1 depends on migrations through 0091, but it remains compatible
 // with later additive global migrations. These constants express that minimum
