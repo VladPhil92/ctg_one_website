@@ -45,8 +45,8 @@ export function InvestmentResumePaymentClient({
     if (!proof) return;
     if (!railConfigured) {
       setError(rail === 'crypto'
-        ? 'La dirección de destino en cripto aún no está configurada en producción. La orden continúa reservada, pero no se aceptará evidencia hasta publicarla.'
-        : 'El QR de Bancolombia aún no está configurado en producción. La orden continúa reservada, pero no se aceptará evidencia hasta publicar el QR aprobado.');
+        ? 'Los destinos de pago con criptomonedas no están disponibles. La orden continúa reservada, pero no se aceptará evidencia hasta restablecerlos.'
+        : 'El QR de PISAO/Bancolombia no está disponible. La orden continúa reservada, pero no se aceptará evidencia hasta restablecerlo.');
       return;
     }
     if (proof.size <= 0 || proof.size > MAX_FILE_BYTES) {
@@ -73,7 +73,7 @@ export function InvestmentResumePaymentClient({
           <div className="w-10 h-10 rounded-full border border-accent/25 flex items-center justify-center text-accent shrink-0"><Check size={17}/></div>
           <div>
             <p className="text-[9px] uppercase tracking-[.22em] text-accent">Orden existente</p>
-            <h2 className="text-xl sm:text-2xl font-outfit font-semibold mt-1">Retoma tu transferencia</h2>
+            <h2 className="text-xl sm:text-2xl font-outfit font-semibold mt-1">Retoma tu pago</h2>
             <p className="text-xs text-text-muted mt-2 leading-relaxed">No se creará una nueva reserva. Este flujo continúa exclusivamente sobre la orden existente validada por tu sesión.</p>
           </div>
         </div>
@@ -87,20 +87,20 @@ export function InvestmentResumePaymentClient({
 
         <div className="mt-5 rounded-xl border border-white/[.07] p-4 flex items-start gap-3 bg-black/20">
           <ShieldCheck size={16} className="text-accent shrink-0 mt-0.5"/>
-          <p className="text-xs text-text-muted leading-relaxed">El comprobante es evidencia, no confirmación de fondos. La participación solo se activa cuando Finance verifica el abono directamente en Bancolombia.</p>
+          <p className="text-xs text-text-muted leading-relaxed">El comprobante es evidencia, no confirmación de fondos. La participación solo se activa cuando Finance verifica el abono {rail === 'crypto' ? 'en la red blockchain declarada' : 'en Bancolombia'}.</p>
         </div>
       </section>
 
       <section className="rounded-[24px] border border-white/10 p-5 sm:p-6" style={{background:'rgba(255,255,255,.022)'}}>
         <div className="flex items-center gap-3 mb-5">
           <div className="w-9 h-9 rounded-full border border-accent/20 flex items-center justify-center text-accent">{rail === 'crypto' ? <Coins size={17}/> : <Landmark size={17}/>}</div>
-          <div><p className="text-[9px] uppercase tracking-[.22em] text-accent">Transferencia pendiente</p><h2 className="text-lg font-outfit font-semibold mt-1">{rail === 'crypto' ? 'Cripto' : 'Bancolombia'}</h2></div>
+          <div><p className="text-[9px] uppercase tracking-[.22em] text-accent">Pago pendiente</p><h2 className="text-lg font-outfit font-semibold mt-1">{rail === 'crypto' ? 'Criptomonedas' : 'QR PISAO'}</h2></div>
         </div>
 
         {submitted ? (
           <div className="rounded-xl border border-accent/20 bg-accent/[.05] p-4">
             <p className="text-sm text-white font-medium">Comprobante recibido</p>
-            <p className="text-xs text-text-muted mt-2 leading-relaxed">La orden pasó a verificación humana. No envíes una segunda transferencia ni crees otra orden para el mismo aporte.</p>
+            <p className="text-xs text-text-muted mt-2 leading-relaxed">La orden pasó a verificación humana. No envíes un segundo pago ni crees otra orden para el mismo aporte.</p>
             <Button href="/inversion/app" variant="secondary" size="sm" fullWidth className="mt-4">Volver a mis inversiones</Button>
           </div>
         ) : (
@@ -110,11 +110,11 @@ export function InvestmentResumePaymentClient({
             {rail === 'crypto' ? <InvestmentCryptoDestination amountLabel={formatCents(order.capital_required_cents)} /> : (
               <>
                 <div className="rounded-xl border border-white/[.07] p-4 mb-4 text-xs text-text-muted leading-relaxed">
-                  Transfiere exactamente <strong className="text-white">{formatCents(order.capital_required_cents)}</strong> a la cuenta de ahorros de {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName}. No cambies el valor de la orden reservada.
+                  Paga exactamente <strong className="text-white">{formatCents(order.capital_required_cents)}</strong> usando el QR oficial de PISAO en {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName}. No cambies el valor de la orden reservada.
                 </div>
 
-                <Button onClick={() => setShowQr(true)} disabled={!INVESTMENT_BANK_TRANSFER_CONFIGURED} variant="secondary" size="sm" fullWidth><QrCode size={14}/> Ver QR Bancolombia</Button>
-                {!INVESTMENT_BANK_TRANSFER_CONFIGURED && <p className="text-[11px] text-amber-300/80 mt-2">El QR aprobado todavía no está publicado en la configuración productiva. La orden permanece reservada.</p>}
+                <Button onClick={() => setShowQr(true)} disabled={!INVESTMENT_BANK_TRANSFER_CONFIGURED} variant="secondary" size="sm" fullWidth><QrCode size={14}/> Ver QR PISAO / Bancolombia</Button>
+                {!INVESTMENT_BANK_TRANSFER_CONFIGURED && <p className="text-[11px] text-amber-300/80 mt-2">El QR aprobado no está disponible. La orden permanece reservada.</p>}
               </>
             )}
 
@@ -131,14 +131,14 @@ export function InvestmentResumePaymentClient({
       </section>
 
       {showQr && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="QR Bancolombia">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="QR PISAO Bancolombia">
           <div className="relative w-full max-w-md rounded-[24px] border border-white/10 bg-[#0b0b0b] p-5 sm:p-6 shadow-2xl">
             <button type="button" aria-label="Cerrar QR" onClick={() => setShowQr(false)} className="absolute right-4 top-4 rounded-full border border-white/10 p-2 text-text-muted hover:text-white"><X size={16}/></button>
-            <p className="text-[9px] uppercase tracking-[.2em] text-accent mb-2">Transferencia oficial</p>
-            <h3 className="text-xl font-outfit font-semibold text-white">QR Bancolombia</h3>
+            <p className="text-[9px] uppercase tracking-[.2em] text-accent mb-2">Pago oficial</p>
+            <h3 className="text-xl font-outfit font-semibold text-white">QR PISAO</h3>
             <p className="text-xs text-text-muted mt-2 mb-5">{INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.bankName} · {INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.accountType}</p>
-            <div className="rounded-2xl bg-white p-4"><img src={INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl} alt={`QR oficial de la cuenta de ahorros Bancolombia para ${investmentConfig.programDisplayName}`} className="mx-auto block max-h-[360px] w-auto max-w-full"/></div>
-            <p className="text-[11px] text-text-dim mt-4 leading-relaxed">Después de transferir, sube el comprobante en esta misma orden. No generes otra reserva.</p>
+            <div className="rounded-2xl bg-white p-4"><img src={INVESTMENT_BANK_TRANSFER_INSTRUCTIONS.qrImageUrl} alt={`QR oficial de PISAO en Bancolombia para ${investmentConfig.programDisplayName}`} className="mx-auto block max-h-[360px] w-auto max-w-full"/></div>
+            <p className="text-[11px] text-text-dim mt-4 leading-relaxed">Después de pagar, sube el comprobante en esta misma orden. No generes otra reserva.</p>
           </div>
         </div>
       )}
