@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0151",
-  "expectedMigrationName": "wallet_crypto_topup_server_audit_fix",
-  "expectedMigrationCount": 150,
+  "expectedMigration": "0152",
+  "expectedMigrationName": "wallet_crypto_rate_limit_scopes",
+  "expectedMigrationCount": 151,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
