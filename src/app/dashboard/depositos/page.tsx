@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, CircleDollarSign, Landmark, QrCode, ShieldCheck, UploadCloud, WalletCards } from 'lucide-react';
+import { CheckCircle2, Landmark, QrCode, ShieldCheck, UploadCloud, WalletCards } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { AccountSurface } from '@/components/dashboard/AccountSurface';
 import { WalletAccountContext } from '@/components/dashboard/WalletAccountContext';
@@ -80,7 +80,10 @@ export default function DepositosPage() {
 
       <div className="accountNotice">
         <ShieldCheck size={17} />
-        <div><strong>Una sola fuente de saldo</strong><p>PSE, transferencias y criptomonedas no crean saldos paralelos. El Saldo CTG solo cambia cuando el ingreso correspondiente supera su validación y se publica en el ledger canónico.</p></div>
+        <div>
+          <strong>Una sola fuente de saldo</strong>
+          <p>PSE, transferencias y criptomonedas no crean saldos paralelos. El Saldo CTG solo cambia cuando el ingreso correspondiente supera su validación y se publica en el ledger canónico. Subir un comprobante, recargar la página o modificar el cliente nunca cambia por sí solo el saldo financiero.</p>
+        </div>
       </div>
 
       {profile && !kycVerified && (
