@@ -68,7 +68,7 @@ export const AdminNav: React.FC<{ investmentRole: InvestmentRole }> = ({ investm
         <select className="min-w-0 flex-1 rounded-xl border border-white/[.08] bg-white/[.035] px-3 py-2 text-[9px] uppercase tracking-[.1em] text-white outline-none xl:hidden" value={active?.href ?? '/admin'} onChange={e=>{window.location.href=e.target.value}}>{visibleItems.map(i=><option key={i.href} value={i.href}>{i.label}</option>)}</select>
 
         <div className="ml-auto flex shrink-0 items-center gap-2 border-l border-white/[.07] pl-3 sm:pl-4">
-          <Link href="/dashboard" className="rounded-lg px-2.5 py-2 text-[8px] uppercase tracking-[.13em] text-accent transition-colors hover:bg-accent/[.07]">Mi cuenta</Link>
+          <Link href="/dashboard/mi-cuenta" className="rounded-lg px-2.5 py-2 text-[8px] uppercase tracking-[.13em] text-accent transition-colors hover:bg-accent/[.07]">Vista usuario</Link>
           <button onClick={signOut} className="hidden rounded-lg px-2.5 py-2 text-[8px] uppercase tracking-[.13em] text-text-dim transition-colors hover:bg-white/[.04] hover:text-white sm:block">Cerrar sesión</button>
         </div>
       </div>
