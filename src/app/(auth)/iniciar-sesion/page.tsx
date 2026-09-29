@@ -30,8 +30,8 @@ function IniciarSesionForm() {
   const searchParams = useSearchParams();
   const { locale } = useLanguage();
   const es = locale === 'es';
+  const redirectTo = safeRedirectPath(searchParams.get('next'), '/dashboard');
   const requestedNext = searchParams.get('next');
-  const redirectTo = safeRedirectPath(requestedNext, '/dashboard');
   const hasExplicitNext = Boolean(requestedNext);
   const isWorldMakersFlow = redirectTo.startsWith('/worldmakers');
   const registrationHref = isWorldMakersFlow
