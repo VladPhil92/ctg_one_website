@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0151",
-    "schemaMigrationName": "wallet_crypto_topup_server_audit_fix",
-    "schemaMigrationCount": 150,
+    "schemaMigration": "0152",
+    "schemaMigrationName": "wallet_crypto_rate_limit_scopes",
+    "schemaMigrationCount": 151,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
