@@ -245,29 +245,40 @@ select public.transition_lot_status(:'lot_id'::uuid, 'CONDITIONING', null, null)
 select public.transition_lot_status(:'lot_id'::uuid, 'BOTTLING', null, null);
 
 select * from public.generate_bottle_units(:'lot_id'::uuid, 4);
+reset role;
 
+-- service_role intentionally has no direct table SELECT after KEV hardening.
+-- The CI harness may inspect its rolled-back fixture to prepare deterministic
+-- function arguments, but every operational mutation still crosses the RPC.
+select array_agg(serial_code order by unit_number)::text[] as bottle_serials
+from public.investment_bottle_units
+where lot_id = :'lot_id'::uuid
+\gset
+
+set local role service_role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000201', true);
 select public.transition_lot_status(:'lot_id'::uuid, 'QUALITY_CONTROL', null, null);
 select public.update_bottle_units_status(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   'QC_APPROVED', null
 );
 select public.transition_lot_status(:'lot_id'::uuid, 'WAREHOUSE', null, null);
 select public.update_bottle_units_status(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   'WAREHOUSE', 'CTG_WAREHOUSE'
 );
 select public.transition_lot_status(:'lot_id'::uuid, 'DISPATCHED', null, null);
 select public.update_bottle_units_status(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   'DISPATCHED', 'IN_TRANSIT'
 );
 select public.transition_lot_status(:'lot_id'::uuid, 'IN_MARKET', null, null);
 select public.update_bottle_units_status(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   'IN_MARKET', 'CI_GP_SALES_POINT'
 );
 select public.transition_lot_status(:'lot_id'::uuid, 'SELLING', null, null);
@@ -296,7 +307,7 @@ select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000401
 select sale_id, sold_count, gross_revenue_cents, tax_recognized_cents
 from public.record_bottle_sale_document(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   3000::bigint,
   'DIRECT',
   'ci-golden-path-sale-0001',
@@ -310,7 +321,7 @@ from public.record_bottle_sale_document(
 select sale_id as replay_sale_id
 from public.record_bottle_sale_document(
   :'lot_id'::uuid,
-  array(select serial_code from public.investment_bottle_units where lot_id = :'lot_id'::uuid order by unit_number),
+  :'bottle_serials'::text[],
   3000::bigint,
   'DIRECT',
   'ci-golden-path-sale-0001',
