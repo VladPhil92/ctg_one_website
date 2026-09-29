@@ -31,6 +31,8 @@ function IniciarSesionForm() {
   const { locale } = useLanguage();
   const es = locale === 'es';
   const redirectTo = safeRedirectPath(searchParams.get('next'), '/dashboard');
+  const requestedNext = searchParams.get('next');
+  const hasExplicitNext = Boolean(requestedNext);
   const isWorldMakersFlow = redirectTo.startsWith('/worldmakers');
   const registrationHref = isWorldMakersFlow
     ? `/registro?next=${encodeURIComponent(redirectTo)}`
@@ -101,11 +103,23 @@ function IniciarSesionForm() {
     setIsSubmitting(true);
     try {
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: parsed.data.email,
         password: parsed.data.password,
       });
       if (signInError) throw signInError;
+
+      // Generic sign-in has a role-aware landing destination. Explicit `next`
+      // destinations (World Makers, recovery flows, etc.) remain authoritative.
+      let resolvedRedirect = redirectTo;
+      if (!hasExplicitNext && signInData.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', signInData.user.id)
+          .maybeSingle();
+        if (profile?.role === 'admin') resolvedRedirect = '/admin';
+      }
 
       const { data: assurance, error: assuranceError } =
         await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -113,9 +127,9 @@ function IniciarSesionForm() {
 
       void trackFunnelEvent('first_login', { sourcePath: isWorldMakersFlow ? '/worldmakers' : '/iniciar-sesion' });
       if (assurance.currentLevel !== 'aal2' && assurance.nextLevel === 'aal2') {
-        router.push(`/dashboard/seguridad/mfa?next=${encodeURIComponent(redirectTo)}`);
+        router.push(`/dashboard/seguridad/mfa?next=${encodeURIComponent(resolvedRedirect)}`);
       } else {
-        router.push(redirectTo);
+        router.push(resolvedRedirect);
       }
       router.refresh();
     } catch (err) {
