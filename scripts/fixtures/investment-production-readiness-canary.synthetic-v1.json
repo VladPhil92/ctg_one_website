@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0149",
-  "expectedMigrationName": "kev_context_assembly_governed_recall",
-  "expectedMigrationCount": 148,
+  "expectedMigration": "0151",
+  "expectedMigrationName": "wallet_crypto_topup_server_audit_fix",
+  "expectedMigrationCount": 150,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",
