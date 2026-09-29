@@ -28,7 +28,7 @@ CREATE TEMP TABLE reviewed_authenticated_security_definer_bodies(
 -- Direct authenticated execution of these implementations has been deliberately
 -- retired. Their reviewed body fingerprints remain as immutable historical
 -- authorization evidence. Runtime access is now mediated through service-role-
--- only *_server wrappers, which independently revalidate the actor in PostgreSQL.
+-- only server boundaries, which independently revalidate the actor in PostgreSQL.
 CREATE TEMP TABLE retired_authenticated_security_definer_signatures(
   signature text PRIMARY KEY
 );
@@ -46,7 +46,31 @@ INSERT INTO retired_authenticated_security_definer_signatures(signature) VALUES
   ('public.verify_investment_crypto_transfer(p_order_id uuid, p_transaction_hash text, p_network text, p_received_amount_cents bigint, p_received_at timestamp with time zone, p_notes text)'),
   ('public.initiate_investment_payout(p_request_id uuid, p_payout_rail text, p_provider_code text, p_destination_masked text, p_destination_fingerprint text, p_idempotency_key text, p_notes text)'),
   ('public.confirm_investment_payout(p_payout_id uuid, p_external_reference text, p_paid_at timestamp with time zone, p_notes text)'),
-  ('public.fail_investment_payout(p_payout_id uuid, p_reason text, p_external_reference text)');
+  ('public.fail_investment_payout(p_payout_id uuid, p_reason text, p_external_reference text)'),
+  -- Migration 0144 moves the following Finance/Production/Operations surface
+  -- from direct authenticated execution to explicit service_role execution.
+  ('public.auto_match_pending_investment_financial_events(p_limit integer)'),
+  ('public.get_finance_payout_queue_snapshot(p_active_limit integer, p_active_offset integer, p_paid_limit integer, p_paid_offset integer)'),
+  ('public.get_investment_financial_reconciliation_inbox(p_limit integer)'),
+  ('public.get_investment_provider_reconciliation_health()'),
+  ('public.get_manual_bank_verification_health()'),
+  ('public.get_manual_crypto_verification_health()'),
+  ('public.get_operations_dashboard_snapshot(p_lot_limit integer)'),
+  ('public.get_operations_intelligence_snapshot()'),
+  ('public.get_system_migration_health()'),
+  ('public.list_investment_role_assignments()'),
+  ('public.generate_bottle_units(p_lot_id uuid, p_quantity integer)'),
+  ('public.ingest_investment_financial_event(p_provider_code text, p_provider_event_key text, p_direction text, p_event_type text, p_payment_rail text, p_amount_cents bigint, p_external_reference text, p_merchant_reference text, p_occurred_at timestamp with time zone, p_payload_sha256 text)'),
+  ('public.reconcile_investment_order_payment(p_order_id uuid, p_payment_rail text, p_provider_code text, p_external_reference text, p_amount_cents bigint, p_settled_at timestamp with time zone, p_idempotency_key text, p_notes text)'),
+  ('public.record_bottle_sale_document(p_lot_id uuid, p_serial_codes text[], p_unit_price_cents bigint, p_channel_code text, p_idempotency_key text, p_sale_reference text, p_location text, p_tax_cents bigint)'),
+  ('public.record_sale_return_credit_note(p_sale_id uuid, p_serial_codes text[], p_return_location text, p_reason_code text, p_idempotency_key text, p_credit_reference text, p_notes text)'),
+  ('public.reject_investment_bank_proof(p_order_id uuid, p_reason text)'),
+  ('public.reject_investment_order(p_order_id uuid, p_admin_notes text)'),
+  ('public.resolve_investment_financial_event(p_event_id uuid, p_action text, p_order_id uuid, p_payout_id uuid, p_notes text)'),
+  ('public.transition_lot_status(p_lot_id uuid, p_new_status text, p_notes text, p_evidence_document_id uuid)'),
+  ('public.update_bottle_units_status(p_lot_id uuid, p_serial_codes text[], p_new_status text, p_location text)'),
+  ('public.update_investment_beer_style_economics(p_style_code text, p_production_cost_unit_cents bigint, p_label_cost_unit_cents bigint, p_transport_cost_unit_cents bigint, p_own_point_price_unit_cents bigint, p_b2b_price_unit_cents bigint, p_inc_rate numeric, p_advertising_rate_on_pre_inc numeric)'),
+  ('public.upsert_inventory_location(p_code text, p_name text, p_location_type text, p_address text, p_active boolean)');
 
 CREATE TEMP VIEW actual_authenticated_security_definer_bodies AS
 SELECT
@@ -118,19 +142,15 @@ BEGIN
   JOIN reviewed_authenticated_security_definer_bodies r USING (signature)
   WHERE a.body_sha256 IS DISTINCT FROM r.body_sha256;
 
-  -- Freeze exact reviewed search_path values. The migration-health RPC is the
-  -- only historical exception because it intentionally needs pg_catalog explicit.
-  -- Education quote decision RPCs intentionally pin pg_catalog before public.
-  -- Wallet COP top-up administration uses an empty search_path deliberately:
-  -- every application object is schema-qualified and only pg_catalog remains
-  -- implicitly visible, which is stricter than the legacy public-only policy.
+  -- Freeze exact reviewed search_path values. Education quote decision RPCs
+  -- intentionally pin pg_catalog before public. Wallet COP top-up administration
+  -- uses an empty search_path deliberately: every application object is schema-
+  -- qualified and only pg_catalog remains implicitly visible.
   SELECT coalesce(array_agg(a.signature ORDER BY a.signature), ARRAY[]::text[])
   INTO v_bad_config
   FROM actual_authenticated_security_definer_bodies a
   WHERE a.function_config IS DISTINCT FROM
     CASE
-      WHEN a.signature = 'public.get_system_migration_health()'
-        THEN ARRAY['search_path=public, pg_catalog']::text[]
       WHEN a.signature IN (
         'public.accept_education_service_quote(p_quote_id uuid)',
         'public.decline_education_service_quote(p_quote_id uuid)'
