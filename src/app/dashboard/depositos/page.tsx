@@ -82,7 +82,7 @@ export default function DepositosPage() {
         <ShieldCheck size={17} />
         <div>
           <strong>Una sola fuente de saldo</strong>
-          <p>PSE, transferencias y criptomonedas no crean saldos paralelos. El Saldo CTG solo cambia cuando el ingreso correspondiente supera su validación y se publica en el ledger canónico. Subir un comprobante, recargar la página o modificar el cliente nunca cambia por sí solo el saldo financiero.</p>
+          <p>PSE, transferencias y criptomonedas no crean saldos paralelos. El Saldo CTG solo cambia cuando el ingreso correspondiente supera su validación y se publica en el ledger canónico. Subir un comprobante, recargar la página o modificar el cliente nunca cambia por sí solo el saldo financiero. En el canal bancario, la acreditación ocurre cuando Finanzas verifique el pago y un segundo control lo concilie.</p>
         </div>
       </div>
 
