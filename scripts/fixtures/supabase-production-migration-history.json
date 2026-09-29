@@ -2,7 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-26T01:15:00Z",
+  "capturedAt": "2026-09-29T23:06:30Z",
   "source": "Supabase production migration history",
   "migrations": [
     {
@@ -274,6 +274,16 @@
       "logicalVersion": "0149",
       "remoteVersion": "20260921112707",
       "remoteName": "0149_kev_context_assembly_governed_recall"
+    },
+    {
+      "logicalVersion": "0150",
+      "remoteVersion": "20260929230600",
+      "remoteName": "0150_wallet_direct_crypto_topups"
+    },
+    {
+      "logicalVersion": "0151",
+      "remoteVersion": "20260929230614",
+      "remoteName": "0151_wallet_crypto_topup_server_audit_fix"
     }
   ]
 }
