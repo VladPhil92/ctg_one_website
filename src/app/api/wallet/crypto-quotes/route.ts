@@ -17,6 +17,15 @@ const DECIMALS: Record<WalletCryptoAsset, number> = {
   USDC: 6,
 };
 
+type SettlementBinding = 'shared-operator-address' | 'claimant-specific-address';
+
+type QuoteAllocation = {
+  quoteId?: string;
+  destinationAddress?: string;
+  settlementBinding?: SettlementBinding;
+  depositAddressId?: string | null;
+};
+
 function roundCryptoAmount(value: number, decimals: number) {
   return Number(value.toFixed(decimals));
 }
@@ -73,11 +82,11 @@ export async function POST(request: NextRequest) {
 
     const expiresAt = new Date(Date.now() + WALLET_CRYPTO_QUOTE_TTL_SECONDS * 1_000);
     const admin = createAdminClient();
-    const { data: quoteId, error: quoteError } = await admin.rpc('create_wallet_crypto_quote_server', {
+    const { data, error: quoteError } = await admin.rpc('create_wallet_crypto_quote_v2_server', {
       p_user_id: user.id,
       p_asset: destination.asset,
       p_network: destination.network,
-      p_destination_address: destination.address,
+      p_shared_destination_address: destination.address,
       p_amount_cents: amountCents,
       p_price_cop: market.priceCop,
       p_price_usd: market.priceUsd,
@@ -89,12 +98,19 @@ export async function POST(request: NextRequest) {
     });
     if (quoteError) return NextResponse.json({ error: quoteError.message }, { status: 409 });
 
+    const allocation = (data ?? {}) as QuoteAllocation;
+    if (!allocation.quoteId || !allocation.destinationAddress || !allocation.settlementBinding) {
+      return NextResponse.json({ error: 'crypto quote allocation is incomplete' }, { status: 500 });
+    }
+
     const amountUsd = cryptoAmount * market.priceUsd;
     return NextResponse.json({
-      quoteId,
+      quoteId: allocation.quoteId,
       asset: destination.asset,
       network: destination.network,
-      destinationAddress: destination.address,
+      destinationAddress: allocation.destinationAddress,
+      settlementBinding: allocation.settlementBinding,
+      autoSettlementEligible: allocation.settlementBinding === 'claimant-specific-address',
       amountCop,
       amountUsd: Number(amountUsd.toFixed(2)),
       cryptoAmount,
