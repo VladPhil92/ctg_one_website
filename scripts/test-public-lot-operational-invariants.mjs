@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [migration, boundaryStage, queries, detail, simulatorPage, simulatorClient, schemaVersion, bottleTrace] = await Promise.all([
+const [migration, boundaryStage, browserRevocation, queries, detail, simulatorPage, simulatorClient, schemaVersion, bottleTrace] = await Promise.all([
   read('supabase/migrations/0061_public_lot_operational_snapshot.sql'),
   read('supabase/migrations/20260930124946_0156_public_read_model_service_role_boundary_stage.sql'),
+  read('supabase/migrations/20260930134358_0157_public_read_model_browser_execution_revocation.sql'),
   read('src/lib/investment/queries.ts'),
   read('src/app/inversion/lotes/[slug]/page.tsx'),
   read('src/app/inversion/simulador/page.tsx'),
@@ -53,6 +54,16 @@ for (const signature of [
     new RegExp(`grant execute on function ${escaped} to anon, authenticated, service_role;`, 'i'),
     `${signature} must explicitly grant service_role before application callers move to the server trust boundary.`,
   );
+  assert.match(
+    browserRevocation,
+    new RegExp(`revoke all on function ${escaped}\\s+from public, anon, authenticated;`, 'i'),
+    `${signature} must revoke direct browser execution after the service-role boundary is live.`,
+  );
+  assert.match(
+    browserRevocation,
+    new RegExp(`grant execute on function ${escaped} to service_role;`, 'i'),
+    `${signature} must retain explicit service_role execution after browser revocation.`,
+  );
 }
 
 assert.match(queries, /rpc\('get_public_investment_lot_operations'/, 'Public lot details must consume the reviewed operational snapshot.');
@@ -99,7 +110,7 @@ assert.match(simulatorClient, /El cálculo sigue siendo válido como escenario e
 
 const schemaMatch = schemaVersion.match(/EXPECTED_DATABASE_MIGRATION\s*=\s*'(\d{4})'/);
 const countMatch = schemaVersion.match(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/);
-assert.ok(schemaMatch && Number(schemaMatch[1]) >= 156, 'Runtime schema must include staged public-read-model service-role boundary 0156.');
-assert.ok(countMatch && Number(countMatch[1]) >= 155, 'Runtime migration count must include staged public-read-model service-role boundary 0156.');
+assert.ok(schemaMatch && Number(schemaMatch[1]) >= 157, 'Runtime schema must include public-read-model browser revocation 0157.');
+assert.ok(countMatch && Number(countMatch[1]) >= 156, 'Runtime migration count must include public-read-model browser revocation 0157.');
 
 console.log('Public lot operational truth invariants: PASS');

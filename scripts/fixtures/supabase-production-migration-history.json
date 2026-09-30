@@ -2,7 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-30T12:49:46Z",
+  "capturedAt": "2026-09-30T13:43:58Z",
   "source": "Supabase production migration history",
   "migrations": [
     {"logicalVersion":"0095","remoteVersion":"20260901214059","remoteName":"jp_education_commerce"},
@@ -65,6 +65,7 @@
     {"logicalVersion":"0153","remoteVersion":"20260929233256","remoteName":"0153_wallet_crypto_rls_permission_hoisting"},
     {"logicalVersion":"0154","remoteVersion":"20260930025245","remoteName":"0154_wallet_crypto_settlement_v2"},
     {"logicalVersion":"0155","remoteVersion":"20260930030945","remoteName":"0155_wallet_crypto_evm_address_canonicalization"},
-    {"logicalVersion":"0156","remoteVersion":"20260930124946","remoteName":"0156_public_read_model_service_role_boundary_stage"}
+    {"logicalVersion":"0156","remoteVersion":"20260930124946","remoteName":"0156_public_read_model_service_role_boundary_stage"},
+    {"logicalVersion":"0157","remoteVersion":"20260930134358","remoteName":"0157_public_read_model_browser_execution_revocation"}
   ]
 }

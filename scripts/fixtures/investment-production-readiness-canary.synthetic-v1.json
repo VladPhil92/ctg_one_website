@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0156",
-  "expectedMigrationName": "public_read_model_service_role_boundary_stage",
-  "expectedMigrationCount": 155,
+  "expectedMigration": "0157",
+  "expectedMigrationName": "public_read_model_browser_execution_revocation",
+  "expectedMigrationCount": 156,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

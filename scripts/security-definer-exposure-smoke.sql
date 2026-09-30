@@ -11,12 +11,8 @@ BEGIN
   FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
   WHERE n.nspname IN ('public','graphql_public') AND p.prosecdef
     AND has_function_privilege('anon',p.oid,'EXECUTE');
-  IF v_actual IS DISTINCT FROM ARRAY[
-    'public.get_public_bottle_trace(p_serial_code text)',
-    'public.get_public_investment_lot_funding(p_lot_id uuid)',
-    'public.get_public_investment_lot_operations(p_lot_id uuid)'
-  ]::text[] THEN
-    RAISE EXCEPTION 'unexpected anonymous database function exposure: %',v_actual;
+  IF cardinality(v_actual) > 0 THEN
+    RAISE EXCEPTION 'unexpected anonymous SECURITY DEFINER database function exposure: %',v_actual;
   END IF;
 END $$;
 
@@ -212,6 +208,34 @@ BEGIN
     END IF;
     IF NOT has_function_privilege('service_role',v_oid,'EXECUTE') THEN
       RAISE EXCEPTION '0144 backend-only SECURITY DEFINER RPC missing service_role execution: %',v_signature;
+    END IF;
+  END LOOP;
+END $$;
+
+-- Migration 0157 completes the two-step contraction of the curated public read
+-- models. Their results remain public through server-rendered application pages,
+-- but the SECURITY DEFINER functions themselves are service-role-only.
+DO $$
+DECLARE
+  v_signature text;
+  v_oid oid;
+BEGIN
+  FOREACH v_signature IN ARRAY ARRAY[
+    'public.get_public_bottle_trace(text)',
+    'public.get_public_investment_lot_funding(uuid)',
+    'public.get_public_investment_lot_operations(uuid)'
+  ]::text[]
+  LOOP
+    v_oid := to_regprocedure(v_signature);
+    IF v_oid IS NULL THEN
+      RAISE EXCEPTION '0157 server-only public read model missing: %',v_signature;
+    END IF;
+    IF has_function_privilege('anon',v_oid,'EXECUTE')
+       OR has_function_privilege('authenticated',v_oid,'EXECUTE') THEN
+      RAISE EXCEPTION '0157 server-only public read model exposed to a browser role: %',v_signature;
+    END IF;
+    IF NOT has_function_privilege('service_role',v_oid,'EXECUTE') THEN
+      RAISE EXCEPTION '0157 server-only public read model missing service_role execution: %',v_signature;
     END IF;
   END LOOP;
 END $$;
