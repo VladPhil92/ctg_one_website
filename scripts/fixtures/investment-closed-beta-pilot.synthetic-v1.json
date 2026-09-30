@@ -10,6 +10,9 @@
     "schemaMigration": "0158",
     "schemaMigrationName": "wallet_crypto_address_pool_operations_v1",
     "schemaMigrationCount": 157,
+    "schemaMigration": "0157",
+    "schemaMigrationName": "public_read_model_browser_execution_revocation",
+    "schemaMigrationCount": 156,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
