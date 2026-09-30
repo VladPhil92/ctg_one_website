@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0153",
-    "schemaMigrationName": "wallet_crypto_rls_permission_hoisting",
-    "schemaMigrationCount": 152,
+    "schemaMigration": "0154",
+    "schemaMigrationName": "wallet_crypto_settlement_v2",
+    "schemaMigrationCount": 153,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
