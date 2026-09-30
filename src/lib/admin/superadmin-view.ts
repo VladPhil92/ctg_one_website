@@ -10,10 +10,16 @@ export function isSuperadminViewMode(value: unknown): value is SuperadminViewMod
   return typeof value === 'string' && SUPERADMIN_VIEW_MODES.includes(value as SuperadminViewMode);
 }
 
-export function superadminUserViewCookieValue(userId: string) {
-  return `${SUPERADMIN_USER_VIEW_PREFIX}${userId}`;
+export function superadminUserViewCookieValue(userId: string, lastSignInAt?: string) {
+  if (!lastSignInAt) return null;
+  return `${SUPERADMIN_USER_VIEW_PREFIX}${userId}:${encodeURIComponent(lastSignInAt)}`;
 }
 
-export function isSuperadminUserViewCookie(value: string | undefined, userId: string) {
-  return value === superadminUserViewCookieValue(userId);
+export function isSuperadminUserViewCookie(
+  value: string | undefined,
+  userId: string,
+  lastSignInAt?: string,
+) {
+  const expected = superadminUserViewCookieValue(userId, lastSignInAt);
+  return expected !== null && value === expected;
 }
