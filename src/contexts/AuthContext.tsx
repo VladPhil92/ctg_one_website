@@ -16,6 +16,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+async function clearSuperadminEffectiveView() {
+  try {
+    await fetch('/api/admin/view-mode', {
+      method: 'DELETE',
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+  } catch {
+    // Signing out must not be blocked by a best-effort cleanup request. The
+    // server also binds user-mode state to the authenticated user id, so a
+    // stale cookie cannot transfer the mode to a different account.
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
@@ -75,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return;
 
       if (event === 'SIGNED_OUT' || !session?.user) {
+        void clearSuperadminEffectiveView();
         clearIdentity();
         setIsLoading(false);
         return;
@@ -98,6 +113,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [clearIdentity, fetchProfile]);
 
   const signOut = async () => {
+    // Remove the independent HttpOnly effective-view state before invalidating
+    // the Supabase session. DELETE is safe and does not require authentication.
+    await clearSuperadminEffectiveView();
+
     if (isSupabaseConfigured) {
       const supabase = createClient();
       const { error } = await supabase.auth.signOut();
