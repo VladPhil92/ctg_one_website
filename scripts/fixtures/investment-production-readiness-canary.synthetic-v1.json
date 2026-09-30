@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0157",
-  "expectedMigrationName": "public_read_model_browser_execution_revocation",
-  "expectedMigrationCount": 156,
+  "expectedMigration": "0159",
+  "expectedMigrationName": "wallet_crypto_address_pool_operational_hardening_v1_1",
+  "expectedMigrationCount": 158,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

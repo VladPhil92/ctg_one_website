@@ -1,0 +1,37 @@
+name: Wallet Crypto Address Pool Operations Contract
+
+on:
+  pull_request:
+    paths:
+      - 'src/app/admin/finance/crypto-address-pool/**'
+      - 'src/app/api/admin/wallet/crypto-address-pool/**'
+      - 'src/lib/observability/schema-version.ts'
+      - 'scripts/test-wallet-crypto-address-pool-operations-invariants.mjs'
+      - 'supabase/migrations/*wallet_crypto_address_pool*'
+      - '.github/workflows/wallet-crypto-address-pool-operations-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/app/admin/finance/crypto-address-pool/**'
+      - 'src/app/api/admin/wallet/crypto-address-pool/**'
+      - 'src/lib/observability/schema-version.ts'
+      - 'scripts/test-wallet-crypto-address-pool-operations-invariants.mjs'
+      - 'supabase/migrations/*wallet_crypto_address_pool*'
+      - '.github/workflows/wallet-crypto-address-pool-operations-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Address pool operational hardening
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.0
+      - name: Run address-pool invariants
+        run: node scripts/test-wallet-crypto-address-pool-operations-invariants.mjs

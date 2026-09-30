@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0157",
-    "schemaMigrationName": "public_read_model_browser_execution_revocation",
-    "schemaMigrationCount": 156,
+    "schemaMigration": "0159",
+    "schemaMigrationName": "wallet_crypto_address_pool_operational_hardening_v1_1",
+    "schemaMigrationCount": 158,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
