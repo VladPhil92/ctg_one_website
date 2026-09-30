@@ -4,23 +4,30 @@ import {
   SUPERADMIN_VIEW_COOKIE,
   SUPERADMIN_VIEW_COOKIE_MAX_AGE,
   isSuperadminViewMode,
+  superadminUserViewCookieValue,
 } from '@/lib/admin/superadmin-view';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 
+function noStoreJson(body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init);
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
+  return response;
+}
+
 export async function POST(request: NextRequest) {
   if (!isSupabaseConfigured) {
-    return NextResponse.json({ error: 'Authentication is not configured.' }, { status: 503 });
+    return noStoreJson({ error: 'Authentication is not configured.' }, { status: 503 });
   }
 
   const contentType = request.headers.get('content-type') ?? '';
   if (!contentType.includes('application/json')) {
-    return NextResponse.json({ error: 'Content-Type must be application/json.' }, { status: 415 });
+    return noStoreJson({ error: 'Content-Type must be application/json.' }, { status: 415 });
   }
 
   const body = await request.json().catch(() => null) as { mode?: unknown } | null;
   const mode = body?.mode;
   if (!isSuperadminViewMode(mode)) {
-    return NextResponse.json({ error: 'Unsupported view mode.' }, { status: 400 });
+    return noStoreJson({ error: 'Unsupported view mode.' }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -29,7 +36,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    return noStoreJson({ error: 'Authentication required.' }, { status: 401 });
   }
 
   const [{ data: profile }, { data: investmentProfile }] = await Promise.all([
@@ -43,14 +50,14 @@ export async function POST(request: NextRequest) {
 
   const isSuperAdmin = profile?.role === 'admin' && investmentProfile?.investment_role === 'SUPER_ADMIN';
   if (!isSuperAdmin) {
-    return NextResponse.json({ error: 'SUPER_ADMIN authority required.' }, { status: 403 });
+    return noStoreJson({ error: 'SUPER_ADMIN authority required.' }, { status: 403 });
   }
 
-  const response = NextResponse.json({ mode });
+  const response = noStoreJson({ mode });
   if (mode === 'superadmin') {
     response.cookies.delete(SUPERADMIN_VIEW_COOKIE);
   } else {
-    response.cookies.set(SUPERADMIN_VIEW_COOKIE, mode, {
+    response.cookies.set(SUPERADMIN_VIEW_COOKIE, superadminUserViewCookieValue(user.id), {
       httpOnly: true,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
@@ -59,5 +66,15 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  return response;
+}
+
+// Clearing an effective-view cookie cannot grant privilege, so this endpoint is
+// intentionally safe to call even after the Supabase session has expired. This
+// lets every sign-out path remove stale browser state without depending on an
+// authenticated request that may already be invalid.
+export async function DELETE() {
+  const response = noStoreJson({ mode: 'superadmin' });
+  response.cookies.delete(SUPERADMIN_VIEW_COOKIE);
   return response;
 }
