@@ -2,7 +2,10 @@ import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/server';
 import { validateWalletCryptoTopup } from '@/lib/wallet-crypto-onchain';
-import type { WalletCryptoAsset } from '@/lib/wallet-crypto-topups';
+import {
+  canAutoSettleWalletCryptoDestination,
+  type WalletCryptoAsset,
+} from '@/lib/wallet-crypto-topups';
 
 export async function validateAndPersistWalletCryptoTopup(
   admin: ReturnType<typeof createAdminClient>,
@@ -26,24 +29,51 @@ export async function validateAndPersistWalletCryptoTopup(
       expectedAmount: Number(claim.crypto_amount_expected),
     });
   } catch (validationError) {
+    // Explorer/RPC availability is transient. Keep the claim retryable so the
+    // status endpoint and UI polling continue validating instead of stranding a
+    // paid claim in manual review after a temporary provider outage.
     validation = {
-      state: 'manual_review' as const,
+      state: 'confirming' as const,
       confirmations: 0,
       receivedAmount: null,
       reason: validationError instanceof Error ? validationError.message : 'CHAIN_VALIDATION_UNAVAILABLE',
-      details: { validatorUnavailable: true },
+      details: { validatorUnavailable: true, retryable: true },
     };
   }
 
   if (validation.state === 'confirmed' && validation.receivedAmount !== null) {
-    const { data, error: confirmError } = await admin.rpc('confirm_wallet_crypto_topup_server', {
-      p_claim_id: claimId,
-      p_confirmations: validation.confirmations,
-      p_received_amount: validation.receivedAmount,
-      p_validation_data: validation.details,
-    });
-    if (confirmError) throw new Error(confirmError.message);
-    return data;
+    // The currently configured Binance destinations are shared operator
+    // addresses. A transaction to a shared address proves receipt, but not which
+    // CTG One participant originated it. Never auto-credit such a claim: doing
+    // so would allow an otherwise-unclaimed historical/third-party transaction
+    // to be presented by the wrong participant. Automatic settlement is only
+    // permitted once the destination itself is claimant-specific.
+    if (!canAutoSettleWalletCryptoDestination(claim.asset, claim.destination_address)) {
+      validation = {
+        state: 'manual_review' as const,
+        confirmations: validation.confirmations,
+        receivedAmount: validation.receivedAmount,
+        reason: 'shared receiving address requires operator reconciliation before wallet credit',
+        details: {
+          ...validation.details,
+          onchainValidated: true,
+          autoSettlementBlocked: true,
+          settlementBinding: 'shared-operator-address',
+        },
+      };
+    } else {
+      const { data, error: confirmError } = await admin.rpc('confirm_wallet_crypto_topup_server', {
+        p_claim_id: claimId,
+        p_confirmations: validation.confirmations,
+        p_received_amount: validation.receivedAmount,
+        p_validation_data: {
+          ...validation.details,
+          settlementBinding: 'claimant-specific-address',
+        },
+      });
+      if (confirmError) throw new Error(confirmError.message);
+      return data;
+    }
   }
 
   const { data, error: recordError } = await admin.rpc('record_wallet_crypto_validation_server', {
