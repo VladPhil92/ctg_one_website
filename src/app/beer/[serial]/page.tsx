@@ -1,6 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
+import { createAdminClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { Container } from '@/components/ui';
 import { Navbar } from '@/components/Navbar';
 import { CheckCircle2, MapPin, PackageCheck, QrCode, ShieldCheck } from 'lucide-react';
@@ -13,7 +13,7 @@ type BottleTraceRouteParams = Promise<{ serial: string }>;
 
 export default async function BottleTracePage({ params }: { params: BottleTraceRouteParams }) {
   if (!isSupabaseConfigured) notFound();
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { serial: serialParam } = await params;
   const serial = decodeURIComponent(serialParam).trim().toUpperCase();
   const { data, error } = await supabase.rpc('get_public_bottle_trace', { p_serial_code: serial });
