@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [migration, queries, detail, simulatorPage, simulatorClient, schemaVersion, bottleTrace] = await Promise.all([
+const [migration, boundaryStage, queries, detail, simulatorPage, simulatorClient, schemaVersion, bottleTrace] = await Promise.all([
   read('supabase/migrations/0061_public_lot_operational_snapshot.sql'),
+  read('supabase/migrations/20260930124946_0156_public_read_model_service_role_boundary_stage.sql'),
   read('src/lib/investment/queries.ts'),
   read('src/app/inversion/lotes/[slug]/page.tsx'),
   read('src/app/inversion/simulador/page.tsx'),
@@ -40,6 +41,19 @@ assert.match(
   /'get_public_bottle_trace',[\s\S]*?'get_public_investment_lot_funding',[\s\S]*?'get_public_investment_lot_operations'/,
   'Historical System Health migration must document the three reviewed read models before the later server-boundary hardening migration.',
 );
+
+for (const signature of [
+  'public.get_public_bottle_trace(text)',
+  'public.get_public_investment_lot_funding(uuid)',
+  'public.get_public_investment_lot_operations(uuid)',
+]) {
+  const escaped = signature.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  assert.match(
+    boundaryStage,
+    new RegExp(`grant execute on function ${escaped} to anon, authenticated, service_role;`, 'i'),
+    `${signature} must explicitly grant service_role before application callers move to the server trust boundary.`,
+  );
+}
 
 assert.match(queries, /rpc\('get_public_investment_lot_operations'/, 'Public lot details must consume the reviewed operational snapshot.');
 assert.doesNotMatch(queries, /\.from\('investment_inventory_movements'\)/, 'Public query helpers must not read ops-only inventory movements directly.');
@@ -85,7 +99,7 @@ assert.match(simulatorClient, /El cálculo sigue siendo válido como escenario e
 
 const schemaMatch = schemaVersion.match(/EXPECTED_DATABASE_MIGRATION\s*=\s*'(\d{4})'/);
 const countMatch = schemaVersion.match(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/);
-assert.ok(schemaMatch && Number(schemaMatch[1]) >= 61, 'Runtime schema must remain at or beyond public lot operational boundary 0061.');
-assert.ok(countMatch && Number(countMatch[1]) >= 61, 'Runtime migration count must remain at or beyond public lot operational boundary 0061.');
+assert.ok(schemaMatch && Number(schemaMatch[1]) >= 156, 'Runtime schema must include staged public-read-model service-role boundary 0156.');
+assert.ok(countMatch && Number(countMatch[1]) >= 155, 'Runtime migration count must include staged public-read-model service-role boundary 0156.');
 
 console.log('Public lot operational truth invariants: PASS');
