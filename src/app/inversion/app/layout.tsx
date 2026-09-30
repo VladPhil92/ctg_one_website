@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { SuperadminUserModeBanner } from '@/components/admin/SuperadminUserModeBanner';
@@ -41,27 +40,22 @@ export default async function InvestmentAppLayout({ children }: { children: Reac
       }
 
       if (profile?.role === 'admin') {
-        const { data: investmentProfile, error: investmentRoleError } = await supabase
-          .from('investment_participant_profiles')
-          .select('investment_role')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (investmentRoleError) {
-          throw new Error(`No se pudo validar el rol operativo de inversión: ${investmentRoleError.message}`);
-        }
-
         const cookieStore = await cookies();
         const requestedView = cookieStore.get(SUPERADMIN_VIEW_COOKIE)?.value;
-        const isSuperAdmin = investmentProfile?.investment_role === 'SUPER_ADMIN';
 
-        if (
-          !isSuperAdmin
-          || !isSuperadminUserViewCookie(requestedView, user.id, user.last_sign_in_at)
-        ) {
-          redirect('/admin');
+        // The proxy owns authorization for /inversion/app. This layout only
+        // renders the persistent indicator when the effective view is valid.
+        if (requestedView) {
+          const { data: investmentProfile } = await supabase
+            .from('investment_participant_profiles')
+            .select('investment_role')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          superadminUserView =
+            investmentProfile?.investment_role === 'SUPER_ADMIN'
+            && isSuperadminUserViewCookie(requestedView, user.id, user.last_sign_in_at);
         }
-        superadminUserView = true;
       }
     }
   }
