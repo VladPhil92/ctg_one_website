@@ -33,13 +33,14 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (authError || !user) {
     return noStoreJson({ error: 'Authentication required.' }, { status: 401 });
   }
 
-  const [{ data: profile }, { data: investmentProfile }] = await Promise.all([
+  const [profileResult, investmentProfileResult] = await Promise.all([
     supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
     supabase
       .from('investment_participant_profiles')
@@ -48,7 +49,13 @@ export async function POST(request: NextRequest) {
       .maybeSingle(),
   ]);
 
-  const isSuperAdmin = profile?.role === 'admin' && investmentProfile?.investment_role === 'SUPER_ADMIN';
+  if (profileResult.error || investmentProfileResult.error) {
+    return noStoreJson({ error: 'Authorization state is temporarily unavailable.' }, { status: 503 });
+  }
+
+  const isSuperAdmin =
+    profileResult.data?.role === 'admin'
+    && investmentProfileResult.data?.investment_role === 'SUPER_ADMIN';
   if (!isSuperAdmin) {
     return noStoreJson({ error: 'SUPER_ADMIN authority required.' }, { status: 403 });
   }
@@ -57,7 +64,12 @@ export async function POST(request: NextRequest) {
   if (mode === 'superadmin') {
     response.cookies.delete(SUPERADMIN_VIEW_COOKIE);
   } else {
-    response.cookies.set(SUPERADMIN_VIEW_COOKIE, superadminUserViewCookieValue(user.id), {
+    const cookieValue = superadminUserViewCookieValue(user.id, user.last_sign_in_at);
+    if (!cookieValue) {
+      return noStoreJson({ error: 'Current sign-in session cannot be fingerprinted safely.' }, { status: 409 });
+    }
+
+    response.cookies.set(SUPERADMIN_VIEW_COOKIE, cookieValue, {
       httpOnly: true,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
