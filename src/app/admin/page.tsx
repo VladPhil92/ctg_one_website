@@ -78,6 +78,7 @@ export default async function AdminOverviewPage() {
   const attentionCount = pendingKyc + pendingDeposits + pendingOrders;
   const generatedAt = snapshot?.generated_at
     ? new Date(snapshot.generated_at).toLocaleString('es-CO', {
+        timeZone: 'America/Bogota',
         day: '2-digit',
         month: 'short',
         hour: '2-digit',
