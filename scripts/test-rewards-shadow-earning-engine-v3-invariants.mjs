@@ -72,11 +72,16 @@ assert.match(panel, /Replay manual de evento/, 'v3 UI must retain controlled adm
 assert.doesNotMatch(panel, /activar rewards|earning comercial activo|acreditar puntos ahora|redimir ahora/i, 'Shadow UI must not expose commercial activation claims.');
 assert.match(nav, /href: '\/admin\/rewards\/shadow', label: 'Rewards Shadow', roles: \['SUPER_ADMIN'\]/, 'Shadow navigation must remain SUPER_ADMIN-only.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0155'/, 'Repository schema authority must reflect the current additive global schema.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_crypto_evm_address_canonicalization'/, 'Schema authority must name the current additive global migration.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 154/, 'Schema migration count must align with the current global schema.');
+const expectedMigration = /EXPECTED_DATABASE_MIGRATION\s*=\s*['"](\d{4})['"]/.exec(schemaVersion)?.[1];
+const expectedMigrationName = /EXPECTED_DATABASE_MIGRATION_NAME\s*=\s*['"]([^'"]+)['"]/.exec(schemaVersion)?.[1];
+const expectedMigrationCount = Number(/EXPECTED_DATABASE_MIGRATION_COUNT\s*=\s*(\d+)/.exec(schemaVersion)?.[1]);
+assert.ok(expectedMigration && expectedMigrationName && Number.isSafeInteger(expectedMigrationCount), 'Repository schema authority must be parseable.');
+assert.ok(Number(expectedMigration) >= 135, 'Repository schema authority must remain at or beyond Rewards shadow migration 0135.');
 
 const productionHistory = JSON.parse(history);
+const latestHistoryEntry = productionHistory.migrations.at(-1);
+assert.equal(latestHistoryEntry?.logicalVersion, expectedMigration, 'Production migration history must end at the repository schema authority.');
+assert.ok(latestHistoryEntry?.remoteName?.endsWith(expectedMigrationName), 'Production migration history latest name must match repository schema authority.');
 const assertHistoryEntry = (logicalVersion, remoteVersion, remoteName) => {
   const entry = productionHistory.migrations.find((item) => item.logicalVersion === logicalVersion);
   assert.deepEqual(entry, { logicalVersion, remoteVersion, remoteName }, `Production provenance must retain migration ${logicalVersion}.`);

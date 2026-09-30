@@ -7,9 +7,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "schemaMigration": "0155",
-    "schemaMigrationName": "wallet_crypto_evm_address_canonicalization",
-    "schemaMigrationCount": 154,
+    "schemaMigration": "0156",
+    "schemaMigrationName": "public_read_model_service_role_boundary_stage",
+    "schemaMigrationCount": 155,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

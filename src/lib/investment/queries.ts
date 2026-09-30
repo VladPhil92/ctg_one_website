@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import type {
   InvestmentProductionLot,
@@ -52,6 +52,10 @@ export type PublicLotOperationalSnapshot = {
 // blocked by RLS as of migration 0060 and filtered here again as defense in
 // depth. Funding and operational truth come only from reviewed aggregate RPCs;
 // allocation, order, bottle-unit and production-event rows remain private.
+//
+// The reviewed aggregate RPCs execute only from this server-only module through
+// the service-role trust boundary. Browser/anonymous callers never receive the
+// privileged credential and cannot invoke the SECURITY DEFINER RPCs directly.
 
 export async function getPublicLots(): Promise<InvestmentProductionLot[]> {
   if (!isSupabaseConfigured) return [];
@@ -122,7 +126,7 @@ function fundingRowToSummary(row: PublicLotFundingRow): LotFundingSummary {
 
 export async function getPublicLotFundingSummaries(): Promise<Record<string, LotFundingSummary>> {
   if (!isSupabaseConfigured) return {};
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase.rpc('get_public_investment_lot_funding', { p_lot_id: null });
   if (error) throw new Error(`No se pudo cargar el avance público de financiación: ${error.message}`);
 
@@ -131,7 +135,7 @@ export async function getPublicLotFundingSummaries(): Promise<Record<string, Lot
 }
 
 export async function getLotFundingSummary(lot: InvestmentProductionLot): Promise<LotFundingSummary> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase.rpc('get_public_investment_lot_funding', { p_lot_id: lot.id });
   if (error) throw new Error(`No se pudo cargar la financiación del lote: ${error.message}`);
 
@@ -166,7 +170,7 @@ export async function getPublicLotOperationalSnapshot(lotId: string): Promise<Pu
   };
   if (!isSupabaseConfigured) return empty;
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase.rpc('get_public_investment_lot_operations', { p_lot_id: lotId });
   if (error) throw new Error(`No se pudo cargar el estado operacional público del lote: ${error.message}`);
 
