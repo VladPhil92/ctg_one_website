@@ -1,6 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import {
+  SUPERADMIN_VIEW_COOKIE,
+  isSuperadminUserViewCookie,
+} from '@/lib/admin/superadmin-view';
+import {
   NVET_ACCESS_COOKIE,
   NVET_REFRESH_COOKIE,
   isExpiredOrUnreadable,
@@ -18,6 +22,26 @@ const routeRoles: Array<{ prefix:string; roles:InvestmentRole[] }> = [
   { prefix:'/admin/operations', roles:['SUPER_ADMIN','PRODUCTION_MANAGER'] },
   { prefix:'/inversion/admin/orders', roles:['SUPER_ADMIN','FINANCE_ADMIN'] },
 ];
+
+const participantAdminExemptPrefixes = [
+  '/dashboard/educacion/instructor',
+  '/dashboard/educacion/operaciones',
+] as const;
+
+function matchesPrefix(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+function isParticipantAdminExemptPath(pathname: string) {
+  return participantAdminExemptPrefixes.some(prefix => matchesPrefix(pathname, prefix));
+}
+
+function authorizationUnavailable() {
+  return new NextResponse('Authorization state is temporarily unavailable.', {
+    status: 503,
+    headers: { 'Cache-Control': 'no-store, max-age=0' },
+  });
+}
 
 // Nvet Care dashboard: its own session cookie, not Supabase (ADR-002).
 // Runs independently of Supabase configuration so it isn't skipped when
@@ -80,6 +104,42 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/iniciar-sesion';
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
+  }
+
+  // Effective participant view enforcement belongs here because the proxy sees
+  // the concrete pathname on every document/RSC navigation. Existing education
+  // admin consoles remain governed by their own global-admin authorization and
+  // must not require an investment role merely because they live under /dashboard.
+  if ((isDashboardRoute || isInvestmentAppRoute) && user) {
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profileError) return authorizationUnavailable();
+
+    if (profile?.role === 'admin' && !isParticipantAdminExemptPath(pathname)) {
+      const { data: investmentProfile, error: investmentRoleError } = await supabase
+        .from('investment_participant_profiles')
+        .select('investment_role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (investmentRoleError) return authorizationUnavailable();
+
+      const requestedView = request.cookies.get(SUPERADMIN_VIEW_COOKIE)?.value;
+      const isVerifiedUserView =
+        investmentProfile?.investment_role === 'SUPER_ADMIN'
+        && isSuperadminUserViewCookie(requestedView, user.id, user.last_sign_in_at);
+
+      if (!isVerifiedUserView) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/admin';
+        url.search = '';
+        return NextResponse.redirect(url);
+      }
+    }
   }
 
   if ((isAdminRoute || isInvestmentAdminRoute) && user) {
