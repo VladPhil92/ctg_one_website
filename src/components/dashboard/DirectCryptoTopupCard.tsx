@@ -13,6 +13,8 @@ type Quote = {
   asset: WalletCryptoAsset;
   network: string;
   destinationAddress: string;
+  settlementBinding: 'shared-operator-address' | 'claimant-specific-address';
+  autoSettlementEligible: boolean;
   amountCop: number;
   amountUsd: number;
   cryptoAmount: number;
@@ -46,15 +48,16 @@ export function DirectCryptoTopupCard({ kycVerified }: { kycVerified: boolean })
   const [copied, setCopied] = useState(false);
 
   const destination = WALLET_CRYPTO_DESTINATIONS.find((item) => item.asset === asset) ?? first;
-  const autoSettlementSupported = destination?.settlementBinding === 'claimant-specific-address';
   const qrDataUrl = useMemo(() => {
-    if (!destination?.address) return '';
-    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(encodeQR(destination.address, 'svg'))}`;
-  }, [destination]);
+    if (!quote?.destinationAddress) return '';
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(encodeQR(quote.destinationAddress, 'svg'))}`;
+  }, [quote?.destinationAddress]);
 
   useEffect(() => {
     setQuote(null);
     setSubmission(null);
+    setTxHash('');
+    setProofFile(null);
   }, [asset, amountCop, displayCurrency]);
 
   useEffect(() => {
@@ -122,18 +125,19 @@ export function DirectCryptoTopupCard({ kycVerified }: { kycVerified: boolean })
   );
 
   const copyAddress = async () => {
-    try { await navigator.clipboard.writeText(destination.address); setCopied(true); window.setTimeout(() => setCopied(false), 1600); } catch { setCopied(false); }
+    if (!quote?.destinationAddress) return;
+    try { await navigator.clipboard.writeText(quote.destinationAddress); setCopied(true); window.setTimeout(() => setCopied(false), 1600); } catch { setCopied(false); }
   };
   const confirmed = submission?.state === 'confirmed';
 
   return (
     <section className="accountPanel">
       <div className="accountPanelHeader">
-        <div><p className="accountMicro">Pagos sin CTG Wallet</p><h2>Recargar con criptomonedas</h2><p>Compra Saldo CTG indicando primero el valor en COP. CTG One fija el equivalente cripto con una cotización de mercado y valida la transferencia on-chain antes de acreditar.</p></div>
+        <div><p className="accountMicro">Pagos sin CTG Wallet</p><h2>Recargar con criptomonedas</h2><p>Compra Saldo CTG indicando primero el valor en COP. CTG One fija el equivalente cripto y asigna la ruta de recepción antes de validar la transferencia on-chain.</p></div>
         <div className="accountNode"><Coins size={17} /></div>
       </div>
 
-      <div className="accountNotice"><ShieldCheck size={17} /><div><strong>La captura no acredita saldo</strong><p>{autoSettlementSupported ? 'El hash, activo, red, dirección, monto y confirmaciones deben coincidir con la operación real. El saldo se acredita automáticamente solo cuando la validación on-chain finaliza.' : 'El hash, activo, red, dirección, monto y confirmaciones deben coincidir con la operación real. Como la dirección de recepción actual es compartida, una operación validada on-chain pasa a conciliación antes de acreditar saldo.'}</p></div></div>
+      <div className="accountNotice"><ShieldCheck size={17} /><div><strong>La captura no acredita saldo</strong><p>El hash, activo, red, dirección, monto y confirmaciones deben coincidir con la operación real. Si la cotización recibe una dirección individual de un solo uso, puede liquidarse automáticamente; una dirección compartida siempre pasa por conciliación.</p></div></div>
 
       <div className="accountSegments" aria-label="Criptomoneda">
         {WALLET_CRYPTO_DESTINATIONS.map((item) => <button key={item.asset} type="button" onClick={() => setAsset(item.asset)} className={`accountSegment ${asset === item.asset ? 'active' : ''}`}>{item.asset}</button>)}
@@ -153,9 +157,10 @@ export function DirectCryptoTopupCard({ kycVerified }: { kycVerified: boolean })
           <p>Red obligatoria: <strong>{quote.network}</strong></p>
           <p>Cotización de mercado actualizada: {new Date(quote.marketFetchedAt).toLocaleString('es-CO')}</p>
           <p>Esta orden vence: {new Date(quote.expiresAt).toLocaleTimeString('es-CO')}</p>
+          <div className={`accountNotice mt-3 ${quote.autoSettlementEligible ? 'success' : 'warning'}`}><ShieldCheck size={16}/><div><strong>{quote.autoSettlementEligible ? 'Dirección individual de un solo uso' : 'Dirección compartida'}</strong><p>{quote.autoSettlementEligible ? 'Esta dirección quedó reservada exclusivamente para esta cotización. Una transferencia válida puede acreditarse automáticamente cuando alcance las confirmaciones requeridas.' : 'No hay una dirección individual disponible para este activo. La transferencia será validada on-chain, pero requerirá conciliación antes de acreditar saldo.'}</p></div></div>
           <div className="mt-4 grid gap-4 md:grid-cols-[180px_1fr] md:items-center">
-            <div className="rounded-xl bg-white p-3">{qrDataUrl ? <img src={qrDataUrl} alt={`QR para recibir ${asset}`} className="block w-full" /> : null}</div>
-            <div><p className="accountFieldLabel">Dirección de recepción</p><div className="flex items-start gap-2"><p className="mono break-all">{destination.address}</p><button type="button" onClick={copyAddress} className="shrink-0 rounded-lg border border-white/10 p-2" aria-label="Copiar dirección">{copied ? <Check size={14}/> : <Copy size={14}/>}</button></div><p className="mt-2 text-xs">{destination.exchange} · {destination.network}</p></div>
+            <div className="rounded-xl bg-white p-3">{qrDataUrl ? <img src={qrDataUrl} alt={`QR para recibir ${quote.asset}`} className="block w-full" /> : null}</div>
+            <div><p className="accountFieldLabel">Dirección de recepción de esta cotización</p><div className="flex items-start gap-2"><p className="mono break-all">{quote.destinationAddress}</p><button type="button" onClick={copyAddress} className="shrink-0 rounded-lg border border-white/10 p-2" aria-label="Copiar dirección">{copied ? <Check size={14}/> : <Copy size={14}/>}</button></div><p className="mt-2 text-xs">{quote.network} · {quote.autoSettlementEligible ? 'asignación individual' : 'custodia del operador'}</p></div>
           </div>
 
           {!confirmed && <div className="mt-4 grid gap-3">
