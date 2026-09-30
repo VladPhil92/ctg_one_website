@@ -1,58 +1,55 @@
-'use client';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import type { ReactNode } from 'react';
 
-import { useEffect, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { DASHBOARD_SERVICE_ROUTES } from '@/config/dashboard-services';
-import { EcosystemSwitcher } from '@/components/dashboard/EcosystemSwitcher';
-import { trackFunnelEvent } from '@/lib/analytics/client';
-import type { FunnelServiceKey } from '@/lib/analytics/funnel';
+import DashboardClientShell from '@/components/dashboard/DashboardClientShell';
+import {
+  SUPERADMIN_VIEW_COOKIE,
+  isSuperadminUserViewCookie,
+} from '@/lib/admin/superadmin-view';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 
-function serviceForHref(href: string): FunnelServiceKey | null {
-  const match = DASHBOARD_SERVICE_ROUTES.find(
-    ({ prefix }) => href === prefix || href.startsWith(`${prefix}?`) || href.startsWith(`${prefix}/`),
-  );
-  return match?.serviceKey ?? null;
-}
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+  let superadminUserView = false;
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const { isAuthenticated, isLoading } = useAuth();
+  if (isSupabaseConfigured) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && pathname === '/dashboard') {
-      void trackFunnelEvent('dashboard_viewed', { sourcePath: '/dashboard' });
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile?.role === 'admin') {
+        const { data: investmentProfile } = await supabase
+          .from('investment_participant_profiles')
+          .select('investment_role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const cookieStore = await cookies();
+        const requestedView = cookieStore.get(SUPERADMIN_VIEW_COOKIE)?.value;
+        const isSuperAdmin = investmentProfile?.investment_role === 'SUPER_ADMIN';
+
+        // Every participant route uses this shared gate. Global admins remain
+        // on the administrative surface unless a verified SUPER_ADMIN has
+        // explicitly selected a user view bound to the current identity.
+        if (!isSuperAdmin || !isSuperadminUserViewCookie(requestedView, user.id)) {
+          redirect('/admin');
+        }
+        superadminUserView = true;
+      }
     }
-  }, [isAuthenticated, isLoading, pathname]);
-
-  useEffect(() => {
-    if (isLoading || !isAuthenticated || pathname !== '/dashboard') return;
-
-    const handleClick = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const anchor = target.closest('a[href]');
-      if (!(anchor instanceof HTMLAnchorElement)) return;
-
-      const rawHref = anchor.getAttribute('href');
-      if (!rawHref) return;
-      const serviceKey = serviceForHref(rawHref);
-      if (!serviceKey) return;
-
-      void trackFunnelEvent('first_service_used', {
-        sourcePath: '/dashboard',
-        serviceKey,
-      });
-    };
-
-    document.addEventListener('click', handleClick, { capture: true });
-    return () => document.removeEventListener('click', handleClick, { capture: true });
-  }, [isAuthenticated, isLoading, pathname]);
+  }
 
   return (
-    <>
-      {isAuthenticated ? <EcosystemSwitcher /> : null}
+    <DashboardClientShell superadminUserView={superadminUserView}>
       {children}
-    </>
+    </DashboardClientShell>
   );
 }
