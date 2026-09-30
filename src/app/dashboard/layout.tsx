@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import DashboardClientShell from '@/components/dashboard/DashboardClientShell';
@@ -35,30 +34,24 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       }
 
       if (profile?.role === 'admin') {
-        const { data: investmentProfile, error: investmentRoleError } = await supabase
-          .from('investment_participant_profiles')
-          .select('investment_role')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (investmentRoleError) {
-          throw new Error(`No se pudo validar el rol operativo del dashboard: ${investmentRoleError.message}`);
-        }
-
         const cookieStore = await cookies();
         const requestedView = cookieStore.get(SUPERADMIN_VIEW_COOKIE)?.value;
-        const isSuperAdmin = investmentProfile?.investment_role === 'SUPER_ADMIN';
 
-        // Every participant route uses this shared gate. Global admins remain
-        // on the administrative surface unless a verified SUPER_ADMIN has
-        // explicitly selected a user view bound to the current sign-in session.
-        if (
-          !isSuperAdmin
-          || !isSuperadminUserViewCookie(requestedView, user.id, user.last_sign_in_at)
-        ) {
-          redirect('/admin');
+        // Authorization is enforced in the pathname-aware proxy. The shared
+        // layout only decides whether to render the effective-user indicator,
+        // so nested admin consoles under /dashboard are not accidentally gated
+        // by investment roles.
+        if (requestedView) {
+          const { data: investmentProfile } = await supabase
+            .from('investment_participant_profiles')
+            .select('investment_role')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          superadminUserView =
+            investmentProfile?.investment_role === 'SUPER_ADMIN'
+            && isSuperadminUserViewCookie(requestedView, user.id, user.last_sign_in_at);
         }
-        superadminUserView = true;
       }
     }
   }
