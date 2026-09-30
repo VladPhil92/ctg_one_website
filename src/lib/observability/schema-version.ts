@@ -1,6 +1,3 @@
-export const EXPECTED_DATABASE_MIGRATION = '0158' as const;
-export const EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_crypto_address_pool_operations_v1' as const;
-export const EXPECTED_DATABASE_MIGRATION_COUNT = 157 as const;
 export const EXPECTED_DATABASE_MIGRATION = '0159' as const;
 export const EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_crypto_address_pool_operational_hardening_v1_1' as const;
 export const EXPECTED_DATABASE_MIGRATION_COUNT = 158 as const;
