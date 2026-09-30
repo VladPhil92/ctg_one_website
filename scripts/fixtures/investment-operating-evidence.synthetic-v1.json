@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0154",
-    "schemaMigrationName": "wallet_crypto_settlement_v2",
-    "schemaMigrationCount": 153,
+    "schemaMigration": "0155",
+    "schemaMigrationName": "wallet_crypto_evm_address_canonicalization",
+    "schemaMigrationCount": 154,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
