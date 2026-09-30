@@ -14,11 +14,13 @@ function noStoreJson(body: unknown, init?: ResponseInit) {
   return response;
 }
 
-export async function POST(request: NextRequest) {
-  if (!isSupabaseConfigured) {
-    return noStoreJson({ error: 'Authentication is not configured.' }, { status: 503 });
-  }
+function clearEffectiveViewResponse() {
+  const response = noStoreJson({ mode: 'superadmin' });
+  response.cookies.delete(SUPERADMIN_VIEW_COOKIE);
+  return response;
+}
 
+export async function POST(request: NextRequest) {
   const contentType = request.headers.get('content-type') ?? '';
   if (!contentType.includes('application/json')) {
     return noStoreJson({ error: 'Content-Type must be application/json.' }, { status: 415 });
@@ -28,6 +30,17 @@ export async function POST(request: NextRequest) {
   const mode = body?.mode;
   if (!isSuperadminViewMode(mode)) {
     return noStoreJson({ error: 'Unsupported view mode.' }, { status: 400 });
+  }
+
+  // Leaving an effective user view only removes state; it cannot grant any
+  // capability. Keep this fail-safe available even if authorization data or
+  // the Supabase session becomes unavailable while the operator is browsing.
+  if (mode === 'superadmin') {
+    return clearEffectiveViewResponse();
+  }
+
+  if (!isSupabaseConfigured) {
+    return noStoreJson({ error: 'Authentication is not configured.' }, { status: 503 });
   }
 
   const supabase = await createClient();
@@ -60,24 +73,19 @@ export async function POST(request: NextRequest) {
     return noStoreJson({ error: 'SUPER_ADMIN authority required.' }, { status: 403 });
   }
 
-  const response = noStoreJson({ mode });
-  if (mode === 'superadmin') {
-    response.cookies.delete(SUPERADMIN_VIEW_COOKIE);
-  } else {
-    const cookieValue = superadminUserViewCookieValue(user.id, user.last_sign_in_at);
-    if (!cookieValue) {
-      return noStoreJson({ error: 'Current sign-in session cannot be fingerprinted safely.' }, { status: 409 });
-    }
-
-    response.cookies.set(SUPERADMIN_VIEW_COOKIE, cookieValue, {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: SUPERADMIN_VIEW_COOKIE_MAX_AGE,
-    });
+  const cookieValue = superadminUserViewCookieValue(user.id, user.last_sign_in_at);
+  if (!cookieValue) {
+    return noStoreJson({ error: 'Current sign-in session cannot be fingerprinted safely.' }, { status: 409 });
   }
 
+  const response = noStoreJson({ mode });
+  response.cookies.set(SUPERADMIN_VIEW_COOKIE, cookieValue, {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: SUPERADMIN_VIEW_COOKIE_MAX_AGE,
+  });
   return response;
 }
 
@@ -86,7 +94,5 @@ export async function POST(request: NextRequest) {
 // lets every sign-out path remove stale browser state without depending on an
 // authenticated request that may already be invalid.
 export async function DELETE() {
-  const response = noStoreJson({ mode: 'superadmin' });
-  response.cookies.delete(SUPERADMIN_VIEW_COOKIE);
-  return response;
+  return clearEffectiveViewResponse();
 }
