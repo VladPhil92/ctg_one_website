@@ -71,6 +71,13 @@ function boundedText(value: unknown, min: number, max: number) {
   return text.length >= min && text.length <= max ? text : null;
 }
 
+function boundedInteger(raw: string | null, fallback: number, min: number, max: number) {
+  if (raw === null || raw.trim() === '') return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value)) return fallback;
+  return Math.min(Math.max(value, min), max);
+}
+
 function mapRpcError(message: string) {
   const known: Array<[string, number]> = [
     ['CRYPTO_ADDRESS_POOL_BATCH_SIZE_INVALID', 400],
@@ -92,12 +99,17 @@ function mapRpcError(message: string) {
   return known.find(([code]) => message.includes(code)) ?? ['CRYPTO_ADDRESS_POOL_OPERATION_FAILED', 503] as const;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const context = await requireSuperAdmin();
   if (isResponse(context)) return context;
-  const { data, error } = await context.admin.rpc('get_wallet_crypto_address_pool_snapshot_server');
+  const limit = boundedInteger(request.nextUrl.searchParams.get('limit'), 100, 1, 200);
+  const offset = boundedInteger(request.nextUrl.searchParams.get('offset'), 0, 0, 1_000_000);
+  const { data, error } = await context.admin.rpc('get_wallet_crypto_address_pool_snapshot_page_server', {
+    p_address_limit: limit,
+    p_address_offset: offset,
+  });
   if (error) return json({ error: 'CRYPTO_ADDRESS_POOL_READ_FAILED' }, 503);
-  return json({ phase: 'wallet_crypto_address_pool_operations_v1', custody: 'public-addresses-only', privateKeysStored: false, snapshot: data ?? {} });
+  return json({ phase: 'wallet_crypto_address_pool_operations_v1_1', custody: 'public-addresses-only', privateKeysStored: false, snapshot: data ?? {} });
 }
 
 export async function POST(request: NextRequest) {
