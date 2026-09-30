@@ -27,6 +27,7 @@ const ITEMS: Item[] = [
   { href: '/admin/operations/settlement', label: 'Settlement', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
   { href: '/inversion/admin/orders', label: 'Verificación Bancolombia', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
   { href: '/admin/finance/rails', label: 'Payment Rails', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
+  { href: '/admin/finance/crypto-address-pool', label: 'Crypto Address Pool', roles: ['SUPER_ADMIN'] },
   { href: '/admin/finance/reinvestment', label: 'Reinvestment Rail', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
   { href: '/admin/finance/reconciliation', label: 'Provider Reconciliation', roles: ['SUPER_ADMIN','FINANCE_ADMIN','AUDITOR'] },
   { href: '/admin/security/mfa', label: 'MFA Seguridad', roles: ['SUPER_ADMIN','FINANCE_ADMIN'] },
