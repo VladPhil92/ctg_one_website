@@ -47,3 +47,4 @@ assert.ok(paymentProofRoute.indexOf('consumeAuthenticatedRateLimit') < paymentPr
 console.log('HTTP security invariants: PASS');
 
 await import('./test-trusted-admin-server-boundary-invariants.mjs');
+await import('./test-security-definer-governance-invariants.mjs');
