@@ -9,6 +9,9 @@
   "expectedMigration": "0158",
   "expectedMigrationName": "wallet_crypto_address_pool_operations_v1",
   "expectedMigrationCount": 157,
+  "expectedMigration": "0159",
+  "expectedMigrationName": "wallet_crypto_address_pool_operational_hardening_v1_1",
+  "expectedMigrationCount": 158,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

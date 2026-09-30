@@ -10,6 +10,9 @@
     "schemaMigration": "0158",
     "schemaMigrationName": "wallet_crypto_address_pool_operations_v1",
     "schemaMigrationCount": 157,
+    "schemaMigration": "0159",
+    "schemaMigrationName": "wallet_crypto_address_pool_operational_hardening_v1_1",
+    "schemaMigrationCount": 158,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
