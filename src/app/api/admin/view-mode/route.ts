@@ -15,15 +15,15 @@ function noStoreJson(body: unknown, init?: ResponseInit) {
   return response;
 }
 
-function clearEffectiveViewResponse(init?: ResponseInit) {
-  const response = noStoreJson({ mode: 'superadmin' }, init);
+function clearEffectiveViewResponse(init?: ResponseInit, error?: string) {
+  const response = noStoreJson(error ? { mode: 'superadmin', error } : { mode: 'superadmin' }, init);
   response.cookies.delete(SUPERADMIN_VIEW_COOKIE);
   return response;
 }
 
 async function readAuthority() {
   if (!isSupabaseConfigured) {
-    return { error: clearEffectiveViewResponse({ status: 503 }) } as const;
+    return { status: 503, error: 'Authentication is not configured.' } as const;
   }
 
   const supabase = await createClient();
@@ -33,7 +33,7 @@ async function readAuthority() {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { error: clearEffectiveViewResponse({ status: 401 }) } as const;
+    return { status: 401, error: 'Authentication required.' } as const;
   }
 
   const [profileResult, investmentProfileResult] = await Promise.all([
@@ -46,7 +46,7 @@ async function readAuthority() {
   ]);
 
   if (profileResult.error || investmentProfileResult.error) {
-    return { error: clearEffectiveViewResponse({ status: 503 }) } as const;
+    return { status: 503, error: 'Authorization state is temporarily unavailable.' } as const;
   }
 
   const isSuperAdmin =
@@ -54,7 +54,7 @@ async function readAuthority() {
     && investmentProfileResult.data?.investment_role === 'SUPER_ADMIN';
 
   if (!isSuperAdmin) {
-    return { error: clearEffectiveViewResponse({ status: 403 }) } as const;
+    return { status: 403, error: 'SUPER_ADMIN authority required.' } as const;
   }
 
   return { user } as const;
@@ -62,11 +62,13 @@ async function readAuthority() {
 
 export async function GET(request: NextRequest) {
   const authority = await readAuthority();
-  if ('error' in authority) return authority.error;
+  if ('error' in authority) {
+    return clearEffectiveViewResponse({ status: authority.status }, authority.error);
+  }
 
   const requestedView = request.cookies.get(SUPERADMIN_VIEW_COOKIE)?.value;
   if (!isSuperadminUserViewCookie(requestedView, authority.user.id, authority.user.last_sign_in_at)) {
-    return clearEffectiveViewResponse({ status: 409 });
+    return clearEffectiveViewResponse({ status: 409 }, 'Effective user view is no longer valid.');
   }
 
   return noStoreJson({ mode: 'user' });
@@ -92,7 +94,9 @@ export async function POST(request: NextRequest) {
   }
 
   const authority = await readAuthority();
-  if ('error' in authority) return authority.error;
+  if ('error' in authority) {
+    return noStoreJson({ error: authority.error }, { status: authority.status });
+  }
 
   const cookieValue = superadminUserViewCookieValue(authority.user.id, authority.user.last_sign_in_at);
   if (!cookieValue) {
