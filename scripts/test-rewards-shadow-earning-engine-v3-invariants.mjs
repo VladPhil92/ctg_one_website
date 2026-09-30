@@ -72,9 +72,9 @@ assert.match(panel, /Replay manual de evento/, 'v3 UI must retain controlled adm
 assert.doesNotMatch(panel, /activar rewards|earning comercial activo|acreditar puntos ahora|redimir ahora/i, 'Shadow UI must not expose commercial activation claims.');
 assert.match(nav, /href: '\/admin\/rewards\/shadow', label: 'Rewards Shadow', roles: \['SUPER_ADMIN'\]/, 'Shadow navigation must remain SUPER_ADMIN-only.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0153'/, 'Repository schema authority must reflect the current additive global schema.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_crypto_rls_permission_hoisting'/, 'Schema authority must name the current additive global migration.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 152/, 'Schema migration count must align with the current global schema.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0155'/, 'Repository schema authority must reflect the current additive global schema.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_crypto_evm_address_canonicalization'/, 'Schema authority must name the current additive global migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 154/, 'Schema migration count must align with the current global schema.');
 
 const productionHistory = JSON.parse(history);
 const assertHistoryEntry = (logicalVersion, remoteVersion, remoteName) => {
