@@ -10,7 +10,7 @@ type InvestmentRole = 'SUPER_ADMIN' | 'FINANCE_ADMIN' | 'PRODUCTION_MANAGER' | '
 type Item = { href: string; label: string; roles?: Exclude<InvestmentRole, null>[] };
 
 const ITEMS: Item[] = [
-  { href: '/admin', label: 'Resumen' },
+  { href: '/admin', label: 'Command Center' },
   { href: '/admin/system-health', label: 'System Health', roles: ['SUPER_ADMIN'] },
   { href: '/admin/analytics', label: 'Analytics', roles: ['SUPER_ADMIN'] },
   { href: '/admin/rewards', label: 'Rewards Lab', roles: ['SUPER_ADMIN'] },
@@ -43,6 +43,7 @@ export const AdminNav: React.FC<{ investmentRole: InvestmentRole }> = ({ investm
   const { signOut } = useAuth();
   const visibleItems = ITEMS.filter(item => !item.roles || (investmentRole && item.roles.includes(investmentRole)));
   const active = visibleItems.slice().sort((a,b)=>b.href.length-a.href.length).find(i=>pathname===i.href||pathname.startsWith(i.href+'/'));
+  const isSuperAdmin = investmentRole === 'SUPER_ADMIN';
 
   return (
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/[.07] bg-black/85 backdrop-blur-2xl">
@@ -51,8 +52,8 @@ export const AdminNav: React.FC<{ investmentRole: InvestmentRole }> = ({ investm
           <div className="relative h-9 w-9 overflow-hidden rounded-full border border-white/10 shadow-[0_0_28px_rgba(201,169,98,.08)]">
             <Image src="/images/logo/CTGLOGO.jpeg" alt="CTG One Logo" fill className="object-cover" />
           </div>
-          <div className="hidden lg:block min-w-[126px]">
-            <span className="block text-[12px] font-outfit font-medium tracking-tight text-white">CTG One Admin OS</span>
+          <div className="hidden lg:block min-w-[140px]">
+            <span className="block text-[12px] font-outfit font-medium tracking-tight text-white">{isSuperAdmin ? 'CTG One Superadmin OS' : 'CTG One Admin OS'}</span>
             <span className="mt-1 flex items-center gap-1.5 text-[7px] uppercase tracking-[.18em] text-accent"><span className="h-1 w-1 rounded-full bg-accent shadow-[0_0_8px_rgba(201,169,98,.8)]" />{investmentRole ?? 'GLOBAL ADMIN'}</span>
           </div>
         </Link>
