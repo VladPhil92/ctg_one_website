@@ -2,10 +2,7 @@ import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/server';
 import { validateWalletCryptoTopup } from '@/lib/wallet-crypto-onchain';
-import {
-  canAutoSettleWalletCryptoDestination,
-  type WalletCryptoAsset,
-} from '@/lib/wallet-crypto-topups';
+import { type WalletCryptoAsset } from '@/lib/wallet-crypto-topups';
 
 export async function validateAndPersistWalletCryptoTopup(
   admin: ReturnType<typeof createAdminClient>,
@@ -13,7 +10,7 @@ export async function validateAndPersistWalletCryptoTopup(
 ) {
   const { data: claim, error } = await admin
     .from('wallet_crypto_topup_claims')
-    .select('id,asset,network,destination_address,tx_hash,crypto_amount_expected,state')
+    .select('id,asset,network,destination_address,tx_hash,crypto_amount_expected,state,settlement_binding,deposit_address_id')
     .eq('id', claimId)
     .maybeSingle();
   if (error || !claim) throw new Error(error?.message ?? 'CRYPTO_TOPUP_CLAIM_NOT_FOUND');
@@ -29,9 +26,6 @@ export async function validateAndPersistWalletCryptoTopup(
       expectedAmount: Number(claim.crypto_amount_expected),
     });
   } catch (validationError) {
-    // Explorer/RPC availability is transient. Keep the claim retryable so the
-    // status endpoint and UI polling continue validating instead of stranding a
-    // paid claim in manual review after a temporary provider outage.
     validation = {
       state: 'confirming' as const,
       confirmations: 0,
@@ -42,13 +36,10 @@ export async function validateAndPersistWalletCryptoTopup(
   }
 
   if (validation.state === 'confirmed' && validation.receivedAmount !== null) {
-    // The currently configured Binance destinations are shared operator
-    // addresses. A transaction to a shared address proves receipt, but not which
-    // CTG One participant originated it. Never auto-credit such a claim: doing
-    // so would allow an otherwise-unclaimed historical/third-party transaction
-    // to be presented by the wrong participant. Automatic settlement is only
-    // permitted once the destination itself is claimant-specific.
-    if (!canAutoSettleWalletCryptoDestination(claim.asset, claim.destination_address)) {
+    const claimantBound = claim.settlement_binding === 'claimant-specific-address'
+      && Boolean(claim.deposit_address_id);
+
+    if (!claimantBound) {
       validation = {
         state: 'manual_review' as const,
         confirmations: validation.confirmations,
@@ -58,7 +49,7 @@ export async function validateAndPersistWalletCryptoTopup(
           ...validation.details,
           onchainValidated: true,
           autoSettlementBlocked: true,
-          settlementBinding: 'shared-operator-address',
+          settlementBinding: claim.settlement_binding ?? 'shared-operator-address',
         },
       };
     } else {
@@ -69,6 +60,7 @@ export async function validateAndPersistWalletCryptoTopup(
         p_validation_data: {
           ...validation.details,
           settlementBinding: 'claimant-specific-address',
+          depositAddressId: claim.deposit_address_id,
         },
       });
       if (confirmError) throw new Error(confirmError.message);
@@ -81,7 +73,11 @@ export async function validateAndPersistWalletCryptoTopup(
     p_state: validation.state,
     p_confirmations: validation.confirmations,
     p_received_amount: validation.receivedAmount,
-    p_validation_data: validation.details,
+    p_validation_data: {
+      ...validation.details,
+      settlementBinding: claim.settlement_binding ?? 'shared-operator-address',
+      depositAddressId: claim.deposit_address_id,
+    },
     p_rejection_reason: validation.state === 'rejected'
       ? validation.reason ?? 'on-chain validation rejected the payment'
       : null,
