@@ -33,6 +33,17 @@ The Admin OS surface is `/admin/finance/crypto-address-pool` and requires both t
 
 The route creates the service-role Supabase client only after normal-user authorization succeeds. Operational RPCs are `SECURITY INVOKER`, executable by `service_role` only, with `anon` and `authenticated` execution revoked.
 
+## Operational hardening V1.1
+
+Migration `0159_wallet_crypto_address_pool_operational_hardening_v1_1` hardens the original V1 control plane without changing its custody model:
+
+- quote allocation locks the asset/network control row with `FOR SHARE`, while administrative enable/disable uses `FOR UPDATE`; a disable operation therefore serializes against an in-flight claimant-specific allocation instead of reporting completion before the lease commits;
+- the Admin OS snapshot is paginated (`100` addresses by default, maximum `200`) and returns `addressTotal`, `addressOffset`, `addressLimit` and `hasMore`, so addresses beyond the first page remain inspectable and operable;
+- failed batch provisioning preserves the operator's pasted input so it can be corrected and retried safely;
+- a dedicated CI contract freezes the locking, privilege, pagination, batch-preservation and schema-authority invariants.
+
+The paginated snapshot remains server-only. Its RPC is executable by `service_role`; direct `anon` and `authenticated` execution is revoked.
+
 ## Activation checklist
 
 Before enabling automatic assignment for any rail:
@@ -48,4 +59,6 @@ Before enabling automatic assignment for any rail:
 
 ## Schema authority
 
-This phase is logical migration `0158`, production remote version `20260930135346`, following `0157_public_read_model_browser_execution_revocation` (`20260930134358`).
+Address Pool Operations V1 is logical migration `0158`, production remote version `20260930135346`, following `0157_public_read_model_browser_execution_revocation` (`20260930134358`).
+
+Operational hardening V1.1 is logical migration `0159`, production remote version `20260930151850`. The repository-wide runtime authority is therefore `0159` with `158` database migrations, matching Supabase production.
