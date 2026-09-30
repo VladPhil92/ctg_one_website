@@ -2,8 +2,7 @@
   "contractVersion": 1,
   "project": "CTG One Web",
   "projectId": "mdscwjvlihdiflcvghhk",
-  "capturedAt": "2026-09-30T13:53:46Z",
-  "capturedAt": "2026-09-30T13:43:58Z",
+  "capturedAt": "2026-09-30T15:18:50Z",
   "source": "Supabase production migration history",
   "migrations": [
     {"logicalVersion":"0095","remoteVersion":"20260901214059","remoteName":"jp_education_commerce"},
@@ -68,7 +67,7 @@
     {"logicalVersion":"0155","remoteVersion":"20260930030945","remoteName":"0155_wallet_crypto_evm_address_canonicalization"},
     {"logicalVersion":"0156","remoteVersion":"20260930124946","remoteName":"0156_public_read_model_service_role_boundary_stage"},
     {"logicalVersion":"0157","remoteVersion":"20260930134358","remoteName":"0157_public_read_model_browser_execution_revocation"},
-    {"logicalVersion":"0158","remoteVersion":"20260930135346","remoteName":"0158_wallet_crypto_address_pool_operations_v1"}
-    {"logicalVersion":"0157","remoteVersion":"20260930134358","remoteName":"0157_public_read_model_browser_execution_revocation"}
+    {"logicalVersion":"0158","remoteVersion":"20260930135346","remoteName":"0158_wallet_crypto_address_pool_operations_v1"},
+    {"logicalVersion":"0159","remoteVersion":"20260930151850","remoteName":"0159_wallet_crypto_address_pool_operational_hardening_v1_1"}
   ]
 }
