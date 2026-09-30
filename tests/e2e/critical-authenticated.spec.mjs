@@ -130,6 +130,26 @@ test.describe('CTG One authenticated critical journey', () => {
     await expect(page.getByText('Está navegando CTG One como usuario.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Volver a Superadmin' })).toBeVisible();
 
+    // Simulate another tab clearing or expiring the session-bound effective
+    // view. The mounted dashboard layout must not keep user mode alive during
+    // the next client-side participant navigation.
+    const clearedStatus = await page.evaluate(async () => {
+      const response = await fetch('/api/admin/view-mode', { method: 'DELETE' });
+      return response.status;
+    });
+    expect(clearedStatus).toBe(200);
+
+    const walletLink = page.locator('a[href="/dashboard/wallet"]').first();
+    await expect(walletLink).toBeVisible();
+    await walletLink.click();
+    await expect(page).toHaveURL(/\/admin$/);
+
+    // Re-enter user view and verify the explicit return control still removes
+    // effective-view state without changing the stored SUPER_ADMIN authority.
+    await page.getByRole('button', { name: 'Vista usuario' }).click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByRole('button', { name: 'Volver a Superadmin' })).toBeVisible();
+
     await page.getByRole('button', { name: 'Volver a Superadmin' }).click();
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByRole('heading', { name: /Superadmin Command Center/i })).toBeVisible();
