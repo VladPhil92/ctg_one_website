@@ -99,12 +99,6 @@ function mapRpcError(message: string) {
   return known.find(([code]) => message.includes(code)) ?? ['CRYPTO_ADDRESS_POOL_OPERATION_FAILED', 503] as const;
 }
 
-export async function GET() {
-  const context = await requireSuperAdmin();
-  if (isResponse(context)) return context;
-  const { data, error } = await context.admin.rpc('get_wallet_crypto_address_pool_snapshot_server');
-  if (error) return json({ error: 'CRYPTO_ADDRESS_POOL_READ_FAILED' }, 503);
-  return json({ phase: 'wallet_crypto_address_pool_operations_v1', custody: 'public-addresses-only', privateKeysStored: false, snapshot: data ?? {} });
 export async function GET(request: NextRequest) {
   const context = await requireSuperAdmin();
   if (isResponse(context)) return context;
