@@ -2,13 +2,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [migration, queries, detail, simulatorPage, simulatorClient, schemaVersion] = await Promise.all([
+const [migration, queries, detail, simulatorPage, simulatorClient, schemaVersion, bottleTrace] = await Promise.all([
   read('supabase/migrations/0061_public_lot_operational_snapshot.sql'),
   read('src/lib/investment/queries.ts'),
   read('src/app/inversion/lotes/[slug]/page.tsx'),
   read('src/app/inversion/simulador/page.tsx'),
   read('src/components/inversion/InvestmentSimulatorClient.tsx'),
   read('src/lib/observability/schema-version.ts'),
+  read('src/app/beer/[serial]/page.tsx'),
 ]);
 
 assert.match(
@@ -37,7 +38,7 @@ assert.doesNotMatch(migration, /jsonb_build_object\([\s\S]*?'notes'/, 'Public ti
 assert.match(
   migration,
   /'get_public_bottle_trace',[\s\S]*?'get_public_investment_lot_funding',[\s\S]*?'get_public_investment_lot_operations'/,
-  'System Health must recognize all three reviewed anonymous read models.',
+  'Historical System Health migration must document the three reviewed read models before the later server-boundary hardening migration.',
 );
 
 assert.match(queries, /rpc\('get_public_investment_lot_operations'/, 'Public lot details must consume the reviewed operational snapshot.');
@@ -45,6 +46,23 @@ assert.doesNotMatch(queries, /\.from\('investment_inventory_movements'\)/, 'Publ
 assert.doesNotMatch(queries, /\.from\('investment_production_events'\)/, 'Public query helpers must not read internal production-event rows directly.');
 assert.match(queries, /serializedUnits:\s*Number\(row\.serialized_units/, 'Operational snapshot must map aggregate serialized-unit count.');
 assert.match(queries, /timeline:\s*rawTimeline[\s\S]*?status: event\.status[\s\S]*?occurredAt: event\.occurred_at/, 'Public timeline mapping must retain only reviewed fields.');
+assert.match(
+  queries,
+  /getPublicLotFundingSummaries[\s\S]*?createAdminClient\(\)[\s\S]*?rpc\('get_public_investment_lot_funding'/,
+  'Public funding summaries must invoke the privileged aggregate RPC only from the server-only service-role boundary.',
+);
+assert.match(
+  queries,
+  /getLotFundingSummary[\s\S]*?createAdminClient\(\)[\s\S]*?rpc\('get_public_investment_lot_funding'/,
+  'Single-lot funding must invoke the privileged aggregate RPC only from the server-only service-role boundary.',
+);
+assert.match(
+  queries,
+  /getPublicLotOperationalSnapshot[\s\S]*?createAdminClient\(\)[\s\S]*?rpc\('get_public_investment_lot_operations'/,
+  'Public operational truth must invoke the privileged aggregate RPC only from the server-only service-role boundary.',
+);
+assert.match(bottleTrace, /createAdminClient\(\)/, 'Bottle trace must execute its privileged read model only from the server-only service-role boundary.');
+assert.doesNotMatch(bottleTrace, /await createClient\(\)/, 'Bottle trace must not depend on anonymous/authenticated direct RPC execution.');
 
 assert.match(detail, /getPublicLotOperationalSnapshot/, 'Lot detail must use the public operational snapshot.');
 assert.match(detail, /funding\.availableCasesEquivalent >= MIN_INVESTMENT_CASES/, 'Lot detail CTA must enforce the same minimum as checkout.');
