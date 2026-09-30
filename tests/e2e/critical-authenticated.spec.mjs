@@ -5,41 +5,68 @@ const localSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const localSupabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const localSupabaseServiceRoleKey = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
 
+async function provisionConfirmedUser(request, prefix) {
+  expect(localSupabaseUrl).toBeTruthy();
+  expect(localSupabaseAnonKey).toBeTruthy();
+  expect(localSupabaseServiceRoleKey).toBeTruthy();
+
+  const unique = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const email = `${prefix}-${unique}@example.com`;
+  const password = 'E2E-Safe-Password!123';
+  const createUser = await request.post(`${localSupabaseUrl}/auth/v1/admin/users`, {
+    headers: {
+      apikey: localSupabaseServiceRoleKey,
+      Authorization: `Bearer ${localSupabaseServiceRoleKey}`,
+      'Content-Type': 'application/json',
+    },
+    data: {
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: 'Critical E2E User', phone: '3001234567' },
+    },
+  });
+  expect(createUser.ok(), await createUser.text()).toBeTruthy();
+  const created = await createUser.json();
+  expect(created.id).toBeTruthy();
+  return { email, password, userId: created.id };
+}
+
+async function grantAdminInvestmentRole(request, userId, investmentRole) {
+  const headers = {
+    apikey: localSupabaseServiceRoleKey,
+    Authorization: `Bearer ${localSupabaseServiceRoleKey}`,
+    'Content-Type': 'application/json',
+    Prefer: 'return=representation',
+  };
+
+  const promoteGlobal = await request.patch(`${localSupabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
+    headers,
+    data: { role: 'admin' },
+  });
+  expect(promoteGlobal.ok(), await promoteGlobal.text()).toBeTruthy();
+
+  const createInvestmentProfile = await request.post(`${localSupabaseUrl}/rest/v1/investment_participant_profiles`, {
+    headers,
+    data: { user_id: userId, investment_role: investmentRole },
+  });
+  expect(createInvestmentProfile.ok(), await createInvestmentProfile.text()).toBeTruthy();
+}
+
+async function signIn(page, email, password, next) {
+  await page.goto(`/iniciar-sesion?next=${encodeURIComponent(next)}`);
+  await page.getByLabel('Correo electrónico').fill(email);
+  await page.getByLabel('Contraseña').fill(password);
+  await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+}
+
 test.describe('CTG One authenticated critical journey', () => {
   test.skip(!runAuthenticatedSuite, 'Requires the isolated local Supabase stack from CI.');
 
   test('KYC survives a partial Storage failure and finalizes through the same resumable intake', async ({ page, request }) => {
-    expect(localSupabaseUrl).toBeTruthy();
-    expect(localSupabaseAnonKey).toBeTruthy();
-    expect(localSupabaseServiceRoleKey).toBeTruthy();
+    const { email, password } = await provisionConfirmedUser(request, 'e2e-kyc');
 
-    const unique = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const email = `e2e-kyc-${unique}@example.com`;
-    const password = 'E2E-Safe-Password!123';
-
-    // Provision a confirmed identity through the service-role-only admin API of
-    // the isolated local Supabase stack. The key never reaches the browser and
-    // no production credential is involved. Registration UX has separate tests;
-    // this journey is responsible for authenticated KYC recovery semantics.
-    const createUser = await request.post(`${localSupabaseUrl}/auth/v1/admin/users`, {
-      headers: {
-        apikey: localSupabaseServiceRoleKey,
-        Authorization: `Bearer ${localSupabaseServiceRoleKey}`,
-        'Content-Type': 'application/json',
-      },
-      data: {
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: 'Critical E2E User', phone: '3001234567' },
-      },
-    });
-    expect(createUser.ok(), await createUser.text()).toBeTruthy();
-
-    await page.goto('/iniciar-sesion?next=/dashboard/kyc');
-    await page.getByLabel('Correo electrónico').fill(email);
-    await page.getByLabel('Contraseña').fill(password);
-    await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+    await signIn(page, email, password, '/dashboard/kyc');
 
     await expect(page).toHaveURL(/\/dashboard\/kyc$/);
     await expect(page.getByRole('heading', { name: 'Verificación de identidad' })).toBeVisible();
@@ -88,5 +115,51 @@ test.describe('CTG One authenticated critical journey', () => {
     await expect(page).toHaveURL(/\/dashboard\/kyc$/);
     await expect(page.getByText('Verificación en revisión')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Registrar documento' })).toHaveCount(0);
+  });
+
+  test('SUPER_ADMIN can switch to user view and return without changing authority', async ({ page, request }) => {
+    const { email, password, userId } = await provisionConfirmedUser(request, 'e2e-superadmin');
+    await grantAdminInvestmentRole(request, userId, 'SUPER_ADMIN');
+
+    await signIn(page, email, password, '/admin');
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.getByRole('heading', { name: /Superadmin Command Center/i })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Vista usuario' }).click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByText('Está navegando CTG One como usuario.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Volver a Superadmin' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Volver a Superadmin' }).click();
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.getByRole('heading', { name: /Superadmin Command Center/i })).toBeVisible();
+
+    // Returning to Superadmin deletes the effective-view cookie. A direct
+    // dashboard visit therefore resolves back to the privileged command layer.
+    await page.goto('/dashboard');
+    await expect(page).toHaveURL(/\/admin$/);
+  });
+
+  test('non-superadmin admin cannot forge the user-view switch', async ({ page, request }) => {
+    const { email, password, userId } = await provisionConfirmedUser(request, 'e2e-finance-admin');
+    await grantAdminInvestmentRole(request, userId, 'FINANCE_ADMIN');
+
+    await signIn(page, email, password, '/admin');
+    await expect(page).toHaveURL(/\/admin$/);
+
+    const result = await page.evaluate(async () => {
+      const response = await fetch('/api/admin/view-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'user' }),
+      });
+      return { status: response.status, body: await response.json() };
+    });
+
+    expect(result.status).toBe(403);
+    expect(result.body.error).toContain('SUPER_ADMIN');
+
+    await page.goto('/dashboard');
+    await expect(page).toHaveURL(/\/admin$/);
   });
 });
