@@ -5,6 +5,7 @@ import {
 
 export type WalletCryptoAsset = 'BTC' | 'ETH' | 'BNB' | 'USDT' | 'USDC';
 export type WalletCryptoChainKind = 'bitcoin' | 'evm-native' | 'evm-token';
+export type WalletCryptoSettlementBinding = 'shared-operator-address' | 'claimant-specific-address';
 
 export type WalletCryptoDestination = {
   asset: WalletCryptoAsset;
@@ -14,6 +15,7 @@ export type WalletCryptoDestination = {
   exchange: 'Binance';
   chainKind: WalletCryptoChainKind;
   coingeckoId: string;
+  settlementBinding: WalletCryptoSettlementBinding;
 };
 
 const byAsset = (asset: InvestmentCryptoDestination['asset']) =>
@@ -31,6 +33,7 @@ const requiredDestination = (
     asset,
     chainKind,
     coingeckoId,
+    settlementBinding: 'shared-operator-address',
   };
 };
 
@@ -44,8 +47,14 @@ const usdcNetwork = process.env.NEXT_PUBLIC_WALLET_USDC_NETWORK?.trim();
 
 /**
  * Direct Wallet top-ups intentionally reuse the operator-approved Binance
- * destinations already pinned by the investment rail. USDC is fail-closed
- * until its exact network and receiving address are explicitly configured.
+ * destinations already pinned by the investment rail. Those addresses are
+ * shared operator destinations, so on-chain validation alone is not sufficient
+ * to prove which CTG One user originated a transfer. Auto-settlement therefore
+ * remains fail-closed until a claimant-specific receiving address (or another
+ * cryptographically verifiable claimant binding) is introduced.
+ *
+ * USDC is additionally fail-closed until its exact network and receiving address
+ * are explicitly configured.
  */
 export const WALLET_CRYPTO_DESTINATIONS: WalletCryptoDestination[] = [
   requiredDestination('BTC', 'bitcoin', 'bitcoin'),
@@ -61,6 +70,7 @@ export const WALLET_CRYPTO_DESTINATIONS: WalletCryptoDestination[] = [
         exchange: 'Binance' as const,
         chainKind: 'evm-token' as const,
         coingeckoId: 'usd-coin',
+        settlementBinding: 'shared-operator-address' as const,
       }]
     : []),
 ];
@@ -70,6 +80,16 @@ export const WALLET_CRYPTO_TOPUPS_CONFIGURED = WALLET_CRYPTO_DESTINATIONS.length
 export function getWalletCryptoDestination(asset: string | null | undefined) {
   const normalized = asset?.trim().toUpperCase();
   return WALLET_CRYPTO_DESTINATIONS.find((item) => item.asset === normalized) ?? null;
+}
+
+export function canAutoSettleWalletCryptoDestination(
+  asset: string | null | undefined,
+  destinationAddress: string | null | undefined,
+) {
+  const destination = getWalletCryptoDestination(asset);
+  if (!destination || !destinationAddress) return false;
+  return destination.settlementBinding === 'claimant-specific-address'
+    && destination.address.toLowerCase() === destinationAddress.trim().toLowerCase();
 }
 
 export function isWalletCryptoAsset(value: string): value is WalletCryptoAsset {
