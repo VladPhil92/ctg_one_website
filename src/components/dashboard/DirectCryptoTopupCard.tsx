@@ -46,6 +46,7 @@ export function DirectCryptoTopupCard({ kycVerified }: { kycVerified: boolean })
   const [copied, setCopied] = useState(false);
 
   const destination = WALLET_CRYPTO_DESTINATIONS.find((item) => item.asset === asset) ?? first;
+  const autoSettlementSupported = destination?.settlementBinding === 'claimant-specific-address';
   const qrDataUrl = useMemo(() => {
     if (!destination?.address) return '';
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(encodeQR(destination.address, 'svg'))}`;
@@ -132,7 +133,7 @@ export function DirectCryptoTopupCard({ kycVerified }: { kycVerified: boolean })
         <div className="accountNode"><Coins size={17} /></div>
       </div>
 
-      <div className="accountNotice"><ShieldCheck size={17} /><div><strong>La captura no acredita saldo</strong><p>El hash, activo, red, dirección, monto y confirmaciones deben coincidir con la operación real. El saldo se acredita automáticamente solo cuando la validación on-chain finaliza.</p></div></div>
+      <div className="accountNotice"><ShieldCheck size={17} /><div><strong>La captura no acredita saldo</strong><p>{autoSettlementSupported ? 'El hash, activo, red, dirección, monto y confirmaciones deben coincidir con la operación real. El saldo se acredita automáticamente solo cuando la validación on-chain finaliza.' : 'El hash, activo, red, dirección, monto y confirmaciones deben coincidir con la operación real. Como la dirección de recepción actual es compartida, una operación validada on-chain pasa a conciliación antes de acreditar saldo.'}</p></div></div>
 
       <div className="accountSegments" aria-label="Criptomoneda">
         {WALLET_CRYPTO_DESTINATIONS.map((item) => <button key={item.asset} type="button" onClick={() => setAsset(item.asset)} className={`accountSegment ${asset === item.asset ? 'active' : ''}`}>{item.asset}</button>)}
@@ -165,7 +166,7 @@ export function DirectCryptoTopupCard({ kycVerified }: { kycVerified: boolean })
         </div>
       )}
 
-      {submission && <div className={`accountNotice mt-4 ${confirmed ? 'success' : submission.state === 'rejected' ? 'warning' : ''}`}><Coins size={17}/><div><strong>{confirmed ? 'Recarga confirmada y saldo acreditado' : submission.state === 'confirming' ? 'Transferencia detectada, esperando confirmaciones' : submission.state === 'manual_review' ? 'Validación automática requiere revisión' : submission.state === 'rejected' ? 'La operación no pasó la validación' : 'Pago registrado'}</strong><p>{confirmed ? 'El crédito ya fue publicado en tu ledger COP.' : submission.reason ?? submission.warning ?? (submission.confirmations != null ? `Confirmaciones observadas: ${submission.confirmations}. CTG One volverá a consultar automáticamente mientras mantengas esta pantalla abierta.` : 'CTG One está verificando la operación on-chain.')}</p></div></div>}
+      {submission && <div className={`accountNotice mt-4 ${confirmed ? 'success' : submission.state === 'rejected' ? 'warning' : ''}`}><Coins size={17}/><div><strong>{confirmed ? 'Recarga confirmada y saldo acreditado' : submission.state === 'confirming' ? 'Transferencia detectada, esperando confirmaciones' : submission.state === 'manual_review' ? 'Transferencia validada; pendiente de conciliación' : submission.state === 'rejected' ? 'La operación no pasó la validación' : 'Pago registrado'}</strong><p>{confirmed ? 'El crédito ya fue publicado en tu ledger COP.' : submission.reason ?? submission.warning ?? (submission.confirmations != null ? `Confirmaciones observadas: ${submission.confirmations}. CTG One volverá a consultar automáticamente mientras mantengas esta pantalla abierta.` : 'CTG One está verificando la operación on-chain.')}</p></div></div>}
       {error && <p className="accountError mt-3" role="alert">{error}</p>}
     </section>
   );
