@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0149",
-    "schemaMigrationName": "kev_context_assembly_governed_recall",
-    "schemaMigrationCount": 148,
+    "schemaMigration": "0153",
+    "schemaMigrationName": "wallet_crypto_rls_permission_hoisting",
+    "schemaMigrationCount": 152,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },

@@ -144,8 +144,9 @@ BEGIN
 
   -- Freeze exact reviewed search_path values. Education quote decision RPCs
   -- intentionally pin pg_catalog before public. Wallet COP top-up administration
-  -- uses an empty search_path deliberately: every application object is schema-
-  -- qualified and only pg_catalog remains implicitly visible.
+  -- and the authenticated API rate limiter intentionally use an empty
+  -- search_path: every application object is schema-qualified and only
+  -- pg_catalog remains implicitly visible.
   SELECT coalesce(array_agg(a.signature ORDER BY a.signature), ARRAY[]::text[])
   INTO v_bad_config
   FROM actual_authenticated_security_definer_bodies a
@@ -158,6 +159,7 @@ BEGIN
         THEN ARRAY['search_path=pg_catalog, public']::text[]
       WHEN a.signature IN (
         'public.approve_deposit(p_transaction_id uuid, p_admin_notes text)',
+        'public.consume_api_rate_limit(p_scope text)',
         'public.reconcile_wallet_topup_claim(p_claim_id uuid, p_admin_notes text)',
         'public.reject_wallet_topup_claim(p_claim_id uuid, p_reason text)',
         'public.verify_wallet_topup_claim(p_claim_id uuid, p_verification_notes text)'

@@ -4,7 +4,10 @@ export type ApiRateLimitScope =
   | 'knowledge.query'
   | 'investment.payment-proof'
   | 'wallet.topup-proof'
-  | 'wallet.intent-create';
+  | 'wallet.intent-create'
+  | 'wallet.crypto-quote'
+  | 'wallet.crypto-topup-proof'
+  | 'wallet.crypto-topup-status';
 
 export type ApiRateLimitDecision = {
   allowed: boolean;
