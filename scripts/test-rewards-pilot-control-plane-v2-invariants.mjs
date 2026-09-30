@@ -61,9 +61,9 @@ assert.match(panel, /Validado significa listo para análisis interno; nunca sign
 assert.doesNotMatch(panel, /activar rewards|publicar regla|ganar puntos ahora|redimir ahora/i, 'Control-plane UI must not expose activation or commercial CTAs.');
 assert.match(nav, /href: '\/admin\/rewards', label: 'Rewards Lab', roles: \['SUPER_ADMIN'\]/, 'Rewards Lab navigation must remain SUPER_ADMIN-only.');
 
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0154'/, 'Repository schema authority must reflect the current additive schema.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_crypto_settlement_v2'/, 'Schema authority must name the current additive global migration.');
-assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 153/, 'Schema migration count must align with the current global schema.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION = '0155'/, 'Repository schema authority must reflect the current additive schema.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_NAME = 'wallet_crypto_evm_address_canonicalization'/, 'Schema authority must name the current additive global migration.');
+assert.match(schemaVersion, /EXPECTED_DATABASE_MIGRATION_COUNT = 154/, 'Schema migration count must align with the current global schema.');
 
 const productionHistory = JSON.parse(history);
 const assertHistoryEntry = (logicalVersion, remoteVersion, remoteName) => {
