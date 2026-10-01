@@ -160,6 +160,23 @@ test.describe('CTG One authenticated critical journey', () => {
     await expect(page).toHaveURL(/\/admin$/);
   });
 
+  test('admin MFA challenge stays reachable without opening neighboring participant routes', async ({ page, request }) => {
+    const { email, password, userId } = await provisionConfirmedUser(request, 'e2e-admin-mfa');
+    await grantAdminInvestmentRole(request, userId, 'FINANCE_ADMIN');
+
+    // Login sends verified-factor AAL1 sessions through this same route before
+    // they can reach the admin surface. It must therefore remain reachable
+    // without requiring the SUPER_ADMIN participant-view cookie.
+    await signIn(page, email, password, '/dashboard/seguridad/mfa?next=/admin');
+    await expect(page).toHaveURL(/\/dashboard\/seguridad\/mfa\?next=%2Fadmin$/);
+    await expect(page.getByRole('heading', { name: 'Autenticación multifactor' })).toBeVisible();
+
+    // Keep the exception least-privilege: adjacent dashboard security routes
+    // are still participant surfaces for an admin outside effective user view.
+    await page.goto('/dashboard/seguridad');
+    await expect(page).toHaveURL(/\/admin$/);
+  });
+
   test('non-superadmin admin cannot forge the user-view switch', async ({ page, request }) => {
     const { email, password, userId } = await provisionConfirmedUser(request, 'e2e-finance-admin');
     await grantAdminInvestmentRole(request, userId, 'FINANCE_ADMIN');
