@@ -26,21 +26,32 @@ const ERC20_BALANCE_ABI = [
     inputs: [{ name: 'account', type: 'address' }],
     outputs: [{ name: '', type: 'uint256' }],
   },
+] as const;
+
+const CANONICAL_POLYGON_ERC20_ASSETS = [
   {
-    type: 'function',
-    stateMutability: 'view',
-    name: 'decimals',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint8' }],
+    symbol: 'USDC',
+    address: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
+    decimals: 6,
   },
   {
-    type: 'function',
-    stateMutability: 'view',
-    name: 'symbol',
-    inputs: [],
-    outputs: [{ name: '', type: 'string' }],
+    symbol: 'USDT',
+    address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
+    decimals: 6,
+  },
+  {
+    symbol: 'WETH',
+    address: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
+    decimals: 18,
+  },
+  {
+    symbol: 'WBTC',
+    address: '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6',
+    decimals: 8,
   },
 ] as const;
+
+const CANONICAL_CTG_TOKEN_ADDRESS = '0xe4200d6beD0DB8E720Cbb840c572182676515132' as const;
 
 function unavailable(
   accountAddress: string | null,
@@ -62,20 +73,44 @@ function configuredRpcUrl(): string | null {
   return value ? value : null;
 }
 
-function configuredCtgTokenAddress(): Address | null {
-  const value = process.env.CTG_TOKEN_POLYGON_ADDRESS?.trim();
-  if (!value || !isAddress(value)) return null;
-  return getAddress(value);
+function configuredCtgTokenAddress(): { address: Address | null; invalid: boolean } {
+  const configured = process.env.CTG_TOKEN_POLYGON_ADDRESS?.trim();
+  if (!configured) return { address: getAddress(CANONICAL_CTG_TOKEN_ADDRESS), invalid: false };
+  if (!isAddress(configured)) return { address: null, invalid: true };
+  return { address: getAddress(configured), invalid: false };
+}
+
+function erc20Position(
+  accountAddress: Address,
+  assetAddress: Address,
+  symbol: string,
+  decimals: number,
+  rawBalance: bigint,
+): WalletOverviewBlockchainPosition {
+  return {
+    authority: 'blockchain',
+    network: POLYGON_NETWORK,
+    chainId: POLYGON_CHAIN_ID,
+    accountAddress,
+    assetKind: 'erc20',
+    assetAddress,
+    symbol,
+    decimals,
+    rawBalance: rawBalance.toString(),
+    formattedBalance: formatUnits(rawBalance, decimals),
+  };
 }
 
 /**
- * Reads display-only Polygon balances for a server-resolved, verified CTG wallet
- * account. It never signs, sends, approves, swaps or derives wallet ownership
- * from a browser-supplied address.
+ * Reads the canonical display-only Polygon portfolio for a server-resolved,
+ * verified CTG wallet. The registry mirrors the legacy CTG Wallet Polygon
+ * surface (POL, CTG, USDC, USDT, WETH and WBTC) so identity convergence does
+ * not silently collapse a funded historical portfolio to only POL + CTG.
  *
- * A Polygon/RPC failure is deliberately isolated from the COP wallet read path:
- * blockchain balances are a separate authority and must not make the canonical
- * CTG ledger unavailable.
+ * This reader never signs, sends, approves, swaps or derives wallet ownership
+ * from a browser-supplied address. A provider failure is isolated from the CTG
+ * ledger: native-balance failure makes blockchain data unavailable; individual
+ * ERC-20 failures degrade the portfolio while preserving successful positions.
  */
 export async function readPolygonPortfolio(
   accountAddress: string | null,
@@ -87,7 +122,18 @@ export async function readPolygonPortfolio(
   const rpcUrl = configuredRpcUrl();
   if (!rpcUrl) return unavailable(address, 'RPC_NOT_CONFIGURED');
 
-  const client = createPublicClient({ chain: polygon, transport: http(rpcUrl) });
+  const client = createPublicClient({
+    chain: polygon,
+    transport: http(rpcUrl, { timeout: 8_000, retryCount: 1 }),
+  });
+
+  try {
+    const chainId = await client.getChainId();
+    if (chainId !== POLYGON_CHAIN_ID) return unavailable(address, 'RPC_CHAIN_MISMATCH');
+  } catch {
+    return unavailable(address, 'RPC_READ_FAILED');
+  }
+
   const positions: WalletOverviewBlockchainPosition[] = [];
 
   try {
@@ -108,50 +154,44 @@ export async function readPolygonPortfolio(
     return unavailable(address, 'RPC_READ_FAILED');
   }
 
-  const ctgTokenAddress = configuredCtgTokenAddress();
+  const ctg = configuredCtgTokenAddress();
+  const assets: Array<{ symbol: string; address: Address; decimals: number }> = [];
+  if (ctg.address) assets.push({ symbol: 'CTG', address: ctg.address, decimals: 18 });
+  for (const asset of CANONICAL_POLYGON_ERC20_ASSETS) {
+    assets.push({
+      symbol: asset.symbol,
+      address: getAddress(asset.address),
+      decimals: asset.decimals,
+    });
+  }
+
+  const reads = await Promise.allSettled(
+    assets.map(async (asset) => {
+      const rawBalance = await client.readContract({
+        address: asset.address,
+        abi: ERC20_BALANCE_ABI,
+        functionName: 'balanceOf',
+        args: [address],
+      });
+      return erc20Position(address, asset.address, asset.symbol, asset.decimals, rawBalance);
+    }),
+  );
+
+  for (const result of reads) {
+    if (result.status === 'fulfilled') positions.push(result.value);
+  }
+
+  const failedTokenReads = reads.filter((result) => result.status === 'rejected').length;
   let status: WalletOverviewBlockchainPortfolio['status'] = 'available';
   let reason: WalletOverviewBlockchainPortfolio['reason'] = null;
 
-  if (process.env.CTG_TOKEN_POLYGON_ADDRESS?.trim() && !ctgTokenAddress) {
+  if (ctg.invalid) {
     status = 'degraded';
     reason = 'CTG_TOKEN_CONFIG_INVALID';
-  } else if (ctgTokenAddress) {
-    try {
-      const [rawBalance, decimals, symbol] = await Promise.all([
-        client.readContract({
-          address: ctgTokenAddress,
-          abi: ERC20_BALANCE_ABI,
-          functionName: 'balanceOf',
-          args: [address],
-        }),
-        client.readContract({
-          address: ctgTokenAddress,
-          abi: ERC20_BALANCE_ABI,
-          functionName: 'decimals',
-        }),
-        client.readContract({
-          address: ctgTokenAddress,
-          abi: ERC20_BALANCE_ABI,
-          functionName: 'symbol',
-        }),
-      ]);
-
-      positions.push({
-        authority: 'blockchain',
-        network: POLYGON_NETWORK,
-        chainId: POLYGON_CHAIN_ID,
-        accountAddress: address,
-        assetKind: 'erc20',
-        assetAddress: ctgTokenAddress,
-        symbol,
-        decimals,
-        rawBalance: rawBalance.toString(),
-        formattedBalance: formatUnits(rawBalance, decimals),
-      });
-    } catch {
-      status = 'degraded';
-      reason = 'CTG_TOKEN_READ_FAILED';
-    }
+  }
+  if (failedTokenReads > 0) {
+    status = 'degraded';
+    reason = 'TOKEN_READ_PARTIAL_FAILURE';
   }
 
   return {

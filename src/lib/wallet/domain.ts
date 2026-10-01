@@ -221,8 +221,10 @@ export type WalletOverviewBlockchainReason =
   | 'INVALID_VERIFIED_EVM_ACCOUNT'
   | 'RPC_NOT_CONFIGURED'
   | 'RPC_READ_FAILED'
+  | 'RPC_CHAIN_MISMATCH'
   | 'CTG_TOKEN_CONFIG_INVALID'
   | 'CTG_TOKEN_READ_FAILED'
+  | 'TOKEN_READ_PARTIAL_FAILURE'
   | null;
 
 export interface WalletOverviewBlockchainPosition {
