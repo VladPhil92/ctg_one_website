@@ -14,14 +14,9 @@ import {
 
 type InvestmentRole = 'SUPER_ADMIN'|'FINANCE_ADMIN'|'PRODUCTION_MANAGER'|'INVENTORY_MANAGER'|'SALES_MANAGER'|'AUDITOR'|'PARTICIPANT';
 
-const routeRoles: Array<{ prefix:string; roles:InvestmentRole[] }> = [
-  { prefix:'/admin/operations/settlement', roles:['SUPER_ADMIN','FINANCE_ADMIN'] },
-  { prefix:'/admin/operations/labels', roles:['SUPER_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER'] },
-  { prefix:'/admin/operations/scanner', roles:['SUPER_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER'] },
-  { prefix:'/admin/operations/overview', roles:['SUPER_ADMIN','FINANCE_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER','AUDITOR'] },
-  { prefix:'/admin/operations', roles:['SUPER_ADMIN','PRODUCTION_MANAGER'] },
-  { prefix:'/inversion/admin/orders', roles:['SUPER_ADMIN','FINANCE_ADMIN'] },
-];
+const participantAdminExactExemptPaths = new Set([
+  '/dashboard/seguridad/mfa',
+]);
 
 const participantAdminExemptPrefixes = [
   '/dashboard/educacion/instructor',
@@ -33,7 +28,8 @@ function matchesPrefix(pathname: string, prefix: string) {
 }
 
 function isParticipantAdminExemptPath(pathname: string) {
-  return participantAdminExemptPrefixes.some(prefix => matchesPrefix(pathname, prefix));
+  return participantAdminExactExemptPaths.has(pathname)
+    || participantAdminExemptPrefixes.some(prefix => matchesPrefix(pathname, prefix));
 }
 
 function authorizationUnavailable() {
@@ -110,6 +106,9 @@ export async function updateSession(request: NextRequest) {
   // the concrete pathname on every document/RSC navigation. Existing education
   // admin consoles remain governed by their own global-admin authorization and
   // must not require an investment role merely because they live under /dashboard.
+  // The exact MFA challenge route is also exempt because it is part of the
+  // authentication boundary itself: an admin at AAL1 must be able to reach it
+  // before any participant-view cookie can be required.
   if ((isDashboardRoute || isInvestmentAppRoute) && user) {
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
