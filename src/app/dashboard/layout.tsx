@@ -1,58 +1,64 @@
-'use client';
+import { cookies } from 'next/headers';
+import type { ReactNode } from 'react';
 
-import { useEffect, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { DASHBOARD_SERVICE_ROUTES } from '@/config/dashboard-services';
-import { EcosystemSwitcher } from '@/components/dashboard/EcosystemSwitcher';
-import { trackFunnelEvent } from '@/lib/analytics/client';
-import type { FunnelServiceKey } from '@/lib/analytics/funnel';
+import DashboardClientShell from '@/components/dashboard/DashboardClientShell';
+import {
+  SUPERADMIN_VIEW_COOKIE,
+  isSuperadminUserViewCookie,
+} from '@/lib/admin/superadmin-view';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/server';
 
-function serviceForHref(href: string): FunnelServiceKey | null {
-  const match = DASHBOARD_SERVICE_ROUTES.find(
-    ({ prefix }) => href === prefix || href.startsWith(`${prefix}?`) || href.startsWith(`${prefix}/`),
-  );
-  return match?.serviceKey ?? null;
-}
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+  let superadminUserView = false;
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const { isAuthenticated, isLoading } = useAuth();
+  if (isSupabaseConfigured) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && pathname === '/dashboard') {
-      void trackFunnelEvent('dashboard_viewed', { sourcePath: '/dashboard' });
+    if (authError) {
+      throw new Error(`No se pudo validar la sesión del dashboard: ${authError.message}`);
     }
-  }, [isAuthenticated, isLoading, pathname]);
 
-  useEffect(() => {
-    if (isLoading || !isAuthenticated || pathname !== '/dashboard') return;
+    if (user) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    const handleClick = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const anchor = target.closest('a[href]');
-      if (!(anchor instanceof HTMLAnchorElement)) return;
+      if (profileError) {
+        throw new Error(`No se pudo validar el rol global del dashboard: ${profileError.message}`);
+      }
 
-      const rawHref = anchor.getAttribute('href');
-      if (!rawHref) return;
-      const serviceKey = serviceForHref(rawHref);
-      if (!serviceKey) return;
+      if (profile?.role === 'admin') {
+        const cookieStore = await cookies();
+        const requestedView = cookieStore.get(SUPERADMIN_VIEW_COOKIE)?.value;
 
-      void trackFunnelEvent('first_service_used', {
-        sourcePath: '/dashboard',
-        serviceKey,
-      });
-    };
+        // Authorization is enforced in the pathname-aware proxy. The shared
+        // layout only decides whether to render the effective-user indicator,
+        // so nested admin consoles under /dashboard are not accidentally gated
+        // by investment roles.
+        if (requestedView) {
+          const { data: investmentProfile } = await supabase
+            .from('investment_participant_profiles')
+            .select('investment_role')
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-    document.addEventListener('click', handleClick, { capture: true });
-    return () => document.removeEventListener('click', handleClick, { capture: true });
-  }, [isAuthenticated, isLoading, pathname]);
+          superadminUserView =
+            investmentProfile?.investment_role === 'SUPER_ADMIN'
+            && isSuperadminUserViewCookie(requestedView, user.id, user.last_sign_in_at);
+        }
+      }
+    }
+  }
 
   return (
-    <>
-      {isAuthenticated ? <EcosystemSwitcher /> : null}
+    <DashboardClientShell superadminUserView={superadminUserView}>
       {children}
-    </>
+    </DashboardClientShell>
   );
 }
