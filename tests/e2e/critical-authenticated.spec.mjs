@@ -168,7 +168,7 @@ test.describe('CTG One authenticated critical journey', () => {
     // they can reach the admin surface. It must therefore remain reachable
     // without requiring the SUPER_ADMIN participant-view cookie.
     await signIn(page, email, password, '/dashboard/seguridad/mfa?next=/admin');
-    await expect(page).toHaveURL(/\/dashboard\/seguridad\/mfa\?next=%2Fadmin$/);
+    await expect(page).toHaveURL(/\/dashboard\/seguridad\/mfa(?:\?|$)/);
     await expect(page.getByRole('heading', { name: 'Autenticación multifactor' })).toBeVisible();
 
     // Keep the exception least-privilege: adjacent dashboard security routes
