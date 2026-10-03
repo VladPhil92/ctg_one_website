@@ -67,8 +67,8 @@ assert.match(
 );
 assert.match(
   proofItemBlock('web3'),
-  /status: 'ROADMAP'/,
-  'CTGO/Web3 must remain ROADMAP until verifiable on-chain production evidence exists.',
+  /status: 'PARTIAL'/,
+  'CTGO/Web3 must remain PARTIAL while production evidence is verified and market/governance controls are still consolidating.',
 );
 assert.match(
   proofItemBlock('ai-layer'),
@@ -139,8 +139,8 @@ for (const forbidden of [
 ]) {
   assert.ok(!forbidden.test(`${token}\n${content}`), `Unverified CTGO metric reintroduced: ${forbidden}`);
 }
-assert.ok(token.includes('No publicamos cifras de holders, precio, APY, TVL'), 'Token surface must explicitly reject unverified on-chain metrics.');
-assert.ok(content.includes("status: 'ROADMAP'"), 'Shared CTGO content must remain ROADMAP.');
+assert.ok(token.includes('CTG One no publica ni garantiza un precio fiat fijo'), 'Token surface must explicitly reject a fixed or guaranteed CTG fiat price.');
+assert.ok(content.includes("status: 'PARTIAL'"), 'Shared CTGO content must reflect verified production with incomplete market/governance evidence.');
 
 assert.ok(flags.includes('CTG_INVESTMENT_PUBLIC_FUNDING_ENABLED'), 'Investment public-funding feature flag must remain explicit.');
 assert.ok(flags.includes('defaultValue = false') || flags.includes("=== 'true'"), 'Investment flags must remain fail-closed.');

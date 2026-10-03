@@ -136,9 +136,16 @@ export const TECHNOLOGY_PROOF: ProofItem[] = [
     id: 'web3',
     area: 'Web3',
     capability: 'CTGO on-chain production utility',
-    status: 'ROADMAP',
-    evidence: ['Web3 libraries present', 'No verified production contract/network evidence published'],
-    publicPath: '/token',
+    status: 'PARTIAL',
+    evidence: [
+      'Canonical CTG token deployed on Polygon PoS (chain ID 137)',
+      'Canonical proxy: 0xe4200d6beD0DB8E720Cbb840c572182676515132',
+      'Production implementation/source equivalence is verified in the CTG-TOKEN deployment registry',
+      'Wallet registry points to the canonical production contract',
+      'Liquidity, independent price indexing, governance convergence and broader market evidence remain under consolidation',
+      'No fixed or guaranteed fiat price is claimed',
+    ],
+    publicPath: '/ctgotoken',
   },
 ];
 

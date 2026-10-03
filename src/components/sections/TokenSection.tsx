@@ -15,19 +15,19 @@ export const TokenSection: React.FC = () => {
 
   const copy = es
     ? {
-        badge: 'CTGO · Estrategia Web3',
-        title: 'Una capa de utilidad en',
-        highlight: 'fase de desarrollo.',
+        badge: 'CTGO · Polygon Mainnet',
+        title: 'Una capa de utilidad',
+        highlight: 'ya desplegada.',
         description:
-          'CTGO forma parte de la visión fintech y Web3 de CTG One. En esta etapa lo presentamos como una arquitectura de utilidad en desarrollo, no como un activo con métricas públicas on-chain verificadas. No publicamos cifras de holders, precio, APY, TVL ni direcciones de contrato mientras no exista evidencia productiva verificable.',
+          'CTGO es el token utilitario canónico de CTG One en Polygon PoS. El contrato productivo y su implementación están verificados; la liquidez, la indexación de precio y parte de la infraestructura de mercado siguen en consolidación. CTG One no publica ni garantiza un precio fiat fijo.',
         status: 'Estado',
-        statusValue: 'En desarrollo',
+        statusValue: 'Desplegado · consolidación',
         network: 'Red productiva',
-        networkValue: 'No publicada',
+        networkValue: 'Polygon PoS · 137',
         sale: 'Venta pública',
         saleValue: 'No activa',
         evidence: 'Criterio de evidencia',
-        evidenceValue: 'Solo datos verificables',
+        evidenceValue: 'Contrato + source verificados',
         utilityTitle: 'Utilidades diseñadas',
         utilityIntro: 'Estas funciones describen el modelo objetivo y no implican que todas estén activas actualmente.',
         utilities: [
@@ -38,23 +38,23 @@ export const TokenSection: React.FC = () => {
         ],
         verificationTitle: 'Transparencia antes que marketing',
         verificationText:
-          'Cuando exista un despliegue productivo, esta sección deberá publicar red, dirección de contrato, mecanismo de emisión, utilidades activas, auditorías aplicables y enlaces verificables a exploradores on-chain. Hasta entonces, CTGO permanece identificado como roadmap tecnológico.',
-        roadmap: 'ROADMAP',
+          'El contrato canónico es 0xe4200d6beD0DB8E720Cbb840c572182676515132 en Polygon PoS. La valoración fiat debe provenir de un mercado o proveedor verificable; si no existe una fuente fiable, el producto debe mostrar el balance CTG sin inventar un precio.',
+        roadmap: 'POLYGON MAINNET',
       }
     : {
-        badge: 'CTGO · Web3 Strategy',
-        title: 'A utility layer currently',
-        highlight: 'in development.',
+        badge: 'CTGO · Polygon Mainnet',
+        title: 'A utility layer',
+        highlight: 'already deployed.',
         description:
-          'CTGO is part of CTG One’s fintech and Web3 vision. At this stage it is presented as a utility architecture in development, not as an asset with verified public on-chain metrics. We do not publish holder counts, price, APY, TVL, or contract addresses until production evidence can be independently verified.',
+          'CTGO is CTG One’s canonical utility token on Polygon PoS. The production contract and implementation are verified; liquidity, price indexing, and parts of the market infrastructure remain under consolidation. CTG One does not publish or guarantee a fixed fiat price.',
         status: 'Status',
-        statusValue: 'In development',
+        statusValue: 'Deployed · consolidating',
         network: 'Production network',
-        networkValue: 'Not published',
+        networkValue: 'Polygon PoS · 137',
         sale: 'Public sale',
         saleValue: 'Not active',
         evidence: 'Evidence standard',
-        evidenceValue: 'Verified data only',
+        evidenceValue: 'Contract + source verified',
         utilityTitle: 'Designed utilities',
         utilityIntro: 'These functions describe the target model and do not imply that every capability is active today.',
         utilities: [
@@ -65,8 +65,8 @@ export const TokenSection: React.FC = () => {
         ],
         verificationTitle: 'Transparency before marketing',
         verificationText:
-          'Once a production deployment exists, this section must publish the network, contract address, issuance mechanics, active utilities, applicable audits, and independently verifiable explorer links. Until then, CTGO remains explicitly identified as a technology roadmap.',
-        roadmap: 'ROADMAP',
+          'The canonical contract is 0xe4200d6beD0DB8E720Cbb840c572182676515132 on Polygon PoS. Fiat valuation must come from a verifiable market or price provider; when no reliable source exists, products must show the CTG balance without inventing a price.',
+        roadmap: 'POLYGON MAINNET',
       };
 
   const statusItems = [
