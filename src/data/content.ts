@@ -134,21 +134,21 @@ export const REWARDS = {
   status: 'DEVELOPMENT',
 };
 
-// CTGO is a Web3 technology roadmap. Do not add supply, holder count, price,
-// APY, TVL, distribution or contract-address claims without independently
-// verifiable production evidence.
+// CTGO is a live Polygon production token whose market layer remains under
+// consolidation. Public claims must remain evidence-based: do not invent
+// holder counts, fiat prices, APY, TVL, distribution figures, or listing status.
 export const TOKEN = {
-  badge: 'CTGO · Web3 Strategy',
-  title: 'Utility Architecture',
-  titleHighlight: 'In Development',
+  badge: 'CTGO · Polygon Mainnet',
+  title: 'Utility Token',
+  titleHighlight: 'Under Consolidation',
   description:
-    'CTGO is part of CTG One’s fintech and Web3 roadmap. No production network, contract address, holder metrics, price, APY, TVL or public sale is represented as active until independently verifiable evidence exists.',
-  status: 'ROADMAP',
+    'CTGO is deployed on Polygon PoS at the canonical contract 0xe4200d6beD0DB8E720Cbb840c572182676515132. The production token is live; liquidity, independent price indexing, governance convergence and broader public-market evidence remain under consolidation. No fixed or guaranteed fiat price is claimed.',
+  status: 'PARTIAL',
   stats: [],
   utilities: [
-    'Potential cross-unit payments and transactions.',
-    'Potential integration with CTG Rewards and ecosystem benefits.',
-    'Utility mechanisms to be documented and verified before production.',
+    'Canonical ERC-20 utility token on Polygon PoS.',
+    'Progressive integration with CTG One products and rewards infrastructure.',
+    'Market and liquidity capabilities that remain evidence-gated before broader promotion.',
   ],
   distribution: [],
 };
