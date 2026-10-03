@@ -44,8 +44,8 @@ assert.match(
 );
 assert.match(
   proofItemBlock('web3'),
-  /status: 'ROADMAP'/,
-  'CTGO/Web3 must remain ROADMAP until verified production evidence exists.',
+  /status: 'PARTIAL'/,
+  'CTGO/Web3 must remain PARTIAL while production is verified but market/governance evidence is still consolidating.',
 );
 
 for (const [serviceId, capabilityId, variableName] of [
@@ -78,7 +78,7 @@ assert.doesNotMatch(
 assert.doesNotMatch(
   serviceBlock('token'),
   /status: 'CONSOLIDATION'/,
-  'CTGO must not maintain a second consolidation label independent of canonical ROADMAP.',
+  'CTGO must not maintain a second consolidation label independent of canonical PARTIAL.',
 );
 
 assert.ok(
@@ -89,15 +89,20 @@ assert.ok(
   homeShowcases.includes('getPublicProofStatus(ctgoProof)'),
   'CTGO homepage showcase must render public maturity from the canonical proof registry.',
 );
-assert.doesNotMatch(
+assert.match(
   homeShowcases,
-  /CTGO ya fue desplegado en Polygon|CTGO has already been deployed on Polygon/i,
-  'Homepage must not publish an on-chain production deployment claim without canonical evidence.',
+  /CTGO ya está desplegado y verificado en Polygon PoS|CTGO is deployed and verified on Polygon PoS/i,
+  'Homepage must acknowledge the now-verified canonical production deployment.',
 );
 assert.match(
   homeShowcases,
-  /no publicamos un contrato o red de producción como verificados|do not publish a production contract or network as verified/i,
-  'Homepage CTGO copy must disclose the current evidence boundary.',
+  /0xe4200d6beD0DB8E720Cbb840c572182676515132/i,
+  'Homepage CTGO copy must publish the canonical Polygon contract.',
+);
+assert.match(
+  homeShowcases,
+  /no se garantiza un precio fiat fijo|no fixed fiat price is guaranteed/i,
+  'Homepage CTGO copy must preserve the market-price evidence boundary.',
 );
 
 console.log('Public maturity coherence invariants: PASS');
