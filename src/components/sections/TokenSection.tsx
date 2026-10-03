@@ -66,7 +66,7 @@ export const TokenSection: React.FC = () => {
         verificationTitle: 'Transparency before marketing',
         verificationText:
           'The canonical contract is 0xe4200d6beD0DB8E720Cbb840c572182676515132 on Polygon PoS. Fiat valuation must come from a verifiable market or price provider; when no reliable source exists, products must show the CTG balance without inventing a price.',
-        roadmap: 'ROADMAP',
+        roadmap: 'POLYGON MAINNET',
       };
 
   const statusItems = [
