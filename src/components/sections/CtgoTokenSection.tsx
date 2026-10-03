@@ -30,12 +30,12 @@ export const CtgoTokenSection: React.FC = () => {
         title: 'CTGO',
         subtitle: 'Un token real, todavía en consolidación.',
         intro:
-          'CTGO es la capa de utilidad cripto del ecosistema CTG One. Antes de cualquier apertura pública más amplia, estamos fortaleciendo liquidez, verificación del contrato, infraestructura de mercado y revisión de seguridad.',
+          'CTGO es la capa de utilidad cripto del ecosistema CTG One. El contrato productivo ya está desplegado y verificado en Polygon PoS; la fase actual fortalece liquidez, gobierno, datos de mercado e indexación externa.',
         explore: 'Explorar el ecosistema',
         docs: 'Ver transparencia',
         noticeTitle: 'Este token está en consolidación.',
         noticeText:
-          'La verificación, auditoría y documentación pública se ampliarán a medida que se completen las fases actuales.',
+          'El contrato y su implementación están verificados. La liquidez, la indexación de precio, la revisión de seguridad y la documentación de mercado siguen en consolidación.',
         glance: 'CTGO EN UN VISTAZO',
         glanceNote: 'Estado real. Sin hype.',
         facts: [
@@ -48,7 +48,7 @@ export const CtgoTokenSection: React.FC = () => {
         networkEyebrow: 'DÓNDE VIVE CTGO',
         networkTitle: 'En Polygon. Construido para escalar.',
         networkText:
-          'CTGO está desplegado sobre Polygon PoS, una red blockchain eficiente y ampliamente compatible con el ecosistema EVM.',
+          'CTGO está desplegado sobre Polygon PoS. Contrato canónico: 0xe4200d6beD0DB8E720Cbb840c572182676515132. La valoración fiat no se fija en el código: debe provenir de una fuente de mercado verificable.',
         utilityEyebrow: 'POR QUÉ EXISTE CTGO',
         utilityTitle: 'Utilidad en el centro del ecosistema.',
         utilityText:
@@ -78,23 +78,23 @@ export const CtgoTokenSection: React.FC = () => {
             inProgress: false,
           },
           {
-            label: 'Fortalecimiento de liquidez',
+            label: 'Verificación del contrato',
+            status: 'Completada',
+            description: 'Proxy canónico e implementación productiva verificados en Polygon PoS.',
+            done: true,
+            inProgress: false,
+          },
+          {
+            label: 'Liquidez + datos de mercado',
             status: 'En curso',
-            description: 'Construcción de fundamentos de liquidez e infraestructura de mercado.',
+            description: 'Consolidación de liquidez, fuente de precio verificable y metadata/indexación externa.',
             done: false,
             inProgress: true,
           },
           {
-            label: 'Verificación + auditoría',
-            status: 'Pendiente',
-            description: 'Verificación del contrato y revisión de seguridad antes de mayor exposición.',
-            done: false,
-            inProgress: false,
-          },
-          {
-            label: 'Apertura pública',
-            status: 'No programada',
-            description: 'Disponibilidad pública únicamente después de completar los controles previos.',
+            label: 'Exposición pública ampliada',
+            status: 'Condicionada',
+            description: 'Solo después de controles de gobierno, seguridad, liquidez, cumplimiento e indexación.',
             done: false,
             inProgress: false,
           },
@@ -110,9 +110,9 @@ export const CtgoTokenSection: React.FC = () => {
         infrastructureText:
           'Liquidez, metadata, indexación y proveedores de datos deben alinearse antes de una experiencia consistente en wallets y exploradores.',
         resourcesEyebrow: 'DOCUMENTACIÓN Y RECURSOS',
-        resourcesTitle: 'Todo se publicará de forma verificable.',
+        resourcesTitle: 'El contrato canónico ya es público y verificable.',
         resourcesText:
-          'Contratos, direcciones, auditorías y recursos oficiales se documentarán conforme avance la consolidación.',
+          'La dirección canónica y el estado productivo ya son públicos. Auditorías, política de mercado, liquidez e indexación se ampliarán con evidencia verificable.',
         approach: 'Nuestro enfoque',
         pipeline: 'Ver el pipeline',
         resources: 'Ver fases',
@@ -125,12 +125,12 @@ export const CtgoTokenSection: React.FC = () => {
         title: 'CTGO',
         subtitle: 'A real token, still under consolidation.',
         intro:
-          'CTGO is the crypto utility layer of the CTG One ecosystem. Before any broader public rollout, we are strengthening liquidity, contract verification, market infrastructure, and security review.',
+          'CTGO is the crypto utility layer of the CTG One ecosystem. The production contract is already deployed and verified on Polygon PoS; the current phase strengthens liquidity, governance, market data, and external indexing.',
         explore: 'Explore the ecosystem',
         docs: 'View transparency',
         noticeTitle: 'This token is under consolidation.',
         noticeText:
-          'Verification, audit, and public documentation will expand as the current phases are completed.',
+          'The contract and production implementation are verified. Liquidity, price indexing, security review, and market documentation remain under consolidation.',
         glance: 'CTGO AT A GLANCE',
         glanceNote: 'Real status. No hype.',
         facts: [
@@ -143,7 +143,7 @@ export const CtgoTokenSection: React.FC = () => {
         networkEyebrow: 'WHERE CTGO LIVES',
         networkTitle: 'On Polygon. Built for scale.',
         networkText:
-          'CTGO is deployed on Polygon PoS, an efficient blockchain network broadly compatible with the EVM ecosystem.',
+          'CTGO is deployed on Polygon PoS. Canonical contract: 0xe4200d6beD0DB8E720Cbb840c572182676515132. Fiat valuation is not fixed in code and must come from a verifiable market source.',
         utilityEyebrow: 'WHY CTGO EXISTS',
         utilityTitle: 'Utility at the core of the ecosystem.',
         utilityText:
@@ -173,23 +173,23 @@ export const CtgoTokenSection: React.FC = () => {
             inProgress: false,
           },
           {
-            label: 'Liquidity strengthening',
+            label: 'Contract verification',
+            status: 'Completed',
+            description: 'Canonical proxy and production implementation verified on Polygon PoS.',
+            done: true,
+            inProgress: false,
+          },
+          {
+            label: 'Liquidity + market data',
             status: 'In progress',
-            description: 'Building liquidity foundations and market infrastructure.',
+            description: 'Consolidating liquidity, a verifiable price source, and external metadata/indexing.',
             done: false,
             inProgress: true,
           },
           {
-            label: 'Verification + audit',
-            status: 'Pending',
-            description: 'Contract verification and security review before broader exposure.',
-            done: false,
-            inProgress: false,
-          },
-          {
-            label: 'Public rollout',
-            status: 'Not scheduled',
-            description: 'Public availability only after prior controls are completed.',
+            label: 'Broader public exposure',
+            status: 'Conditional',
+            description: 'Only after governance, security, liquidity, compliance, and indexing controls are completed.',
             done: false,
             inProgress: false,
           },
@@ -205,9 +205,9 @@ export const CtgoTokenSection: React.FC = () => {
         infrastructureText:
           'Liquidity, metadata, indexing, and data providers must align before wallets and explorers can offer a consistent experience.',
         resourcesEyebrow: 'DOCUMENTATION & RESOURCES',
-        resourcesTitle: 'Everything will be published verifiably.',
+        resourcesTitle: 'The canonical contract is already public and verifiable.',
         resourcesText:
-          'Contracts, addresses, audits, and official resources will be documented as consolidation progresses.',
+          'The canonical address and production status are already public. Audits, market policy, liquidity, and indexing evidence will expand as consolidation progresses.',
         approach: 'Our approach',
         pipeline: 'See the pipeline',
         resources: 'View phases',
