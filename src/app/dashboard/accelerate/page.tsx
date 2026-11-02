@@ -199,7 +199,7 @@ export default function AccelerateDashboardPage() {
           <div className="mt-5 grid gap-3 sm:grid-cols-3" aria-live="polite">
             <div className="rounded-xl border border-white/10 p-4">
               <p className="text-xs text-white/50">Bonificaciones hipotéticas</p>
-              <strong className="mt-2 block text-lg text-white">{usdt(Number(BigInt(simulation.hypotheticalRewardMinor) > 1_000_000_000_000n ? 1_000_000_000_000n : BigInt(simulation.hypotheticalRewardMinor)))}</strong>
+              <strong className="mt-2 block text-lg text-white">{usdt(Number(BigInt(simulation.hypotheticalRewardMinor) > BigInt(1_000_000_000_000) ? BigInt(1_000_000_000_000) : BigInt(simulation.hypotheticalRewardMinor)))}</strong>
             </div>
             <div className="rounded-xl border border-white/10 p-4">
               <p className="text-xs text-white/50">Potencial recuperación de principal</p>
