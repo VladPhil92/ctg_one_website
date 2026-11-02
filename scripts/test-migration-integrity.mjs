@@ -214,15 +214,21 @@ for (let index = 0; index < productionAnchors.length; index += 1) {
 
 const latestProductionAnchor = productionAnchors.at(-1);
 assert.ok(latestProductionAnchor, 'Latest production migration provenance anchor must exist.');
-assert.equal(
-  latestProductionAnchor.logicalVersion,
-  latest.logicalVersion,
-  `Production migration history fixture must advance with repository schema: production=${latestProductionAnchor.logicalVersion}, repository=${latest.logicalVersion}.`
+// Development branches may add migrations before they are applied to production.
+ // Preserve the real production fixture rather than inventing applied history.
+assert.ok(
+  Number(latestProductionAnchor.logicalVersion) <= Number(latest.logicalVersion),
+  `Production migration history is ahead of repository schema: production=${latestProductionAnchor.logicalVersion}, repository=${latest.logicalVersion}.`
 );
-assert.equal(
-  latestProductionAnchor.remoteVersion,
-  latest.remoteVersion,
-  `Latest production remote version must match repository latest remote version: production=${latestProductionAnchor.remoteVersion}, repository=${latest.remoteVersion}.`
+if (latestProductionAnchor.logicalVersion === latest.logicalVersion) {
+  assert.equal(
+    latestProductionAnchor.remoteVersion,
+    latest.remoteVersion,
+    'Latest production version must match the latest repository migration when both are aligned.'
+  );
+}
+const pendingProductionMigrations = migrations.filter(
+  (migration) => Number(migration.logicalVersion) > Number(latestProductionAnchor.logicalVersion)
 );
 
 assert.equal(
@@ -244,5 +250,5 @@ assert.equal(
 );
 
 console.log(
-  `Migration integrity: PASS (${logicalVersions[0]}..${latest.logicalVersion}, ${migrations.length} files, latest=${latest.name}, remote=${latest.remoteVersion}, productionAnchors=${productionAnchors.length})`
+  `Migration integrity: PASS (${logicalVersions[0]}..${latest.logicalVersion}, ${migrations.length} files, latest=${latest.name}, remote=${latest.remoteVersion}, productionAnchors=${productionAnchors.length}, pendingProduction=${pendingProductionMigrations.length})`
 );
