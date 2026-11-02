@@ -72,7 +72,7 @@ assert.match(api, /'private, no-store'/);
 assert.doesNotMatch(api, /export async function POST/, 'Participants cannot create money events.');
 assert.match(registration, /ctg_referral_code: referralCode/, 'Signup must pass validated invitation code.');
 assert.match(dashboard, /credentials: 'same-origin'/);
-assert.match(dashboard, //registro\?ref=/);
+assert.ok(dashboard.includes('/registro?ref='), 'Invite link must point to canonical signup.');
 assert.match(homepage, /href="\/dashboard\/accelerate"/);
 assert.match(version, /EXPECTED_DATABASE_MIGRATION = '0160'/);
 console.log('CTG Accelerate referral MVP invariants: PASS');
