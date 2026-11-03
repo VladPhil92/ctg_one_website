@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { SuperadminViewControl } from '@/components/admin/SuperadminViewControl';
 import { useAuth } from '@/contexts/AuthContext';
 
 type InvestmentRole = 'SUPER_ADMIN' | 'FINANCE_ADMIN' | 'PRODUCTION_MANAGER' | 'INVENTORY_MANAGER' | 'SALES_MANAGER' | 'AUDITOR' | 'PARTICIPANT' | null;
@@ -69,7 +70,8 @@ export const AdminNav: React.FC<{ investmentRole: InvestmentRole }> = ({ investm
 
         <select className="min-w-0 flex-1 rounded-xl border border-white/[.08] bg-white/[.035] px-3 py-2 text-[9px] uppercase tracking-[.1em] text-white outline-none xl:hidden" value={active?.href ?? '/admin'} onChange={e=>{window.location.href=e.target.value}}>{visibleItems.map(i=><option key={i.href} value={i.href}>{i.label}</option>)}</select>
 
-        <div className="ml-auto flex shrink-0 items-center border-l border-white/[.07] pl-3 sm:pl-4">
+        <div className="ml-auto flex shrink-0 items-center gap-2 border-l border-white/[.07] pl-3 sm:pl-4">
+          {isSuperAdmin ? <SuperadminViewControl currentMode="superadmin" compact /> : null}
           <button onClick={signOut} className="rounded-lg px-2.5 py-2 text-[8px] uppercase tracking-[.13em] text-text-dim transition-colors hover:bg-white/[.04] hover:text-white">Cerrar sesión</button>
         </div>
       </div>
