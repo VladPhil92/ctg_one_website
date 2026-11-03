@@ -69,6 +69,7 @@ function formatActivityDate(value: string) {
 function resolveSearch(query: string) {
   const normalized = query.toLocaleLowerCase('es-CO');
   if (['wallet', 'saldo', 'recarga', 'retirar'].some((token) => normalized.includes(token))) return '/dashboard/wallet';
+  if (['referido', 'referidos', 'accelerate', 'aceleración', 'invitación'].some((token) => normalized.includes(token))) return '/dashboard/accelerate';
   if (['invertir', 'inversion', 'inversión', 'cerveza', 'craft beer', 'lote'].some((token) => normalized.includes(token))) return '/inversion/lotes';
   if (['educacion', 'educación', 'curso'].some((token) => normalized.includes(token))) return '/dashboard/educacion';
   if (['identidad', 'kyc', 'verificar'].some((token) => normalized.includes(token))) return '/dashboard/kyc';
@@ -288,6 +289,18 @@ export default function InvestorDashboard() {
               </Link>
             </section>
 
+            <section className="mt-4 flex flex-col gap-4 rounded-2xl border border-[#e3b653]/25 bg-[linear-gradient(115deg,rgba(227,182,83,.12),rgba(11,14,16,.98)_64%)] p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-[#e3b653]/25 bg-[#e3b653]/[.08] text-[#e3b653]"><Sparkles size={22} /></span>
+                <div>
+                  <span className="text-[10px] font-semibold uppercase tracking-[.14em] text-[#e3b653]">CTG Accelerate</span>
+                  <h2 className="mt-1 font-outfit text-xl font-semibold">Invita, consulta y simula tu recuperación de capital</h2>
+                  <p className="mt-2 max-w-2xl text-xs leading-5 text-white/50">Enlaces personales y seguimiento de referidos disponibles después de la instalación del módulo. Las recompensas monetarias y la aceleración contractual todavía no están activas.</p>
+                </div>
+              </div>
+              <Link href="/dashboard/accelerate" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#e3b653] px-5 text-xs font-bold text-[#171207]">Mis referidos <ArrowRight size={16} /></Link>
+            </section>
+
             <section className="mt-4 rounded-2xl border border-white/[0.08] bg-[#0b0e10] p-3 sm:p-4">
               <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
                 <div>
@@ -479,6 +492,7 @@ function DesktopSidebar({ notifications }: { notifications: number }) {
         <SidebarItem href="/dashboard" icon={<Home size={18} />} label="Inicio" active />
         <SidebarItem href="/inversion/lotes" icon={<BarChart3 size={18} />} label="Invertir" />
         <SidebarItem href="/inversion/app" icon={<TrendingUp size={18} />} label="Mi portafolio" />
+        <SidebarItem href="/dashboard/accelerate" icon={<Sparkles size={18} />} label="CTG Accelerate" />
         <SidebarItem href="/dashboard/wallet" icon={<WalletCards size={18} />} label="Wallet" />
         <SidebarItem href="/products" icon={<Compass size={18} />} label="Explorar" />
         <SidebarItem href="/dashboard/educacion" icon={<GraduationCap size={18} />} label="Educación" />
@@ -519,6 +533,7 @@ function MobileNav({ onClose, notifications }: { onClose: () => void; notificati
           <SidebarItem href="/dashboard" icon={<Home size={18} />} label="Inicio" active />
           <SidebarItem href="/inversion/lotes" icon={<BarChart3 size={18} />} label="Invertir" />
           <SidebarItem href="/inversion/app" icon={<TrendingUp size={18} />} label="Mi portafolio" />
+        <SidebarItem href="/dashboard/accelerate" icon={<Sparkles size={18} />} label="CTG Accelerate" />
           <SidebarItem href="/dashboard/wallet" icon={<WalletCards size={18} />} label="Wallet" />
           <SidebarItem href="/products" icon={<Compass size={18} />} label="Explorar" />
           <SidebarItem href="/dashboard/educacion" icon={<GraduationCap size={18} />} label="Educación" />
