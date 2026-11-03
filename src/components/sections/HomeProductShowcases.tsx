@@ -224,8 +224,8 @@ export const HomeProductShowcases: React.FC = () => {
               <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#f1c75b]">CTGO · {ctgoStatusLabel}</p>
               <p className="mt-2 text-sm leading-6 text-white/50">
                 {es
-                  ? 'CTGO permanece como capacidad Web3 en hoja de ruta: no publicamos un contrato o red de producción como verificados hasta contar con evidencia técnica trazable.'
-                  : 'CTGO remains a Web3 roadmap capability: we do not publish a production contract or network as verified until traceable technical evidence is available.'}
+                  ? 'CTGO ya está desplegado y verificado en Polygon PoS. El contrato canónico es 0xe4200d6beD0DB8E720Cbb840c572182676515132; liquidez, gobierno e indexación de precio continúan en consolidación y no se garantiza un precio fiat fijo.'
+                  : 'CTGO is deployed and verified on Polygon PoS. The canonical contract is 0xe4200d6beD0DB8E720Cbb840c572182676515132; liquidity, governance, and price indexing remain under consolidation and no fixed fiat price is guaranteed.'}
               </p>
             </div>
           </div>
