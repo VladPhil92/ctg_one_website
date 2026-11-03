@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#0c2734" />
+  <meta name="description" content="Valderrama Learning Center conecta estudiantes y familias con tutores y profesores especializados. Una experiencia educativa basada en confianza." />
+  <title>Valderrama Learning Center | Aprende con especialistas</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="module" src="./src/app.js"></script>
+</head>
+<body>
+  <div class="demo-bar"><span class="demo-dot"></span> Prototipo conceptual · Perfiles y valoraciones de ejemplo · No se reciben solicitudes reales</div>
+  <header class="site-header">
+    <a href="#inicio" class="brand" aria-label="Valderrama Learning Center, inicio">
+      <span class="brand-symbol" aria-hidden="true">V<span>.</span></span>
+      <span class="brand-copy"><strong>VALDERRAMA</strong><small>LEARNING CENTER</small></span>
+    </a>
+    <nav class="nav-links" aria-label="Navegación principal">
+      <a href="#explorar">Encontrar profesor</a>
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#confianza">Nuestra protección</a><a href="./demo/index.html">Explorar simulador</a><a href="./portal/index.html">Acceso a cuentas</a>
+    </nav>
+    <button type="button" id="open-tutor" class="btn btn-outline nav-cta">Soy docente <span aria-hidden="true">↗</span></button>
+  </header>
+  <main>
+    <section class="hero" id="inicio">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow"><span></span> Educación a tu medida</div>
+          <h1>El talento correcto.<br /><em>El aprendizaje</em><br />que transforma.</h1>
+          <p>Conectamos familias, estudiantes universitarios y adultos con tutores y profesores especializados, para avanzar con confianza en cada etapa de la vida.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#explorar">Explorar profesores <span aria-hidden="true">↗</span></a>
+            <a class="subtle-link" href="./demo/index.html">Probar flujos de reserva (simulación)</a><a class="subtle-link" href="#como-funciona">Conoce cómo funciona <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="hero-metrics" aria-label="Áreas de aprendizaje">
+            <div><strong>Colegio</strong><span>Todos los grados</span></div>
+            <div><strong>Universidad</strong><span>Apoyo especializado</span></div>
+            <div><strong>Adultos</strong><span>Habilidades para crecer</span></div>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+          <div class="feature-panel">
+            <span class="panel-overline">Una experiencia centrada en ti</span>
+            <div class="panel-art"><span class="art-star star-one">✦</span><span class="art-ring"></span><span class="art-letter">V</span><span class="art-star star-two">✳</span></div>
+            <div class="panel-lower"><span>Aprender, avanzar,<br /><strong>transformar.</strong></span><span class="panel-mark">01 / ∞</span></div>
+          </div>
+          <div class="floating-note"><span class="icon-check" aria-hidden="true">✓</span><span><strong>Protección por diseño</strong><small>Familias al centro</small></span></div>
+          <div class="floating-tag">Conexiones que educan <span>✳</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="trust-strip" aria-label="Principios del servicio"><div class="container strip-content"><span>APRENDIZAJE PERSONALIZADO</span><span class="strip-sep">✦</span><span>DOCENTES ESPECIALIZADOS</span><span class="strip-sep">✦</span><span>PROTECCIÓN DE MENORES</span><span class="strip-sep">✦</span><span>CONFIANZA Y TRANSPARENCIA</span></div></section>
+    <section class="explore section" id="explorar"><div class="container">
+      <div class="section-intro"><div><div class="eyebrow dark"><span></span> Explora el talento</div><h2>Encuentra a quien te<br /><em>ayude a llegar más lejos.</em></h2></div><p>Filtra por etapa educativa, materia y modalidad. Los perfiles que aparecen a continuación son exclusivamente ilustrativos.</p></div>
+      <div class="filters" role="search" aria-label="Filtros de docentes">
+        <label class="filter search-filter"><span>¿Qué deseas aprender?</span><input id="search" type="search" placeholder="Ej. Matemáticas, inglés, cálculo..." autocomplete="off" /></label>
+        <label class="filter"><span>Nivel</span><select id="level"><option value="">Todos los niveles</option><option value="colegio">Colegio</option><option value="universidad">Universidad</option><option value="adultos">Adultos</option></select></label>
+        <label class="filter"><span>Modalidad</span><select id="mode"><option value="">Todas las modalidades</option><option value="virtual">Virtual</option><option value="presencial">Presencial</option></select></label>
+        <button class="btn btn-dark" id="reset" type="button">Limpiar filtros</button>
+      </div>
+      <div class="results-head"><p id="count" aria-live="polite"></p><span>Vista de demostración · Datos ficticios</span></div>
+      <div id="tutor-list" class="tutor-grid"></div>
+      <div id="no-results" class="no-results" hidden>No encontramos perfiles de ejemplo con esos filtros. Prueba otra materia o nivel.</div>
+    </div></section>
+    <section class="how section" id="como-funciona"><div class="container"><div class="eyebrow dark"><span></span> Una ruta clara</div><h2>Así funciona <em>Valderrama.</em></h2><div class="steps">
+      <article><span class="step-n">01</span><div class="step-symbol">⌕</div><h3>Explora especialistas</h3><p>Busca por asignatura, nivel educativo, experiencia y modalidad.</p></article>
+      <article><span class="step-n">02</span><div class="step-symbol">✓</div><h3>Revisa la información</h3><p>Consulta formación académica, áreas de especialidad y valoraciones auténticas cuando estén habilitadas.</p></article>
+      <article><span class="step-n">03</span><div class="step-symbol">↗</div><h3>Coordina con seguridad</h3><p>Una persona adulta responsable gestiona las clases de menores. La plataforma supervisará los canales autorizados.</p></article>
+    </div></div></section>
+    <section class="safety section" id="confianza"><div class="container safety-grid"><div><div class="eyebrow light"><span></span> Nuestro compromiso</div><h2>La confianza<br />no es opcional.<br /><em>Es el punto de partida.</em></h2><p>La plataforma se diseña alrededor del interés superior de los niños, niñas y adolescentes, la privacidad de las familias y las reglas claras de convivencia.</p><a href="./docs/PROTECCION_INFANCIA.md" class="safety-link">Leer protocolo de protección propuesto →</a></div><div class="safety-points">
+    <div><div class="safety-icon">01</div><div><h3>Docentes sujetos a validación</h3><p>Identidad, formación y verificaciones legales aplicables antes de habilitar clases con menores.</p></div></div>
+    <div><div class="safety-icon">02</div><div><h3>Familias al frente</h3><p>Las cuentas de menores son gestionadas por madres, padres o representantes autorizados; no mostramos sus datos en público.</p></div></div>
+    <div><div class="safety-icon">03</div><div><h3>Conducta y reportes</h3><p>Protocolo contra acoso, discriminación, contacto no autorizado y cualquier conducta que ponga en riesgo al estudiante.</p></div></div>
+    <div><div class="safety-icon">04</div><div><h3>Valoraciones responsables</h3><p>En producción, solo participantes de clases realizadas podrán calificar; habrá moderación y derecho de respuesta.</p></div></div>
+  </div></div></section>
+    <section class="join section"><div class="container join-grid"><div><div class="eyebrow dark"><span></span> Para educadores</div><h2>Tu conocimiento<br />puede abrir <em>nuevos caminos.</em></h2><p>Construye un perfil profesional que represente tu preparación, experiencia y forma de enseñar. La habilitación estará sujeta a revisión.</p><button type="button" class="btn btn-dark" id="open-tutor-bottom">Conocer requisitos para docentes ↗</button></div><div class="join-card"><span class="join-card-top">PERFIL PROFESIONAL</span><div class="join-avatar">V<span>✦</span></div><div class="join-lines"><span></span><span></span><span></span></div><div class="join-bottom"><span>Experiencia</span><span>Especialidad</span><span>Formación</span></div></div></div></section>
+    <section class="faq section"><div class="container faq-grid"><div><div class="eyebrow dark"><span></span> Preguntas frecuentes</div><h2>Antes de <em>comenzar.</em></h2></div><div class="faq-items">
+      <details><summary>¿La plataforma también es para universitarios y adultos?</summary><p>Sí. Su diseño contempla acompañamiento escolar, educación superior y aprendizaje de habilidades para personas adultas.</p></details>
+      <details><summary>¿Quién puede solicitar clases para un menor de edad?</summary><p>Una madre, padre o representante autorizado debe gestionar el vínculo y aprobar las condiciones de la clase. No se habilitará contratación independiente por menores.</p></details>
+      <details><summary>¿Qué documentos presenta un docente?</summary><p>Fotografía profesional, identificación para verificación privada, trayectoria académica y soportes correspondientes. No se publicarán documentos sensibles completos.</p></details>
+      <details><summary>¿Las valoraciones mostradas son reales?</summary><p>No. Esta versión es un prototipo y los perfiles y sus puntuaciones son completamente ficticios. La reputación real se habilitará tras contar con reservas verificadas y moderación.</p></details>
+    </div></div></section>
+  </main>
+  <footer class="footer"><div class="container footer-main"><div class="brand brand-footer"><span class="brand-symbol">V<span>.</span></span><span class="brand-copy"><strong>VALDERRAMA</strong><small>LEARNING CENTER</small></span></div><p>Aprendizaje humano. Conexiones responsables.<br />Proyecto en fase de prototipo conceptual.</p><div class="footer-links"><a href="./docs/CODIGO_CONDUCTA.md">Código de conducta</a><a href="./docs/REGLAMENTO_INTERNO.md">Reglamento propuesto</a><a href="./docs/PRIVACIDAD_BORRADOR.md">Privacidad (borrador)</a></div></div><div class="container footer-bottom"><span>© 2026 Valderrama Learning Center · Todos los derechos reservados</span><span>Hecho para aprender con confianza.</span></div></footer>
+  <dialog id="request-dialog" aria-labelledby="request-title" class="modal"><form method="dialog" class="modal-content" id="request-form"><div class="modal-head"><div><span class="modal-kicker">SOLICITUD DE CLASE</span><h2 id="request-title">Conecta con tu próximo profesor</h2></div><button class="close-modal" type="button" data-close="request-dialog" aria-label="Cerrar">×</button></div><p id="selected-tutor" class="selected-tutor"></p><div class="notice">Demostración sin envío ni almacenamiento de datos. Aún no se habilitan reservas reales.</div><label>¿Para quién es la clase?<select id="audience" required><option value="">Seleccionar</option><option value="menor">Para un menor bajo mi responsabilidad</option><option value="adulto">Para mí, soy mayor de edad</option></select></label><div id="guardian-note" class="guardian-note" hidden>Para menores, solamente una madre, padre o representante autorizado podrá completar y aprobar reservas. No se solicitan datos del niño en esta demostración.</div><label>Materia o tema<input id="request-subject" required placeholder="Ej. Álgebra, inglés conversacional" maxlength="120" /></label><label class="checkbox-line"><input type="checkbox" required /> Comprendo que este formulario es ilustrativo y no crea una reserva.</label><button type="submit" class="btn btn-primary wide">Verificar flujo de solicitud</button><p id="request-feedback" aria-live="polite" class="form-feedback"></p></form></dialog>
+  <dialog id="tutor-dialog" aria-labelledby="tutor-title" class="modal"><div class="modal-content"><div class="modal-head"><div><span class="modal-kicker">COMUNIDAD DOCENTE</span><h2 id="tutor-title">Construye tu perfil docente</h2></div><button class="close-modal" type="button" data-close="tutor-dialog" aria-label="Cerrar">×</button></div><p>En la fase de registro real, los candidatos deberán aportar:</p><ul class="requirement-list"><li>Fotografía de perfil y presentación pedagógica.</li><li>Información de especialidad, asignaturas y niveles atendidos.</li><li>Títulos, certificaciones y trayectoria académica comprobable.</li><li>Validación privada de identidad y documentación.</li><li>Autorizaciones y verificaciones pertinentes para trabajar con menores, cuando aplique.</li><li>Aceptación del código de conducta y reglamento.</li></ul><div class="notice">El registro de profesores aún no recibe documentos. Ninguna acreditación es automática.</div><button class="btn btn-dark wide" type="button" data-close="tutor-dialog">Entendido</button></div></dialog>
+</body>
+</html>
