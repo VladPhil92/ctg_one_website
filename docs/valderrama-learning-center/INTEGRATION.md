@@ -6,6 +6,14 @@
 - `valderramalearnigncenter.ctgone.com`: host literal solicitado, atendido por el proxy (solo archivos estáticos permitidos) cuando haya DNS/TLS/hosting.
 - `public/valderrama-learning-center/`: snapshot estático del repositorio canónico `VladPhil92/Valderrama-Learning-Center-App`.
 
+## Producto multiplataforma: web, Android e iOS
+
+El repositorio canónico VLC incorpora un cliente independiente **React Native/Expo en `mobile/`**. Android e iOS son requisitos de primera clase y no una etapa opcional. Web y ambos clientes consumirán la misma API versionada del dominio educativo y las mismas reservas, perfiles docentes y progresos académicos.
+
+El snapshot estático de `public/valderrama-learning-center/` **no constituye sincronización de usuarios o reservas** y NO incluye el código de la app nativa. La arquitectura de sincronización está especificada en `docs/APP_MOVIL_SINCRONIZACION.md` del repositorio VLC. El backend común y la sincronización en vivo todavía no existen.
+
+Las credenciales de la app educativa deben quedar separadas de servicios financieros CTG One, a menos que se diseñe y audite posteriormente un mecanismo explícito de federación de identidades. No copiar tokens de Wallet ni identificar menores como usuarios financieros.
+
 ## Límite de confianza
 El proxy rechaza los paths no listados, en particular API y panel de usuario de CTG One. La app no comparte sesiones, medios de pago, identificación, balances, consentimiento ni datos privados con los servicios financieros del ecosistema. El portal VLC falla de forma segura sin configuración explícita. El demo opera 100 % en memoria con datos sintéticos.
 

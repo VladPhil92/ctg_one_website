@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowUpRight, BookOpenCheck, CalendarDays, ShieldCheck, UsersRound } from 'lucide-react';
+import { ArrowUpRight, BookOpenCheck, CalendarDays, ShieldCheck, Smartphone, UsersRound } from 'lucide-react';
 
 const title = 'Valderrama Learning Center App | CTG One';
 const description = 'Conexión educativa para familias, adultos y tutores especializados. Entorno de demostración sin reservas reales.';
@@ -53,6 +53,17 @@ export default function LearningCenterMarketplacePage() {
           <h3 className="mt-5 text-lg font-bold">{heading}</h3>
           <p className="mt-3 text-sm leading-6 text-[#5b727a]">{content}</p>
         </article>)}
+      </section>
+      <section className="mb-14 rounded-3xl border border-[#b9d7ce] bg-white p-7 md:p-10">
+        <div className="flex items-start gap-4">
+          <Smartphone size={32} className="shrink-0 text-[#137e70]" aria-hidden="true" />
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[.15em] text-[#197c74]">Un producto · Tres plataformas</p>
+            <h2 className="mt-3 text-2xl font-extrabold">Web, Android e iOS sincronizados</h2>
+            <p className="mt-3 max-w-3xl leading-7 text-[#5b727a]">El producto está diseñado para compartir identidad educativa, docentes, agenda y progreso mediante una API central. La base de la aplicación móvil React Native/Expo ya forma parte del repositorio; la sincronización real, los binarios instalables y su publicación siguen en desarrollo.</p>
+            <p className="mt-3 text-xs font-semibold text-[#8a6a26]">Las aplicaciones aún no están disponibles en Google Play ni App Store.</p>
+          </div>
+        </div>
       </section>
       <footer className="border-t border-[#d5e3dd] py-8 text-sm leading-6 text-[#6b848a]">
         Subdominio previsto: valderramalearnigncenter.ctgone.com. Su activación necesita hosting, DNS y certificado TLS.
