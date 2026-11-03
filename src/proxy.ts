@@ -69,7 +69,39 @@ function handleWorldMakersSubdomain(request: NextRequest) {
   return NextResponse.rewrite(url);
 }
 
+// Isolated, static, preoperative VLC app on the specifically requested hostname.
+// Never route this host through CTG One banking, account or API handlers.
+function handleValderramaLearningCenterHost(request: NextRequest) {
+  if (normalizeHost(request) !== 'valderramalearnigncenter.ctgone.com') return null;
+
+  const pathname = request.nextUrl.pathname;
+  const allowedPaths = new Set([
+    '/', '/index.html', '/styles.css', '/robots.txt', '/SECURITY.md',
+    '/src/app.js', '/src/data.js', '/src/filters.js', '/src/marketplace.js',
+    '/demo/index.html', '/demo/app.js', '/demo/styles.css',
+    '/portal/index.html', '/portal/app.js', '/portal/client.js',
+    '/portal/config.js', '/portal/styles.css', '/portal/validators.js',
+    '/docs/CODIGO_CONDUCTA.md', '/docs/FASE1_INSTALACION.md',
+    '/docs/PRIVACIDAD_BORRADOR.md', '/docs/PROTECCION_INFANCIA.md',
+    '/docs/REGLAMENTO_INTERNO.md', '/docs/INTEGRACION_CTG_ONE.md',
+  ]);
+
+  if (!allowedPaths.has(pathname)) {
+    return new NextResponse('Esta ruta no pertenece a Valderrama Learning Center.', {
+      status: 404,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+    });
+  }
+
+  const url = request.nextUrl.clone();
+  url.pathname = '/valderrama-learning-center' + (pathname === '/' ? '/index.html' : pathname);
+  return NextResponse.rewrite(url);
+}
+
 export async function proxy(request: NextRequest) {
+  const vlcResponse = handleValderramaLearningCenterHost(request);
+  if (vlcResponse) return vlcResponse;
+
   // The World Makers public portal lives inside this Next.js deployment but is
   // served as its own branded property at worldmakers.ctgone.com.
   const worldMakersResponse = handleWorldMakersSubdomain(request);

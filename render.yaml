@@ -12,6 +12,7 @@ services:
     autoDeployTrigger: checksPass
     domains:
       - worldmakers.ctgone.com
+      - valderramalearnigncenter.ctgone.com
     envVars:
       - key: NODE_VERSION
         value: "22.22.0"

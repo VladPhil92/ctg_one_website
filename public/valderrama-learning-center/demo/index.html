@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0c2734">
+<meta name="description" content="Simulador de procesos para pruebas internas; no acepta reservas ni datos personales.">
+<title>Laboratorio de producto | Valderrama Learning Center</title>
+<link rel="stylesheet" href="./styles.css">
+<script type="module" src="./app.js"></script>
+</head><body>
+<div class="banner" role="status">ENTORNO DE DEMOSTRACIÓN · Datos y docentes ficticios · Sin almacenamiento ni servicios reales</div>
+<header class="topbar"><a class="wordmark" href="../index.html"><span class="mark">V.</span><span>VALDERRAMA <small>LEARNING CENTER</small></span></a><nav><a href="../index.html">Inicio</a><a href="../portal/index.html">Portal de cuentas</a><a href="https://ctgone.com">CTG One</a></nav></header>
+<main class="container">
+<section class="hero"><div><p class="eyebrow">PRODUCT LAB · FASE DE PRELANZAMIENTO</p><h1>De la búsqueda a la clase,<br><em>con controles en cada paso.</em></h1><p class="lead">Pruebe reservas, aceptación docente, reprogramación, clases completadas, reseñas y alertas de protección. Todo ocurre exclusivamente en memoria y desaparece al recargar.</p></div>
+<div class="hero-side"><strong>Sin proveedores conectados</strong><p>No crea cuentas, no procesa pagos, no almacena datos ni constituye verificación real de identidad o representación legal.</p><button id="restart" type="button" class="quiet">Reiniciar simulador</button></div></section>
+<section class="stats" aria-label="Resumen de operaciones"><div><strong id="pending">0</strong><span>Solicitudes pendientes</span></div><div><strong id="confirmed">0</strong><span>Clases confirmadas</span></div><div><strong id="completed">0</strong><span>Clases finalizadas</span></div><div><strong id="incidents">0</strong><span>Alertas abiertas</span></div></section>
+<div class="grid">
+<section class="panel"><div class="section-head"><div><span class="eyebrow">01 · ENCONTRAR DOCENTE</span><h2>Catálogo de prueba</h2></div><span class="status">PERFILES SINTÉTICOS</span></div>
+<label class="field">Buscar por nombre o materia<input id="search" type="search" placeholder="Ej. matemáticas, inglés o química"></label>
+<div id="teachers" class="teachers"></div></section>
+<section class="panel"><div class="section-head"><div><span class="eyebrow">02 · SOLICITAR CLASE</span><h2>Agenda controlada</h2></div></div>
+<form id="book-form" class="form">
+<label class="field">Docente seleccionado<select id="tutor" required></select></label>
+<label class="field">Público de la clase<select id="audience" required><option value="adult">Estudiante adulto</option><option value="minor">Menor, gestionado por su representante</option></select></label>
+<label id="guardian-check" class="checkbox" hidden><input id="guardian-verified" type="checkbox"> Simular representación familiar verificada (no es verificación real)</label>
+<label class="field">Materia o tema genérico<input id="subject" maxlength="100" minlength="2" required placeholder="Ej. física"></label>
+<label class="field">Modalidad<select id="mode" required><option value="virtual">Virtual</option><option value="presencial">Presencial</option></select></label>
+<label class="field">Horario local de ejemplo<select id="slot" required></select></label>
+<label class="checkbox"><input id="consent" type="checkbox" required> Comprendo que es una simulación sin profesores ni reservas reales.</label>
+<button class="primary" type="submit">Crear solicitud ficticia</button>
+</form>
+<p id="feedback" role="status" aria-live="polite"></p>
+<p class="footnote">No introduzca nombres, teléfonos, correos, direcciones o información identificable de menores. Los pagos y la mensajería están desactivados.</p>
+</section></div>
+<section class="panel operations"><div class="section-head"><div><span class="eyebrow">03 · GESTIONAR</span><h2>Tablero operativo de ejemplo</h2></div><span class="status">ESTADOS TRAZABLES</span></div>
+<p class="footnote">Las acciones de tutor y representante se simulan en un mismo navegador. En producción serán exclusivas de cuentas autorizadas.</p>
+<div id="bookings" class="bookings"></div>
+</section>
+<section class="panel"><span class="eyebrow">04 · CONTROL DE CALIDAD</span><h2>Moderación y protección</h2><p class="footnote">Las reseñas creadas quedan pendientes de revisión. Una alerta congela automáticamente la sesión; ninguna calificación se publica ni se resuelve un incidente de forma automática.</p>
+<div id="quality" class="quality"></div></section>
+</main><footer>Valderrama Learning Center · Laboratorio preoperativo · <a href="../docs/PROTECCION_INFANCIA.md">Política propuesta de protección</a></footer>
+</body></html>
