@@ -9,9 +9,9 @@
     "provider": "ci",
     "branch": "synthetic",
     "commit": "cccccccccccccccccccccccccccccccccccccccc",
-    "schemaMigration": "0159",
-    "schemaMigrationName": "wallet_crypto_address_pool_operational_hardening_v1_1",
-    "schemaMigrationCount": 158,
+    "schemaMigration": "0160",
+    "schemaMigrationName": "ctg_accelerate_referral_attribution",
+    "schemaMigrationCount": 159,
     "schemaCompatible": true,
     "productionReadinessVerified": false
   },
@@ -26,11 +26,33 @@
     {
       "lotDigestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "observedStatus": "SETTLED",
-      "funding": {"allocatedCapitalCents":230000,"cashReceiptCents":230000,"approvedReinvestmentDebitCents":0,"internalCapitalCents":0,"unbackedExternalCapitalCents":0,"reconciled":true},
-      "production": {"serializedUnits":48,"terminalPhysicalUnits":48,"inventoryReconciled":true},
-      "sales": {"documentedSoldUnits":48,"returnedUnits":2,"returnGenealogyMismatches":0},
-      "settlement": {"finalized":true,"netDistributableProfitCents":100000,"participantCreditCents":280000},
-      "liquidity": {"approvedReinvestmentCents":140000,"confirmedWithdrawalDebitCents":140000}
+      "funding": {
+        "allocatedCapitalCents": 230000,
+        "cashReceiptCents": 230000,
+        "approvedReinvestmentDebitCents": 0,
+        "internalCapitalCents": 0,
+        "unbackedExternalCapitalCents": 0,
+        "reconciled": true
+      },
+      "production": {
+        "serializedUnits": 48,
+        "terminalPhysicalUnits": 48,
+        "inventoryReconciled": true
+      },
+      "sales": {
+        "documentedSoldUnits": 48,
+        "returnedUnits": 2,
+        "returnGenealogyMismatches": 0
+      },
+      "settlement": {
+        "finalized": true,
+        "netDistributableProfitCents": 100000,
+        "participantCreditCents": 280000
+      },
+      "liquidity": {
+        "approvedReinvestmentCents": 140000,
+        "confirmedWithdrawalDebitCents": 140000
+      }
     }
   ]
 }

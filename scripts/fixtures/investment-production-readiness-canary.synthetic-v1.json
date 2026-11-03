@@ -6,9 +6,9 @@
   "result": "PASS",
   "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "expectedBranch": "main",
-  "expectedMigration": "0159",
-  "expectedMigrationName": "wallet_crypto_address_pool_operational_hardening_v1_1",
-  "expectedMigrationCount": 158,
+  "expectedMigration": "0160",
+  "expectedMigrationName": "ctg_accelerate_referral_attribution",
+  "expectedMigrationCount": 159,
   "observed": {
     "readinessHttp": 200,
     "readinessStatus": "ready",

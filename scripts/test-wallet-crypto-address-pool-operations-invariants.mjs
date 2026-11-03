@@ -38,9 +38,9 @@ assert.match(page, /snapshot\.addressOffset-snapshot\.addressLimit/,
 const schemaMigrationDeclarations = schema.match(/export const EXPECTED_DATABASE_MIGRATION =/g) ?? [];
 assert.equal(schemaMigrationDeclarations.length, 1,
   'Repository schema authority must contain exactly one EXPECTED_DATABASE_MIGRATION declaration.');
-assert.match(schema, /EXPECTED_DATABASE_MIGRATION = '0159'/,
-  'Repository schema authority must track 0159.');
-assert.match(schema, /EXPECTED_DATABASE_MIGRATION_COUNT = 158/,
-  'Repository schema migration count must track 158 migrations.');
+assert.match(schema, /EXPECTED_DATABASE_MIGRATION = '0160'/,
+  'Repository schema authority must track latest additive migration 0160.');
+assert.match(schema, /EXPECTED_DATABASE_MIGRATION_COUNT = 159/,
+  'Repository schema migration count must track 159 migrations.');
 
 console.log('Wallet crypto address-pool operations invariants: PASS');

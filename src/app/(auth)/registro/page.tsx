@@ -37,6 +37,8 @@ function RegistroForm() {
   const { locale } = useLanguage();
   const es = locale === 'es';
   const redirectTo = safeRedirectPath(searchParams.get('next'), '/dashboard');
+  const incomingReferral = (searchParams.get('ref') ?? '').toUpperCase();
+  const referralCode = /^CTG-[A-F0-9]{16}$/.test(incomingReferral) ? incomingReferral : null;
   const isWorldMakersFlow = redirectTo.startsWith('/worldmakers');
   const signInHref = isWorldMakersFlow
     ? `/iniciar-sesion?next=${encodeURIComponent(redirectTo)}`
@@ -170,6 +172,7 @@ function RegistroForm() {
             full_name: parsed.data.fullName,
             phone: parsed.data.phone,
             analytics_anonymous_id: analyticsAnonymousId,
+            ...(referralCode ? { ctg_referral_code: referralCode } : {}),
           },
           ...redirectOptions,
         },
@@ -200,6 +203,7 @@ function RegistroForm() {
     <form noValidate onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }}>
       <h1 className="mb-1 font-outfit text-2xl font-semibold tracking-tight text-white">{copy.title}</h1>
       <p className="text-sm leading-relaxed text-text-muted">{copy.subtitle}</p>
+      {referralCode ? <p className="mt-3 rounded-xl border border-accent/20 bg-accent/[.05] px-3 py-2 text-xs text-accent">Código de invitación recibido: {referralCode}. Su atribución se verificará al crear la cuenta; no implica una recompensa económica.</p> : null}
 
       <div className="mb-7 mt-5 rounded-2xl border border-accent/15 bg-accent/[0.035] p-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">{copy.valueTitle}</p>
