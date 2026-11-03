@@ -14,6 +14,15 @@ import {
 
 type InvestmentRole = 'SUPER_ADMIN'|'FINANCE_ADMIN'|'PRODUCTION_MANAGER'|'INVENTORY_MANAGER'|'SALES_MANAGER'|'AUDITOR'|'PARTICIPANT';
 
+const routeRoles: Array<{ prefix:string; roles:InvestmentRole[] }> = [
+  { prefix:'/admin/operations/settlement', roles:['SUPER_ADMIN','FINANCE_ADMIN'] },
+  { prefix:'/admin/operations/labels', roles:['SUPER_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER'] },
+  { prefix:'/admin/operations/scanner', roles:['SUPER_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER'] },
+  { prefix:'/admin/operations/overview', roles:['SUPER_ADMIN','FINANCE_ADMIN','PRODUCTION_MANAGER','INVENTORY_MANAGER','SALES_MANAGER','AUDITOR'] },
+  { prefix:'/admin/operations', roles:['SUPER_ADMIN','PRODUCTION_MANAGER'] },
+  { prefix:'/inversion/admin/orders', roles:['SUPER_ADMIN','FINANCE_ADMIN'] },
+];
+
 const participantAdminExactExemptPaths = new Set([
   '/dashboard/seguridad/mfa',
 ]);
