@@ -60,7 +60,7 @@ export default function LearningCenterMarketplacePage() {
           <div>
             <p className="text-xs font-bold uppercase tracking-[.15em] text-[#197c74]">Un producto · Tres plataformas</p>
             <h2 className="mt-3 text-2xl font-extrabold">Web, Android e iOS sincronizados</h2>
-            <p className="mt-3 max-w-3xl leading-7 text-[#5b727a]">El producto está diseñado para compartir identidad educativa, docentes, agenda y progreso mediante una API central. La base de la aplicación móvil React Native/Expo ya forma parte del repositorio; la sincronización real, los binarios instalables y su publicación siguen en desarrollo.</p>
+            <p className="mt-3 max-w-3xl leading-7 text-[#5b727a]">El producto está diseñado para compartir identidad educativa, docentes, agenda y progreso mediante una API central. La base React Native/Expo ya incluye un laboratorio local de reservas ficticias sincronizadas con una interfaz web mediante Node.js y SQLite. La identidad segura, la sincronización productiva, los binarios instalables y la publicación en tiendas continúan en desarrollo.</p>
             <p className="mt-3 text-xs font-semibold text-[#8a6a26]">Las aplicaciones aún no están disponibles en Google Play ni App Store.</p>
           </div>
         </div>
